@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>物料包装规格配置</title>
+    <#include "/web_header.html">
+</head>
+<body>
+<div class="wrapper">
+	<div class="main-content" >
+		<div class="box box-main" id="rrapp">
+			<div class="box-body" id='popupForm'>
+				<form id="searchForm" action="${request.contextPath}/config/matPackage/info"  method="post" class="form-horizontal">
+					<input type="hidden" id="headId" name="headId" class="form-control" v-model="headId"/>
+					<div class="form-unit">物料包装规格抬头</div>
+					<div class="row">
+						<div class="col-sm-6">
+					     	<div class="form-group">
+		                        <label class="control-label col-sm-4" title="">
+			                    	<span class="required hide">*</span> 工厂代码：<i class="fa icon-question hide"></i>
+			                   	</label>
+		                        <div class="col-sm-8">
+                                    <select class="" name="werks" id="werks" v-model="matPackage.WERKS"  style="width:100%;height:25px">
+                                        <#list tag.getUserAuthWerks("WMS_C_MAT_PACKAGE") as factory> 
+                                            <option value="${factory.code}">${factory.code}</option>
+                                        </#list>
+                                    </select>
+                                </div>
+		                    </div>
+	                   	</div>
+						<div class="col-sm-6">
+							<div class="form-group">
+		                        <label class="control-label col-sm-4" title="">
+			                    	<span class="required hide">*</span> 仓库号：<i class="fa icon-question hide"></i>
+			                   	</label>	                        
+		                        <div class="col-sm-8">
+                                     <select class=""  name="whNumber" id="whNumber" v-model="matPackage.WH_NUMBER" style="width:100%;height:25px">
+                                        <option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+                                     </select>
+<!--                                     <select class="required"  name="whNumber" id="whNumber" v-model="matPackage.WH_NUMBER" style="width:100%;height:25px">
+										<#list tag.getUserAuthWh("WMS_C_MAT_PACKAGE") as wh> 
+											<option value="${wh.code}">${wh.code}</option>
+										</#list>
+									</select> -->
+                                </div>
+		                    </div>
+	                    </div>	
+	             	</div>
+	             	<div class="row">
+						<div class="col-sm-6">
+					     	<div class="form-group">
+		                        <label class="control-label col-sm-4" title="">
+			                    	<span class="required hide">*</span> 包规类型：<i class="fa icon-question hide"></i>
+			                   	</label>
+		                        <div class="col-sm-8">
+		                        	<select id="packageType" style="width:100%;height:25px" v-model="matPackage.PACKAGE_TYPE"> 
+										   <option value=''>请选择</option>
+										   <option value='01'>入库</option>
+										   <option value='02'>出库</option>
+									</select>
+		                        </div>
+		                    </div>
+	                   	</div>
+						<div class="col-sm-6">
+							<div class="form-group">
+		                        <label class="control-label col-sm-4" title="">
+			                    	<span class="required hide">*</span> 物料号：<i class="fa icon-question hide"></i>
+			                   	</label>	                        
+		                        <div class="col-sm-8">
+		                            <input type="text" class="form-control" id="matnr" name="matnr"  @click="getMaterialNoFuzzy()"  placeholder="物料号" v-model="matPackage.MATNR">
+		                        </div>
+		                    </div>
+	                    </div>	
+	             	</div>
+	             	<div class="row">
+						<div class="col-sm-6">
+					     	<div class="form-group">
+		                        <label class="control-label col-sm-4" title="">
+			                    	<span class="required hide">*</span> 供应商：<i class="fa icon-question hide"></i>
+			                   	</label>
+		                        <div class="col-sm-8">
+		                        	<input type="text" class="form-control" id="lifnr" name="lifnr"  placeholder="供应商" v-model="matPackage.LIFNR" @click="getVendorNoFuzzy()" >	
+		                        </div>
+		                    </div>
+	                   	</div>
+						<div class="col-sm-6">
+							<div class="form-group">
+		                        <label class="control-label col-sm-4" title="">
+			                    	<span class="required hide">*</span> 满箱数量：<i class="fa icon-question hide"></i>
+			                   	</label>	                        
+		                        <div class="col-sm-8">
+		                            <input type="text" class="form-control" id="fullBoxQty" name="fullBoxQty"  placeholder="满箱数量" v-model="matPackage.FULL_BOX_QTY">
+		                        </div>
+		                    </div>
+	                    </div>	
+	             	</div>
+	             	<div class="row">
+						<div class="col-sm-6">
+					     	<div class="form-group">
+		                        <label class="control-label col-sm-4" title="">
+			                    	<span class="required hide">*</span> 状态：<i class="fa icon-question hide"></i>
+			                   	</label>
+		                        <div class="col-sm-8">
+		                        	<select id="status" style="width:100%;height:25px" v-model="matPackage.STATUS"> 
+										   <option value=''>请选择</option>
+										   <option value='00'>开通</option>
+										   <option value='01'>锁定</option>
+									</select>
+		                        </div>
+		                    </div>
+	                   	</div>
+	             	</div>
+	             	<div class="form-unit">物料包装规格明细</div>			
+					<table  id="dataGrid" ></table>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_c_mat_package_edit.js?_${.now?long}"></script>
+</body>
+</html>

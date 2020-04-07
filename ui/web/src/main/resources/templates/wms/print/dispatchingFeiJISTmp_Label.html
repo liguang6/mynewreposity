@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+    <title>标签</title>
+    <style>
+        @page {
+            size: 100mm 100mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            margin: 0.15in;
+            padding: 0.1em;
+/*             @bottom-center{
+                content:"CSCC © 版权所有";
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            }; */
+            @top-center { content: element(header) };
+/*             @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;
+            }; */
+        }
+    </style>
+    
+</head>
+<body style="font-family: SimSun;width: 100%;height: 100%;" >
+	<div style="width: 100%;height: 99%;font-size: 11px;" >
+		<table style="border:solid #000000; border-width:1px 0px 0px 1px;width: 100%;height: 100%;">
+			<tr style="width: 100%;">
+				<td style="border:solid #000000;text-align: center; border-width:0px 1px 1px 0px;" >
+					<img src="${contextPath}/statics/images/byd_logo.png" style="height: 42px;"></img>
+				</td>
+				<td style="text-align: center;border:solid #000000;border-width:0px 1px 1px 0px;" colspan="2"> 
+					JIT拣配单     ${BUPRINT}
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					NO:<label class="control-label" style="width: 100%;">${DISPATCHING_NO}</label>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					<label class="control-label" style="width: 100%;">${DISPATCHING_ADDRESS}/${LINE_CATEGORY}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;border-radius:50%;text-align:center;">
+					<label class="control-label" style="width: 100%;">${WAITING_LOCATION}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;border-radius:50%;text-align:center;" >
+					<label class="control-label" style="width: 100%;">${ELEVATOR_CODE}</label>
+				</td>
+				<td style="border:solid #000000;border-width:0px 1px 1px 0px;text-align: center;" rowspan="2">
+					<img src="${barCode}" style="height:100px;"></img>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					<label class="control-label" style="width: 100%;">${FROM_PLANT_CODE}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;">${QUANTITY}/${PACKAGE_QTY}</label>
+				</td>
+				
+			</tr>
+			<tr style="width: 100%;">
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					<label class="control-label" style="width: 100%;">${VENDOR_NAME}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;">${PACKAGE_MODEL}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;">${BATCH}</label>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					<label class="control-label" style="width: 100%;">${MATERIAL_CODE}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="3">
+					<label class="control-label" style="width: 100%;">${MATERIAL_DESC}</label>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					<label class="control-label" style="width: 100%;">${PICKING_USER_NAME}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;">${PICKING_ADDRESS}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;">${JCQ}</label>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="text-align: center;;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;">${HANDOVER_DATE}</label>
+				</td>
+				<td style="text-align: center;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;">${REMARK}</label>
+				</td>
+			</tr>	
+			
+		</table>
+	</div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>云平台送货单行明细信息</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/yptquery/listitem">
+						
+	                        <input type="text" v-model="asnno" id="ASNNO" name="ASNNO" style="width: 100px;display:none;" class="form-control width-300" />
+							
+						</form>
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/YPTDeliveryDetail.js?_${.now?long}"></script>
+</body>
+</html>

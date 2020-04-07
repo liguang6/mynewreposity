@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 创建需求 mapper -->
+<mapper namespace="com.byd.wms.business.modules.out.dao.SendCreateRequirementDao">
+
+	<!-- 查询某个工厂下的业务类型 -->
+	<select id="selectPlantBusinessTypes" resultType="Map"
+		parameterType="Map">
+		select s.BUSINESS_NAME code,d.value from (
+		select
+		distinct BUSINESS_NAME from wms_c_wms_business where BUSINESS_CODE in
+		(
+		select BUSINESS_CODE from wms_c_plant_business where werks =
+		#{params.werks}
+		and BUSINESS_CLASS = '04' ))
+		s left join sys_dict d on
+		d.type='BUSINESS_NAME' and s.BUSINESS_NAME = d.code
+	</select>
+
+	<select id="selectWMSSapMoHead" resultType="Map" parameterType="Map">
+		select * from WMS_SAP_MO_HEAD where
+		aufnr = #{params.aufnr}
+	</select>
+
+	<select id="selectHxMoComponents" resultType="Map"
+		parameterType="Map">
+		select * from WMS_HX_MO_COMPONENT
+		where 1 = 1
+		<if test="params.aufnr != null and params.aufnr!=''">
+			and AUFNR = #{params.aufnr}
+		</if>
+		<if test="params.werks !=null and params.werks != ''">
+			and WERKS = #{params.werks}
+		</if>
+		<if test="params.matnr != null and params.matnr != ''">
+			and MATNR =
+			#{params.matnr}
+		</if>
+	</select>
+
+	<!-- 查询生产订单信息 -->
+	<select id="selectProduceOrderList">
+		select * from WMS_SAP_MO_COMPONENT
+		where AUFNR IN
+		<foreach collection="orders" index="index" item="item" open="("
+			separator="," close=")">
+			#{item.orderNo}
+		</foreach>
+
+	</select>
+	<!-- 查询 预留号和预留行项目号 -->
+	<select id="selectPOPro" resultType="Map" parameterType="Map">
+		select RSNUM, RSPOS from WMS_SAP_MO_COMPONENT
+		where 1=1
+		<if test="params.aufnr != null and params.aufnr!=''">
+			and AUFNR = #{params.aufnr}
+		</if>
+		<if test="params.posnr != null and params.posnr != ''">
+			and POSNR =
+			#{params.posnr}
+		</if>
+		<if test="params.matnr != null and params.matnr != ''">
+			and MATNR =
+			#{params.matnr}
+		</if>
+	</select>
+	<!-- 根据工厂和物料号 查询物料信息 -->
+	<select id="selectMaterial" resultType="Map" parameterType="Map">
+		SELECT
+		MATNR        ,
+		MAKTX        ,
+		MAKTX_EN     ,
+		MEINS  as MEINH      ,
+		WERKS        ,
+		BSTME        ,
+		AUSME        ,
+		MMSTA        ,
+		LVORM        ,
+		BESKZ        ,
+		SOBSL        ,
+		VPRSV        ,
+		VERPR        ,
+		STPRS        ,
+		PEINH        ,
+		IMPORT_DATE  ,
+		IMPORTOR     ,
+		EDITOR_ID    ,
+		EDITOR       ,
+		EDIT_DATE    ,
+		VALUE_TYPE   ,
+		MAT_LVORM    ,
+		XCHPF        ,
+		BIG_CATEGORY ,
+		MID_CATEGORY ,
+		SMA_CATEGORY ,
+		PRFRQ
+
+		FROM
+
+		 WMS_SAP_MATERIAL a
+
+		WHERE 1=1
+		<if test="params.werks != null and params.werks != ''">
+			and a.werks = #{params.werks}
+		</if>
+		and a.MATNR = #{params.matnr}
+	</select>
+
+	<!-- 根据物料 工厂 仓库 查 库位 和 库存数量 -->
+	<select id="selectLgortStockByMaterial" resultType="Map"
+		parameterType="Map">
+		select LGORT,sum(STOCK_QTY) as stock_total_qty from WMS_CORE_STOCK
+		where werks = #{params.werks} and wh_number = #{params.whNumber}
+		<if test="params.matnr != null and params.matnr != ''">
+			and MATNR = #{params.matnr}
+		</if>
+		group by (LGORT)
+	</select>
+
+	<!-- 查询生产订单 -->
+	<select id="selectProducerOrder" resultType="Map" parameterType="Map">
+		select distinct c.*,
+		h.hx_qty,item.KDAUF,item.PSMNG,mat.maktx,
+		( select
+		sum(NVL(o.qty,0)-NVL(o.QTY_CANCEL,0)) from
+		wms_out_requirement_item o
+		where
+		o.mo_no = c.aufnr and o.MO_ITEM_NO = c.POSNR and o.matnr = c.matnr and NVL(o.del,'0') = '0'
+		and
+		o.req_item_status !='06' and NVL(o.qty_real,0) =0
+		) out_qty
+		from
+		WMS_SAP_MO_COMPONENT c
+		left join WMS_HX_MO_COMPONENT h on
+		c.aufnr =
+		h.aufnr
+		and c.matnr = h.matnr
+		and c.rsnum = h.rsnum
+		and c.rspos
+		= h.rspos
+		left join wms_sap_mo_item item
+		on c.aufnr = item.AUFNR
+		left join wms_sap_material
+		mat
+		on
+		c.matnr = mat.matnr and c.werks = mat.werks
+		WHERE c.AUFNR =
+		#{params.AUFNR}
+		and c.POSTP = 'L'
+		and c.XLOEK is null
+		and c.DUMPS is null
+		<if test="params.WERKS != null and params.WERKS !=''">
+			and c.WERKS = #{params.WERKS}
+		</if>
+		<if test="params.MATNR != null and params.MATNR !=''">
+			AND c.MATNR like '%' || #{params.MATNR} || '%'
+		</if>
+		<if test="params.LGORT != null and params.LGORT.size > 0">
+			AND c.LGORT in
+			<foreach collection="params.LGORT" item="lgort" index="i"
+				open="(" separator="," close=")">
+				#{lgort}
+			</foreach>
+		</if>
+		<if test="params.SORTF != null and params.SORTF !=''">
+			AND c.SORTF = #{params.SORTF}
+		</if>
+		<if test="params.filterZeroRequireLine != null">
+			AND c.BDMNG > 0
+		</if>
+		<!-- 如果属于生产订单投料 或者 属于生产订单补料 -->
+		<if test="params.IS_PRO_LINE_WAREHOUSE == null ">
+			and NVL(c.RGEKZ,'0') = '0' and c.BWART= '261'
+		</if>
+		<!-- 线边仓 -->
+		<if test="params.IS_PRO_LINE_WAREHOUSE">
+			and NVL(c.RGEKZ,'0') = 'X' and c.BWART='261'
+		</if>
+	</select>
+
+	<!-- 查询库存总数 -->
+	<select id="selectTotalStockQty" resultType="java.lang.Double"
+		parameterType="Map">
+		select SUM(stock_qty) from wms_core_stock where 1=1
+		<if test="params.MATNR != null and params.MATNR !=''">
+			and matnr = #{params.MATNR}
+		</if>
+		<if test="params.WERKS != null and params.WERKS !=''">
+			and werks = #{params.WERKS}
+		</if>
+		<if test="params.WH_NUMBER != null and params.WH_NUMBER !=''">
+			and wh_number = #{params.WH_NUMBER}
+		</if>
+		<if test="params.LGORT_LIST != null and params.LGORT_LIST.size > 0">
+			and lgort in
+			<foreach collection="params.LGORT_LIST" item="lgort" index="index"
+				open="(" separator="," close=")">
+				#{lgort}
+			</foreach>
+		</if>
+		<if test="params.LIFNR != null and params.LIFNR !=''">
+			and LIFNR = #{params.LIFNR}
+		</if>
+	</select>
+
+	<select id="selectHxFlag" parameterType="Map" resultType="Map">
+		select
+		special_flag from WMS_C_WMS_BUSINESS t where business_type =
+		#{params.businessType} and business_name=#{params.businessName}
+	</select>
+
+	<!-- 查询指定工厂的非上线物料 -->
+	<select id="selectMatUsing" resultType="Map" parameterType="String">
+		select MATNR from WMS_C_MAT_USING where del = '0' and use_flag = '0'
+		and werks = #{werks}
+	</select>
+
+	<!-- 查询业务代码 -->
+	<select id="selectBusinessCode" resultType="java.lang.String"
+		parameterType="Map">
+		select business_code from WMS_C_WMS_BUSINESS t
+		where
+		business_type = #{type} and business_name = #{name}
+		and business_class
+		= '07'
+	</select>
+
+	<select id="selectApprovalFlag" resultType="Map" parameterType="Map">
+		select APPROVAL_FLAG from WMS_C_PLANT_BUSINESS t where BUSINESS_CODE =
+		#{params.businessCode}
+		and WERKS = #{params.werks}
+	</select>
+
+	<select id="selectApprovalBusinessCode" resultType="Map">
+		SELECT
+		BUSINESS_CODE FROM WMS_C_WMS_BUSINESS
+		WHERE BUSINESS_NAME =
+		#{business_name} AND BUSINESS_TYPE = #{business_type}
+		AND
+		BUSINESS_CLASS = #{business_class}
+	</select>
+
+
+	<select id="selectSapPoHead" resultType="Map" parameterType="Map">
+		select s.* from (select t.EBELN,v.EBELP,
+		t.BSTYP,
+		t.LIFNR,
+		t.FRGRL,
+		v.WERKS,
+		v.PSTYP,
+		v.LOEKZ,
+		v.ELIKZ,
+		v.MATNR,
+		v.TXZ01,
+		v.MEINS,
+		v.MENGE,
+		v.LGORT,
+		v.LMEIN
+		from WMS_SAP_PO_HEAD t
+		inner join WMS_SAP_PO_item v
+		on
+		t.EBELN = v.EBELN
+		) s
+		where (s.LOEKZ is null or s.LOEKZ != 'X')
+		and
+		(s.ELIKZ is null or s.ELIKZ != 'X')
+		<if test="params.EBELN != null and params.EBELN !=''">
+			and s.EBELN = #{params.EBELN}
+		</if>
+		<if test="params.LIFNR != null and params.LIFNR != ''">
+			and s.LIFNR = #{params.LIFNR}
+		</if>
+		<if test="params.MATNR != null and params.MATNR !=''">
+			and s.MATNR = #{params.MATNR}
+		</if>
+	</select>
+
+	<!-- 查询委外订单出库需求 行信息 -->
+	<select id="selectOutReqItems6" resultType="Map" parameterType="Map">
+		select tmp.*, m.maktx TXZ01 from(
+		select i.EBELN,
+		       i.Ebelp,
+		       i.matn2 MATNR,
+		       i.meng2 MENGE,
+		       i.mein2 MEINS,
+		       c.stock_qty as total_stock_qty,
+		       c.MEINS as base_meins,
+		       #{params.qty} as req_qty
+		from
+		wms_sap_po_head h
+		left join
+		WMS_SAP_PO_COMPONENT i on h.EBELN = i.EBELN
+		left
+		join (select sum(stock_qty)
+		as stock_qty,matnr,MEINS from
+		WMS_CORE_STOCK where WERKS =
+		#{params.WERKS} group by matnr,MEINS) c
+		on i.matn2 = c.matnr
+		where 1=1
+		<if test="params.EBELN != null and params.EBELN !=''">
+			and h.EBELN = #{params.EBELN}
+		</if>
+		<if test="params.LIFNR != null and params.LIFNR !=''">
+			and h.LIFNR = #{params.LIFNR}
+		</if>
+		<if test="params.EBELP != null and params.EBELP !=''">
+			and i.EBELP = #{params.EBELP}
+		</if>
+		) tmp,
+	   WMS_SAP_MATERIAL m
+	   where tmp.matnr = m.matnr
+	</select>
+
+	<!-- SAP交货单核销信息 -->
+	<select id="selectHxDn" resultType="Map" parameterType="Map">
+		select *
+		from WMS_HX_DN where werks =#{params.werks} and VBELN =
+		#{params.vbeln}
+	</select>
+
+	<select id="selectHasReceivedQty" resultType="java.lang.Double">
+		select
+		nvl(sum(nvl(QTY,0)-nvl(QTY_CANCEL,0)),0) as qty_real from WMS_OUT_REQUIREMENT_ITEM t
+		where business_name= #{business_name} and po_no = #{PO_NO} and matnr =
+		#{MATNR}  and po_item_no= #{poItemNo}  and del!='X'
+	</select>
+	<select id="selectHasReceivedQty2" resultType="java.lang.Double">
+		select
+		nvl(sum(nvl(QTY,0)-nvl(QTY_CANCEL,0)),0) as qty_real from WMS_OUT_REQUIREMENT_ITEM t
+		where business_name= #{business_name} and MO_NO = #{MO_NO} and matnr =
+		#{MATNR}  and mo_item_no= #{moItemNo}  and del!='X'
+	</select>
+
+
+	<select id="selectAvaliableQty" resultType="java.lang.Double">
+		select sum(qty) as
+		qty from WMS_OUT_REQUIREMENT_ITEM t
+		where
+		business_name=#{business_name} and po_no = #{PO_NO} and matnr =
+		#{MATNR} and REQ_ITEM_STATUS != '06'
+	</select>
+
+	<select id="selectSapPoHeadInfo" resultType="Map">
+<!-- 		select * from
+		wms_sap_po_head t
+		where EBELN = #{EBELN}
+		and BUKRS in (select BUKRS from
+		wms_sap_plant where
+		werks = #{WERKS}) -->
+		select * from
+		WMS_SAP_MO_HEAD t
+		where AUFNR = #{EBELN}
+		and WERKS = #{WERKS}
+	</select>
+
+	<select id="selectMatnrHx" resultType="Map">
+		select
+		hx.matnr,hx.hx_qty_xf from WMS_C_PLANT_TO cfg
+		left join WMS_HX_TO hx
+		on
+		cfg.werks = hx.werks
+		and cfg.werks = #{werks}
+		where hx.F_WERKS =
+		#{f_werks}
+		and cfg.hx_flag = 'X' and hx.hx_qty_xf > 0 and hx.matnr =
+		#{matnr}
+	</select>
+
+	<select id="selectPlantHx" resultType="Map">
+		select * FROM WMS_C_WH
+		where WERKS = #{WERKS}
+		and DEL_FLAG = '0' and WH_NUMBER =#{WH_NUMBER}
+	</select>
+
+	<select id="selectHxQtyXf" resultType="Map">
+		SELECT hx.*,mat.MEINS FROM WMS_HX_TO hx
+		LEFT JOIN wms_sap_material mat
+		on hx.MATNR = mat.MATNR and hx.F_WERKS = mat.WERKS
+		WHERE hx.WERKS =
+		#{werks}
+		AND hx.F_WERKS = #{fwerks}
+		AND hx.SAP_MATDOC_NO =
+		#{SAP_MATDOC_NO}
+		<if test="matnr != null and matnr !=''">
+			AND hx.MATNR = #{matnr}
+		</if>
+		<!-- 只显示 HX_QTY_XF>0 -->
+		<if test="onlyOverZero != null and onlyOverZero !=''">
+			AND hx.HX_QTY_XF > 0
+		</if>
+	</select>
+
+
+	<select id="selectWmsHxDn" resultType="Map">
+		select dn.*,mat.MEINS from WMS_HX_DN dn
+		left join wms_sap_material mat
+		on dn.werks = mat.werks and dn.matnr = mat.matnr
+		where dn.WERKS =
+		#{WERKS}
+		and dn.VBELN = #{VBELN}
+		<if test="xf != null and xf !=''">
+			and dn.HX_QTY_XF > 0
+		</if>
+	</select>
+
+	<!-- 扫描枪出库，查询标签出库信息 -->
+	<select id="selectCoreLabel" resultType="Map">
+		select
+		l.label_no,l.batch,l.label_status,l.del,
+		l.matnr,l.maktx,l.unit,l.box_qty,s.Lgort,s.sobkz,s.bin_code,
+		s.lifnr,t.txt_rule,t.txt_rule_item,l.werks,l.wh_number,l.sobkz,s.STOCK_QTY,s.lifnr,s.liktx
+		from WMS_CORE_LABEL l left join wms_core_stock s
+		on l.werks = s.werks
+		and l.wh_number = s.wh_number
+		and l.matnr = s.matnr
+		and l.batch = s.batch
+		and l.lgort = s.lgort
+		left join wms_c_txt t
+		on t.werks = l.werks
+		and t.business_name = #{params.businessName}
+		where
+		1=1
+		<if test="params.WERKS != null and params.WERKS !=''">
+			and l.werks = #{params.WERKS}
+		</if>
+		<if test="params.WH_NUMBER != null and params.WH_NUMBER !=''">
+			and l.wh_number = #{params.WH_NUMBER}
+		</if>
+		<if test="params.LABEL_NO != null and params.LABEL_NO !=''">
+			and l.LABEL_NO = #{params.LABEL_NO}
+		</if>
+		<if test="params.BATCH != null and params.BATCH !=''">
+			and l.BATCH = #{params.BATCH}
+		</if>
+		<if test="params.MATNR != null and params.MATNR !=''">
+			and l.MATNR = #{params.MATNR}
+		</if>
+	</select>
+	
+	<!-- 扫描看板卡创建需求 -->
+	<select id="queryOutReqPda311" resultType="Map" parameterType="Map">
+		select MATNR,MAKTX,FULL_BOX_QTY REQ_QTY,DIS_STATION,DIS_ADDRSS from WMS_C_MAT_LT_SAMPLE where
+		MATNR = #{matnr}
+		<if test="werks!= null and werks !=''">
+			and WERKS = #{werks}
+		</if>
+	</select>
+	<select id="queryUNIT" resultType="Map" parameterType="Map">
+		select MEINS from WMS_SAP_MATERIAL where
+		MATNR = #{matnr}		
+	</select>
+	
+	<select id="selectCallMaterial" resultType="Map">
+		SELECT distinct t.*,t1.MEINS 
+		  FROM WMS_WS_CALL_MATERIAL t,
+		  	   WMS_SAP_MATERIAL t1
+		 WHERE t.DELIVERY_NO = #{distribution}
+		   AND t.DELIVERY_TYPE = #{deliveryType}
+		   AND t.WERKS = t1.WERKS
+		   AND t.MATNR = t1.MATNR
+	</select>
+</mapper>

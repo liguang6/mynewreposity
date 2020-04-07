@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCMatUrgentDao">
+	 <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,CONCAT(WERKS,'-') || MATNR  AS UNIQUE_STR  FROM WMS_C_MAT_URGENT 
+	        WHERE CONCAT(WERKS,'-') || MATNR IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+			AND DEL='0'
+	 </select>
+</mapper>

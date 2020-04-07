@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>生产作业</title>
+<#include "/web_header.html">
+<style type="text/css">
+[v-cloak] {
+	display: none
+}
+</style>
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body form-inline well">
+					<!--<form class="form-inline well" action="">-->
+						<div class="row" style="margin-left:0px;">
+							<div class="form-group" >
+								<label class="control-label" style="width: 70px">产品编号：</label>
+								<div class="control-inline">
+									<span class="input-icon input-icon-right" style="width: 170px;">
+										<input v-model="product_no" type="text" name="product_no" id="product_no"  @click="getProductNoFuzzy" class="form-control" style="width: 170px;" >
+										<i class="ace-icon fa fa-barcode black fa-2x btn_scan" style="cursor: pointer" onclick="doScan('product_no')"> </i>
+									</span>
+								</div>
+							</div>
+							
+							<input type="button" @click="scan" class="btn btn-primary  btn-sm" value="确定" v-if="saveFlag" v-cloak/> 
+							<input type="button"  @click="reset"  class="btn btn-default btn-sm" value="清空" />
+
+							<span>{{product_info}}</span>
+
+						</div>
+						<div class="row" style="margin-left:0px;margin-top:10px;">
+						<div class="form-group">
+							<label class="control-label" style="width: 70px">工厂：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width: 90px">
+									<select name="werks" id="werks" v-model="werks" style="width: 100%; height: 25px" disabled>
+										<#list tag.getUserAuthWerks("BJMES_PRODUCT_SCAN") as factory>
+										<option data-name="${factory.NAME}" value="${factory.CODE}">${factory.CODE}</option>
+										</#list>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" >车间：</label>
+							<div class="control-inline" style="width:90px">
+                                      <select  name="workshop" id="workshop" v-model="workshop" style="width:100%;height:25px" disabled>
+									  <option v-for="w in workshop_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+									</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">线别：</label>
+							<div class="control-inline">
+								<div class="input-group treeselect" style="width: 60px">
+									<select v-model="line" name="line" id="line" style="width: 60px;height: 25px;">
+										<option v-for="w in line_list" :value="w.CODE">{{ w.NAME }}</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">节点：</label>
+							<span>{{node_name}}</span>
+						</div>
+						<div class="form-group">
+						<span style="color:red">{{node_type}}</span>
+						<label class="control-label" style="margin-left:10px;">工位：</label>
+						<span>{{process_code}}</span>
+						<label class="control-label" style="margin-left:10px;">扫描人：</label>
+						<span>{{user.FULL_NAME}}</span>
+						</div>
+						</div>
+						
+					<!--</form>-->
+					
+					<table id="dataGrid"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/bjmes/product/productScan.js?_${.now?long}"></script>
+</body>
+</html>

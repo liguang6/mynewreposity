@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>移储查询</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-tagsinput/bootstrap-tagsinput.css">
+        <style type="text/css">
+		.bootstrap-tagsinput input {
+		     width: 350px;
+		}
+		.label-tag {font-size: 0.8em}
+		</style>
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/kn/storageMove/list">
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select v-model="WERKS" style="width: 70px;height: 26px;" class="" name="WERKS" id="werks">
+									   <#list tag.getUserAuthWerks("STORAGE_MOVE") as factory> 
+										   <option value="${factory.code}">${factory.code}</option>
+										</#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">&nbsp;&nbsp;&nbsp; 仓库号：</label>
+								<div class="control-inline" style="width: 60px;">
+ 	                                <select v-model="whNumber" class="" style="width: 70px;height: 26px;" name="WH_NUMBER" id="whNumber">
+ 									 	<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+ 									</select>
+								</div>
+							</div>
+							<div class="form-group">
+							<label class="control-label">库位：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:120px">
+                                    <input type="text" id="lgort" name="LGORT"  style="width: 100px;" class="form-control width-300" />
+								 </div>
+							</div>
+							</div>
+							<div class="form-group">
+							<label class="control-label">批次：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+								<input type="text" id="batch" name="BATCH" style="width: 100px;" class="form-control width-300" />
+								</div>
+							</div>
+							</div>
+							<div class="form-group">
+							<label class="control-label">供应商代码：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+								<input type="text" id="lifnr" name="LIFNR" style="width: 80px;" class="form-control" />
+								</div>
+							</div>
+							</div>
+							<div class="form-group">
+							<label class="control-label">料号：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+								<input type="text" id="matnr" name="MATNR"  style="width: 100px;" class="form-control width-300" />
+								</div>
+							</div>
+							</div>
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-sm" id="btnQuery">查询</button>
+								<button type="button" class="btn btn-primary btn-sm" id="btnAdd" @click="add">创建移储</button>
+							</div>
+						</div>
+						</form>
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/kn/storageMove.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/plugins/bootstrap-tagsinput/bootstrap-tagsinput.js"></script>
+    <script src="${request.contextPath}/statics/plugins/bootstrap-tagsinput/bootstrap-tagsinput-angular.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.ProcessFlowDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.admin.modules.masterdata.entity.ProcessFlowEntity" id="settingProcessFlowMap">
+        <result property="id" column="id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="factoryName" column="factory_name"/>
+        <result property="workshopName" column="workshop_name"/>
+        <result property="lineName" column="line_name"/>
+        <result property="busTypeId" column="bus_type_id"/>
+        <result property="busTypeCode" column="bus_type_code"/>
+        <result property="vehicleTypeId" column="vehicle_type_id"/>
+        <result property="vehicleType" column="vehicle_type"/>
+        <result property="sortNo" column="sort_no"/>
+        <result property="processName" column="process_name"/>
+        <result property="monitoryPointFlag" column="monitory_point_flag"/>
+        <result property="sectionName" column="section_name"/>
+        <result property="planNodeName" column="plan_node_name"/>
+        <result property="editor" column="editor"/>
+        <result property="editDate" column="edit_date"/>
+        <result property="busTypeName" column="bus_type_name"/>
+        <result property="vehicleTypeName" column="vehicle_type_name"/>
+    </resultMap>
+
+	<select id="selectWithPage" resultMap="settingProcessFlowMap">
+		<!-- 数据库的多条记录，对应一个车型工序对象 . 去除重复 -->
+		SELECT distinct
+		bus.internal_name as bus_type_name,dict.value as vehicle_type_name,
+		f.dept_id,f.factory_name,f.workshop_name,f.line_name,f.bus_type_id,f.bus_type_code,f.vehicle_type_id,f.vehicle_type
+		FROM VMES_SETTING_PROCESS_FLOW as f
+		left join VMES_SETTING_BUS_TYPE as bus on f.bus_type_id = bus.id
+		left join sys_dict as dict on f.vehicle_type_id = dict.id
+		where 1=1
+		<if test="busTypeCode != null and busTypeCode !=''">
+			and f.bus_type_code = #{busTypeCode}
+		</if>
+		<if test="busTypeId != null">
+			and f.bus_type_id = #{busTypeId}
+		</if>
+		<if test="vehicleType != null and vehicleType !=''">
+			and f.vehicle_type = #{vehicleType}
+		</if>
+
+		<if test="deptIds != null">
+			and f.dept_id in
+			<foreach collection="deptIds" index="index" item="deptId"
+				open="(" separator="," close=")">
+				#{deptId}
+			</foreach>
+		</if>
+	</select>
+
+</mapper>

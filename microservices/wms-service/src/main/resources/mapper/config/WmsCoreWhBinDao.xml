@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCoreWhBinDao">
+	 <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,CONCAT(WH_NUMBER,'-') || CONCAT(STORAGE_AREA_CODE,'-') || BIN_CODE
+	       AS UNIQUE_STR  FROM WMS_CORE_WH_BIN
+	        WHERE CONCAT(WH_NUMBER,'-') || CONCAT(STORAGE_AREA_CODE,'-') || BIN_CODE  IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+			AND DEL='0'
+	 </select>
+	 
+	 <select id="queryWhAreaInfo" parameterType="Map" resultType="Map">
+	 SELECT * FROM WMS_CORE_WH_AREA WHERE WH_NUMBER = #{WH_NUMBER} AND STORAGE_AREA_CODE = #{STORAGE_AREA_CODE} AND DEL = '0'
+	 </select>
+	 
+	 <select id="findAlreadyBinForRandom" parameterType="Map" resultType="Map">
+	  	select distinct wcwb.*, 
+	  			wcs.stock_qty 
+	  	   from WMS_CORE_WH_BIN wcwb,
+                WMS_CORE_STOCK wcs
+          where wcwb.wh_number = wcs.wh_number
+            and wcwb.bin_code = wcs.bin_code
+            and wcwb.del ='0'
+	          <if test="whNumber != null and whNumber !=''">
+				  AND wcwb.WH_NUMBER = #{whNumber}
+			  </if>
+			  <if test="storageAreaCode != null and storageAreaCode !=''">
+				  AND wcwb.storage_area_code=#{storageAreaCode} 
+			  </if>
+	          <if test="werks != null and werks !=''">
+				  AND wcs.WERKS=#{werks} 
+			  </if>
+			  <if test="matnr != null and matnr !=''">
+				  AND wcs.matnr=#{matnr} 
+			  </if>
+			  <if test="lgort != null and lgort !=''">
+				  AND wcs.lgort=#{lgort} 
+			  </if>
+			  <if test="sobkz != null and sobkz !=''">
+				  AND wcs.sobkz=#{sobkz} 
+			  </if>
+			  <if test="lifnr != null and lifnr !=''">
+				  AND wcs.lifnr=#{lifnr} 
+			  </if>
+	  </select>
+	  
+	  <select id="findEmptyBinForNeighbor" parameterType="Map" resultType="Map">
+	  	SELECT a.* FROM 
+	  		WMS_CORE_WH_BIN a,
+            WMS_CORE_WH_BIN_SEQ b
+       	WHERE A.WH_NUMBER = B.WH_NUMBER
+          AND A.BIN_CODE = B.BIN_CODE
+          AND A.EMPTY_BIN = '0'
+          AND A.DEL = '0'
+          <if test="whNumber != null and whNumber !=''">
+		  	 AND A.WH_NUMBER = #{whNumber}
+		  </if>
+		  <if test="storageAreaCode != null and storageAreaCode !=''">
+			 AND A.STORAGE_AREA_CODE=#{storageAreaCode} 
+		  </if>
+          <if test="seqType != null and seqType !=''">
+			 AND b.seq_type = #{seqType} 
+		  </if>
+          order by abs(b.seqno-(SELECT C.SEQNO 
+                   FROM WMS_CORE_WH_BIN_SEQ c 
+                   WHERE 1=1
+                   <if test="binCode != null and binCode !=''">
+				  		AND C.BIN_CODE = #{binCode} 
+			       </if>
+                   ))
+	  </select>
+	  
+	  <select id="findEmptyBin" parameterType="Map" resultType="Map">
+	  	SELECT a.* FROM 
+	  		WMS_CORE_WH_BIN a,
+            WMS_CORE_WH_BIN_SEQ b
+       	WHERE A.WH_NUMBER = B.WH_NUMBER
+          AND A.BIN_CODE = B.BIN_CODE
+          AND A.EMPTY_BIN = '0'
+          AND A.DEL = '0'
+          <if test="whNumber != null and whNumber !=''">
+		  	 AND A.WH_NUMBER = #{whNumber}
+		  </if>
+		  <if test="storageAreaCode != null and storageAreaCode !=''">
+			 AND A.STORAGE_AREA_CODE=#{storageAreaCode} 
+		  </if>
+          <if test="seqType != null and seqType !=''">
+			 AND b.seq_type = #{seqType} 
+		  </if>
+          order by b.seqno
+	  </select>
+	  
+	  <update id="updateBinStorageUnit"  parameterType="List">
+	  	<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			UPDATE WMS_CORE_WH_BIN T SET T.U_STORAGE_UNIT = T.U_STORAGE_UNIT - CEIL(#{s.CONFIRM_QUANTITY}/(SELECT wcms.qty FROM WMS_C_MAT_STORAGE wcms
+         where wcms.wh_number =#{s.WH_NUMBER}
+           and wcms.matnr =#{s.MATNR}))
+           WHERE T.WH_NUMBER = #{s.WH_NUMBER}
+             AND T.BIN_CODE = #{s.FROM_BIN_CODE}
+        </foreach>
+	  </update>
+	  
+	  <select id="findWhBinByBinCode" resultType="Map">
+	  	select * from WMS_CORE_WH_BIN where wh_number = #{whNumber} and bin_code = #{binCode} and del != 'X'
+	  </select>
+	  <!-- 更新or插入 -->
+	<update id="merge" parameterType="List">
+		merge into WMS_CORE_WH_BIN s using(
+		select m.WH_NUMBER,m.STORAGE_AREA_CODE,m.BIN_CODE,m.BIN_NAME,m.BIN_TYPE,m.BIN_STATUS,m.BIN_ROW,
+		m.BIN_COLUMN,m.BIN_FLOOR,m.VL,m.VL_UNIT,m.WT,m.WT_UNIT,m.VL_USE,m.WT_USE,m.TURNOVER_RATE,m.A_STORAGE_UNIT,
+		m.U_STORAGE_UNIT,m.X,m.Y,m.Z,m.DEL,m.EDITOR,m.EDIT_DATE from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.whNumber} WH_NUMBER,#{d.storageAreaCode} STORAGE_AREA_CODE,#{d.binCode} BIN_CODE, 
+			#{d.binName} BIN_NAME,#{d.binType} BIN_TYPE,#{d.binStatus} BIN_STATUS,#{d.binRow} BIN_ROW,
+			#{d.binColumn} BIN_COLUMN,#{d.binFloor} BIN_FLOOR,#{d.vl} VL,#{d.vlUnit} VL_UNIT,#{d.wt} WT,#{d.wtUnit} WT_UNIT,
+			#{d.vlUse} VL_USE,#{d.wtUse} WT_USE,#{d.turnoverRate} TURNOVER_RATE,#{d.aStorageUnit} A_STORAGE_UNIT,
+			#{d.uStorageUnit} U_STORAGE_UNIT,#{d.x} X,#{d.y} Y,#{d.z} Z,#{d.del} DEL,#{d.editor} EDITOR,#{d.editDate} EDIT_DATE
+			from dual
+		</foreach>
+		) m ) tmp
+		on (tmp.WH_NUMBER=s.WH_NUMBER and tmp.BIN_CODE=s.BIN_CODE AND s.DEL='0' )
+		when matched then
+		update  set s.BIN_NAME=tmp.BIN_NAME,s.STORAGE_AREA_CODE=tmp.STORAGE_AREA_CODE,
+		s.BIN_TYPE=tmp.BIN_TYPE,s.BIN_STATUS=tmp.BIN_STATUS,s.BIN_ROW=tmp.BIN_ROW,
+		s.BIN_COLUMN=tmp.BIN_COLUMN,s.BIN_FLOOR=tmp.BIN_FLOOR,s.VL=tmp.VL,s.VL_UNIT=tmp.VL_UNIT,
+		s.WT=tmp.WT,s.WT_UNIT=tmp.WT_UNIT,s.VL_USE=tmp.VL_USE,s.WT_USE=tmp.WT_USE,
+		s.TURNOVER_RATE=tmp.TURNOVER_RATE,s.A_STORAGE_UNIT=tmp.A_STORAGE_UNIT,s.U_STORAGE_UNIT=tmp.U_STORAGE_UNIT,
+		s.X=tmp.X,s.Y=tmp.Y,s.Z=tmp.Z,s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then
+		insert (ID,WH_NUMBER,STORAGE_AREA_CODE,BIN_CODE,BIN_NAME,BIN_TYPE,BIN_STATUS,BIN_ROW,
+		BIN_COLUMN,BIN_FLOOR,VL,VL_UNIT,WT,WT_UNIT,VL_USE,WT_USE,TURNOVER_RATE,A_STORAGE_UNIT,
+		U_STORAGE_UNIT,X,Y,Z,DEL,EDITOR,EDIT_DATE)
+		VALUES (SEQ_WMS_CORE_WH_BIN.nextval,tmp.WH_NUMBER,tmp.STORAGE_AREA_CODE,tmp.BIN_CODE,
+		tmp.BIN_NAME,tmp.BIN_TYPE,tmp.BIN_STATUS,tmp.BIN_ROW,tmp.BIN_COLUMN,tmp.BIN_FLOOR,tmp.VL,tmp.VL_UNIT,tmp.WT,
+		tmp.WT_UNIT,tmp.VL_USE,tmp.WT_USE,tmp.TURNOVER_RATE,
+		tmp.A_STORAGE_UNIT,tmp.U_STORAGE_UNIT,tmp.X,tmp.Y,tmp.Z,'0',tmp.EDITOR,tmp.EDIT_DATE
+		)
+	</update>
+</mapper>

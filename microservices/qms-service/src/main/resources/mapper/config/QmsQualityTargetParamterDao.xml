@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.config.dao.QmsQualityTargetParamterDao">
+	 
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+      SELECT D.ID id,D.WERKS werks,D.TEST_NODE testNode,D.TARGET_TYPE targetType,T.VALUE targetTypeDesc,
+          D.TARGET_VALUE targetValue,D.START_DATE startDate,D.END_DATE endDate,D.TEST_TYPE testType,
+		      T1.VALUE testTypeDesc,D.TEST_TYPE testType,D.EDITOR editor,D.EDIT_DATE editDate,
+		      D.CREATOR  creator,D.CREATE_DATE createDate
+		       FROM QMS_C_QUALITY_TARGET_PARAMETER D
+		       LEFT JOIN QMS_C_DICT T ON T.CODE=D.TARGET_TYPE AND T.TYPE='TARGET_TYPE'
+		        LEFT JOIN QMS_C_DICT T1 ON T1.CODE=D.TEST_TYPE AND T1.TYPE='ORDER_TYPE'
+		         WHERE 1=1
+		         <if test="testNode != null and testNode !=''">
+			        AND D.TEST_NODE=#{testNode} 
+			      </if>
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+			      <if test="werks != null and werks !=''">
+			        AND D.WERKS =#{werks}
+			      </if>
+			      <if test="targetType != null and targetType !=''">
+			        AND D.TARGET_TYPE =#{targetType}
+			      </if>
+			       ORDER BY D.CREATE_DATE DESC
+         LIMIT #{start},#{limit}
+                
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM QMS_C_QUALITY_TARGET_PARAMETER D WHERE  1=1
+		         <if test="testNode != null and testNode !=''">
+			        AND D.TEST_NODE=#{testNode} 
+			      </if>
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+			      <if test="werks != null and werks !=''">
+			        AND D.WERKS =#{werks}
+			      </if>
+			      <if test="targetType != null and targetType !=''">
+			        AND D.TARGET_TYPE =#{targetType}
+			      </if>
+    </select>
+    <select id="getById" parameterType="Long" resultType="Map">
+      SELECT D.ID id,D.WERKS werks,D.TEST_NODE testNode,D.TARGET_TYPE targetType,
+          D.TARGET_VALUE targetValue,D.START_DATE startDate,D.END_DATE endDate,
+		      D.TEST_TYPE testType,D.EDITOR editor,D.EDIT_DATE editDate,
+		      D.CREATOR  creator,D.CREATE_DATE createDate
+		       FROM QMS_C_QUALITY_TARGET_PARAMETER D  WHERE ID=#{id}
+    </select>
+    <select id="getList" parameterType="Map" resultType="Map">
+      SELECT D.ID id,D.WERKS werks,D.TEST_NODE testNode,D.TARGET_TYPE targetType,
+          D.TARGET_VALUE targetValue,D.START_DATE startDate,D.END_DATE endDate,
+		      D.TEST_TYPE testType,D.EDITOR editor,D.EDIT_DATE editDate,
+		      D.CREATOR  creator,D.CREATE_DATE createDate
+		       FROM QMS_C_QUALITY_TARGET_PARAMETER D  WHERE 1=1
+		          <if test="testNode != null and testNode !=''">
+			        AND D.TEST_NODE=#{testNode} 
+			      </if>
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+			      <if test="werks != null and werks !=''">
+			        AND D.WERKS =#{werks}
+			      </if>
+			      <if test="targetType != null and targetType !=''">
+			        AND D.TARGET_TYPE =#{targetType}
+			      </if>
+    </select>
+    <insert id="save" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_C_QUALITY_TARGET_PARAMETER
+		(WERKS,TEST_TYPE,TEST_NODE,TARGET_TYPE,TARGET_VALUE,START_DATE,END_DATE,CREATOR,CREATE_DATE) values
+			(#{werks},#{testType},#{testNode},#{targetType},#{targetValue},#{startDate},#{endDate},#{user},#{createDate})
+	</insert>
+	<update id="update" parameterType="Map">
+			update QMS_C_QUALITY_TARGET_PARAMETER set TEST_TYPE=#{testType},TEST_NODE=#{testNode},
+			TARGET_TYPE= #{targetType},TARGET_VALUE=#{targetValue},START_DATE=#{startDate},END_DATE=#{endDate}
+			,editor=#{user},edit_date=#{editDate}  where id=#{id}
+	</update>
+	<update id="delete" parameterType="Long">
+			delete from QMS_C_QUALITY_TARGET_PARAMETER  where id=#{id}
+	</update>
+</mapper>

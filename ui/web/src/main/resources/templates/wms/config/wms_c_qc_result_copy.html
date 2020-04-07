@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>复制质检结果</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/config/wmscqcresult/list" v-model="page.list">
+						<input type="hidden" value="10000" name="pageSize"/>
+						<input type="hidden" value="1" name="pageNo"/>
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">源工厂：</label>
+								<div class="control-inline" style="width: 80px;">
+                                    <select class="form-control" name="werks" id="werks" onchange="vm.query()">
+                                        <#list tag.getUserAuthWerks("WMS_C_QC_RESULT") as factory> 
+                                            <option value="${factory.code}">${factory.code}</option>
+                                        </#list>
+									</select>
+								</div>
+							</div>
+                            <div class="form-group">
+								<label class="control-label" style="width: 80px">目标工厂：</label>
+								<div class="control-inline" style="width: 80px;">
+								
+									<select class="form-control" name="targetWerks" id="targetWerks" onchange="onPlantChange(event)">
+									<option value="">请选择</option>
+									      <#list tag.getUserAuthWerks("WMS_C_QC_RESULT") as factory> 
+                                            <option value="${factory.code}">${factory.code}</option>
+                                        </#list>
+									</select>
+								</div>
+							</div>
+						</div>
+						<button id="save" value="保存" style="display:none" @click="vm.save()"></button>
+						</form>
+							<table id="dataGrid"></table>
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_qc_result_copy.js?_${.now?long}"></script>
+</body>
+</html>

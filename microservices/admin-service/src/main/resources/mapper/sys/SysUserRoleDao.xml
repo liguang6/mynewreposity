@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysUserRoleDao">
+
+	<select id="queryRoleIdList" resultType="long">
+		select role_id from sys_user_role where user_id = #{value}
+	</select>
+
+
+	<select id="queryUserRoleList" resultType="com.byd.admin.modules.sys.entity.SysUserRoleEntity">
+		select urole.* from SYS_USER_ROLE urole
+		inner join SYS_USER u on urole.USER_ID=u.USER_ID and u.USERNAME=#{userName}
+		inner join SYS_ROLE_MENU rm on urole.ROLE_ID=rm.ROLE_ID
+		inner join SYS_MENU m on rm.MENU_ID=m.MENU_ID and m.MENU_KEY=#{menuKey}
+	</select>
+
+	<select id="queryUserRoleListByRids" resultType="com.byd.admin.modules.sys.entity.SysUserRoleEntity">
+		select urole.* from SYS_USER_ROLE urole
+		inner join SYS_USER u on urole.USER_ID=u.USER_ID and u.USERNAME=#{userName}
+		inner join SYS_ROLE_MENU rm on urole.ROLE_ID=rm.ROLE_ID
+		inner join SYS_MENU m on rm.MENU_ID=m.MENU_ID and m.MENU_KEY=#{menuKey}
+		<if test="roleIds != null and roleIds.size() > 0">
+			where urole.ROLE_ID not in
+			<foreach collection="roleIds" item="item" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+		</if>
+	</select>
+
+	<delete id="deleteBatch">
+		delete from sys_user_role where role_id in
+		<foreach item="roleId" collection="array" open="(" separator="," close=")">
+			#{roleId}
+		</foreach>
+	</delete>
+	
+	<select id="queryUserIdList" resultType="long">
+		select user_id from sys_user_role where role_id= #{value}
+	</select>
+</mapper>

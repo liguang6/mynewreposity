@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.report.dao.MaterialStoreDao">
+
+    <select id="selectMaterialList" parameterType="Map" resultType="Map">
+        SELECT * FROM (
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+        select t.*,p.receipt_no,p.receipt_item_no,p.box_count,p.receipt_date,
+        ceil(sysdate-to_date(p.receipt_date,'yyyy-mm-dd hh24-mi-ss')) STORE_DATE,
+        p.receiver,p.po_no,p.po_item_no,p.bednr,p.afnam,p.returnable_qty,
+        p.inable_qty,p.ASNNO,p.GR_AREA,
+        qcit.inspection_no,qcit.inspection_item_no,qcit.inspection_item_status,
+        dict.value,
+        matp.manager,
+        qc.qc_date,qc.qc_result_code,qc.qc_result
+        from WMS_IN_RH_STOCK t
+        LEFT JOIN WMS_IN_RECEIPT p on t.batch=p.batch
+        LEFT JOIN WMS_QC_INSPECTION_ITEM qcit on qcit.batch=t.batch
+        LEFT JOIN sys_dict dict on p.business_name=dict.code
+        LEFT JOIN WMS_C_MAT_MANAGER mage on mage.werks=t.werks and mage.matnr=t.matnr
+        LEFT JOIN WMS_C_MAT_MANAGER_TYPE matp on matp.authorize_code=mage.authorize_code
+        LEFT JOIN WMS_QC_RESULT qc on qc.batch=t.batch
+        WHERE 1=1
+        <if test="WERKS != null and WERKS !='' ">
+            and t.WERKS=#{WERKS}
+        </if>
+        <if test="WH_NUMBER != null and WH_NUMBER !='' ">
+            and t.WH_NUMBER=#{WH_NUMBER}
+        </if>
+        <if test="LGORT != null and LGORT !='' ">
+            and t.LGORT=#{LGORT}
+        </if>
+        <if test="RECEIPT_NO != null and RECEIPT_NO !='' ">
+            and p.RECEIPT_NO=#{RECEIPT_NO}
+        </if>
+        <if test="LIFNR != null and LIFNR !='' ">
+            and t.LIFNR=#{LIFNR}
+        </if>
+        <if test="MATNR != null and MATNR !='' ">
+            and t.MATNR=#{MATNR}
+        </if>
+        <if test="BATCH != null and BATCH !='' ">
+            and t.BATCH=#{BATCH}
+        </if>
+        <if test="GR_AREA != null and GR_AREA !='' ">
+            and p.GR_AREA=#{GR_AREA}
+        </if>
+        <if test="PO_NO != null and PO_NO !='' ">
+            and p.PO_NO=#{PO_NO}
+        </if>
+        <if test="MANAGER != null and MANAGER !='' ">
+            and matp.MANAGER=#{MANAGER}
+        </if>
+        <if test="RECEIVER != null and RECEIVER !='' ">
+            and p.RECEIVER=#{RECEIVER}
+        </if>
+        <if test="RECEIPT_DATE_START !=null and RECEIPT_DATE_START !='' ">
+            AND p.RECEIPT_DATE&gt;=#{RECEIPT_DATE_START}
+        </if>
+        <if test="RECEIPT_DATE_END !=null and RECEIPT_DATE_END !='' ">
+            AND p.RECEIPT_DATE&lt;=#{RECEIPT_DATE_END}
+        </if>
+        )TMP
+        <if test="END !=null ">
+            WHERE ROWNUM  &lt;=#{END}
+        </if>
+        )
+        <if test="START !=null ">
+            WHERE ROW_ID > #{START}
+        </if>
+    </select>
+
+    <select id="selectMaterialInfoCount" parameterType="Map" resultType="int">
+        select count(*) from WMS_IN_RH_STOCK t
+        LEFT JOIN WMS_IN_RECEIPT p on t.batch=p.batch
+        LEFT JOIN WMS_QC_INSPECTION_ITEM qcit on qcit.batch=t.batch
+        LEFT JOIN sys_dict dict on p.business_name=dict.code
+        LEFT JOIN WMS_C_MAT_MANAGER mage on mage.werks=t.werks and mage.matnr=t.matnr
+        LEFT JOIN WMS_C_MAT_MANAGER_TYPE matp on matp.authorize_code=mage.authorize_code
+        LEFT JOIN WMS_QC_RESULT qc on qc.batch=t.batch
+        WHERE 1=1
+        <if test="WERKS != null and WERKS !='' ">
+            and t.WERKS=#{WERKS}
+        </if>
+        <if test="WH_NUMBER != null and WH_NUMBER !='' ">
+            and t.WH_NUMBER=#{WH_NUMBER}
+        </if>
+        <if test="LGORT != null and LGORT !='' ">
+            and t.LGORT=#{LGORT}
+        </if>
+        <if test="RECEIPT_NO != null and RECEIPT_NO !='' ">
+            and p.RECEIPT_NO=#{RECEIPT_NO}
+        </if>
+        <if test="LIFNR != null and LIFNR !='' ">
+            and t.LIFNR=#{LIFNR}
+        </if>
+        <if test="MATNR != null and MATNR !='' ">
+            and t.MATNR=#{MATNR}
+        </if>
+        <if test="BATCH != null and BATCH !='' ">
+            and t.BATCH=#{BATCH}
+        </if>
+        <if test="GR_AREA != null and GR_AREA !='' ">
+            and p.GR_AREA=#{GR_AREA}
+        </if>
+        <if test="PO_NO != null and PO_NO !='' ">
+            and p.PO_NO=#{PO_NO}
+        </if>
+        <if test="MANAGER != null and MANAGER !='' ">
+            and matp.MANAGER=#{MANAGER}
+        </if>
+        <if test="RECEIVER != null and RECEIVER !='' ">
+            and p.RECEIVER=#{RECEIVER}
+        </if>
+        <if test="RECEIPT_DATE_START !=null and RECEIPT_DATE_START !='' ">
+            AND p.RECEIPT_DATE&gt;=#{RECEIPT_DATE_START}
+        </if>
+        <if test="RECEIPT_DATE_END !=null and RECEIPT_DATE_END !='' ">
+            AND p.RECEIPT_DATE&lt;=#{RECEIPT_DATE_END}
+        </if>
+    </select>
+
+<!--    <select id="selectMaterialList" parameterType="Map" resultType="Map">-->
+<!--        select * from WMS_IN_RH_STOCK-->
+<!--    </select>-->
+</mapper>

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCEngineDao">
+
+	<select id="selectById" resultType="Map">
+	SELECT
+		HEAD.ID headID ,
+		HEAD.PROJECT_CODE ,
+		HEAD.WH_NUMBER ,
+		HEAD.WERKS ,
+		HEAD.PROJECT_NAME ,
+		HEAD.SAFE_STOCK ,
+		HEAD.MIN_STOCK ,
+		HEAD.NORMAL_STOCK ,
+		HEAD.MAX_STOCK ,
+		HEAD.EDITOR ,
+		HEAD.EDIT_DATE ,
+		ITEM.ID itemID ,
+		ITEM.PROJECT_CODE ,
+		ITEM.MATNR ,
+		ITEM.MAKTX ,
+		ITEM.SINGLE_QTY ,
+		ITEM.LIFNR ,
+		ITEM.LIKTX ,
+		ITEM.LGORT ,
+		ITEM.PERSON 
+	FROM WMS_C_DAILY_REPORT_HEAD HEAD LEFT JOIN WMS_C_DAILY_REPORT_ITEM ITEM
+		ON HEAD.PROJECT_CODE = ITEM.PROJECT_CODE
+	    WHERE HEAD.ID = #{HEADID} AND ITEM.ID = #{ITEMID}
+		AND HEAD.DEL = '0' AND ITEM.DEL = '0'
+	</select>
+	
+	<select id="selectByProject" resultType="Map">
+		SELECT * FROM  WMS_C_DAILY_REPORT_ITEM ITEM  WHERE PROJECT_CODE = #{PROJECT_CODE}  AND DEL = '0'
+	</select>
+
+	<select id="selectAll" parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_C_DAILY_REPORT_HEAD
+		WHERE
+		DEL = '0'
+		   <choose>
+                <when test="PROJECT_CODE != null and PROJECT_CODE !=''">
+                    AND PROJECT_CODE=#{PROJECT_CODE}
+                </when>
+                <otherwise>
+                    AND PROJECT_CODE is null
+                </otherwise>
+            </choose>
+               <choose>
+                <when test="WERKS != null and WERKS !=''">
+                    AND WERKS=#{WERKS}
+                </when>
+                <otherwise>
+                    AND WERKS is null
+                </otherwise>
+            </choose>
+               <choose>
+                <when test="WH_NUMBER != null and WH_NUMBER !=''">
+                    AND WH_NUMBER=#{WH_NUMBER}
+                </when>
+                <otherwise>
+                    AND WH_NUMBER is null
+                </otherwise>
+            </choose>
+               <choose>
+                <when test="PROJECT_NAME != null and PROJECT_NAME !=''">
+                    AND PROJECT_NAME=#{PROJECT_NAME}
+                </when>
+                <otherwise>
+                    AND PROJECT_NAME is null
+                </otherwise>
+            </choose>
+        <!--      <choose>
+                <when test="SAFE_STOCK != null and SAFE_STOCK !=''">
+                    AND SAFE_STOCK=#{SAFE_STOCK}
+                </when>
+                <otherwise>
+                    AND SAFE_STOCK is null
+                </otherwise>
+            </choose>
+               <choose>
+                <when test="MIN_STOCK != null and MIN_STOCK !=''">
+                    AND PROJECT_CODE=#{MIN_STOCK}
+                </when>
+                <otherwise>
+                    AND MIN_STOCK is null
+                </otherwise>
+            </choose>
+               <choose>
+                <when test="NORMAL_STOCK != null and NORMAL_STOCK !=''">
+                    AND NORMAL_STOCK=#{NORMAL_STOCK}
+                </when>
+                <otherwise>
+                    AND NORMAL_STOCK is null
+                </otherwise>
+            </choose>
+             <choose>
+                <when test="MAX_STOCK != null and MAX_STOCK !=''">
+                    AND MAX_STOCK=#{MAX_STOCK}
+                </when>
+                <otherwise>
+                    AND MAX_STOCK is null
+                </otherwise>
+            </choose> -->  
+	</select>
+	
+	<select id="selectItemAll" parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_C_DAILY_REPORT_ITEM
+		WHERE
+		DEL = '0'
+		    <choose>
+                <when test="PROJECT_CODE != null and PROJECT_CODE !=''">
+                    AND PROJECT_CODE=#{PROJECT_CODE}
+                </when>
+                <otherwise>
+                    AND PROJECT_CODE is null
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="MATNR != null and MATNR !=''">
+                    AND MATNR=#{MATNR}
+                </when>
+                <otherwise>
+                    AND MATNR is null
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="LGORT != null and LGORT !=''">
+                    AND LGORT=#{LGORT}
+                </when>
+                <otherwise>
+                    AND LGORT is null
+                </otherwise>
+            </choose>
+              <choose>
+                <when test="LIFNR != null and LIFNR !=''">
+                    AND LIFNR=#{LIFNR}
+                </when>
+                <otherwise>
+                    AND LIFNR is null
+                </otherwise>
+            </choose>
+        <!--  
+            <choose>
+                <when test="MAKTX != null and MAKTX !=''">
+                    AND MAKTX=#{MAKTX}
+                </when>
+                <otherwise>
+                    AND MAKTX is null
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="SINGLE_QTY != null and SINGLE_QTY !=''">
+                    AND SINGLE_QTY=#{SINGLE_QTY}
+                </when>
+                <otherwise>
+                    AND SINGLE_QTY is null
+                </otherwise>
+            </choose>
+          
+            <choose>
+                <when test="LIKTX != null and LIKTX !=''">
+                    AND LIKTX=#{LIKTX}
+                </when>
+                <otherwise>
+                    AND LIKTX is null
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="PERSON != null and PERSON !=''">
+                    AND PERSON=#{PERSON}
+                </when>
+                <otherwise>
+                    AND PERSON is null
+                </otherwise>
+            </choose>
+           -->      
+	</select>
+	
+	<select id="queryAll" parameterType="Map" resultType="Map">
+	SELECT
+		HEAD.ID headID ,
+		HEAD.PROJECT_CODE ,
+		HEAD.WH_NUMBER ,
+		HEAD.WERKS ,
+		HEAD.PROJECT_NAME ,
+		HEAD.SAFE_STOCK ,
+		HEAD.MIN_STOCK ,
+		HEAD.NORMAL_STOCK ,
+		HEAD.MAX_STOCK ,
+		HEAD.EDITOR ,
+		HEAD.EDIT_DATE ,
+		ITEM.ID itemID ,
+		ITEM.PROJECT_CODE ,
+		ITEM.MATNR ,
+		ITEM.MAKTX ,
+		ITEM.SINGLE_QTY ,
+		ITEM.LIFNR ,
+		ITEM.LIKTX ,
+		ITEM.LGORT ,
+		ITEM.PERSON 
+	FROM WMS_C_DAILY_REPORT_HEAD HEAD LEFT JOIN WMS_C_DAILY_REPORT_ITEM ITEM
+	ON HEAD.PROJECT_CODE = ITEM.PROJECT_CODE
+	WHERE HEAD.DEL = '0' AND ITEM.DEL = '0'
+	      <if test="WERKS != null and WERKS != ''">AND HEAD.WERKS=#{WERKS}</if>
+	      <if test="WH_NUMBER != null and WH_NUMBER != ''"> AND HEAD.WH_NUMBER=#{WH_NUMBER}</if>
+	      <if test="LIKTX != null and LIKTX != ''"> AND ITEM.LIKTX=#{LIKTX}</if>
+	</select>
+	
+	<update id="updateById" parameterType="Map">
+		update WMS_C_DAILY_REPORT_HEAD 
+			<set>
+				<if test="PROJECT_CODE != null and PROJECT_CODE != ''">PROJECT_CODE=#{PROJECT_CODE},</if>
+				<if test="WH_NUMBER != null and WH_NUMBER != ''">WH_NUMBER=#{WH_NUMBER},</if>
+				<if test="PROJECT_NAME != null and PROJECT_NAME != ''">PROJECT_NAME=#{PROJECT_NAME},</if>
+				<if test="SAFE_STOCK != null and SAFE_STOCK != ''">SAFE_STOCK=#{SAFE_STOCK},</if>
+				<if test="MIN_STOCK != null and MIN_STOCK != ''">MIN_STOCK=#{MIN_STOCK},</if>
+				<if test="NORMAL_STOCK != null and NORMAL_STOCK != ''">NORMAL_STOCK=#{NORMAL_STOCK},</if>
+				<if test="MAX_STOCK != null and MAX_STOCK != ''">MAX_STOCK=#{MAX_STOCK},</if>
+				<if test="EDITOR != null and EDITOR != ''">EDITOR=#{EDITOR},</if>
+				<if test="EDIT_DATE != null and EDIT_DATE != ''">EDIT_DATE=#{EDIT_DATE},</if>
+				<if test="ITEMDEL != null and ITEMDEL != ''">DEL=#{HEADDEL},</if>
+			</set>
+		WHERE ID = #{HEADID}
+	</update>
+	
+	<update id="updateProject" parameterType="Map">
+		update WMS_C_DAILY_REPORT_ITEM
+			<set>
+				<if test="PROJECT_CODE != null and PROJECT_CODE != ''">PROJECT_CODE=#{PROJECT_CODE}</if>				
+			</set>
+		WHERE PROJECT_CODE = #{CODE}
+	</update>
+	
+	<update id="updateItemById" parameterType="Map">
+		update WMS_C_DAILY_REPORT_ITEM
+			<set>
+				<if test="PROJECT_CODE != null and PROJECT_CODE != ''">PROJECT_CODE=#{PROJECT_CODE},</if>
+				<if test="MATNR != null and MATNR != ''">MATNR=#{MATNR},</if>
+				<if test="MAKTX != null and MAKTX != ''">MAKTX=#{MAKTX},</if>
+				<if test="SINGLE_QTY != null and SINGLE_QTY != ''">SINGLE_QTY=#{SINGLE_QTY},</if>
+				<if test="LIFNR != null and LIFNR != ''">LIFNR=#{LIFNR},</if>
+				<if test="LIKTX != null and LIKTX != ''">LIKTX=#{LIKTX},</if>
+				<if test="LGORT != null and LGORT != ''">LGORT=#{LGORT},</if>
+				<if test="PERSON != null and PERSON != ''">PERSON=#{PERSON},</if>
+				<if test="EDITOR != null and EDITOR != ''">EDITOR=#{EDITOR},</if>
+				<if test="EDIT_DATE != null and EDIT_DATE != ''">EDIT_DATE=#{EDIT_DATE},</if>
+				<if test="ITEMDEL != null and ITEMDEL != ''">DEL=#{ITEMDEL},</if>
+			</set>
+		WHERE ID = #{ITEMID}
+	</update>
+	
+	<insert id="insert" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_C_DAILY_REPORT_HEAD.nextval FROM dual
+		</selectKey>
+			INSERT INTO WMS_C_DAILY_REPORT_HEAD 
+				(ID,PROJECT_CODE,WERKS,WH_NUMBER,PROJECT_NAME,SAFE_STOCK,MIN_STOCK,NORMAL_STOCK,MAX_STOCK,EDITOR,EDIT_DATE) 
+			VALUES 
+				(#{ID},#{PROJECT_CODE},#{WERKS},#{WH_NUMBER},#{PROJECT_NAME},#{SAFE_STOCK},#{MIN_STOCK},#{NORMAL_STOCK},#{MAX_STOCK},#{EDITOR},#{EDIT_DATE})
+	</insert>
+	
+	<insert id="insertItem" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_C_DAILY_REPORT_ITEM.nextval FROM dual
+		</selectKey>
+			INSERT INTO WMS_C_DAILY_REPORT_ITEM
+				(ID,PROJECT_CODE,MATNR,MAKTX,SINGLE_QTY,LIFNR,LIKTX,LGORT,PERSON,EDITOR,EDIT_DATE) 
+			VALUES 
+				(#{ID},#{PROJECT_CODE},#{MATNR},#{MAKTX},#{SINGLE_QTY},#{LIFNR},#{LIKTX},#{LGORT},#{PERSON},#{EDITOR},#{EDIT_DATE})
+	</insert>
+	
+</mapper>

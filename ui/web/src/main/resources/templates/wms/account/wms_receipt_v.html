@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>收货</title>  
+<#include "/web_header.html">
+<style type="text/css">
+	.control-label{
+		width:75px;
+		text-align:right;
+	}
+	.form-group > .control-inline{
+		width:110px;	
+	}
+	
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+
+	<div class="wrapper" id="page_div">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" :action="formUrl">
+						<!-- SAP采购订单收料（V）/ SAP交货单收料(V)-->
+						<div v-if="receipt_type=='22'||receipt_type=='23' " v-cloak>				
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">收货类型：</label>
+							<div class="control-inline"  style="width:140px;">
+								<select id="receiptType" name="receiptType" v-model="receipt_type" class="input-medium" style="height: 30px;width:100%">
+									<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE">
+										{{t.BUSINESS_NAME}}
+									</option>
+								</select>
+							</div>
+						</div>	
+						<div class="form-group">	
+							<label class="control-label" style="width:50px;">单据号：</label>
+							<div class="control-inline" >
+								<input id="PO_NO" name="PO_NO" v-model="PO_NO"  class="input-medium " style="height: 30px; width:100%" @keyup.enter="query" />
+							</div>
+						</div>	
+						<div class="form-group" >
+							<label class="control-label" style="width:50px;">仓库号：</label>
+							<div class="control-inline" style="width:60px;">
+								<select class="input-medium" style="height: 30px;width:100%;" name="WH_NUMBER" id="WH_NUMBER" onchange="setWH()"> 
+									<#list tag.getUserAuthWh("ACCOUNT_RECEIPT_V") as wh>
+										<option value="${wh.code}">${wh.code}</option>
+									</#list>
+								</select>
+								
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">凭证日期：</label>
+							<div class="control-inline" style="width:80px;">
+								<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">记账日期：</label>
+							<div class="control-inline"  style="width:80px;">
+								<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+							</div>														
+						</div>
+
+						<div class="form-group">
+							<button type="button" class="btn btn-primary btn-sm" @click="query">查询</button>
+							<button id="btnConfirm" type="button" class="btn btn-success btn-sm"  @click="boundIn">确认</button>						
+						</div>
+						
+						<div class="form-group pull-right">
+							<div  class="control-inline" style="font-size: 28px;font-weight:bold;width: 100px;text-align: center;background-color: #FF8C00;border: 1px solid #FF8C00;border-radius: 4px;color: black"><span id="mat_count">0行</span></div>
+							<button  type="button" class="btn btn-info btn-sm" @click="countMat">料号汇总</button>
+						</div>				
+						</div>
+						<!-- SAP生产订单收货（V）-->
+						<div v-if="receipt_type=='60' || receipt_type=='62' " v-cloak>		
+						<table>
+							<tr>
+								<td width="90%">		
+									<div class="form-group">
+										<label class="control-label" style="width:65px;">收货类型：</label>
+										<div class="control-inline"  style="width:140px;">
+											<select id="receiptType" name="receiptType" v-model="receipt_type" class="input-medium" style="height: 30px;width:100%" >
+												<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE">
+													{{t.BUSINESS_NAME}}
+												</option>
+											</select>
+										</div>
+									</div>	
+									<div class="form-group">	
+										<label class="control-label" style="width:50px;">单据号：</label>
+										<div class="control-inline" style="width:90px;">
+											<input id="PO_NO" name="PO_NO" v-model="PO_NO"  class="input-medium " style="height: 30px; width:90px;" @keyup.enter="query" />
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width:45px;"><span style="color:red">*</span>工厂：</label>
+										<div class="control-inline" style="width:60px;">
+										<select class="input-medium" name="WERKS" id="WERKS" v-model="WERKS" style="height: 30px;width: 55px;">
+										   <#list tag.getUserAuthWerks("ACCOUNT_RECEIPT_V") as WERKS>
+										      <option value="${WERKS.code}" >${WERKS.code}</option>
+										   </#list>
+										</select>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width:55px;"><span style="color:red">*</span>仓库号：</label>
+										<div class="control-inline">
+											<select style="height: 30px;width: 55px;" class="input-medium"  name="WH_NUMBER" id="WH_NUMBER"  v-model="WH_NUMBER">
+												<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+											</select>
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<button type="button" class="btn btn-primary btn-sm" @click="query">查询</button>
+									</div>
+									
+									<div class="form-group pull-right">
+										<div  class="control-inline" style="font-size: 28px;font-weight:bold;width: 100px;text-align: center;background-color: #FF8C00;border: 1px solid #FF8C00;border-radius: 4px;color: black"><span id="mat_count">0行</span></div>
+										<button  type="button" class="btn btn-info btn-sm" @click="countMat">料号汇总</button>
+									</div>
+								</td>
+							<tr>
+								<td>
+									<div class="form-group" >
+										<label class="control-label"><span style="color:red">*</span>收货库位：</label>
+										<div class="control-inline" style="width:60px;">
+											<select class="input-medium" style="height: 30px;width:100%;" name="LGORT"  id="LGORT" v-modle="LGORT"> 
+												<option v-for="w in lgortList" :value="w.LGORT" :key="w.LGORT" :logrt_name="w.LGORT_NAME">{{ w.LGORT }}</option>
+											</select>
+											<input type="hidden" id="LGORT_NAME" name="LGORT_NAME">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width:60px;">凭证日期：</label>
+										<div class="control-inline" style="width:80px;">
+											<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width:60px;">记账日期：</label>
+										<div class="control-inline"  style="width:80px;">
+											<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+										</div>														
+									</div>
+			
+									<div class="form-group">
+										<button id="btnConfirm" type="button" class="btn btn-success btn-sm"  @click="boundIn">确认</button>						
+									</div>
+									
+								</td>
+							</tr>
+						</table>			
+						</div>
+						
+						<!-- 工厂间调拨(V)/ -->
+						<div v-if="receipt_type=='24' "  v-cloak>
+							<div class="form-group">
+								<label class="control-label" style="width:60px;">收货类型：</label>
+								<div class="control-inline"  style="width:140px;">
+									<select id="receiptType" name="receiptType" v-model="receipt_type" class="input-medium" style="height: 30px;width:100%" >
+										<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE">
+											{{t.BUSINESS_NAME}}
+										</option>
+									</select>
+								</div>
+							</div>	
+							<div class="form-group">	
+								<label class="control-label" style="width:60px;">303凭证：</label>
+								<div class="control-inline" style="width: 102px;">
+									<input id="MAT_DOC" name="MAT_DOC" v-model="MAT_DOC"  class="input-medium " style="height: 30px; width:100px;" @keyup.enter="query" />
+								</div>
+							</div>
+							<div class="form-group">	
+								<label class="control-label" style="width:70px;">凭证年份：</label>
+								<div class="control-inline" style="width: 50px;">
+									<input id="MAT_DOC_YEAR" v-model="MAT_DOC_YEAR" name="MAT_DOC_YEAR" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy'});" @keyup.enter="query"  style="height: 30px;width:45px;" />
+								</div>
+							</div>
+							<div class="form-group" >
+								<label class="control-label" style="width:60px;">仓库号：</label>
+								<div class="control-inline" style="width:60px;">
+									<select class="input-medium" style="height: 30px;width:100%;" name="WH_NUMBER" id="WH_NUMBER" onchange="setWH()"> 
+											<#list tag.getUserAuthWh("ACCOUNT_RECEIPT_V") as wh>
+											   	<option value="${wh.code}">${wh.code}</option>
+											</#list>
+										</select>
+									
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px;">凭证日期：</label>
+								<div class="control-inline" style="width:82px;">
+									<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px;">记账日期：</label>
+								<div class="control-inline"  style="width:82px;">
+									<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+								</div>														
+							</div>
+	
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" @click="query">查询</button>
+								<button id="btnConfirm" type="button" class="btn btn-success btn-sm"  @click="boundIn">确认</button>						
+							</div>
+							
+						</div>
+					</form>
+
+
+					<div  v-if="showList"  v-cloak>
+						<table id="dataGrid"></table>
+						<!-- <div id=dataGridPage></div> -->
+					</div>
+					<div class="hide" style="display:none" id="countMat">
+						<table class="table table-striped table-bordered" id="countMatTable">
+							<thead>
+								<tr>
+									<th>料号</th>
+									<th width="80px;">汇总数量</th>
+									<th>供应商名称</th>
+								</tr>
+							</thead>
+							<tbody>
+														
+							</tbody>
+						</table>
+					</div>
+					
+					<div class="hide" style="dispaly:none" id="dangerMat">
+						<table class="table table-striped table-bordered" id="dangerMatTable" style="font-size:12px;">
+							<thead>
+								<tr>
+									<th width="80px;">工厂</th>
+									<th width="90px;">供应商代码</th>
+									<th width="90px;">料号</th>
+									<th width="180px;">物料描述</th>
+									<th width="100px;">生产日期</th>
+									<th width="100px;">保质时长</th>
+									<th width="100px;">保质日期</th>
+								</tr>
+							</thead>
+							<tbody>
+														
+							</tbody>
+						</table>
+					</div>
+					
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/wms/account/wms_receipt_v.js?_${.now?long}"></script>
+</body>
+</html>

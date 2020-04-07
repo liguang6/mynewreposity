@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.pda.dao.StoSendCreateDao">
+	<select id="list" parameterType="Map" resultType="Map">
+		SELECT * from
+		WMS_CORE_WMSDOC_ITEM
+		where REQUIREMENT_NO =
+		#{requirementNo}
+		and
+		BUSINESS_NAME = '50'
+		and BUSINESS_TYPE = '06'
+		<!-- and WERKS = #{WERKS} -->
+		<if test="SAP_OUT_NO !=null and SAP_OUT_NO!=''">
+			and SAP_OUT_NO = #{SAP_OUT_NO}
+		</if>
+	</select>
+
+	<insert id="insertHead" parameterType="Map">
+		insert into
+		WMS_IN_DELIVERY VALUES(
+		#{DELIVERY_NO},#{DELIVERY_TYPE},#{STATUS_RMK},#{FACT_NO},#{LGORT_NO},#{BOOKING_DATE},#{BOOKING_TIME},
+		#{PROVIDER_CODE},#{PROVIDER_NAME},#{WHCD_NO},#{CTURID},#{CTDT},#{UPURID},#{UPDT},
+		SEQ_WEBSERVICE_DELIVERY.nextval,#{REMARK},#{REQUIREMENT_NO})
+	</insert>
+
+	<insert id="insertItem" parameterType="List">
+		insert into WMS_IN_DELIVERY_ITEM (
+		ID ,
+		DELIVERY_NO ,
+		ITEM_NO ,
+		ITEM_QTY ,
+		PO_NO ,
+		PO_ITEM ,
+		FACT_NO ,
+		LGORT_NO ,
+		PROVIDER_CODE ,
+		PROVIDER_NAME ,
+		MAT_NO ,
+		MAT_DESC ,
+		UNIT_NO ,
+		TESTMATERIAL_QTY ,
+		RCQTY ,
+		QCQTY_FH ,
+		RCQTY_FH ,
+		UPURID ,
+		CTURID ,
+		CTDT ,
+		UPDT ,
+		DEL ,
+		FULL_BOX_QTY ,
+		SAP_OUT_ITEM_NO ,
+		SAP_OUT_NO
+		)
+		select
+		SEQ_WEBSERVICE_DELIVERY_ITEM.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index"
+			separator="union all">
+			select
+			#{d.DELIVERY_NO},#{d.ITEM_NO},#{d.ITEM_QTY},#{d.PO_NO},#{d.PO_ITEM}
+			,#{d.FACT_NO},#{d.LGORT_NO},#{d.PROVIDER_CODE},#{d.PROVIDER_NAME},#{d.MAT_NO},#{d.MAT_DESC},#{d.UNIT_NO},#{d.TESTMATERIAL_QTY}
+			,#{d.RCQTY},#{d.QCQTY_FH},#{d.RCQTY_FH},#{d.UPURID},#{d.CTURID},#{d.CTDT},#{d.UPDT},#{d.DEL},#{d.FULL_BOX_QTY},#{d.SAP_OUT_ITEM_NO},#{d.SAP_OUT_NO}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+	<insert id="insertPacking" parameterType="List">
+		insert into WMS_IN_DELIVERY_PACKING (
+		ID ,
+		DELIVERY_NO ,
+		ITEM_NO ,
+		LGORT_NO ,
+		FACT_NO ,
+		MAT_NO ,
+		MAT_DESC ,
+		VERSION_NO ,
+		PRODUCTION_QTY ,
+		UNIT_NO ,
+		BUNIT ,
+		BUNIT_QTY ,
+		BATCH_NO ,
+		BYD_BATCH ,
+		PO_NO ,
+		PO_TYPE ,
+		PO_ITEM ,
+		TESTMATERIAL_FLAG ,
+		SPEC_QTY ,
+		CONTAINERCODE ,
+		END_FLAG ,
+		PROD_DATE ,
+		EXPIRY_DATE ,
+		BARCODE_NO ,
+		TYPE_NO ,
+		UPURID ,
+		CTURID ,
+		CTDT ,
+		UPDT ,
+		PARENT_BARCODE_NO ,
+		REMARK
+		)
+		select
+		SEQ_WEBSERVICE_PACKING.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index"
+			separator="union all">
+			select
+			#{d.DELIVERY_NO},#{d.ITEM_NO},#{d.LGORT_NO},#{d.FACT_NO},#{d.MAT_NO},#{d.MAT_DESC},#{d.VERSION_NO},#{d.PRODUCTION_QTY}
+			,#{d.UNIT_NO},#{d.BUNIT},#{d.BUNIT_QTY},#{d.BATCH_NO},#{d.BYD_BATCH},#{d.PO_NO},#{d.PO_TYPE},#{d.PO_ITEM},#{d.TESTMATERIAL_FLAG},#{d.SPEC_QTY},#{d.CONTAINERCODE}
+			,#{d.END_FLAG},#{d.PROD_DATE},#{d.EXPIRY_DATE},#{d.BARCODE_NO},#{d.TYPE_NO},#{d.UPURID},#{d.CTURID},#{d.CTDT},#{d.UPDT},#{d.PARENT_BARCODE_NO},#{d.REMARK}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+	<select id="querySto" parameterType="Map" resultType="Map">
+		select a.*
+		, b.BYD_BATCH , b.BARCODE_NO ,c.BOOKING_DATE ,c.WHCD_NO,
+		ceil(a.ITEM_QTY/a.FULL_BOX_QTY) BOXNO
+		from WMS_IN_DELIVERY_ITEM a
+		,WMS_IN_DELIVERY_PACKING b ,WMS_IN_DELIVERY c
+		where a.DELIVERY_NO =
+		b.DELIVERY_NO AND a.ITEM_NO = b.ITEM_NO AND a.DELIVERY_NO =
+		c.DELIVERY_NO
+		AND a.DELIVERY_NO = #{stoNo}
+	</select>
+
+	<select id="queryCustomer" parameterType="Map" resultType="Map">
+		select * from WMS_SAP_CUSTOMER
+		where KUNNR = #{KUNNR}
+	</select>
+
+	<select id="queryContact" parameterType="Map" resultType="Map">
+		select
+		COUNTRY,PROVINCE,CITY,REGION,STREET,CONTACTS,TEL from
+		WMS_CORE_WH_ADDRESS
+		where WERKS = #{WERKS} and WH_NUMBER = #{WH_NUMBER}
+	</select>
+
+	<select id="queryWMSNo" parameterType="Map" resultType="Map">
+		select
+		distinct t.wms_no from wms_core_wmsdoc_item t
+		where t.requirement_no =
+		(select distinct REQUIREMENT_NO from wms_in_delivery where
+		DELIVERY_NO=#{DELIVERY_NO})
+	</select>
+
+	<select id="queryLiktx" parameterType="Map" resultType="Map">
+		select NAME1 from wms_sap_vendor
+		where LIFNR = #{LIFNR}
+	</select>
+
+	<select id="checkAddr" parameterType="Map" resultType="Map">
+		select
+		WH_NUMBER from WMS_CORE_WH_ADDRESS
+		where WERKS = #{toWerks} and
+		LGORT_NO = #{toLgort}
+	</select>
+
+	<select id="checkExist" parameterType="Map" resultType="Map">
+		select
+		count(*) count FROM WMS_IN_DELIVERY
+		where REQUIREMENT_NO =
+		#{requirementNo}
+	</select>
+
+	<select id="queryBydeliveryNo" parameterType="Map"
+		resultType="Map">
+		select * from WMS_WS_CALL_MATERIAL
+		where DELIVERY_NO = #{DELIVERY_NO}
+		<if test="WERKS !=null and WERKS!=''">
+			and WERKS = #{WERKS}
+		</if>
+		<if test="MATNR !=null and MATNR!=''">
+			and MATNR = #{MATNR}
+		</if>
+	</select>		
+</mapper>
+
+  

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysDataPermissionDao">
+
+
+	<select id="queryDataPermission" resultType="com.byd.admin.modules.sys.entity.SysDataPermissionEntity" parameterType="Map">
+		select a.id,a.role_id,a.auth_fields,a.auth_value,a.user_id,a.menu_id from SYS_ROLE_AUTH a
+		left join sys_menu b
+		on a.menu_id = b.menu_id
+		where 1=1
+		and b.MENU_KEY = #{menuKey}
+		and a.role_id in(select role_id from sys_user_role b where b.user_id=#{userId})
+		and (a.user_id = #{userId} or a.user_id is null)
+		and a.del = '0'
+		order by a.id
+	</select>
+
+	<select id="queryDataPermissionList" resultType="java.util.HashMap" parameterType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		select a.id,a.role_id as roleId,a.auth_fields as authFields,a.auth_value AS authValue,
+		a.user_id AS userId,d.username as userName,a.menu_id AS menuId,b.role_name AS roleName,c.name as menuName
+		from SYS_ROLE_AUTH a
+		left join sys_user d on a.user_id = d.user_id
+		left join sys_role b on a.role_Id = b.role_Id
+		left join sys_menu c on a.menu_id = c.menu_id
+		where 1=1
+		and a.del = '0'
+		<if test="roleId != '' and roleId != null">
+			AND a.role_Id = #{roleId}
+		</if>
+		<if test="userId != '' and userId != null">
+		and a.user_id = #{userId}
+		</if>
+		<if test="menuId != '' and menuId != null">
+			AND a.menu_Id = #{menuId}
+		</if>
+		order by a.id
+		)TMP
+		WHERE ROWNUM  &lt;=#{end})
+		WHERE ROW_ID > #{start}
+	</select>
+
+	<select id="selectSysDataPermissionById" resultType="java.util.HashMap" parameterType="Map">
+		select a.id,a.role_id as roleId,a.user_id as userId,a.menu_id as menuId,a.auth_fields as authFields,a.auth_value as authValue,b.role_name AS roleName,c.name as menuName,d.username as userName from SYS_ROLE_AUTH a
+  		left join sys_user d on a.user_id = d.user_id
+		left join sys_role b on a.role_Id = b.role_Id
+		left join sys_menu c on a.menu_id = c.menu_id
+		where 1=1
+        AND a.id = #{id}
+        AND a.DEL='0'
+	</select>
+
+	<select id="getSysDataPermissionCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM SYS_ROLE_AUTH a WHERE a.DEL='0'
+        <if test="roleId != '' and roleId != null">
+            AND a.role_Id = #{roleId}
+        </if>
+        <if test="userId != '' and userId != null">
+            and a.user_id = #{userId}
+        </if>
+        <if test="menuId != '' and menuId != null">
+            AND a.menu_Id = #{menuId}
+        </if>
+    </select>
+
+	<select id="getAuthFields" resultType="java.util.HashMap" parameterType="Map">
+		select AUTH_FIELDS as authFields,AUTH_NAME AS authName from SYS_AUTH_OBJECT
+		where 1=1
+        AND DEL='0'
+		<if test="menuId != '' and menuId != null">
+			AND menu_Id = #{menuId}
+		</if>
+	</select>
+
+	<select id="queryDataPermissionByMenuKey" resultType="java.util.HashMap" parameterType="Map">
+		select a.role_id,a.auth_fields,a.auth_value,a.user_id,a.menu_id from SYS_ROLE_AUTH a
+		left join sys_menu b
+		on a.menu_id = b.menu_id
+		where 1=1
+		and (b.MENU_KEY = #{menuKey} OR b.MENU_KEY = 'ALL_MENU')
+		and a.role_id in(select c.role_id from sys_user_role c,sys_user d where c.user_id= d.user_id and d.user_id = #{userId})
+		and (a.user_id = #{userId} or a.user_id is null)
+		and a.del = '0' 
+		union
+    	select null as role_id,t.auth_fields,t.auth_value,t.user_id,t.menu_id 
+          from SYS_USER_AUTH t	
+          left join sys_menu t1
+      on t.menu_id = t1.menu_id
+     where t.user_id = #{userId} 
+       and (t1.MENU_KEY = #{menuKey} OR t1.MENU_KEY = 'ALL_MENU')
+	</select>
+	
+</mapper>

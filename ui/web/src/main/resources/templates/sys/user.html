@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>用户管理</title>
+<#include "/header.html">
+</head>
+<script>var _hmt = _hmt || [];(function() {var hm = document.createElement("script");
+hm.src = "https://hm.baidu.com/hm.js?104e825088869ff9c5855f24ab8204c2";
+var s = document.getElementsByTagName("script")[0];
+s.parentNode.insertBefore(hm, s);})();</script>
+<body class="hold-transition ">
+    <div class="ui-layout-west">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-header">
+				<div class="box-title">
+					<i class="fa icon-grid"></i> 组织机构
+				</div>
+				<div class="box-tools pull-right">
+						<button type="button" class="btn btn-box-tool addTabPage" data-href="/js/a/sys/office/list" title="机构管理"><i class="fa fa-edit"></i></button>
+					<button type="button" class="btn btn-box-tool" id="btnExpand" title="展开" style="display:none;"><i class="fa fa-chevron-up"></i></button>
+					<button type="button" class="btn btn-box-tool" id="btnCollapse" title="折叠"><i class="fa fa-chevron-down"></i></button>
+					<button type="button" class="btn btn-box-tool" id="btnRefresh" title="刷新"><i class="fa fa-refresh"></i></button>
+				</div>
+			</div>
+			<div class="ui-layout-content">
+				<div id="queryDept" class="ztree"></div>
+			</div>
+		</div>
+	</div>
+  </div>
+  <div class="ui-layout-center">
+	<iframe id="mainFrame" name="mainFrame" class="ui-layout-content p0"
+		src="${request.contextPath}/sys/userlist.html"></iframe>
+  </div>
+  
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+<script type="text/javascript">
+//初始化布局
+$('body').layout({
+	west__size: 180
+});
+
+//主页框架
+var win = $("#mainFrame")[0].contentWindow;
+var zTreeObjmy;
+function queryUserByDept(event, treeId, treeNode) {
+	var nodes = zTreeObjmy.getSelectedNodes();
+	var mainFrame = $(window.frames['mainFrame'].document);
+	mainFrame.find("#deptName").val(nodes[0].name);
+	mainFrame.find("#deptId").val(nodes[0].deptId);
+}
+$(document).ready(function(){
+	var mysetting = {
+		data : {
+			simpleData : {
+				enable : true,
+				idKey : "deptId",
+				pIdKey : "parentId",
+				rootPId : "0"
+			}
+		},
+		callback : {
+			onClick : queryUserByDept
+		}
+	};
+
+	
+	$.ajax({
+		url : baseURL + "masterdata/dept/ztreeDepts",
+		success : function(data) {
+			zTreeObjmy = $.fn.zTree.init($("#queryDept"), mysetting, data);
+			zTreeObjmy.expandAll(true);
+		}
+	});
+	
+});
+</script>
+</body>
+</html>

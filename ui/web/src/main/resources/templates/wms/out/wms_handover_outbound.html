@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>进仓单交接</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+.v-cloak { display: none }
+	
+.urgent-select {
+	color:#f44444;
+}
+</style>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+                   <form id="searchForm" class="form-inline" action="#">
+						<!-- 查询条件 -->
+							<div class="form-group">
+								<label class="control-label" >工厂：</label>
+								<div class="control-inline" style="width: 80px;">
+									<select class="form-control" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("A45") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label">仓库号：</label>
+								<div class="control-inline" style="width: 80px;">
+									<select class="form-control" v-model="whNumber" name="whNumber" id="whNumber">
+										<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">仓管员：</label>
+								<div class="control-inline" style="width: 100px;">
+									<select class="form-control" name="whManager" id="whManager" >
+										<option value="" >全部</option>
+										<option v-for="w in relatedareaname" :value="w.AUTHORIZE_CODE" :key="w.AUTHORIZE_CODE">{{ w.MANAGER }}</option>
+									</select>
+								</div>
+							</div> 
+							<div class="form-group">
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>单号：</label>
+								<span class="input-icon input-icon-right" style="width: 120px;">
+								<input type="text" id="outBoundNo" name="outBoundNo" value="" class="form-control"  style="width: 120px;"/>
+								<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('outBoundNo')"> </i>
+								</span>
+							</div>
+							
+				        	<div class="form-group">
+				        		<label class="control-label"  style="width: 41px;">库位：</label>
+				        		<div class="control-inline">
+				        			<!-- 弹出框 -->
+				        			<input class="form-control" type="text" id="lgortList" name="lgortList"  v-model="lgortList" placeholder="库位" @click='openLgortSelectWindow()'/>
+				        		</div>
+				        	</div>
+				        	
+				        	<div class="form-group">
+				        		<label class="control-label"  style="width: 41px;">工位：</label>
+				        		<div class="control-inline">
+				        			<input class="form-control" type="text" id="station" name="station"   placeholder="工位" />
+				        		</div>
+				        	</div>
+					
+					
+							<div class="form-group">
+								<label class="control-label">凭证日期：</label>
+								<div class="control-inline">
+									<input type="text" id="pzddt" name="pzddt" v-model="PZDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">记账日期：</label>
+								<div class="control-inline">
+									<input type="text" id="jzddt" name="jzddt" v-model="JZDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+								</div>
+							</div>
+							<input type="text" id="dhhidden" name="dhhidden"   style="width: 80px;display:none"/>
+							
+							<div class="form-group">
+							    <input type="button" id="btnqueryhandoverbound" class="btn btn-primary btn-sm " value="查询"/>
+							    <input type="button" id="btnsaveinteralbound" @click="save" class="btn btn-primary btn-sm " value="交接确认"/>
+								<button type="reset" class="btn btn-default btn-sm ">重置</button>
+							</div>
+				   </form>
+				   <div id="resultLayer" style="display: none; padding: 10px;">
+				   		<h4>交接成功!  <br/>
+				   		<span id="outreqNoLayer">-</span></h4>
+						<br/>
+				   </div>
+					
+					<table id="dataGrid"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/out/wms_handover_outbound.js?_${.now?long}"></script>
+</body>
+</html>

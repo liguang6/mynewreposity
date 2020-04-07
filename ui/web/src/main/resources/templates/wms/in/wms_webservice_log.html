@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>接口日志查询</title>
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+
+</head>
+<body>
+	<div class="wrapper" id="vue-app">
+		<div class="main-content" id="vue-app">
+			<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/in/webservicelog/list" >
+							<table border="0">
+								<tr>
+									<td>
+										<div class="form-group">
+											<label class="control-label">方法名称：</label>
+											<div class="control-inline">
+												<div class="input-group" style="width:100px">
+													<input type="text" id="FLOW_NO" name="FLOW_NO" style="width: 100px;" class="form-control width" />
+												</div>
+											</div>
+											<label class="control-label">接口状态：</label>
+											<div class="control-inline">
+												<div class="input-group" style="width:80px">
+												<select name="VSTATUS" id="VSTATUS" style="height: 28px;">
+													<option value=''>全部</option>
+													<option value='100'>成功</option>
+													<option value='101'>失败</option>
+												</select>
+												</div>
+											</div>
+											<label class="control-label" style="width: 60px">执行时间：</label>
+												<div class="control-inline">
+													<div class="input-group" style="width:80px">
+														<input type="text" id="DATE_START" name="DATE_START"
+														class="form-control width-300" style="width: 100px;"
+														onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false,onpicked:function(pd){}});" />
+													 </div>-
+													<div class="input-group" style="width:80px">
+														<input type="text" id="DATE_END" name="DATE_END"
+														class="form-control width-300" style="width: 100px;"
+														onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false,onpicked:function(pd){}});" />
+													 </div>
+												</div>
+											</div>
+										<div class="form-group">
+											<button type="submit" id="queryWebLog" name="queryWebLog"  class="btn btn-primary btn-sm">查询</button>
+											<input type="button" id="log_retriggerClick" @click="retriggerLogsClick()" class="btn btn-primary btn-sm " value="重新触发"/>
+											<button type="reset" class="btn btn-primary btn-sm">重置</button>
+										</div>
+									</td>
+								</tr>
+							</table>
+						</form>
+
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/in/wms_webservice_log.js?_${.now?long}"></script>
+</body>
+</html>

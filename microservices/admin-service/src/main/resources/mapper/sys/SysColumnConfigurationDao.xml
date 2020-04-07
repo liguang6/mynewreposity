@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysColumnConfigurationDao">
+
+
+	<select id="queryGridIdByGridNo" resultType="java.lang.String" parameterType="String">
+		select sgc.column_id from sys_grid_templet sgt,sys_grid_column sgc where sgt.grid_id=sgc.grid_id
+		and sgt.grid_no=#{gridNo}
+	</select>
+
+	<select id="queryUserGrid" resultType="java.util.HashMap" parameterType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		    select a.column_id as columnId,a.hide_rmk AS hideRmk,
+        a.idx_seq AS idxSeq,a.column_width as columnWidth,b.hide_rmk as allowHide,b.column_name as columnName
+        from sys_grid_user a,
+        sys_grid_column b
+        where 1=1
+        and a.column_id=b.column_id
+        and a.user_id=#{userId}
+	    and a.column_id in (select sgc.column_id from sys_grid_column sgc where 1=1
+		and sgc.grid_id=#{gridNo})
+		order by a.idx_seq
+		)TMP
+		WHERE ROWNUM  &lt;=#{end})
+		WHERE ROW_ID > #{start}
+	</select>
+
+	<select id="queryUserGridDefault" resultType="java.util.HashMap" parameterType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		select a.column_id as columnId,a.hide_rmk AS hideRmk,
+        a.idx_seq AS idxSeq,a.column_width as columnWidth,a.column_name as columnName
+        from  sys_grid_column a
+        where 1=1
+        and a.grid_id=#{gridNo}
+        order by a.idx_seq
+		)TMP
+		WHERE ROWNUM  &lt;=#{end})
+		WHERE ROW_ID > #{start}
+	</select>
+
+	<select id="getUserGridPageCount" parameterType="Map" resultType="int">
+       select count(1)
+        from sys_grid_user a
+        where  a.user_id=#{userId}
+	    and 	 a.column_id in (select sgc.column_id from sys_grid_templet sgt,sys_grid_column sgc where sgt.grid_id=sgc.grid_id
+		and sgt.grid_no=#{gridNo})
+
+    </select>
+	<select id="getUserGridPageDefaultCount" parameterType="Map" resultType="int">
+       select count(1)
+       from  sys_grid_column a,
+        sys_grid_templet b
+        where 1=1
+        and a.grid_id=b.grid_id
+        and b.grid_no=#{gridNo}
+
+    </select>
+
+<insert id="insertUserConfiguration" parameterType="Map" >
+       insert into sys_grid_user (id,user_id,column_id,hide_rmk,idx_seq,column_width) 
+       values(SYS_GRID_USER_AUTH.NEXTVAL,#{userId},#{columnId},#{hideRmk},#{idxSeq},#{columnWidth})
+
+    </insert>
+	<update id="updateUserConfiguration" parameterType="Map" >
+       update  sys_grid_user set hide_rmk=#{hideRmk},idx_seq=#{idxSeq},column_width=#{columnWidth} where user_id=#{userId} and column_id=#{columnId}
+
+    </update>
+    <select id="queryUserConfiguration" parameterType="Map" resultType="int">
+       select count(1) from sys_grid_user where user_id=#{userId} and column_id=#{columnId}
+    </select>
+</mapper>

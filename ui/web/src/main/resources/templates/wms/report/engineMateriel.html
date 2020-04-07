@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>发动机仓库物料日报表</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<style type="text/css">
+	.SelectBG{
+       background-color:red;
+    }
+</style>
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm"  method="post" class="form-inline"  action="${request.contextPath}/report/stockCompare/list" >
+						<div class="row">					
+							<div class="form-group">
+								<label class="control-label" style="width: 45px">工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select name="WERKS" id="werks" v-model="werks" class="input-medium" style="width:100%;height:25px">
+									   <#list tag.getUserAuthWerks("STOCK_COMPARE") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;">仓库号：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select class="form-control" v-model="whNumber" name="WH_NUMBER" id="whNumber" style="height: 28px;width: 60px;">
+										 <option v-for="w in wh_list" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label">项目名称：</label>
+								<div class="control-inline" style="width: 200px;">
+									<select class="form-control" name="PROJECT_CODE" id="project" >
+										<option value="" >请选择</option>										
+										<#list tag.getProject() as project>
+									      <option value="${project.PROJECT_CODE}">${project.PROJECT_NAME}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" @click="query">查询</button>
+								<button type="button" class="btn btn-primary btn-sm" @click="exp">导出</button>
+								<button type="reset" class="btn btn-primary btn-sm">重置</button>
+							</div>
+					</div>
+
+					</form>
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						<table id="tb_excel" style="display:none"></table>
+					</div>
+				</div>
+					
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/report/engineMateriel.js?_${.now?long}"></script>
+</body>
+</html>

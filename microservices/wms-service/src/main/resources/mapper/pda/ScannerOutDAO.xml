@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.pda.dao.PdaByWhydDao">
+
+
+
+
+	<select id="queryByBarcode" resultType="Map"  parameterType="Map">
+		select t.WERKS,t.WH_NUMBER,t.bin_code,t.matnr,t2.maktx,t.batch,t2.box_qty,t2.LIFNR,t2.LIKTX,t2.UNIT
+		from wms_core_stock_label t left join wms_core_label t2
+		on t.label_no = t2.label_no and t.werks = t2.werks and t.wh_number = t2.wh_number and t.matnr = t2.matnr
+		where t.LABEL_NO = #{LABEL_NO}
+
+	</select>
+
+    <select id="queryAreaCode" resultType="Map">
+        select
+        *
+        from WMS_CORE_WH_BIN l
+        where
+        1=1
+        and l.WH_NUMBER = #{WH_NUMBER}
+        and l.BIN_CODE = #{binCode}
+
+    </select>
+
+    <select id="queryBin" resultType="Map">
+        select
+        *
+        from WMS_CORE_WH_BIN l
+        where
+        1=1
+        and l.WH_NUMBER = #{WH_NUMBER}
+        and l.BIN_CODE = #{BIN_CODE}
+
+    </select>
+
+    <select id="queryStockQty" resultType="Map">
+        select stock_qty from WMS_CORE_STOCK
+        where WERKS = #{WERKS} and WH_NUMBER = #{WH_NUMBER}
+        and MATNR = #{MATNR} and BATCH = #{BATCH}
+        and BIN_CODE=#{BIN_CODE}
+
+    </select>
+
+    <update id="updateByStock" parameterType="Map" >
+		update WMS_CORE_STOCK l
+		set l.STOCK_QTY = #{STOCK_QTY}
+		where l.WH_NUMBER = #{WH_NUMBER} and WERKS = #{WERKS} and l.MATNR=#{MATNR} and l.BATCH = #{BATCH}
+		and BIN_CODE=#{BIN_CODE}
+	</update>
+
+    <update id="updateBin" parameterType="Map" >
+		update WMS_CORE_STOCK_LABEL l
+		set l.BIN_CODE = #{mbBin_Code},l.BIN_NAME = #{mbBin_Code}
+		where l.LABEL_NO = #{LABEL_NO} and l.WH_NUMBER = #{WH_NUMBER}
+		and l.BATCH = #{BATCH} and l.WERKS = #{WERKS} and l.MATNR = #{MATNR}
+	</update>
+
+    <update id="updateBinByStock" parameterType="Map" >
+		update WMS_CORE_STOCK l
+		set l.BIN_CODE = #{mbBin_Code},l.BIN_NAME = #{mbBin_Code}
+        where WERKS = #{WERKS} and WH_NUMBER = #{WH_NUMBER}
+        and MATNR = #{MATNR} and BATCH = #{BATCH}
+        and BIN_CODE=#{BIN_CODE}
+	</update>
+
+    <insert id="insertByStock" parameterType="Map">
+
+        INSERT INTO WMS_CORE_STOCK
+        (ID,WH_NUMBER,WERKS,MATNR,MAKTX,F_BATCH,BATCH,LGORT,BIN_CODE,BIN_NAME,LIFNR,LIKTX,
+        SOBKZ,STOCK_QTY,VIRTUAL_QTY,LOCK_QTY,VIRTUAL_LOCK_QTY,FREEZE_QTY,XJ_QTY,
+        XJ_BIN_CODE,MEINS,EDITOR,EDIT_DATE,SO_NO,SO_ITEM_NO)
+        select SEQ_WMS_CORE_STOCK.nextval,WH_NUMBER,WERKS,MATNR,MAKTX,F_BATCH,BATCH,LGORT,#{mbBin_Code},#{mbBin_Code},LIFNR,LIKTX,
+        SOBKZ,#{qty},VIRTUAL_QTY,LOCK_QTY,VIRTUAL_LOCK_QTY,FREEZE_QTY,XJ_QTY,
+        XJ_BIN_CODE,MEINS,EDITOR,EDIT_DATE,SO_NO,SO_ITEM_NO
+         from WMS_CORE_STOCK
+         where WH_NUMBER = #{WH_NUMBER} AND WERKS = #{WERKS} AND MATNR = #{MATNR} AND BATCH = #{BATCH} and BIN_CODE=#{BIN_CODE}
+
+    </insert>
+
+
+</mapper>

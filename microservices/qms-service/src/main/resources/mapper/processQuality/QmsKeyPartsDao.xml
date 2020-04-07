@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.processQuality.dao.QmsKeyPartsDao">
+
+     <select id="getListByPage" parameterType="Map" resultType="Map">
+         select f.id factory_id,f.factory_name,t.workshop,t.bus_number,o.order_no, o.order_name,c.order_config_name,u.username,t.edit_date,td.key_components_template_id 
+				,concat(o.order_no,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc from BMS_QM_KEY_PARTS t 
+				RIGHT JOIN BMS_QM_KEY_PARTS_TEMPLATE_DETAILS td on td.id = t.key_parts_template_details_id 
+				LEFT JOIN BMS_QM_KEY_PARTS_TEMPLATE_HEADER th on th.id = td.key_components_template_id 
+				LEFT JOIN BMS_OR_ORDER_CONFIG c on c.id=th.order_config_id and c.order_id = th.order_id 
+				LEFT JOIN BMS_OR_ORDER o ON o.id = c.order_id 
+				LEFT JOIN BMS_BASE_FACTORY f on f.id=t.factory_id 
+				LEFT JOIN BMS_BASE_USER u on u.id=t.editor_id 
+				where t.key_parts_template_details_id>0 AND 1=1 
+                  <if test="orderConfigId != null and orderConfigId !=''">
+			        AND c.id=#{orderConfigId} 
+			      </if>
+			       <if test="orderNo != null and orderNo !=''">
+			        AND o.ORDER_NO=#{orderNo} 
+			      </if>
+	              <if test="vin != null and vin !=''">
+			        AND t.BUS_NUMBER = #{vin}
+			      </if>
+			      <if test="workshop != null and workshop !=''">
+			        AND td.WORKSHOP=#{workshop}
+			      </if>
+<!-- 			      <if test="endDate != null and endDate !=''"> -->
+<!-- 			        AND h.TEST_DATE&lt;= CONCAT(#{endDate},' 23:59:59') -->
+<!-- 			      </if> -->
+                  group by t.bus_number,t.factory_id,t.workshop order by edit_date desc  
+         LIMIT #{start},#{limit}
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         select count(1) from (
+		   select f.id factory_id,f.factory_name,t.workshop,t.bus_number,o.order_no,
+		     o.order_name,c.order_config_name,u.username,t.edit_date,td.key_components_template_id  from BMS_QM_KEY_PARTS t
+				RIGHT JOIN BMS_QM_KEY_PARTS_TEMPLATE_DETAILS td on td.id = t.key_parts_template_details_id
+				LEFT JOIN BMS_QM_KEY_PARTS_TEMPLATE_HEADER th on th.id = td.key_components_template_id 
+				LEFT JOIN BMS_OR_ORDER_CONFIG c on c.id=th.order_config_id and c.order_id = th.order_id
+				LEFT JOIN BMS_OR_ORDER o ON o.id = c.order_id
+		        LEFT JOIN BMS_BASE_FACTORY f on f.id=t.factory_id
+		        LEFT JOIN BMS_BASE_USER u on u.id=t.editor_id 
+        	    where t.key_parts_template_details_id>0 AND 1=1 
+		          <if test="orderConfigId != null and orderConfigId !=''">
+			        AND c.id=#{orderConfigId} 
+			      </if>
+			       <if test="orderNo != null and orderNo !=''">
+			        AND o.ORDER_NO=#{orderNo} 
+			      </if>
+	              <if test="vin != null and vin !=''">
+			        AND t.BUS_NUMBER = #{vin}
+			      </if>
+                  <if test="workshop != null and workshop !=''">
+			        AND td.WORKSHOP=#{workshop}
+			      </if>
+<!-- 			      <if test="endDate != null and endDate !=''"> -->
+<!-- 			        AND h.TEST_DATE&lt;= CONCAT(#{endDate},' 23:59:59') -->
+<!-- 			      </if> -->
+		  group by t.bus_number,t.factory_id,t.workshop) t1	         
+    </select>
+    <select id="getList" parameterType="Map" resultType="Map">
+       select t.*,t.3C_components as CCC_components,b.id as keypartsId,
+		  	case 3C_components WHEN '是' THEN t.3C_no WHEN '否' THEN b.batch end  as batch
+		    from BMS_QM_KEY_PARTS_TEMPLATE_DETAILS  t 
+		    LEFT JOIN BMS_QM_KEY_PARTS_TEMPLATE_HEADER h on h.id=t.key_components_template_id
+		    LEFT JOIN BMS_QM_KEY_PARTS b on b.key_parts_template_details_id=t.id AND b.bus_number =#{bus_number}
+			 where 1=1 and t.key_components_template_id=#{key_components_template_id} 
+			and t.workshop=#{workshop}
+			order by t.id
+    </select>
+    <select id="getOrderConfigList" parameterType="Map" resultType="Map">
+         SELECT c.id,order_config_name FROM BMS_OR_ORDER_CONFIG c
+           LEFT JOIN BMS_OR_ORDER o on c.order_id=o.id
+          Where o.order_no=#{orderNo}
+    </select>
+    <!-- 专用车关键零部件 -->
+    <select id="getListByPage02" parameterType="Map" resultType="Map">
+	select distinct p.vin,ifnull(p.material_barcode,'') materialBarcode,p.order_id orderId,o.order_no as orderNo,
+    concat(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') orderDesc,p.order_config_id orderConfigId,c.order_config_name as orderConfigName,
+	p.tpl_detail_id tplDetailId,p.factory_name factoryName,p.line_name lineName 
+	from VMES_QM_KEY_PARTS p
+	left join VMES_OR_ORDER o on p.order_id = o.id
+	left join VMES_OR_ORDER_CONFIG c on p.order_config_id = c.id
+	where 1=1
+    <if test="vin !=null and vin !=''">
+       and p.vin like CONCAT('%',#{vin},'%') or p.material_barcode like CONCAT('%',#{vin},'%')
+    </if>
+    <if test="factoryName !=null and factoryName !=''">
+      and p.factory_name = #{factoryName}
+    </if>
+    <if test="workshopName !=null and workshopName !=''">
+      and p.workshop_name = #{workshopName}
+    </if>
+    <if test="lineName !=null and lineName!=''">
+      and p.line_name = #{lineName}
+    </if>
+    <if test="orderId != null">
+      and p.order_id = #{orderId}
+    </if>
+    <if test="orderNo !=null and orderNo !=''">
+      and o.order_no = #{orderNo}
+    </if>
+    <if test="orderConfigId != null">
+      and p.order_config_id = #{orderConfigId}
+    </if>
+    <if test="materialBarcode != null and materialBarcode != ''">
+      and p.material_barcode like CONCAT('%',#{materialBarcode},'%')
+    </if>
+    GROUP BY vin,materialBarcode order by vin LIMIT #{start},#{limit}
+   </select>
+   <select id="getListCount02" parameterType="Map" resultType="int">
+	select count(distinct concat(p.vin,p.material_barcode))  from VMES_QM_KEY_PARTS p
+	left join VMES_OR_ORDER o on p.order_id = o.id
+	left join VMES_OR_ORDER_CONFIG c on p.order_config_id = c.id
+	where 1=1
+    <if test="vin !=null and vin !=''">
+       and p.vin like CONCAT('%',#{vin},'%') or p.material_barcode like CONCAT('%',#{vin},'%')
+    </if>
+    <if test="factoryName !=null and factoryName !=''">
+      and p.factory_name = #{factoryName}
+    </if>
+    <if test="workshopName !=null and workshopName !=''">
+      and p.workshop_name = #{workshopName}
+    </if>
+    <if test="lineName !=null and lineName!=''">
+      and p.line_name = #{lineName}
+    </if>
+    <if test="orderId != null">
+      and p.order_id = #{orderId}
+    </if>
+    <if test="orderNo !=null and orderNo !=''">
+      and o.order_no = #{orderNo}
+    </if>
+    <if test="orderConfigId != null">
+      and p.order_config_id = #{orderConfigId}
+    </if>
+    <if test="materialBarcode != null and materialBarcode != ''">
+      and p.material_barcode like CONCAT('%',#{materialBarcode},'%')
+    </if>
+   </select>
+  
+	<select id="getList02" parameterType="Map" resultType="Map">
+       select d.*,b.batch,b.material_no
+		    from VMES_QM_KEY_PARTS_TPL_H h
+		    LEFT JOIN VMES_QM_KEY_PARTS_TPL_D d on h.id=d.head_id
+		    LEFT JOIN VMES_QM_KEY_PARTS b on b.tpl_detail_id=d.id and (b.vin=#{vin} or b.material_barcode=#{vin})
+			 where h.id=#{headId} and d.line_name=#{lineName}
+		order by b.id
+    </select>
+    <select id="getTplHeadId02" parameterType="String" resultType="int">
+         SELECT head_id FROM VMES_QM_KEY_PARTS_TPL_D Where id=#{tplDetailId}
+    </select>
+    <select id="getOrderConfigList02" parameterType="Map" resultType="Map">
+         SELECT id,order_config_name FROM VMES_OR_ORDER_CONFIG Where order_no=#{orderNo}
+    </select>
+    
+    <select id="getWorkshopList" parameterType="Map" resultType="Map">
+         SELECT workshop_name FROM BMS_BASE_WORKSHOP Where 1=1
+    </select>
+    
+    <select id="getLineNameList" parameterType="Map" resultType="Map">
+         SELECT distinct(name) name FROM sys_dept Where dept_type='5'
+    </select>
+    <!-- 关键零部件追溯 -->
+    <select  id="getKeyPartsTraceBackList" parameterType="Map" resultType="Map">
+      select k.*,CONCAT(o.order_no,o.customer,o.bus_type_code,o.order_qty,'台') as order_name 
+      ,c.order_config_name as order_config_name
+      from VMES_QM_KEY_PARTS k
+      left join VMES_OR_ORDER o on k.order_id = o.id
+      left join VMES_OR_ORDER_CONFIG c on k.order_config_id = c.id
+      where 1 = 1
+      <if test="orderNo != null and orderNo !=''">
+        and o.order_no = #{orderNo}
+      </if>
+      <if test="vin != null and vin !=''">
+        and vin = #{vin}
+      </if>
+      <if test="materialBarcode != null and materialBarcode !=''">
+        and material_barcode = #{materialBarcode}
+      </if>
+      <if test="lineName != null and lineName != ''">
+        and line_name like CONCAT('%',#{lineName},'%')
+      </if>
+      <if test="partsName != null and partsName != ''">
+        and (parts_name like CONCAT('%',#{partsName},'%') or parts_no like CONCAT('%',#{partsName},'%'))
+      </if>
+      <if test="partsNo != null and partsNo != ''">
+        and parts_no like CONCAT('%',#{partsNo},'%')
+      </if>
+      <if test="batch != null and batch !=''">
+        and batch like CONCAT('%',#{batch},'%')
+      </if>
+      <if test="materialNo != null and materialNo != ''">
+        and material_no like CONCAT('%',#{materialNo},'%')
+      </if>
+      LIMIT #{start},#{limit}
+   </select>
+   <select  id="getKeyPartsTraceBackCount" parameterType="Map" resultType="int">
+      select count(1)  from VMES_QM_KEY_PARTS k
+      left join VMES_OR_ORDER o on k.order_id = o.id
+      left join VMES_OR_ORDER_CONFIG c on k.order_config_id = c.id
+      where 1 = 1
+      <if test="orderNo != null and orderNo !=''">
+        and o.order_no = #{orderNo}
+      </if>
+      <if test="vin != null and vin !=''">
+        and vin = #{vin}
+      </if>
+      <if test="materialBarcode != null and materialBarcode !=''">
+        and material_barcode = #{materialBarcode}
+      </if>
+      <if test="lineName != null and lineName != ''">
+        and line_name like CONCAT('%',#{lineName},'%')
+      </if>
+      <if test="partsName != null and partsName != ''">
+        and (parts_name like CONCAT('%',#{partsName},'%') or parts_no like CONCAT('%',#{partsName},'%'))
+      </if>
+      <if test="partsNo != null and partsNo != ''">
+        and parts_no like CONCAT('%',#{partsNo},'%')
+      </if>
+      <if test="batch != null and batch !=''">
+        and batch like CONCAT('%',#{batch},'%')
+      </if>
+      <if test="materialNo != null and materialNo != ''">
+        and material_no like CONCAT('%',#{materialNo},'%')
+      </if>
+   </select>
+   
+   <select id="getBusByPartsBatchList" parameterType="Map" resultType="Map">    	
+		select a.*,f.factory_name,b.vin,
+		concat(o.order_no,' ',o.order_name,left(a.bus_number,LOCATE('-',a.bus_number)-1), ' ',o.order_qty,'台') order_desc
+		from(
+		select distinct  upper(p.bus_number) bus_number,p.factory_id,p.workshop,p.parts_name,p.batch,p.edit_date,p.parts_no
+		from BMS_QM_KEY_PARTS p
+		where 1=1
+		<if test="batch !=null and batch !=''">
+			and p.batch=#{batch}
+		</if>
+		<if test="parts !=null and parts !=''">
+			and (p.parts_name like concat('%',#{parts},'%') or p.parts_no like concat('%',#{parts},'%') )
+		</if>
+		<if test="factory !=null and factory !=''">
+			and p.factory_id=#{factory}
+		</if>
+		<if test="workshop !=null and workshop !='全部' ">
+			and p.workshop=#{workshop}
+		</if>
+		<if test="busNumber !=null and busNumber !='' ">
+			and p.bus_number=#{busNumber}
+		</if>
+			
+        ) a
+		left join BMS_BASE_FACTORY f on f.id=a.factory_id
+		left join BMS_PLAN_BUS b on b.bus_number=a.bus_number
+		left join BMS_OR_ORDER o on o.id=b.order_id
+		where 1=1 and b.bus_number is not null 
+		<if test="vin !=null and vin !='' ">
+			and b.vin=#{vin} 
+		</if>
+		<if test="busNumber !=null and busNumber !='' ">
+			and b.bus_number=#{busNumber}
+		</if>
+		<if test="productive_year !=null and productive_year !='' ">
+			and o.productive_year=#{productive_year}
+		</if>
+		<if test="orderNo !=null and orderNo !='' ">
+			and o.order_no=#{orderNo}
+		</if>
+		order by a.bus_number
+		limit #{start},#{limit}
+		
+     </select>
+     
+     <select id="getBusByPartsBatchCount" parameterType="Map" resultType="int">
+     	select count(distinct p.id)
+		from BMS_QM_KEY_PARTS p
+		left join BMS_PLAN_BUS b on b.bus_number=p.bus_number
+		left join BMS_OR_ORDER o on o.id=b.order_id
+		where 1=1
+		<if test="batch !=null and batch !=''">
+			and p.batch=#{batch}
+		</if>
+		<if test="parts !=null and parts !=''">
+			and (p.parts_name like concat('%',#{parts},'%') or p.parts_no like concat('%',#{parts},'%') )
+		</if>
+		<if test="factory !=null and factory !=''">
+			and p.factory_id=#{factory}
+		</if>
+		<if test="workshop !=null and workshop !='全部' ">
+			and p.workshop=#{workshop}
+		</if>	
+		<if test="vin !=null and vin !=''">
+			and b.vin=#{vin} 
+		</if>
+		<if test="busNumber !=null and busNumber !=''">
+			and b.bus_number=#{busNumber} 
+		</if>
+		<if test="productive_year !=null and productive_year !='' ">
+			and o.productive_year=#{productive_year}
+		</if>
+		<if test="orderNo !=null and orderNo !='' ">
+			and o.order_no=#{orderNo}
+		</if>
+     </select>
+</mapper>

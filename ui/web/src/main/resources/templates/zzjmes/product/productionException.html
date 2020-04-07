@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>故障录入</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak style="width:600px">
+		<div id="ecnLayer" class="box-body" style="padding: 10px;">
+			<table id="ecnTable" class="table">
+				<thead>
+					<tr>
+						<th width="40px">&nbsp;&nbsp;<i id="addecntr" @click="addEcnTr" class="fa fa-plus"style="cursor: pointer;color: blue;"></i></th>
+						<th width="100px">异常类别</th>
+						<th width="120px">异常原因</th>
+						<th width="100px">详细原因</th>
+						<th width="150px">处理方案</th>
+					</tr>
+				</thead>
+				<tbody id="ecntbody" class="exp-table">
+				<!-- <tr>
+				<td></td>
+				<td>
+					<select id="exception_type_code" class="input-small" style="height:25px;width:100px">
+						<#list tag.masterdataDictList('EXCEPTION_TYPE') as dict>
+						<option value="${dict.code}">${dict.value}</option>
+						</#list>
+					</select>
+				</td>
+				<td>
+				<select id="reason_type_code" class="input-small" style="height:25px;width:150px">
+					<#list tag.masterdataDictList('ABNORMAL_REASON') as dict>
+						<option value="${dict.code}">${dict.value}</option>
+					</#list>
+				</select>
+				</td>
+				<td><input style="width:200px" id="detailed_exception" type="text" value=""/></td>
+				</tr> -->
+				</tbody>
+			</table>
+			<button id="btnSubmit" type="button" @click="btnSubmitClick" hidden="true" ></button>
+		</div>
+	</div>
+</body>
+<script>
+var vm = new Vue({
+	el:'#rrapp',
+	data:{
+		plan_item_id:0,
+		pmd_item_id:0,
+		del_ids:''
+	},
+	created:function(){
+		
+	},
+	methods: {
+		addEcnTr: function() {
+			var addtr = '<tr><td>&nbsp;&nbsp;<i id="removeEcnTr" class="fa fa-times removeEcnTr"'+
+			' style="cursor: pointer;color: blue;"></i></td><td><select id="exception_type_code" class="input-small" style="height:25px;width:100px">'+
+			'<#list tag.masterdataDictList('EXCEPTION_TYPE') as dict><option value="${dict.value}">${dict.value}</option></#list></select></td>'+
+			'<td><select id="reason_type_code" class="input-small" style="height:25px;width:120px"><#list tag.masterdataDictList('ABNORMAL_REASON') as dict><option value="${dict.value}">${dict.value}</option></#list></select></td>'+
+			'<td><input style="width:100px" type="text" value=""/></td><td><input style="width:100px" disabled="disabled" type="text" value=""/></td><td style="display:none"><input style="width:50px" type="text" value="0"/></td></tr>'
+			$("#ecnTable tbody").append(addtr);
+		},
+		btnSubmitClick: function() {
+			var ecntbody=$("#ecntbody").find("tr");
+			var exc_str = ""
+			$.each(ecntbody,function(index,param){
+				var tds=$(param).children("td");
+				exc_str += $(tds[1]).find("select").val() + "," + $(tds[2]).find("select").val() + "," + 
+				$(tds[3]).find("input").val() + "," + $(tds[5]).find("input").val() + ";"
+			})
+			
+			$.ajax({
+				type : "post",
+				dataType : "json",
+				async : false,
+				url : baseUrl+"zzjmes/common/productionExceptionManage",
+				data : {
+					"plan_item_id" : vm.plan_item_id,
+					"pmd_item_id" : vm.pmd_item_id,
+					"exc_str":exc_str,
+					"del_ids":vm.del_ids.substring(0,vm.del_ids.length-1)
+				},
+				success:function(response){
+					js.showMessage("保存成功！")
+				}
+			});
+		}
+	}
+});
+$(function () {
+	vm.plan_item_id = GetQueryString('plan_item_id')
+	vm.pmd_item_id = GetQueryString('pmd_item_id')
+	
+	$.ajax({
+		type : "post",
+		dataType : "json",
+		async : false,
+		url : baseUrl+"zzjmes/common/getProductionExceptionList",
+		data : {
+			"plan_item_id" : vm.plan_item_id,
+			"pmd_item_id" : vm.pmd_item_id
+		},
+		success:function(response){
+			if(response.code === 0){	
+				if(response.data.length > 0){
+					for(var i=0;i<response.data.length;i++){
+						vm.addEcnTr()
+					}
+					var ecntbody=$("#ecntbody").find("tr");
+					$.each(ecntbody,function(index,param){
+						var tds=$(param).children("td");
+						$(tds[1]).find("select").val(response.data[index].exception_type_code)
+						$(tds[2]).find("select").val(response.data[index].reason_type_code)
+						$(tds[3]).find("input").val(response.data[index].detailed_exception)
+						$(tds[4]).find("input").val(response.data[index].solution)
+						$(tds[5]).find("input").val(response.data[index].id)
+					})
+				}
+			}
+		}
+	});
+	
+	$(document).on("click",".removeEcnTr",function(e){
+		if($(($($(e.target).closest("tr")).children("td"))[5]).find("input").val() != "0"){
+			vm.del_ids += $(($($(e.target).closest("tr")).children("td"))[5]).find("input").val() + ","
+		}
+		$(e.target).closest("tr").remove();	
+	})
+	
+	function GetQueryString(name){
+	    var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+	    var r = window.location.search.substr(1).match(reg);
+	    if(r!=null)return  unescape(r[2]); return null;
+	}
+})
+</script>
+</html>

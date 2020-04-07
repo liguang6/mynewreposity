@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.pda.dao.PdaInventorySearchDao">
+
+    <select id="queryMatnr" parameterType="Map" resultType="Map">
+      SELECT * from WMS_CORE_STOCK_LABEL
+      where LABEL_NO = #{LABEL_NO}
+    </select>
+    
+    <select id="inventoryList" parameterType="Map" resultType="Map">
+      SELECT * from WMS_CORE_STOCK
+      where MATNR = #{MATNR}
+      and WERKS = #{WERKS}
+    </select>
+
+</mapper>

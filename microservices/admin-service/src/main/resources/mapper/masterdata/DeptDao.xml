@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.DeptDao">
+	
+	<select id="queryDetpIdList" resultType="long">
+		select dept_id from sys_dept where parent_id = #{value} and status = '0'
+	</select>
+	<select id="queryParentDeptId" resultType="long">
+		select parent_id from sys_dept where dept_id = #{value} and status = '0'
+	</select>
+	
+	<select id="queryDeptList" resultType="com.byd.admin.modules.masterdata.entity.DeptEntity" parameterType="Map">
+		SELECT d.*,t.value AS deptTypeName FROM sys_dept d 
+		LEFT JOIN MASTERDATA_DICT t ON t.type = 'DEPT_TYPE' AND d.dept_type = t.code
+		WHERE d.status != '1'
+		<if test="nodeid == null">
+			AND d.parent_id = '0'
+		</if>
+		<if test="nodeid != '' and nodeid != null">
+			AND d.parent_id = #{nodeid}
+		</if>
+		<if test="deptType != '' and deptType != null">
+			AND t.dept_type = #{deptType}
+		</if>
+	</select>
+	
+	<select id="queryDeptListAll" resultType="com.byd.admin.modules.masterdata.entity.DeptEntity" parameterType="Map">
+		SELECT d.*,t.value AS deptTypeName
+		FROM sys_dept d 
+		LEFT JOIN MASTERDATA_DICT t ON t.type = 'DEPT_TYPE' AND d.dept_type = t.code
+		WHERE d.status != '1'
+	</select>
+	
+	<update id="enableDept" parameterType="long">
+		UPDATE sys_dept SET status = '0' WHERE dept_id = #{deptId}
+	</update>
+	<update id="disabledDept" parameterType="long">
+		UPDATE sys_dept SET status = '2' WHERE dept_id = #{deptId}
+	</update>
+	<update id="deleteDept" parameterType="long">
+		UPDATE sys_dept SET status = '1' WHERE dept_id = #{deptId}
+	</update>
+	<update id="updateDept" parameterType="com.byd.admin.modules.masterdata.entity.DeptEntity">
+		UPDATE sys_dept SET name = #{name},code = #{code},dept_kind = #{deptKind}, dept_type = #{deptType},
+		tree_sort = #{treeSort},leader = #{leader},remarks = #{remarks},
+		update_by = #{updateBy},update_date = #{updateDate}
+		WHERE dept_id = #{deptId}
+	</update>
+
+    <!-- 查询用户所属的部门列表 -->
+	<select id="selectDeptByUserId" resultType="com.byd.admin.modules.masterdata.entity.DeptEntity">
+	   SELECT * FROM sys_dept where dept_id 
+	   in
+	   (SELECT dept_id from sys_user_dept WHERE user_id = #{userId})
+	</select>
+	
+	<!-- 查询用户的权限部门列表 -->
+	<select id="queryAuthDeptList" resultType="com.byd.admin.modules.masterdata.entity.DeptEntity" parameterType="Map">
+		SELECT d.*,t.value AS deptTypeName FROM sys_dept d 
+		LEFT JOIN MASTERDATA_DICT t ON t.type = 'DEPT_TYPE' AND d.dept_type = t.code
+		WHERE d.status != '1'
+		<if test="deptType != '' and deptType != null">
+			AND t.dept_type = #{deptType}
+		</if>
+	</select>
+	
+	
+	<select id="getPlantList" resultType="Map" parameterType="String">
+		SELECT d.CODE,d.NAME,d.CODE as WERKS,d.NAME as WERKSNAME,d.NAME as WERKS_NAME 
+		FROM sys_dept d 
+		WHERE d.status = '0'
+		AND d.dept_type = 'WERKS'
+		<if test="werks != '' and werks != null">
+			AND d.CODE LIKE '%' ||  upper(#{werks}) || '%'  
+		</if>
+	</select>
+	
+	<select id="getDeptChildNodes" resultType="Map" parameterType="Map">
+		SELECT c.*
+			FROM SYS_DEPT c 
+			<if test="CODE != '' and CODE != null">
+				INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' AND ( p.CODE = #{CODE} OR p.NAME LIKE '%' || #{CODE} || '%' )
+			</if>
+			WHERE c.STATUS = '0'
+			AND c.dept_type = #{DEPT_TYPE}
+		
+	</select>
+	
+	<select id="getWorkshopLineList" resultType="Map" parameterType="Map">
+
+		SELECT c.*
+			FROM SYS_DEPT c 
+			INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' AND (p.CODE = #{WORKSHOP} OR p.NAME = #{WORKSHOP})
+			INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' AND (p1.CODE = #{WERKS} OR p1.NAME = #{WERKS} )
+			WHERE c.STATUS = '0'
+			AND c.dept_type = 'LINE'
+		
+	</select>
+	
+		
+	<select id="getWorkshopWorkgroupList" resultType="Map" parameterType="Map">
+	
+		SELECT c.*
+			FROM SYS_DEPT c 
+			INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' AND (p.CODE = #{WORKSHOP} OR p.NAME = #{WORKSHOP})
+			INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' AND (p1.CODE = #{WERKS} OR p1.NAME = #{WERKS} )
+			WHERE c.status = '0'
+			AND c.dept_type = 'WORKGROUP'
+		 
+	</select>
+	
+	<select id="getWorkshopWorkgroupListNEW" resultType="Map" parameterType="Map">
+	SELECT * FROM (
+    SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT c.*
+			FROM SYS_DEPT c 
+			INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' 
+			<if test="workshoplist !=null and workshoplist !='' ">
+			AND (
+			(p.CODE in 
+			<foreach collection="workshoplist" item="WORKSHOP" separator="," open="(" close=")">
+				#{WORKSHOP}
+			</foreach>
+			) or (p.NAME in 
+			<foreach collection="workshoplist" item="WORKSHOP" separator="," open="(" close=")">
+				#{WORKSHOP}
+			</foreach>
+			)
+			)
+			</if>
+			
+			INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' AND (p1.CODE = #{WERKS} OR p1.NAME = #{WERKS} )
+			WHERE c.status = '0'
+			AND c.dept_type = 'WORKGROUP'
+		 ) TMP
+		<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+	</select>
+	
+	<select id="getTeamList" resultType="Map" parameterType="Map">
+		SELECT c.*
+		FROM SYS_DEPT c 
+		INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' AND (p.CODE = #{WORKGROUP} OR p.NAME = #{WORKGROUP})
+		INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' AND (p1.CODE = #{WORKSHOP} OR p1.NAME = #{WORKSHOP})
+		INNER JOIN SYS_DEPT p2 ON p1.PARENT_ID = p2.DEPT_ID AND p2.STATUS = '0' AND (p2.CODE = #{WERKS} OR p2.NAME = #{WERKS})
+		WHERE c.status = '0'
+		AND c.dept_type = 'TEAM'
+	</select> 
+	
+	<select id="getTeamListNEW" resultType="Map" parameterType="Map">
+	SELECT * FROM (
+    SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT c.*
+		FROM SYS_DEPT c 
+		INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' 
+		<if test="workgrouplist !=null and workgrouplist !='' ">
+		AND (
+		(	p.CODE in 
+			<foreach collection="workgrouplist" item="WORKGROUP" separator="," open="(" close=")">
+				#{WORKGROUP}
+			</foreach>
+		) 
+		or (
+			p.NAME in 
+			<foreach collection="workgrouplist" item="WORKGROUP" separator="," open="(" close=")">
+				#{WORKGROUP}
+			</foreach>
+		)
+		)
+		</if>
+		
+		
+		INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' 
+		<if test="workshoplist !=null and workshoplist !='' ">
+		AND (
+			(p1.CODE in
+			<foreach collection="workshoplist" item="WORKSHOP" separator="," open="(" close=")">
+				#{WORKSHOP}
+			</foreach>
+			) or (
+			 p1.NAME in 
+			 <foreach collection="workshoplist" item="WORKSHOP" separator="," open="(" close=")">
+				#{WORKSHOP}
+			</foreach>
+			)
+		)
+		</if>
+		INNER JOIN SYS_DEPT p2 ON p1.PARENT_ID = p2.DEPT_ID AND p2.STATUS = '0' AND (p2.CODE = #{WERKS} OR p2.NAME = #{WERKS})
+		WHERE c.status = '0'
+		AND c.dept_type = 'TEAM'
+		) TMP
+		<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+	</select>
+	
+	<select id="getWorkTeamListCount" resultType="int" parameterType="Map">
+		SELECT count(*)
+		FROM SYS_DEPT c 
+		INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' 
+		
+		<if test="workgrouplist !=null and workgrouplist !='' ">
+		AND (
+		(	p.CODE in 
+			<foreach collection="workgrouplist" item="WORKGROUP" separator="," open="(" close=")">
+				#{WORKGROUP}
+			</foreach>
+		) 
+		or (
+			p.NAME in 
+			<foreach collection="workgrouplist" item="WORKGROUP" separator="," open="(" close=")">
+				#{WORKGROUP}
+			</foreach>
+		)
+		)
+		</if>
+		
+		INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' 
+		<if test="workshoplist !=null and workshoplist !='' ">
+		AND (
+			(p1.CODE in
+			<foreach collection="workshoplist" item="WORKSHOP" separator="," open="(" close=")">
+				#{WORKSHOP}
+			</foreach>
+			) or (
+			 p1.NAME in 
+			 <foreach collection="workshoplist" item="WORKSHOP" separator="," open="(" close=")">
+				#{WORKSHOP}
+			</foreach>
+			)
+		)
+		</if>
+		INNER JOIN SYS_DEPT p2 ON p1.PARENT_ID = p2.DEPT_ID AND p2.STATUS = '0' AND (p2.CODE = #{WERKS} OR p2.NAME = #{WERKS})
+		WHERE c.status = '0'
+		AND c.dept_type = 'TEAM'
+	</select>
+	
+	<select id="getWorkshopWorkgroupListCount" parameterType="Map" resultType="int">
+
+		SELECT count(*)
+			FROM SYS_DEPT c 
+			INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' 
+			<if test="workshoplist !=null and workshoplist !='' ">
+			AND (
+			(p.CODE in 
+			<foreach collection="workshoplist" item="WORKSHOP" separator="," open="(" close=")">
+				#{WORKSHOP}
+			</foreach>
+			) or (p.NAME in 
+			<foreach collection="workshoplist" item="WORKSHOP" separator="," open="(" close=")">
+				#{WORKSHOP}
+			</foreach>
+			)
+			)
+			</if>
+			
+			INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' AND (p1.CODE = #{WERKS} OR p1.NAME = #{WERKS} )
+			WHERE c.status = '0'
+			AND c.dept_type = 'WORKGROUP'
+		
+	</select>
+	<select id="getTeamListByWorkshop" resultType="Map" parameterType="Map">
+		SELECT * FROM SYS_DEPT t WHERE t.status = '0' and  t.parent_id in (
+		   SELECT dept_id FROM SYS_DEPT t1 WHERE t1.status = '0' and  t1.parent_id in (
+		      SELECT dept_id FROM SYS_DEPT t2 WHERE t2.status = '0' and t2.parent_id in (
+		      select dept_id from SYS_DEPT t3 where t3.status = '0' and  t3.code=#{WERKS}) and t2.code=#{WORKSHOP}
+		   )
+		)
+	</select>
+</mapper>

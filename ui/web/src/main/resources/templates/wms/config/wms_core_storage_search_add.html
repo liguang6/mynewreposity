@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>分配存储类型至搜索顺序配置</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+					<div class="form-group" style="align:center;margin-top:15px">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>${tag.getLocale('warehouseCode','M')}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+							      <input type="text" @click="getWhNoFuzzy()" id="warehouseCode" name="warehouseCode"  class="form-control required"  placeholder="${tag.getLocale('warehouseCode','M')}"/>
+							    </div>
+
+						</div>
+					</div>
+					<div class="form-group" style="align:center;margin-top:15px">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								${tag.getLocale('factoryCode','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text"  id="factoryCode" name="factoryCode"  class="form-control "  placeholder="${tag.getLocale('factoryCode','M')}"/>
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>${tag.getLocale('storageAreaSearch','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text"  name="storageAreaSearch"  class="form-control required"  placeholder="${tag.getLocale('storageAreaSearch','M')}"/>
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>${tag.getLocale('storageAreaCode','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input @blur="getPlantNoFuzzy()" ID="storageAreaCode" type="text"  name="storageAreaCode"  class="form-control required"   placeholder="${tag.getLocale('storageAreaCode','M')}"/>
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								${tag.getLocale('AREANAME','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input readonly="readonly" id = "AREANAME" type="text"  name="AREANAME"  class="form-control"  />
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								</font>${tag.getLocale('priority','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text"  name="priority"  class="form-control"  placeholder="${tag.getLocale('priority','M')}"/>
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								${tag.getLocale('STATUS','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+
+								<select id="status" name="status"  style="width:100%">
+									<option value=''>请选择</option>
+									<option value='0'>启用</option>
+									<option value='1'>禁用</option>
+								</select>
+
+							</div>
+						</div>
+					</div>
+
+<!--                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                ${tag.getLocale('status','M')}：
+                            </label>
+                            <div style="float:left;width:50%" class="col-sm-8">
+
+								<select id="status" name="status" v-model="storage.status" style="width:100%">
+									<option value=''>请选择</option>
+									<option value='0'>启用</option>
+									<option value='1'>禁用</option>
+								</select>
+
+                            </div>
+                        </div>
+                    </div>-->
+
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_core_storage_search_edit.js?_${.now?long}"></script>
+</body>
+</html>

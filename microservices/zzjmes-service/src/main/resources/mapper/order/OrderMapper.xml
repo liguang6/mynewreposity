@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.order.dao.OrderDao">
+	<select id="getOrderListSelect" parameterType="Map" resultType="Map">
+	SELECT * FROM ZZJ_WERKS_ORDER WHERE order_no LIKE '%2019%'
+	</select>
+	
+	<select id="getOrderList" parameterType="Map" resultType="Map">
+	SELECT O.*,(SELECT COUNT(*) FROM ZZJ_PMD_HEAD WHERE order_no = O.order_no) PMD_COUNT 
+	FROM ZZJ_WERKS_ORDER O  WHERE 1=1 
+	<if test="search_werks != '' and search_werks != null">
+	AND O.werks = #{search_werks}
+	</if>
+	<if test="search_order != '' and search_order != null">
+	AND O.order_no LIKE CONCAT('%',#{search_order},'%')
+	</if>
+	<if test="search_order_type_code != '' and search_order_type_code != null">
+	AND O.order_type_code = #{search_order_type_code}
+	</if>
+	<if test="search_bus_type_code != '' and search_bus_type_code != null">
+	AND O.bus_type_code = #{search_bus_type_code}
+	</if>
+	<if test="search_sale_dept_code != '' and search_sale_dept_code != null">
+	AND O.sale_dept_code = #{search_sale_dept_code}
+	</if>
+	<if test="search_status != '' and search_status != null">
+	AND O.status = #{search_status}
+	</if>
+	<if test="search_year != '全部' and search_year != '' and search_status != null">
+	AND O.productive_year = #{search_year}
+	</if> 
+	<if test="pageSize != '' and pageSize != null">
+	LIMIT ${start},${pageSize} 
+	</if>
+	</select>
+	<select id="getOrderListTotalCount" parameterType="Map" resultType="int">
+	SELECT COUNT(*) FROM ZZJ_WERKS_ORDER WHERE 1=1 
+	<if test="search_werks != '' and search_werks != null">
+	AND werks = #{search_werks}
+	</if>
+	<if test="search_order != '' and search_order != null">
+	AND order_no LIKE CONCAT('%',#{search_order},'%')
+	</if>
+	<if test="search_order_type_code != '' and search_order_type_code != null">
+	AND order_type_code = #{search_order_type_code}
+	</if>
+	<if test="search_bus_type_code != '' and search_bus_type_code != null">
+	AND bus_type_code = #{search_bus_type_code}
+	</if>
+	<if test="search_sale_dept_code != '' and search_sale_dept_code != null">
+	AND sale_dept_code = #{search_sale_dept_code}
+	</if>
+	<if test="search_status != '' and search_status != null">
+	AND status = #{search_status}
+	</if>
+	<if test="search_year != '全部' and search_year != '' and search_status != null">
+	AND productive_year = #{search_year}
+	</if> 
+	</select>
+	<insert id="addOrder" parameterType="Map">
+	INSERT INTO ZZJ_WERKS_ORDER
+	(order_no,werks,werks_name,order_name,order_type_code,order_type_name,vehicle_type_code,vehicle_type_name,
+	bus_type_code,internal_name,order_qty,order_area_code,order_area_name,order_desc,productive_year,delivery_date,status,
+	special_requirements,relate_order,customer,sale_dept_code,sale_dept_name,memo,editor,edit_date,creator,creat_date)
+	VALUES(#{order_no},#{werks},#{werks_name},#{order_name},#{order_type_code},#{order_type_name},#{vehicle_type_code},#{vehicle_type_name}
+	,#{bus_type_code},#{internal_name},#{order_qty},#{order_area_code},#{order_area_name},#{order_desc},#{productive_year},#{delivery_date},#{status},
+	#{special_requirements},#{relate_order},#{customer},#{sale_dept_code},#{sale_dept_name},#{memo},#{editor},#{edit_date},#{creator},#{creat_date})
+	</insert>
+	<select id="queryMaxOrderNo" resultType="String" parameterType="Map">
+	<![CDATA[
+		SELECT MAX(order_no) FROM ZZJ_WERKS_ORDER WHERE order_no LIKE CONCAT('%',#{productive_year},'%')
+	]]>
+	</select>
+	<update id="editOrder" parameterType="Map">
+	UPDATE ZZJ_WERKS_ORDER SET order_name = #{order_name},order_area_code = #{order_area_code},order_area_name = #{order_area_name},
+	order_qty = #{order_qty}, productive_year = #{productive_year}, delivery_date = #{delivery_date}, 
+	order_desc = #{order_desc},relate_order=#{relate_order},status=#{status},sale_dept_name = #{sale_dept_name},
+	sale_dept_code = #{sale_dept_code}, memo = #{memo}, editor = #{editor}, edit_date = #{edit_date}	
+	WHERE id = #{id}
+	</update>
+	<delete id="delOrder" parameterType="Map">
+	DELETE FROM ZZJ_WERKS_ORDER WHERE id = #{id}
+	</delete>
+	
+</mapper>

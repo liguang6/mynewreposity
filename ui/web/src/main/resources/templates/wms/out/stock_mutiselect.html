@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库位选择</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div class="wrapper" id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+			    <div class="container">
+				    <table id="dataGrid"></table>
+				</div>
+			</div>
+		</div>
+</div>
+</body>
+<script type="text/javascript">
+ var vm = new Vue({
+	 el:"#vue-app",
+	 data:{
+		 items:[],
+		 default_list:'',
+	 },
+	 methods:{
+		 init:function(werks,whNumber,matnr){
+			 $.ajax({
+				 url:baseUrl +"out/createRequirement/lgortAndStock",
+				 data:{"werks":werks,"whNumber":whNumber,"matnr":matnr},
+				 success:function(resp){
+					 if(resp.code === 0){
+						 vm.items = resp.data; 
+						 vm.initTable();
+					 }
+				 }
+			 }) 
+		 },
+		 initTable: function(){
+			$("#dataGrid").dataGrid({
+				datatype : "local",
+				colNames:['库位','库存总数'],
+				colModel : [{
+					name:"LGORT",
+					index:"LGORT",
+					align:"center"
+				},{
+					name:"STOCK_TOTAL_QTY",
+					index:"STOCK_TOTAL_QTY",
+					align:"center",
+					hidden: true
+				}],
+				multiselect : true
+			}); 
+			this.refresh();
+		 },
+		 getSelectedItems:function(){
+			 //获取ids
+			 var s  = $("#dataGrid").jqGrid('getGridParam','selarrrow');
+			 var items = [];
+			 //获取行数据
+			 for(var i=0;i<s.length;i++){
+				 var rowData = $("#dataGrid").jqGrid('getRowData',s[i]);
+				 items[i] = rowData;
+			 }
+			 return items;
+		 },
+		 close : function(){
+			close(); 
+		 },
+		 refresh : function() {
+				// 刷新表单
+				$("#dataGrid").dataGrid("clearGridData");
+				for (var i = 0; i < this.items.length; i++) {
+					$("#dataGrid").dataGrid("addRowData", i, this.items[i]);
+					if(this.default_list.indexOf(this.items[i].LGORT)>=0){
+						$("#dataGrid").jqGrid('setSelection',i);
+					}
+				}
+				
+				
+		},
+		hiddenColum:function(columName){
+			if(columName === null || columName === undefined){
+				columName = "STOCK_TOTAL_QTY";
+			}
+			$("#dataGrid").setGridParam().hideCol(columName).trigger("reloadGrid");
+		}
+	 }
+ })
+</script>
+</html>

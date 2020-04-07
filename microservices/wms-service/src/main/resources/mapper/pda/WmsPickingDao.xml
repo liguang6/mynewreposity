@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.pda.dao.WmsPickingDao">
+		<insert id="insertCoreLabel" parameterType="List">
+		insert into WMS_CORE_LABEL (ID,LABEL_NO,F_LABEL_NO,RECEIPT_NO,RECEIPT_ITEM_NO,WMS_NO,WMS_ITEM_NO,LABEL_STATUS,QC_RESULT_CODE,BOX_SN,
+		FULL_BOX_QTY,BOX_QTY,END_FLAG,WERKS,MATNR,MAKTX,F_UNIT,F_BATCH,
+		BATCH,SOBKZ,DEL,CREATOR,CREATE_DATE,WH_NUMBER,LGORT,BIN_CODE,UNIT,INBOUND_NO,INBOUND_ITEM_NO,
+		PRODUCT_DATE,LIFNR,LIKTX,EFFECT_DATE,PRODUCT_CODE,STATION,ON_LINE_TYPE,ON_LINE_MOUTH,CAR_TYPE,
+		DOSAGE,CONFIGURATION
+		)
+		select SEQ_WMS_CORE_LABEL.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select  #{d.LABEL_NO},#{d.F_LABEL_NO},#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.WMS_NO},#{d.WMS_ITEM_NO},#{d.LABEL_STATUS},#{d.QC_RESULT_CODE},#{d.BOX_SN},
+		cast(nvl(#{d.FULL_BOX_QTY},0) as number),cast(nvl(#{d.BOX_QTY},0) as number),#{d.END_FLAG},#{d.WERKS},
+		#{d.MATNR},#{d.MAKTX},#{d.F_UNIT},#{d.F_BATCH},#{d.BATCH},#{d.SOBKZ},'0',#{d.CREATOR},#{d.CREATE_DATE},
+		#{d.WH_NUMBER},#{d.LGORT},#{d.BIN_CODE},#{d.UNIT},#{d.INBOUND_NO},#{d.INBOUND_ITEM_NO},
+		#{d.PRODUCT_DATE},#{d.LIFNR},#{d.LIKTX},#{d.EFFECT_DATE},#{d.PRODUCT_CODE},#{d.STATION},#{d.ON_LINE_TYPE},
+		#{d.ON_LINE_MOUTH},#{d.CAR_TYPE},#{d.DOSAGE},#{d.CONFIGURATION}
+		from dual
+		</foreach>
+		) m
+	</insert>
+	      
+</mapper>
+
+  

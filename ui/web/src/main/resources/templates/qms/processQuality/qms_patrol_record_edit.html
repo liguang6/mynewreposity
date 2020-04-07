@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+ .msg-font{color:red}
+</style>
+<meta charset="UTF-8">
+<title>品质巡检记录</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="uploadForm" method="post" class="form-inline"  action="" >
+						<div class="row">
+                            <div class="form-group">
+								<label class="control-label" style="width: 50px">工厂：</label>
+								<div class="control-inline">
+                                       <select  name="werks" id="werks" style="width:100%;height:25px">
+			                                <#list tag.getUserAuthWerks("QMS_PATROL_RECORD") as factory> 
+			                                    <option value="${factory.code}">${factory.code}</option>
+			                                </#list>
+			                            </select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">订单类型：</label>
+								<div class="control-inline">
+                                    <select  name="testType" id="testType" v-model="testType"style="width:100%;height:26px">
+										<option value=''>全部</option>
+										<#list tag.qmsDictList('order_type') as d> 
+									     <option value="${d.code}">${d.value}</option> 
+									    </#list>
+									</select>		
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">订单：</label>
+								<div class="control-inline">
+                                       <input class="" v-model="orderNo" name="orderNo" id="orderNo" 
+                                            @click="getOrderNoSelect()" style="width: 90px;"/>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" style="width: 60px">检验节点：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:110px">
+										<select v-model="testNode" name="testNode" id="testNode" style="width:100%;height:25px" @click="checkTestType()">
+			                                <option value=''>全部</option>
+			                                <option v-for="w in testNodeList" :value="w.testNode" :key="w.testNode">{{ w.testNode }}</option>
+			                             </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<button type="button"  class="btn btn-primary btn-sm" id="btnSave" @click="save">保存</button>
+							</div>							
+						</div>
+						</form>
+						<table id="dataGrid"></table>
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/qms/processQuality/qms_patrol_record_edit.js?_${.now?long}"></script>
+</body>
+</html>

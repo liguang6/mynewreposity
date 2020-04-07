@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>生产订单</title> <#include "/web_header.html">
+
+</head>
+<body>
+	<div class="wrapper" id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+					<form id="searchForm" class="form-inline">
+
+						<div class="form-group">
+
+							<div class="control-inline" style="width: 150px;">
+								<a class="btn btn-success" @click="add">增加新项</a>
+							</div>
+						</div>
+
+						<div class="form-group" v-if="type === '1'">
+							<label class="control-label" style="width: 100px"><span
+								class="required"> *</span>参考订单库位：</label>
+							<div class="control-inline" style="width: 150px;">
+								<select class="form-control" name="referOrderLgort" id = "referOrderLgort">
+									<option value="1" >是</option>
+									<option selected="selected" value="0">否</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group" v-if="type === '1'">
+							<label class="control-label" style="width: 100px"><span
+								class="required"> *</span>过滤零需求行：</label>
+							<div class="control-inline" style="width: 150px;">
+								<select class="form-control" name="filterZeroRequireLine"
+									id ="filterZeroRequireLine">
+									<option  value="1">是</option>
+									<option selected="selected" value="0">否</option>
+								</select>
+							</div>
+						</div>
+
+					</form>
+					<table v-if="type === '1'" class="table table-bordered"  id="t-table" style="text-align: center;">
+						<tr>
+							<th></th>
+							<th>生产订单号</th>
+							<th>需求套数</th>
+							<th>料号</th>
+							<th>数量</th>
+							<th>库位</th>
+							<th>工位</th>
+						</tr>
+
+						<tr v-for="(item,index) in items">
+							<td><a href='#' @click="remove(index)"> <i
+									class='fa fa-times' title="删除" aria-hidden='true'></i></a></td>
+							<td><input class="form-control" v-model="item.orderNo" /></td>
+							<td><input class="form-control"
+								v-model="item.requireSuitQty" /></td>
+							<td><input class="form-control" v-model="item.mat" /></td>
+							<td><input class="form-control" v-model="item.qty" /></td>
+							<td><input class="form-control" v-model="item.location" /></td>
+							<td><input class="form-control" v-model="item.station" /></td>
+						</tr>
+					</table>
+					<table v-if="type === '2' || type==='4'" class="table table-bordered"  id="t-table" style="text-align: center;">
+						<tr>
+							<th></th>
+							<th><span style="color:red;">* </span>采购订单</th>
+							<th v-if="type === '2'">行号</th>
+							<th v-if="type === '4'">料号</th>
+							<th>数量</th>
+						</tr>
+
+						<tr v-for="(item,index) in items">
+							<td><a href='#' @click="remove(index)"> <i class='fa fa-times' title="删除" aria-hidden='true'></i></a></td>
+							<td><input class="form-control" v-model="item.EBELN" /></td>
+							<td v-if="type === '2'"><input class="form-control" v-model="item.EBELP" /></td>
+							<td v-if="type === '4'"><input class="form-control" v-model="item.MATNR" /></td>
+							<td><input class="form-control" v-model="item.qty" /></td>
+						</tr>
+					</table>
+					
+					
+					<table v-if="type === '3'" class="table table-bordered"  id="t-table" style="text-align: center;">
+						<tr>
+							<th></th>
+							<th><span style="color:red;">* </span>SAP交货单</th>
+	
+						</tr>
+
+						<tr v-for="(item,index) in items">
+							<td><a href='#' @click="remove(index)"> <i class='fa fa-times' title="删除" aria-hidden='true'></i></a></td>
+							<td><input class="form-control" v-model="item.deliveryNO" /></td>
+						</tr>
+					</table>
+					
+					<table v-if="type === '5'" class="table table-bordered"  id="t-table" style="text-align: center;">
+						<tr>
+							<th></th>
+							<th><span style="color:red;">* </span>凭证号</th>
+	                        <th>料号</th>
+	                        <th>数量</th>
+						</tr>
+
+						<tr v-for="(item,index) in items">
+							<td><a href='#' @click="remove(index)"> <i class='fa fa-times' title="删除" aria-hidden='true'></i></a></td>
+							<td><input class="form-control" v-model="item.SAP_MATDOC_NO" /></td>
+							<td><input class="form-control" v-model="item.MATNR" /></td>
+							<td><input class="form-control" v-model="item.REQ_QTY" /></td>
+						</tr>
+					</table>
+					<table v-if="type === '6'" class="table table-bordered"  id="t-table" style="text-align: center;">
+						<tr>
+							<th></th>
+							<th><span style="color:red;">* </span>配送单号</th>
+	
+						</tr>
+
+						<tr v-for="(item,index) in items">
+							<td><a href='#' @click="remove(index)"> <i class='fa fa-times' title="删除" aria-hidden='true'></i></a></td>
+							<td><input class="form-control" v-model="item.distribution" /></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/out/out_req_order_query.js?_${.now?long}"></script>
+</html>

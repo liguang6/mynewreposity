@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.out.dao.ScannerOutDAO">
+
+
+	<update id="updateBarcodeQty" parameterType="String">
+		update
+		WMS_CORE_LABEL l
+			set l.LABEL_STATUS = '10'
+			<if test="reciveLgort != null and reciveLgort !=''">
+				, l.LGORT = #{reciveLgort}
+			</if>
+			<if test="SOBKZ != null and SOBKZ !=''">
+				, l.SOBKZ = #{SOBKZ}
+			</if>
+		where l.label_no = #{labelNo}
+		and l.werks = #{werks}
+	</update>
+
+	<delete id="deteleCacheBarcodeByCreator" parameterType="List">
+		delete
+		from wms_pda_scan_cache l
+		where 1=1 
+		<if test="list != null and list.size>0">
+			and l.LABEL_NO in 
+		    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+              #{item}       
+       		</foreach> 
+       	</if>
+   		 <if test="list==null or list.size==0">and 1=0</if> 
+	</delete>
+
+	<select id="queryBarcodeOnly" resultType="Map"
+		parameterType="Map">
+		select
+		*
+		from wms_pda_scan_cache l
+		where
+		1=1
+		and l.LABEL_NO = #{LABEL_NO}
+
+	</select>
+
+
+	<select id="queryBarcodeCache" resultType="map">
+		select
+		*
+		from wms_pda_scan_cache l
+		where
+		1=1
+		<if test="CREATOR != null and CREATOR !=''">
+			and l.CREATOR = #{CREATOR}
+		</if>
+		<if test="WERKS != null and WERKS !=''">
+			and l.WERKS = #{WERKS}
+		</if>
+		<if test="WH_NUMBER != null and WH_NUMBER !=''">
+			and l.WH_NUMBER = #{WH_NUMBER}
+		</if>
+		<if test="BUSINESS_NAME != null and BUSINESS_NAME !=''">
+			and l.BUSINESS_NAME = #{BUSINESS_NAME}
+		</if>
+	</select>
+		
+	<insert id="saveLabelByPda" parameterType="ArrayList">
+
+		INSERT INTO wms_pda_scan_cache
+		(ID,WH_NUMBER,WERKS,BUSINESS_NAME,LABEL_NO,MATNR,MAKTX,QTY,UNIT,CREATOR,CREATE_DATE,postVehicleID,BATCH)
+		SELECT WMS_PDA_SCAN_CACHE_SEQ.nextval,m.* FROM (
+		<foreach collection="list" item="item" index="index"
+			separator="UNION ALL">
+			SELECT
+			#{item.WERKS,jdbcType=VARCHAR},
+			#{item.WERKS,jdbcType=VARCHAR},
+			#{item.BUSINESS_NAME,jdbcType=VARCHAR},
+			#{item.LABEL_NO,jdbcType=VARCHAR},
+			#{item.MATNR,jdbcType=VARCHAR},
+			#{item.MAKTX,jdbcType=VARCHAR},
+			#{item.BOX_QTY,jdbcType=VARCHAR},
+			#{item.UNIT,jdbcType=VARCHAR},
+			#{item.CREATOR,jdbcType=VARCHAR},
+			#{item.CREATE_DATE,jdbcType=VARCHAR},
+			#{item.postVehicleID,jdbcType=VARCHAR},
+			#{item.BATCH,jdbcType=VARCHAR}
+			FROM DUAL
+		</foreach>
+		) m
+
+	</insert>
+	
+	<select id="selectCoreLabel" parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_CORE_LABEL p WHERE 
+		p.WERKS = #{params.WERKS} 
+		AND p.WH_NUMBER = #{params.WH_NUMBER}
+		and p.LABEL_NO = #{params.LABEL_NO}
+		<if test="params.SEND_LGORT != null and params.SEND_LGORT !=''">
+			and p.LGORT = #{params.SEND_LGORT}
+		</if>
+	</select>
+	
+	
+	<!-- 扫PDA出库，查询标签出库信息 -->
+	<select id="queryCoreLabelByPda" resultType="Map">
+		select
+		*
+		from WMS_CORE_LABEL l
+		where
+		1=1
+		<if test="LABEL_NO != null and LABEL_NO !=''">
+			and l.LABEL_NO = #{LABEL_NO}
+		</if>
+
+	</select>
+
+
+	<select id="selectOutRequirementHead" resultType="Map">
+		SELECT * FROM
+		wms_out_requirement_head
+		WHERE WERKS = #{params.werks} AND WH_NUMBER =
+		#{params.whNumber}
+		AND requirement_no = #{params.requirementNo} AND
+		requirement_type =
+		#{params.requirementType}
+	</select>
+
+
+	<select id="selectBusinessNames" resultType="Map">
+		<!-- 查询业务类型 -->
+		select code,value from sys_dict
+		where type = 'BUSINESS_NAME' and code
+		in (
+		select distinct b.business_name from WMS_C_PLANT_BUSINESS t
+		left
+		join WMS_C_WMS_BUSINESS b on t.Business_Code = b.business_code
+		where
+		t.werks = #{werks} and b.business_class = #{businessClass}
+		) order by
+		code
+	</select>
+
+	<select id="selectPlantBusiness" resultType="Map">
+		<!-- 查询工厂业务类型 -->
+		select distinct
+		b.business_name,b.business_type,b.business_code,b.business_class from
+		WMS_C_PLANT_BUSINESS t
+		left join WMS_C_WMS_BUSINESS b on
+		t.Business_Code = b.business_code
+		where t.werks = #{werks} and
+		b.business_class = #{businessClass} and b.business_name =
+		#{businessName}
+	</select>
+
+
+	<update id="updateStockXJQty" parameterType="Map">
+		<!-- 更新库存下架数量 -->
+		update wms_core_stock s
+		<trim prefix="set" suffixOverrides=",">
+			<if test="qty != null and qty !=''">
+				s.stock_qty = s.stock_qty - #{qty},
+			</if>
+			<if test="xjBinCode != null and xjBinCode !=''">
+				s.xj_bin_code = #{xjBinCode},
+			</if>
+			s.xj_qty = #{xjQty}
+
+
+		</trim>
+		where s.batch = #{batch} and s.matnr = #{matnr} and s.werks = #{werks}
+	</update>
+
+	<update id="updateOutPicking" parameterType="Map">
+		<!-- 更新出库拣配记录 -->
+		update WMS_OUT_PICKING o set
+		<if test="params.DEL != null and params.DEL !=''">
+			o.DEL = #{params.DEL},
+		</if>
+		<if
+			test="params.REQ_ITEM_STATUS != null and params.REQ_ITEM_STATUS !=''">
+			o.REQ_ITEM_STATUS = #{params.REQ_ITEM_STATUS}
+		</if>
+		where o.PICK_NO = #{params.PICK_NO} and o.PICK_ITEM_NO =
+		#{params.PICK_ITEM_NO}
+	</update>
+
+	<select id="selectMatBatch" resultType="Map">
+		<!-- 查询物料批次信息(同一个工厂 仓库 库位 储位) -->
+		select batch from wms_core_stock
+		where matnr = #{params.matnr} and lgort = #{params.lgort} and werks =
+		#{params.werks} and wh_number = #{params.wh_number} and bin_code =
+		#{params.bin_code}
+		order by batch
+	</select>
+
+	<insert id="insertCoreWHTask" parameterType="List">
+		insert into
+		WMS_OUT_PICKING(ID,WERKS,WH_NUMBER,TASK_NUM,PROCESS_TYPE,WT_STATUS,PRIORITY_LEVEL,MATNR,MAKTX,QUANTITY,CONFIRM_QUANTITY,
+		UNIT,SOBKZ,BATCH,LABEL_NO,FROM_STORAGE_AREA,FROM_BIN_CODE,TO_STORAGE_AREA,TO_BIN_CODE,REFERENCE_DELIVERY_NO,REFERENCE_DELIVERY_ITEM,
+		WAVE,WAVE_ITEM,CONFIRMOR,CONFIRM_TIME,EXCEPTION_CODE,CREATE_DATE,CREATOR,EDITOR,EDIT_DATE,LIFNR,MOULD_NO,LGORT,HX_FLAG,REAL_QUANTITY)
+		select SEQ_WMS_OUT_PICKING.nextval, m.* from(
+		<foreach collection="list" item="d" index="index"
+			separator="union all">
+			select
+			#{d.WERKS},#{d.WH_NUMBER},#{d.TASK_NUM},#{d.PROCESS_TYPE},#{d.WT_STATUS},#{d.PRIORITY_LEVEL},#{d.MATNR},#{d.MAKTX},#{d.QUANTITY},#{d.CONFIRM_QUANTITY},
+			#{d.UNIT},#{d.SOBKZ},#{d.BATCH},#{d.LABEL_NO},#{d.FROM_STORAGE_AREA},#{d.FROM_BIN_CODE},#{d.TO_STORAGE_AREA},#{d.TO_BIN_CODE},#{d.REFERENCE_DELIVERY_NO},
+			#{d.REFERENCE_DELIVERY_ITEM},#{d.WAVE},#{d.WAVE_ITEM},#{d.CONFIRMOR},#{d.CONFIRM_TIME},#{d.EXCEPTION_CODE},#{d.CREATE_DATE},#{d.CREATOR},#{d.EDITOR},
+			#{d.EDIT_DATE},#{d.LIFNR},#{d.MOULD_NO},#{d.LGORT},#{d.HX_FLAG},#{d.REAL_QUANTITY}
+			from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<update id="updateStock" parameterType="List">
+		MERGE INTO WMS_CORE_STOCK s USING(
+		select m.WERKS,m.WH_NUMBER,m.MATNR,m.BATCH,m.LGORT,
+		m.BIN_CODE,m.LIFNR,m.MEINS,m.STOCK_QTY,m.MAKTX,m.SOBKZ,m.EDITOR,m.EDIT_DATE,m.LIKTX
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		SELECT 
+		#{d.WERKS} WERKS,#{d.WH_NUMBER}  WH_NUMBER,#{d.MATNR} MATNR, #{d.BATCH} BATCH,#{d.reciveLgort} LGORT,
+		#{d.BIN_CODE} BIN_CODE,#{d.LIFNR} LIFNR,#{d.UNIT} MEINS,#{d.BOX_QTY} STOCK_QTY,#{d.MAKTX} MAKTX,#{d.SOBKZ} SOBKZ,
+		#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE,#{d.LIKTX} LIKTX
+		from dual
+		</foreach>
+		) m  ) tmp 
+		on (tmp.WERKS=s.WERKS AND tmp.WH_NUMBER=s.WH_NUMBER  AND tmp.MATNR=s.MATNR 
+		 AND NVL(tmp.BATCH,'null')=NVL(s.BATCH,'null')   
+		 AND NVL(tmp.LGORT,'null')=NVL(s.LGORT,'null')   
+		 AND NVL(tmp.BIN_CODE,'null')=NVL(s.BIN_CODE,'null')   
+		 AND NVL(tmp.LIFNR,'null')=NVL(s.LIFNR,'null')   
+		 AND NVL(tmp.MEINS,'null')=NVL(s.MEINS,'null')   
+		 ) 
+		when matched then 
+			UPDATE  SET s.STOCK_QTY=tmp.STOCK_QTY+s.STOCK_QTY
+				where s.WERKS=tmp.WERKS AND s.WH_NUMBER=tmp.WH_NUMBER  AND s.MATNR=tmp.MATNR 
+					 AND NVL(s.BATCH,'null')=NVL(tmp.BATCH,'null')   
+					 AND NVL(s.LGORT,'null')=NVL(tmp.LGORT,'null')   
+					 AND NVL(s.BIN_CODE,'null')=NVL(tmp.BIN_CODE,'null')   
+					 AND NVL(s.LIFNR,'null')=NVL(tmp.LIFNR,'null')   
+					 AND NVL(s.MEINS,'null')=NVL(tmp.MEINS,'null') 
+		when not matched then 
+			insert (ID,WERKS,WH_NUMBER,MATNR,BATCH,LGORT,BIN_CODE,
+			LIFNR,MEINS,STOCK_QTY,MAKTX,SOBKZ,EDITOR,EDIT_DATE,LIKTX) 
+		    VALUES (SEQ_WMS_CORE_STOCK.nextval,tmp.WERKS,tmp.WH_NUMBER,
+		    tmp.MATNR,tmp.BATCH,tmp.LGORT,tmp.BIN_CODE,
+		    tmp.LIFNR,tmp.MEINS,tmp.STOCK_QTY,tmp.MAKTX,tmp.SOBKZ,tmp.EDITOR,tmp.EDIT_DATE,tmp.LIKTX)
+	</update>
+	<select id="getMoveAndSyn" parameterType="Map" resultType="Map">
+		select * from WMS_C_PLANT_TO where nvl(DEL,'0')!='X' 
+	    and WERKS_F=#{WERKS_F}
+	    and WERKS_T=#{WERKS_T}  
+	    and LGORT_T=#{LGORT_T}
+	    and SOBKZ=nvl(#{SOBKZ},'Z')
+	</select>
+</mapper>

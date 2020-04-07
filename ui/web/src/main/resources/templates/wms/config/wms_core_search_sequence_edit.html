@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>存储类型搜索顺序配置</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text" style="display:none" id="Id" name="Id"  class="form-control "v-model="storage.ID"/>
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group" style="align:center;margin-top:15px">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>${tag.getLocale('warehouseCode','M')}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+							      <input type="text"  @click="getWhNoFuzzy()" id="warehouseCode" name="warehouseCode"  class="form-control required" v-model="storage.warehouseCode"   placeholder="${tag.getLocale('warehouseCode','M')}"/>
+							    </div>
+						</div>
+					</div>
+					<!--<div class="form-group" style="align:center;margin-top:15px">-->
+						<!--<div  style="float:left;width:100%">-->
+							<!--<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >-->
+								<!--${tag.getLocale('factoryCode','M')}：-->
+							<!--</label>-->
+							<!--<div style="float:left;width:50%" class="col-sm-8">-->
+								<!--<input type="text" @click="getFactoryNoFuzzy()" id="factoryCode" name="factoryCode"  class="form-control " v-model="storage.factoryCode"   placeholder="${tag.getLocale('factoryCode','M')}"/>-->
+							<!--</div>-->
+						<!--</div>-->
+					<!--</div>-->
+
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>${tag.getLocale('storageAreaSearch','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text"  ID="storageAreaSearch" name="storageAreaSearch"  class="form-control required"  v-model="storage.storageAreaSearch" placeholder="${tag.getLocale('storageAreaSearch','M')}"/>
+							</div>
+						</div>
+					</div>
+
+
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								${tag.getLocale('searchSequenceType','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+
+								<select id="searchSequenceType"  name="searchSequenceType" v-model="storage.searchSequenceType" style="width:100%">
+									<option value=''>请选择</option>
+									<option value='00'>入库</option>
+									<option value='01'>出库</option>
+								</select>
+
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								${tag.getLocale('descs','M')}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text"  ID="descs" name="descs"  class="form-control "  v-model="storage.descs" placeholder="${tag.getLocale('descs','M')}"/>
+							</div>
+						</div>
+					</div>
+                    <!--<div class="form-group" style="align:center">-->
+                        <!--<div  style="float:left;width:100%">-->
+                            <!--<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >-->
+                                <!--${tag.getLocale('status','M')}：-->
+                            <!--</label>-->
+                            <!--<div style="float:left;width:50%" class="col-sm-8">-->
+
+								<!--<select id="status" name="status" v-model="storage.status" style="width:100%">-->
+									<!--<option value=''>请选择</option>-->
+									<!--<option value='0'>启用</option>-->
+									<!--<option value='1'>禁用</option>-->
+								<!--</select>-->
+
+                            <!--</div>-->
+                        <!--</div>-->
+                    <!--</div>-->
+
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_core_search_sequence_edit.js?_${.now?long}"></script>
+</body>
+</html>

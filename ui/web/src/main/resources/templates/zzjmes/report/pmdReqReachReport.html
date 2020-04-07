@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>需求达成报表</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<div class="row">
+						<div class="tabbable col-md-10" style="min-width:840px;">			
+							<form id="searchForm" method="post" class="form-inline" action="#">
+								<div class="form-group">
+									<label class="control-label" style="width: 100px;"><span style="color:red">*</span>工厂/车间/线别：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+											<select v-model="werks" name="werks" id="werks" style="width: 60px;height: 28px;">
+												<!-- <option value="0">全部</option> -->
+												<#list tag.getUserAuthWerks("ZZJMES_PMD_REQ_REACH_REPORT") as factory>
+													<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+												</#list>
+											</select>
+										</div>
+										<div class="input-group treeselect" style="width: 70px" id="parentDiv">
+											<select v-model="workshop" name="workshop" id="workshop" style="width: 70px;height: 28px;">
+												<option v-for="w in workshop_list" :value="w.CODE">{{ w.NAME }}</option>
+											</select>
+										</div>
+										<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+											<select v-model="line" name="line" id="line" style="width: 60px;height: 28px;">
+												<option v-for="w in line_list" :value="w.CODE">{{ w.NAME }}</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">订单：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+											<input v-model="order_no" type="text" name="order_no" id="order_no" class="form-control" @click="getOrderNoFuzzy()" @keyup.enter="query" placeholder="订单编号">
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">计划日期：</label>
+									<div class="control-inline">
+											<input type="text" id="start_date" name="start_date" value=""
+											class="form-control width-400" style="width: 85px;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />
+									</div>
+									-
+									<div class="control-inline">
+											<input type="text" id="end_date" name="end_date" value=""
+											class="form-control width-500" style="width: 85px;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">生产工序：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+											<input v-model="prod_process" type="text" name="prod_process" id="prod_process" class="form-control" placeholder="生产工序">
+										</div>
+									</div>
+								</div>							
+								<input v-model="report_type" type="text" hidden="true" name="report_type" id="report_type">
+								<div class="form-group">
+									<input type="button" id="btnQuery" @click="query" class="btn btn-info btn-sm" value="查询" /> 
+								</div>
+							</form>
+						</div>
+						
+						<ul class="nav nav-tabs" id="myTab" style="float:right;padding-right:10px;">
+							<li id="#"  class="active"><a data-toggle="tab" href="#div_1" style="font-weight:bold">订单</a></li>
+							<li id="#"><a data-toggle="tab" href="#div_2" style="font-weight:bold">车间</a></li>
+							<li id="#" ><a data-toggle="tab" href="#div_3" style="font-weight:bold">工段</a></li>
+						</ul>
+					</div>
+					
+					<div id="div_1" class="tab-pane fade in active" >
+						<table id="dataGrid_div_1"  v-show="tab_id =='#div_1' "></table>
+						<table id="dataGrid_div_2"  v-show="tab_id =='#div_2' "></table>
+						<table id="dataGrid_div_3"  v-show="tab_id =='#div_3' "></table>
+						<div id="dataGrid_div_1Page" v-show="tab_id =='#div_1' "></div>
+						<div id="dataGrid_div_2Page" v-show="tab_id =='#div_2' "></div>
+						<div id="dataGrid_div_3Page" v-show="tab_id =='#div_3' "></div>
+					</div>				
+					
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/zzjmes/report/pmdReqReachReport.js?_${.now?long}"></script>
+</body>
+</html>

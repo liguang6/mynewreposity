@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>编辑SAP过账账号</title> <#include "/web_header.html">
+</head>
+<body>
+
+<div id="rrapp" v-cloak class="wrapper" >
+		<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span class="required"> * </span> 工厂代码</div>
+									<div class="col-xs-8">
+										<input  id="werks" name="werks" class="form-control required" @click="getPlantNoFuzzy()"  v-model="csapuser.werks"/>
+									</div>
+								</div>
+							</div>
+
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span></span>SAP账号</div>
+									<div class="col-xs-8">
+										<input  id="sapUser" name="sapUser" class="form-control" v-model="csapuser.sapUser"/>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span></span>SAP密码</div>
+									<div class="col-xs-8">
+										<input  id="sapPassword" name="sapPassword" class="form-control" v-model="csapuser.sapPassword"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+					</div>
+					
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+				</div>
+			</div>
+		</div>
+
+
+	</div>
+
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_sap_user_edit.js?_${.now?long}"></script>
+</body>
+
+
+
+</html>

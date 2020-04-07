@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.report.dao.EngineMaterialDao">
+	<select id="queryProject" parameterType="Map" resultType="Map">
+		SELECT PROJECT_CODE,PROJECT_NAME FROM WMS_C_DAILY_REPORT_HEAD WHERE DEL = '0'
+	</select>
+	
+	<select id="queryBatchpick" parameterType="Map" resultType="Map">
+		<foreach collection="list" index="index" item="a" separator="UNION ALL" open="(" close=")">
+			select matnr ,sum(qty_wms-nvl(qty_cancel,0)) batch_qty ,#{a.PROJECT_CODE} PROJECT_CODE ,
+			#{a.LGORT} LGORT ,#{a.LIFNR} LIFNR ,#{a.day} DAYS_CODE from wms_core_wmsdoc_item  
+			where business_name in (47,48) and  BUSINESS_CLASS not in (02,03) and matnr = #{a.MATNR} and lifnr = #{a.LIFNR} and 
+			lgort = #{a.LGORT}  and MOVE_STLOC is null
+			<if test="a.date!=null and a.date!=''">
+				and instr(create_date,#{a.date})>0
+			</if>
+			group by matnr
+		</foreach>
+	</select>
+	
+	<select id="queryBitpick" parameterType="Map" resultType="Map">
+		<foreach collection="list" index="index" item="a" separator="UNION ALL" open="(" close=")">
+			select matnr ,sum(qty_wms-nvl(qty_cancel,0)) SCATTER_QTY ,#{a.PROJECT_CODE} PROJECT_CODE ,
+			#{a.LGORT} LGORT ,#{a.LIFNR} LIFNR ,#{a.day} DAYS_CODE from wms_core_wmsdoc_item  
+			where business_name in (47,48) and matnr = #{a.MATNR} and lifnr = #{a.LIFNR} and 
+			lgort = #{a.LGORT}  and instr(MOVE_STLOC, 'w') = 0 and MOVE_STLOC is not  null
+			<if test="a.date!=null and a.date!=''">
+				and instr(create_date,#{a.date})>0
+			</if>
+			group by matnr
+		</foreach>
+	</select>
+	
+	<select id="queryAftersale" parameterType="Map" resultType="Map">
+		<foreach collection="list" index="index" item="a" separator="UNION ALL" open="(" close=")">
+			select matnr ,sum(qty_wms-nvl(qty_cancel,0)) AFTER_QTY ,#{a.PROJECT_CODE} PROJECT_CODE ,
+			#{a.LGORT} LGORT ,#{a.LIFNR} LIFNR ,#{a.day} DAYS_CODE from wms_core_wmsdoc_item  
+			where business_name in (47,48) and matnr = #{a.MATNR} and lifnr = #{a.LIFNR} and 
+			lgort = #{a.LGORT}  and instr(MOVE_STLOC, 'w') = 1
+			<if test="a.date!=null and a.date!=''">
+				and instr(create_date,#{a.date})>0
+			</if>
+			group by matnr
+		</foreach>
+	</select>
+	
+	<select id="queryIn" parameterType="Map" resultType="Map">
+		<foreach collection="list" index="index" item="a" separator="UNION ALL" open="(" close=")">
+			select matnr ,sum(qty_wms-nvl(qty_cancel,0)) IN_QTY ,#{a.PROJECT_CODE} PROJECT_CODE ,
+			#{a.LGORT} LGORT ,#{a.LIFNR} LIFNR ,#{a.day} DAYS_CODE from wms_core_wmsdoc_item  
+			where  BUSINESS_CLASS in (02,03) and matnr = #{a.MATNR} and lifnr = #{a.LIFNR} and 
+			lgort = #{a.LGORT} 
+			<if test="a.date!=null and a.date!=''">
+				and instr(create_date,#{a.date})>0
+			</if>
+			group by matnr
+		</foreach>
+	</select>
+	
+	<update id="mergeHistory" parameterType="List">
+		merge into WMS_REPORT_PROJECT s using(
+			select m.PROJECT_CODE,m.MATNR,m.LIFNR,m.LGORT,m.IN_QTY ,m.BATCH_QTY ,m.SCATTER_QTY ,m.AFTER_QTY ,
+					m.RETURN_QTY ,m.DAYS_CODE
+				from (
+					<foreach collection="list" item="d" index="index" separator="union all">
+						select
+							#{d.PROJECT_CODE} PROJECT_CODE,#{d.MATNR} MATNR,#{d.LIFNR} LIFNR, #{d.LGORT} LGORT, 
+							#{d.IN_QTY} IN_QTY,#{d.BATCH_QTY} BATCH_QTY,#{d.SCATTER_QTY} SCATTER_QTY, #{d.AFTER_QTY} AFTER_QTY, 
+							#{d.RETURN_QTY} RETURN_QTY, #{d.DAYS_CODE} DAYS_CODE
+						from dual
+					</foreach>
+				) m
+		) tmp
+		on (tmp.PROJECT_CODE=s.PROJECT_CODE and tmp.MATNR=s.MATNR and tmp.LIFNR=s.LIFNR and tmp.LGORT = s.LGORT and tmp.DAYS_CODE = s.DAYS_CODE)
+	    when matched then
+			update set 
+			s.BATCH_QTY=tmp.BATCH_QTY,
+			s.SCATTER_QTY=tmp.SCATTER_QTY,
+			s.AFTER_QTY=tmp.AFTER_QTY,
+			s.RETURN_QTY=tmp.RETURN_QTY,
+			s.IN_QTY=tmp.IN_QTY
+			where s.PROJECT_CODE = tmp.PROJECT_CODE
+			and tmp.MATNR=s.MATNR and tmp.LIFNR=s.LIFNR and tmp.LGORT = s.LGORT and tmp.DAYS_CODE = s.DAYS_CODE
+		when not matched then
+			insert (ID ,PROJECT_CODE ,MATNR ,LIFNR ,LGORT  ,IN_QTY ,BATCH_QTY ,SCATTER_QTY ,AFTER_QTY ,RETURN_QTY ,DAYS_CODE )
+			VALUES (SEQ_WMS_REPORT_PROJECT.nextval,tmp.PROJECT_CODE,tmp.MATNR,
+			tmp.LIFNR ,tmp.LGORT  ,tmp.IN_QTY ,tmp.BATCH_QTY ,tmp.SCATTER_QTY ,tmp.AFTER_QTY ,tmp.RETURN_QTY ,tmp.DAYS_CODE  )
+	</update>
+	
+	<select id="getMaterialStock" parameterType="List" resultType="Map">
+		SELECT tmp.* FROM(
+		<foreach collection="list" index="index" item="a" separator="UNION ALL" open="" close="">
+			SELECT s.*,#{a.PROJECT_CODE} PROJECT_CODE ,#{a.day} day
+			FROM WMS_CORE_STOCK s
+			WHERE s.MATNR = #{a.MATNR} AND s.WERKS = #{a.WERKS}
+			<if test="a.WH_NUMBER !=null and a.WH_NUMBER !=''">
+				AND s.WH_NUMBER =#{a.WH_NUMBER }
+			</if>
+			<if test="a.LGORT !=null and a.LGORT !=''">
+				AND s.LGORT in( SELECT REGEXP_SUBSTR (#{a.LGORT}, '[^,]+', 1,rownum)
+				FROM DUAL CONNECT BY ROWNUM &lt;=
+				LENGTH (#{a.LGORT}) - LENGTH (REPLACE (#{a.LGORT}, ',', ''))+1 )
+			</if>
+			<if test="a.LIFNR !=null and a.LIFNR !=''">
+				AND s.LIFNR =#{a.LIFNR }
+			</if>
+			<if test="a.BATCH !=null and a.BATCH !=''">
+				AND s.BATCH =#{a.BATCH }
+			</if>
+			<if test="a.binCodeList !=null and a.binCodeList !=''">
+				AND s.BIN_CODE IN
+				<foreach collection="binCodeList" item="i" open="(" close=")" separator=",">
+					#{i}
+				</foreach>
+			</if>
+			AND (cast(nvl(s.VIRTUAL_QTY,0) as number)>0 OR cast(nvl(s.STOCK_QTY,0) as number)>0 )
+		</foreach>
+		)tmp 
+	</select>
+	
+	<update id="mergeStock" parameterType="List">
+		merge into WMS_REPORT_PROJECT s using(
+			select m.PROJECT_CODE,m.MATNR,m.LIFNR,m.LGORT,m.STOCK_QTY 
+				from (
+					<foreach collection="list" item="d" index="index" separator="union all">
+						select
+							#{d.PROJECT_CODE} PROJECT_CODE,#{d.MATNR} MATNR,#{d.LIFNR} LIFNR, #{d.LGORT} LGORT, #{d.STOCK_QTY} STOCK_QTY
+						from dual
+					</foreach>
+				) m
+		) tmp
+		on (tmp.PROJECT_CODE=s.PROJECT_CODE and tmp.MATNR=s.MATNR and tmp.LIFNR=s.LIFNR and tmp.LGORT = s.LGORT)
+	    when matched then
+			update set s.LAST_MONTH_QTY=tmp.STOCK_QTY where s.PROJECT_CODE = tmp.PROJECT_CODE and s.MATNR = tmp.MATNR
+			and s.LIFNR = tmp.LIFNR and s.LGORT = tmp.LGORT
+		when not matched then
+			insert (ID ,PROJECT_CODE ,MATNR ,LIFNR ,LGORT,LAST_MONTH_QTY,DAYS_CODE )
+			VALUES (SEQ_WMS_REPORT_PROJECT.nextval,tmp.PROJECT_CODE,tmp.MATNR,tmp.LIFNR ,tmp.LGORT  ,tmp.STOCK_QTY ,1)
+	</update>
+	
+	<update id="updateStock" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_REPORT_PROJECT 
+				set DAYS_QTY = #{s.STOCK_QTY},
+				FREEZE_QTY = #{s.FREEZE_QTY}
+				where 1=1
+				  and PROJECT_CODE=#{s.PROJECT_CODE} 
+				  and MATNR = #{s.MATNR}
+				  and LIFNR = #{s.LIFNR}
+				  and DAYS_CODE = #{s.DAY}
+		</foreach>
+	</update>
+	
+	<select id="queryByDay" parameterType="Map" resultType="Map">
+		SELECT head.* ,item.*,project.* FROM WMS_C_DAILY_REPORT_HEAD head
+		left join WMS_C_DAILY_REPORT_ITEM item
+		on head.PROJECT_CODE = item.PROJECT_CODE
+		left join WMS_REPORT_PROJECT project
+		on item.PROJECT_CODE = project.PROJECT_CODE 
+		and item.MATNR = project.MATNR 
+		and item.LIFNR = project.LIFNR 
+		and item.LGORT = project.LGORT 
+		WHERE head.PROJECT_CODE = #{PROJECT_CODE} AND project.DAYS_CODE &lt; #{DAYS_CODE}
+		and head.WH_NUMBER = #{WH_NUMBER} and head.WERKS = #{WERKS}
+	</select>
+	
+	<select id="queryMat" parameterType="Map" resultType="Map">
+		SELECT head.* ,item.* FROM WMS_C_DAILY_REPORT_HEAD head
+		left join WMS_C_DAILY_REPORT_ITEM item
+		on head.PROJECT_CODE = item.PROJECT_CODE		
+		WHERE head.PROJECT_CODE = #{PROJECT_CODE} 
+		and head.WH_NUMBER = #{WH_NUMBER} and head.WERKS = #{WERKS}
+	</select>
+	
+</mapper>

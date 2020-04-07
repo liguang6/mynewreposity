@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysMenuDao">
+
+	<select id="queryListParentId" resultType="com.byd.admin.modules.sys.entity.SysMenuEntity">
+		select * from sys_menu where parent_id = #{parentId} order by order_num asc 
+	</select>
+
+	<select id="queryMenuListById" resultType="com.byd.admin.modules.sys.entity.SysMenuEntity">
+		select * from sys_menu where MENU_ID = #{menuId} order by order_num asc
+	</select>
+
+	<select id="queryListByCode" resultType="com.byd.admin.modules.sys.entity.SysMenuEntity">
+		select * from sys_menu where MENU_KEY = #{menuKey} order by order_num asc
+	</select>
+
+	<select id="queryMenuListByRoleId" resultType="com.byd.admin.modules.sys.entity.SysMenuEntity">
+		select menu.* from SYS_MENU menu inner join (select romenu1.* from SYS_ROLE_MENU romenu1 where romenu1.ROLE_ID= #{roleId}) romenu on menu.MENU_ID = romenu.MENU_ID where menu.MENU_ID !=0 and menu.TYPE=1  order by menu.order_num asc
+	</select>
+
+	<select id="queryMenuListByRoleIdMenuIds" resultType="com.byd.admin.modules.sys.entity.SysMenuEntity">
+		select menu.* from SYS_MENU menu
+		inner join (select romenu1.* from SYS_ROLE_MENU romenu1 where romenu1.ROLE_ID= #{roleId}) romenu
+		on menu.MENU_ID = romenu.MENU_ID where menu.MENU_ID !=0 and menu.TYPE=1
+		<if test="menuIds != null and menuIds.size() > 0">
+			and menu.MENU_ID not in
+			<foreach collection="menuIds" item="item" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+		</if>
+		order by menu.order_num asc
+	</select>
+
+	<select id="queryMenuListByUserId" resultType="com.byd.admin.modules.sys.entity.SysMenuEntity">
+		select menu.* from SYS_MENU menu
+		inner join SYS_ROLE_MENU rmenu on menu.MENU_ID=rmenu.MENU_ID
+		inner join (select urole1.* from SYS_USER_ROLE urole1 where urole1.USER_ID = #{userId}) urole on rmenu.ROLE_ID=urole.ROLE_ID
+	</select>
+	
+	<select id="queryNotButtonList" resultType="com.byd.admin.modules.sys.entity.SysMenuEntity">
+		select * from sys_menu where type != 2 order by order_num asc 
+	</select>
+	
+	<select id="queryMenuList" resultType="com.byd.admin.modules.sys.entity.SysMenuEntity" parameterType="Map">
+		SELECT * FROM sys_menu WHERE status != '1'
+		<if test="nodeid == null">
+			AND parent_id = '0'
+		</if>
+		<if test="nodeid != '' and nodeid != null">
+			AND parent_id = #{nodeid}
+		</if>
+	</select>
+	
+	<select id="getUserAuthMenuList" resultType="Map" >
+<!-- 		select m.*,
+			nvl((SELECT to_char( WM_CONCAT(CONCAT(CONCAT(a.AUTH_FIELDS,':'),a.AUTH_VALUE) || ';')) 
+	            from sys_role_auth a WHERE  a.role_id = rm.role_id  and a.menu_id = rm.menu_id  and a.del ='0' ),
+	            (SELECT to_char( WM_CONCAT(CONCAT(CONCAT(a.AUTH_FIELDS,':'),a.AUTH_VALUE) || ';')) 
+	            from sys_role_auth a WHERE  a.role_id = rm.role_id  and (a.menu_id ='0' or a.menu_id  ='' )  and a.del ='0' )
+	           ) as 
+			ROLE_DATA_ATUH,
+			nvl((SELECT to_char( WM_CONCAT(CONCAT(CONCAT(ua.AUTH_FIELDS,':'),ua.AUTH_VALUE) || ';') ) 
+                   from sys_user_auth ua WHERE  ua.USER_ID = UR.USER_ID AND ua.menu_id = rm.menu_id 
+                ),
+                (SELECT to_char( WM_CONCAT(CONCAT(CONCAT(ua.AUTH_FIELDS,':'),ua.AUTH_VALUE) || ';') ) 
+                   from sys_user_auth ua WHERE  ua.USER_ID = UR.USER_ID AND (ua.menu_id  ='0' or ua.menu_id  ='') 
+                )
+               ) as  
+			USER_DATA_ATUH
+		from sys_user_role ur 
+			INNER JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+			INNER JOIN sys_menu m on rm.menu_id = m.menu_id and nvl(m.type,'0') !='3'
+			where ur.user_id = #{userId} -->
+			
+		select m.*,
+			CONCAT(
+			  (SELECT to_char( WM_CONCAT(CONCAT(CONCAT(a.AUTH_FIELDS,':'),a.AUTH_VALUE) || ';')) 
+								from sys_role_auth a WHERE  a.role_id = rm.role_id  and a.menu_id = rm.menu_id  and a.del ='0' ) ,
+				(SELECT to_char( WM_CONCAT(CONCAT(CONCAT(a.AUTH_FIELDS,':'),a.AUTH_VALUE) || ';')) 
+								from sys_role_auth a WHERE  a.role_id = rm.role_id  and a.menu_id ='0'  and a.del ='0')
+		    )as 
+			ROLE_DATA_ATUH,
+			CONCAT(
+					(SELECT to_char( WM_CONCAT(CONCAT(CONCAT(ua.AUTH_FIELDS,':'),ua.AUTH_VALUE) || ';') ) 
+                   from sys_user_auth ua WHERE  ua.USER_ID = UR.USER_ID AND ua.menu_id = rm.menu_id ),
+					(SELECT to_char( WM_CONCAT(CONCAT(CONCAT(ua.AUTH_FIELDS,':'),ua.AUTH_VALUE) || ';') ) 
+						 from sys_user_auth ua WHERE  ua.USER_ID = UR.USER_ID AND ua.menu_id  ='0' )
+	      	) as  USER_DATA_ATUH
+			from sys_user_role ur 
+				INNER JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+				INNER JOIN sys_menu m on rm.menu_id = m.menu_id and nvl(m.type,'0') !='3'
+				where ur.user_id = #{userId}
+				ORDER BY m.parent_id			
+			
+	</select>
+	
+	<select id="getAllAuthList" resultType="Map" >
+		select * from sys_menu where nvl(type,'0') !='3' 
+	</select>
+	
+	<select id="getUserPdaAuthMenuList" resultType="Map" >
+		select m.*,
+			(SELECT to_char( WM_CONCAT(CONCAT(CONCAT(a.AUTH_FIELDS,':'),a.AUTH_VALUE) || ';')) 
+					from sys_role_auth a WHERE  a.role_id = rm.role_id  and (a.menu_id = rm.menu_id or a.menu_id ='0' or a.menu_id  ='' )  and a.del ='0' ) as 
+			ROLE_DATA_ATUH,
+			(SELECT to_char( WM_CONCAT(CONCAT(CONCAT(ua.AUTH_FIELDS,':'),ua.AUTH_VALUE) || ';') ) 
+					from sys_user_auth ua WHERE  ua.USER_ID = UR.USER_ID AND (ua.menu_id = rm.menu_id or ua.menu_id  ='0' or ua.menu_id  ='') ) as  
+			USER_DATA_ATUH
+		from sys_user_role ur 
+			INNER JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+			INNER JOIN sys_menu m on rm.menu_id = m.menu_id and nvl(m.type,'0') ='3'
+			where ur.user_id = #{userId}
+	</select>
+	
+</mapper>

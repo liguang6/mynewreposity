@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCoreWhDao">
+	 <update id="delById" parameterType="long">
+	      UPDATE WMS_CORE_WH SET DEL='X' WHERE ID=#{id}
+	 </update>
+	  <update id="deleteBatch" parameterType="list">
+	      UPDATE WMS_CORE_WH SET DEL='X' WHERE ID IN
+	      <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			 #{item}
+		  </foreach>
+	 </update>
+	 
+	 <select id="getWmsCoreWhAddressList" parameterType="Map" resultType="Map">
+	 SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+	 	SELECT W.ID ID,W.WERKS,W.WH_NUMBER WHNUMBER,W.DEL,W.EDITOR,W.EDIT_DATE EDITDATE,W.DEL WHDEL,D.LGORT_NO,
+	     D.ID ADDRESSID,D.LANGUAGE,D.WH_NAME WHNAME,D.COUNTRY,D.PROVINCE,D.CITY,D.REGION,D.STREET,D.CONTACTS,D.TEL,D.MEMO,D.DEL ADDRESSDEL,
+	     S.VALUE LANGUAGENAME
+	    FROM (SELECT * FROM WMS_CORE_WH WHERE DEL='0') W
+	    LEFT JOIN 
+	    (SELECT * FROM WMS_CORE_WH_ADDRESS WHERE DEL='0') D ON W.WERKS=D.WERKS AND W.WH_NUMBER=D.WH_NUMBER
+	     LEFT JOIN 
+      	(SELECT * FROM SYS_DICT WHERE TYPE='LANGUAGE') S ON S.CODE=D.LANGUAGE
+      	WHERE 1=1
+      	<if test="werks != null and werks !=''">
+		        AND W.WERKS = #{werks}
+		</if>
+      	<if test="whNumber != null and whNumber !=''">
+		        AND W.WH_NUMBER = #{whNumber}
+		</if>
+		ORDER BY  EDIT_DATE DESC
+		) TMP 
+		 WHERE ROWNUM  &lt;=#{end})  
+	  WHERE ROW_ID > #{start}
+	  
+	 </select>
+	 
+	 <select id="getWmsCoreWhAddressCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_CORE_WH H WHERE DEL='0'
+		      
+    </select>
+    
+    <select id="getWmsCoreWhList" parameterType="Map" resultType="Map">
+    	select t.*
+		  from wms_core_wh t
+		 where t.del != 'X'
+		 <if test="warehouse != null and warehouse !=''">
+		   and t.wh_number = #{warehouse}
+		 </if>
+    </select>
+</mapper>

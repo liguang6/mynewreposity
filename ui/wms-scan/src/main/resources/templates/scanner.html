@@ -1,0 +1,47 @@
+<script type="text/javascript" src="${request.contextPath}/public/js/scanner.js"></script>
+<OBJECT id="DatalogicScanner1" style="display:none;" CLASSID="CLSID:89B5002E-9DB1-4AA9-A18B-10202D5342A6">
+    <PARAM NAME="_cx" VALUE="0" />
+    <PARAM NAME="_cy" VALUE="0" />
+    <PARAM NAME="bScanEnabled" VALUE="true" />
+</OBJECT>
+
+<OBJECT id="Scanner" style="LEFT: 0px; WIDTH: 0px; TOP: 0px; HEIGHT: 0px"
+        CLASSID="CLSID:5FFAA94A-D9E2-405d-9644-EE2196713A3C">
+</OBJECT>
+
+<OBJECT ID="HoneywellScanAx" CLASSID="CLSID:68113790-4F7B-4023-91CC-CDE352DA9A69" width="0" height="0">
+</OBJECT>
+
+<script type="text/javascript" For="DatalogicScanner1" Event="LabelScanned">
+    onNewBarcode();
+</script>
+<script type="text/javascript" for="Scanner" event="ScanComplete(barcode, source, status, labelType, dataLength)">
+    if (status == 0){
+        scanner(barcode);
+    }else{
+        alert("Scanner error!\nStatus code: " + hex(status));
+    }
+</script>
+
+<SCRIPT type="text/javascript">
+    //Cipherlab9600
+    function onScanBarcode(codeType, code)
+    {
+        scanner(code);
+    }
+
+    //Honeywell6100
+    function HoneywellScan() {
+        var keycode = event.keyCode;
+        if (keycode == '193') {
+            scanner(HoneywellScanAx.Barcode)
+        }
+    }
+</SCRIPT>
+
+<script type="text/javascript">
+    window.onload=function(){Document_OnLoad();}
+    window.onfocus=function(){enableScan();}
+    window.onblur=function(){disableScan();}
+    document.onkeydown=function(){shortcutClick('${request.contextPath}');HoneywellScan();}
+</script>

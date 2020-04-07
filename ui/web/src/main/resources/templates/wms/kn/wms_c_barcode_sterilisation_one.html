@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>条码打印</title>
+    <#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+<div id="rrapp" v-cloak>
+    <div class="wrapper">
+        <div class="main-content">
+            <div class="box box-main">
+                <div class="box-body">
+                    <form id="searchForm" class="form-inline" action="${request.contextPath}/kn/barcodeSterilisation/one">
+                                <input  id="sterilisationId" name="sterilisationId" class="form-control" style="display:none" />
+                    </form>
+                    <div class="form-inline">
+                        <label class="control-label">总数：</label>
+                        <div class="control-inline" >
+                            <input  id="qtyNum" name="qtyNum" class="form-control"  />
+                        </div>
+                        <label class="control-label">每箱数量：</label>
+                        <div class="control-inline" >
+                            <input  id="boxNum" name="boxNum" class="form-control"  />
+                        </div>
+                    </div>
+                    <table id="dataGrid"></table>
+
+                </div>
+                <table id="tb_excel" style="display:none"></table>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/kn/wms_c_barcode_sterilisation_one.js?_${.now?long}"></script>
+</body>
+</html>

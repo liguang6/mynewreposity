@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>批次加工进度</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/zzjmes/machinePlan/queryPage" v-model="page.list">
+						<div class="row">
+							<div class="form-group">
+                                <label class="control-label" style="width:55px"><span style="color:red">*</span>工厂：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									<select  name="werks" id="werks" v-model="werks" style="width:100%;height:25px">
+									   <#list tag.getUserAuthWerks("ZZJMES_BATCH_OUTPUT_REACH_REPORT") as factory>
+											<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+										</#list>
+									</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>车间：</label>
+								<div class="control-inline" style="width:68px">
+                                       <select  name="workshop" id="workshop" v-model="workshop" style="width:100%;height:25px">
+										  <option v-for="w in workshop_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px"><span style="color:red">*</span>订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px">
+										<input v-model="order_no" type="text" name="order_no" id="search_order" class="form-control" @click="getOrderNoFuzzy()">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" style="width:60px">工段：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:120px">
+									  		<input type="text" name="section" id="section"  class="form-control" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px">生产工序：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:60px">
+									  	<input v-model="prod_process" type="text" name="prod_process" id="prod_process"  class="form-control" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<div class="control-inline" title="最后工序">
+								<span id="is_last_process" class="icheck">
+								<label class="">
+									<div class="icheckbox_minimal-grey" style="position: relative;" aria-checked="false" aria-disabled="false">
+										<input type="checkbox" name="last_process" value="LAST" class="form-control" style="position: absolute; opacity: 0;">
+										<ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; background: rgb(255, 255, 255) none repeat scroll 0% 0%; border: 0px none; opacity: 0;"></ins>
+									</div>最后工序
+									<input v-model="last_process" id="last_process" type="hidden"  >
+								</label>
+								</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px">分包类型：</label>
+								<div class="control-inline" style="width:130px">
+										<select name="subcontracting_type" id="subcontracting_type" style="width: 130px;" class="form-control">
+											<option value="">全部</option>
+											<#list tag.masterdataDictList('ZZJ_SUB_TYPE') as dict>
+												<option value="${dict.value}">${dict.value}</option>
+											</#list>
+										</select>								
+								</div>
+							</div>
+						</div>
+						<div class="row">
+						    <div class="form-group">
+								<label class="control-label" style="width:55px"><span style="color:red">*</span>线别：</label>
+								<div class="control-inline" style="width:70px">
+                                       <select  name="line" id="line" v-model="line" style="width:100%;height:25px">
+										  <option v-for="w in line_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" >&nbsp;批次：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									  <select  name="zzj_plan_batch" id="zzj_plan_batch" v-model="zzj_plan_batch" style="width:100%;height:25px" >
+	                  						<option value="">全部</option>
+					                  		<option :data-name="plan.quantity" v-for="plan in batchplanlist" :value="plan.batch">{{ plan.batch }}</option>					                  
+									  </select>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">零部件号：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 150px">
+										<span class="input-icon input-icon-right" style="width: 79%;">
+	                                     	<input type="text"  name="zzj_no" id="zzj_no" v-on:keyup.enter="enter()" style="width: 100%;"  class="form-control"/>	
+	                                     	<i class="ace-icon fa fa-barcode black btn_scan" style="cursor: pointer;" onclick="doScan('zzj_no')"> </i>
+	                                  	 </span>
+	                                  	 <input type="button"  class="btn btn-default btn-sm" value=".." @click="moreZzjNo();" style="width: 5px;float:right"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">装配位置：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 120px">
+										<input v-model="assembly_position" type="text" name="assembly_position" id="assembly_position"  class="form-control" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" >当前工序：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:60px">
+									  	<input type="text" name="current_proces" id="current_proces"  class="form-control" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px">使用车间：</label>
+								<div class="control-inline" style="width:65px">
+                                    <select  name="use_workshop" id="use_workshop" v-model="use_workshop" style="width:100%;height:25px">
+										<option value="">全部</option>
+										<option v-for="w in use_workshop_list" :value="w.NAME" :key="w.ID">{{ w.NAME }}</option>
+									</select>
+								</div>
+							</div>								
+							<div class="form-group">
+								<label class="control-label" >生产状态：</label>
+								<div class="control-inline" style="width:78px">
+                                       <select v-model="status"  name="status" id="status"  style="width:100%;height:25px">
+										  <option value=''>全部</option>
+										  <option value='ok'>已完成</option>
+										  <option value='ng'>欠产</option>
+										</select>
+								</div>
+							</div>	
+							<div class="form-group">
+								<label class="control-label" style="width: 80px;">检验状态：</label>
+								<div class="control-inline" style="width:70px">
+                                       <select name="test_status" id="test_status"  style="width:100%;height:25px">
+										  <option value=''>全部</option>
+										  <option value='not_test'>未检验</option>
+										  <option value='testing'>检验中</option>
+										  <option value='tested'>已检验</option>
+										</select>
+								</div>
+							</div>	
+							<div class="form-group">
+								<label class="control-label" style="width:68px">判定-生产：</label>
+								<div class="control-inline" style="width:60px">
+                                       <select name="product_test_result" id="product_test_result"  style="width:100%;height:25px">
+										  <option value=''>全部</option>
+										  <option value='OK'>OK</option>
+										  <option value='NG'>NG</option>
+										</select>
+								</div>
+							</div>	
+							<div class="form-group">
+								<label class="control-label" style="width:68px">判定-品质：</label>
+								<div class="control-inline" style="width:60px">
+                                       <select name="test_result" id="test_result"  style="width:100%;height:25px">
+										  <option value=''>全部</option>
+										  <option value='OK'>OK</option>
+										  <option value='NG'>NG</option>
+										</select>
+								</div>
+							</div>			
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" id="btnQuery"@click="query">查询</button>
+								<button type="button" class="btn btn-primary btn-sm" id="btnExport" @click="exp">导出</button>
+								<button type="reset" class="btn btn-default btn-sm" id="reset">重置</button>
+							</div>
+						</div>
+						</form>
+						<div id="divDataGrid" style="width:100%;overflow:auto;">
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>	
+					</div>
+				</div>
+			</div>
+	</div>
+	<div id="moreZzjNoLayer" class="wrapper" style="display: none; padding: 10px;">
+		<div id="links"><!-- 批量查询下料明细-->
+			<a href='#' class='btn' id='newOperation_1'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			<a href='#' class='btn' id='newReset_1'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+		</div>
+		<div id="tab1_1" class="table-responsive table2excel" data-tablename="Test Table 1">
+			<table id="dataGrid_1"></table>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/zzjmes/report/batchOutputReachReport.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.WmsDocQueryDao">
+
+	 <resultMap type="Map" id="DocListMap">
+		<result property="LABEL_NO"  column="LABEL_NO" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap> 
+	 <select id="getDocList"  parameterType="List" resultMap="DocListMap">
+	  SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+	     SELECT D.WMS_NO,WMS_ITEM_NO,ITEM_TEXT,BUSINESS_NAME,BUSINESS_TYPE,WMS_MOVE_TYPE,
+	     SAP_FLAG,SAP_MOVE_TYPE,REVERSAL_FLAG,CANCEL_FLAG,SOBKZ,F_WERKS,F_WH_NUMBER,
+	     F_LGORT,MATNR,MAKTX,F_BATCH,WERKS,WH_NUMBER,LGORT,BIN_CODE,UNIT,QTY_WMS,QTY_SAP,
+	     QTY_CANCEL,BATCH,BATCH_SAP,HANDOVER,RECEIPT_NO,RECEIPT_ITEM_NO,ASNNO,ASNITM,
+	     PO_NO,PO_ITEM_NO,LIFNR,LIKTX,COST_CENTER,IO_NO,WBS,SAKTO,ANLN1,PARTNER,RECEIVER,MO_NO,
+	     MO_ITEM_NO,RSNUM,RSPOS,SO_NO,SO_ITEM_NO,SAP_OUT_NO,SAP_OUT_ITEM_NO,SAP_MATDOC_NO,
+	     SAP_MATDOC_ITEM_NO,REF_WMS_NO,REF_WMS_ITEM_NO,DISTRIBUTION_NO,DISTRIBUTION_ITEM_NO,
+	     INSPECTION_NO,INSPECTION_ITEM_NO,RETURN_NO,RETURN_ITEM_NO,INBOUND_NO,INBOUND_ITEM_NO,
+	     D.CREATOR,D.CREATE_DATE,BEDNR,REQUIREMENT_NO,REQUIREMENT_ITEM_NO,PICK_NO,PICK_ITEM_NO,
+	     WMS_SAP_MAT_DOC,H.PZ_DATE,H.PZ_YEAR,H.JZ_DATE,H.HEADER_TXT,H.MAT_DOC,T.VALUE BUSINESS_NAME_DESC,
+	     (D.LABEL_NO) LABEL_NO 
+	     FROM WMS_CORE_WMSDOC_ITEM D
+	     LEFT JOIN SYS_DICT T ON T.CODE=D.BUSINESS_NAME AND T.TYPE='BUSINESS_NAME'
+	     LEFT JOIN WMS_CORE_WMSDOC_HEAD H ON H.WMS_NO=D.WMS_NO
+	     WHERE 1=1
+	      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+	      <if test="WERKS !=null and WERKS !='' ">
+			AND D.WERKS=#{WERKS}
+		   </if>
+	       <if test="WH_NUMBER !=null and WH_NUMBER  !='' ">
+			AND D.WH_NUMBER =#{WH_NUMBER }
+		   </if>
+	       <if test="INBOUND_NO !=null and INBOUND_NO  !='' ">
+			AND D.INBOUND_NO =#{INBOUND_NO }
+		   </if>
+		   <if test="WMS_MOVE_TYPE !=null and WMS_MOVE_TYPE !='' ">
+			AND D.WMS_MOVE_TYPE=#{WMS_MOVE_TYPE}
+		   </if>
+		   <if test="LGORT !=null and LGORT !='' ">
+			AND D.LGORT=#{LGORT}
+		   </if>
+		   <if test="MATNR !=null and MATNR !='' ">
+			AND D.MATNR=#{MATNR}
+		   </if>
+		   <if test="LIFNR !=null and LIFNR !='' ">
+			AND D.LIFNR=#{LIFNR}
+		   </if>
+		   <if test="COST_CENTER !=null and COST_CENTER !='' ">
+			AND D.COST_CENTER=#{COST_CENTER}
+		   </if>
+		   <if test="CREATOR !=null and CREATOR !='' ">
+			AND D.CREATOR like '%' || #{CREATOR} || '%'  
+		   </if>
+		   <if test="HANDOVER !=null and HANDOVER !='' ">
+			AND D.HANDOVER like '%' || #{HANDOVER} || '%'  
+		   </if>
+		   <if test="BIN_CODE !=null and BIN_CODE !='' ">
+			AND D.BIN_CODE=#{BIN_CODE}
+		   </if>
+		   <if test="MO_NO !=null and MO_NO !='' ">
+			AND D.MO_NO=#{MO_NO}
+		   </if>
+		   <if test="SO_NO !=null and SO_NO !='' ">
+			AND D.SO_NO=#{SO_NO}
+		   </if>
+		   <if test="REQUIREMENT_NO !=null and REQUIREMENT_NO !='' ">
+			AND D.REQUIREMENT_NO=#{REQUIREMENT_NO}
+		   </if>
+		   <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND D.CREATE_DATE&gt;= #{CREATE_DATE_START} 
+		   </if>
+		   <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND D.CREATE_DATE&lt;= #{CREATE_DATE_END}
+		   </if>
+		   <if test="JZ_DATE_START !=null and JZ_DATE_START !='' ">
+			AND H.JZ_DATE&gt;=CONCAT(#{JZ_DATE_START}, ' 00:00:00') 
+		   </if>
+		   <if test="JZ_DATE_END !=null and JZ_DATE_END !='' ">
+			AND H.JZ_DATE&lt;=CONCAT(#{JZ_DATE_END}, ' 23:59:59')
+		   </if>
+		   <if test="PZ_DATE_START !=null and PZ_DATE_START !='' ">
+			AND H.PZ_DATE&gt;=CONCAT(#{PZ_DATE_START}, ' 00:00:00') 
+		   </if>
+		   <if test="PZ_DATE_END !=null and PZ_DATE_END !='' ">
+			AND H.PZ_DATE&lt;=CONCAT(#{PZ_DATE_END}, ' 23:59:59')
+		   </if>
+		   <if test="WMS_NO !=null and WMS_NO !='' ">
+			AND D.WMS_NO=#{WMS_NO}  <!-- WMS凭证号 -->
+		   </if>
+		    <if test="ASN_NO !=null and ASN_NO !='' ">
+			AND D.ASNNO=#{ASN_NO}  <!-- SCM送货单号 -->
+		   </if>
+		   <if test="PO_NO !=null and PO_NO !='' ">
+			AND D.PO_NO=#{PO_NO}  <!-- 采购顶单号 -->
+		   </if>
+		   <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+			AND D.SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+		   </if>
+		   <if test="RECEIPT_NO !=null and RECEIPT_NO !='' ">
+			AND D.RECEIPT_NO=#{RECEIPT_NO}  <!-- 送货单号 -->
+		   </if>
+		   <if test="BEDNR !=null and BEDNR !='' ">
+			AND D.BEDNR=#{BEDNR}  <!-- 需求跟踪号 -->
+		   </if>
+		   <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+			AND D.SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+		   </if>
+		   <if test="BATCH !=null and BATCH !='' ">
+			AND D.BATCH=#{BATCH}
+		   </if>
+		     ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+	 </select>
+	 
+	<select id="getDocCount"  parameterType="Map" resultType="int">
+       SELECT COUNT(1) FROM WMS_CORE_WMSDOC_ITEM D
+	     LEFT JOIN WMS_CORE_WMSDOC_HEAD H ON H.WMS_NO=D.WMS_NO
+	     WHERE 1=1
+	     <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+	     <if test="WERKS !=null and WERKS !='' ">
+			AND D.WERKS=#{WERKS}
+		   </if>
+	       <if test="WH_NUMBER !=null and WH_NUMBER  !='' ">
+			AND D.WH_NUMBER =#{WH_NUMBER }
+		   </if>
+	       <if test="INBOUND_NO !=null and INBOUND_NO  !='' ">
+			AND D.INBOUND_NO =#{INBOUND_NO }
+		   </if>
+		   <if test="WMS_MOVE_TYPE !=null and WMS_MOVE_TYPE !='' ">
+			AND D.WMS_MOVE_TYPE=#{WMS_MOVE_TYPE}
+		   </if>
+		   <if test="LGORT !=null and LGORT !='' ">
+			AND D.LGORT=#{LGORT}
+		   </if>
+		   <if test="MATNR !=null and MATNR !='' ">
+			AND D.MATNR=#{MATNR}
+		   </if>
+		   <if test="LIFNR !=null and LIFNR !='' ">
+			AND D.LIFNR=#{LIFNR}
+		   </if>
+		   <if test="COST_CENTER !=null and COST_CENTER !='' ">
+			AND D.COST_CENTER=#{COST_CENTER}
+		   </if>
+		   <if test="CREATOR !=null and CREATOR !='' ">
+			AND D.CREATOR like '%' || #{CREATOR} || '%'  
+		   </if>
+		   <if test="HANDOVER !=null and HANDOVER !='' ">
+			AND D.HANDOVER like '%' || #{HANDOVER} || '%'  
+		   </if>
+		   <if test="BIN_CODE !=null and BIN_CODE !='' ">
+			AND D.BIN_CODE=#{BIN_CODE}
+		   </if>
+		   <if test="MO_NO !=null and MO_NO !='' ">
+			AND D.MO_NO=#{MO_NO}
+		   </if>
+		   <if test="SO_NO !=null and SO_NO !='' ">
+			AND D.SO_NO=#{SO_NO}
+		   </if>
+		   <if test="REQUIREMENT_NO !=null and REQUIREMENT_NO !='' ">
+			AND D.REQUIREMENT_NO=#{REQUIREMENT_NO}
+		   </if>
+		   <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND D.CREATE_DATE&gt;= #{CREATE_DATE_START}
+		   </if>
+		   <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND D.CREATE_DATE&lt;= #{CREATE_DATE_END}
+		   </if>
+		   <if test="JZ_DATE_START !=null and JZ_DATE_START !='' ">
+			AND H.JZ_DATE&gt;=CONCAT(#{JZ_DATE_START}, ' 00:00:00')
+		   </if>
+		   <if test="JZ_DATE_END !=null and JZ_DATE_END !='' ">
+			AND H.JZ_DATE&lt;=CONCAT(#{JZ_DATE_END}, ' 23:59:59')
+		   </if>
+		   <if test="PZ_DATE_START !=null and PZ_DATE_START !='' ">
+			AND H.PZ_DATE&gt;=CONCAT(#{PZ_DATE_START}, ' 00:00:00')
+		   </if>
+		   <if test="PZ_DATE_END !=null and PZ_DATE_END !='' ">
+			AND H.PZ_DATE&lt;=CONCAT(#{PZ_DATE_END}, ' 23:59:59')
+		   </if>
+		   <if test="WMS_NO !=null and WMS_NO !='' ">
+			AND D.WMS_NO=#{WMS_NO}  <!-- WMS凭证号 -->
+		   </if>
+		    <if test="ASN_NO !=null and ASN_NO !='' ">
+			AND D.ASNNO=#{ASN_NO}  <!-- SCM送货单号 -->
+		   </if>
+		   <if test="PO_NO !=null and PO_NO !='' ">
+			AND D.PO_NO=#{PO_NO}  <!-- 采购顶单号 -->
+		   </if>
+		   <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+			AND D.SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+		   </if>
+		   <if test="RECEIPT_NO !=null and RECEIPT_NO !='' ">
+			AND D.RECEIPT_NO=#{RECEIPT_NO}  <!-- 送货单号 -->
+		   </if>
+		   <if test="BEDNR !=null and BEDNR !='' ">
+			AND D.BEDNR=#{BEDNR}  <!-- 需求跟踪号 -->
+		   </if>
+		   <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+			AND D.SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+		   </if>
+		   <if test="BATCH !=null and BATCH !='' ">
+			AND D.BATCH=#{BATCH}
+		   </if>
+		</select>
+		
+		<select id="getReceiveLogsList" parameterType="Map" resultType="Map">
+			SELECT * FROM ( 
+		         SELECT TMP.*, ROWNUM ROW_ID FROM (
+			     SELECT D.WMS_NO,WMS_ITEM_NO,ITEM_TEXT,BUSINESS_NAME,BUSINESS_TYPE,WMS_MOVE_TYPE,
+			     SAP_MOVE_TYPE,SOBKZ,MATNR,MAKTX,WERKS,WH_NUMBER,LGORT,UNIT,QTY_WMS,QTY_SAP,
+			     QTY_CANCEL,BATCH,BATCH_SAP,HANDOVER,RECEIPT_NO,RECEIPT_ITEM_NO,ASNNO,ASNITM,
+			     PO_NO,PO_ITEM_NO,LIFNR,LIKTX,COST_CENTER,IO_NO,SAKTO,RECEIVER,MO_NO,MO_ITEM_NO,
+			     SO_NO,SO_ITEM_NO,SAP_OUT_NO,SAP_OUT_ITEM_NO,D.CREATOR,D.CREATE_DATE,WMS_SAP_MAT_DOC,
+			     H.PZ_DATE,H.PZ_YEAR
+			     FROM WMS_CORE_WMSDOC_ITEM D
+			     LEFT JOIN WMS_CORE_WMSDOC_HEAD H ON H.WMS_NO=D.WMS_NO
+			     WHERE D.BUSINESS_CLASS = '01'
+			       <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+			       <if test="WERKS !=null and WERKS !='' ">
+					AND D.WERKS=#{WERKS}
+				   </if>
+			       <if test="WH_NUMBER !=null and WH_NUMBER  !='' ">
+					AND D.WH_NUMBER =#{WH_NUMBER }
+				   </if>
+				   <if test="MATNR !=null and MATNR !='' ">
+					AND D.MATNR=#{MATNR}
+				   </if>
+				   <if test="LIFNR !=null and LIFNR !='' ">
+					AND D.LIFNR=#{LIFNR}
+				   </if>
+				   <if test="ETA_DATE_START !=null and ETA_DATE_START !='' ">
+					AND D.CREATE_DATE&gt;= #{ETA_DATE_START} 
+				   </if>
+				   <if test="ETA_DATE_END !=null and ETA_DATE_END !='' ">
+					AND D.CREATE_DATE&lt;= #{ETA_DATE_END}
+				   </if>
+				   ) TMP 
+				 WHERE ROWNUM  &lt;=#{END})  
+			  	WHERE ROW_ID > #{START} 
+			  <if test="orderBy !=null and orderBy !='' ">
+				ORDER BY  ${orderBy}
+			  </if>
+		</select>
+		
+		<select id="getReceiveLogsCount"  parameterType="Map" resultType="int">
+			SELECT COUNT(1) 
+				FROM WMS_CORE_WMSDOC_ITEM D
+			    LEFT JOIN WMS_CORE_WMSDOC_HEAD H ON H.WMS_NO=D.WMS_NO
+			    WHERE D.BUSINESS_CLASS = '01'
+			        <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+			    	<if test="WERKS !=null and WERKS !='' ">
+				  	AND D.WERKS=#{WERKS}
+					</if>
+			       <if test="WH_NUMBER !=null and WH_NUMBER  !='' ">
+					AND D.WH_NUMBER =#{WH_NUMBER }
+				   </if>
+				   <if test="MATNR !=null and MATNR !='' ">
+					AND D.MATNR=#{MATNR}
+				   </if>
+				   <if test="LIFNR !=null and LIFNR !='' ">
+					AND D.LIFNR=#{LIFNR}
+				   </if>
+				   <if test="ETA_DATE_START !=null and ETA_DATE_START !='' ">
+					AND D.CREATE_DATE&gt;= #{ETA_DATE_START} 
+				   </if>
+				   <if test="ETA_DATE_END !=null and ETA_DATE_END !='' ">
+					AND D.CREATE_DATE&lt;= #{ETA_DATE_END}
+				   </if>
+		</select>
+		
+		<select id="getReceiveLabelList" parameterType="Map" resultType="Map">
+			SELECT * FROM ( 
+		         SELECT TMP.*, ROWNUM ROW_ID FROM (
+			     SELECT LABEL_NO,MATNR,MAKTX,BOX_QTY,BOX_SN,FULL_BOX_QTY
+			     FROM WMS_CORE_LABEL 
+			     WHERE 1 = 1
+			       <if test="receiptno !=null and receiptno !='' ">
+					AND RECEIPT_NO=#{receiptno}
+				   </if>
+			       <if test="itemno !=null and itemno  !='' ">
+					AND RECEIPT_ITEM_NO =#{itemno }
+				   </if>
+				   
+				   ) TMP 
+				 WHERE ROWNUM  &lt;=#{END})  
+			  	WHERE ROW_ID > #{START} 
+		</select>
+		
+		<select id="getReceiveLabelCount"  parameterType="Map" resultType="int">
+			SELECT COUNT(1) 
+			FROM WMS_CORE_LABEL 
+			WHERE 1 = 1
+			<if test="receiptno !=null and receiptno !='' ">
+				AND RECEIPT_NO=#{receiptno}
+			</if>
+			<if test="itemno !=null and itemno  !='' ">
+				AND RECEIPT_ITEM_NO =#{itemno }
+			</if>
+		</select>
+		
+</mapper>

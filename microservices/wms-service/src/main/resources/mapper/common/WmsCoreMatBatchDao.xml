@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.common.dao.WmsCoreMatBatchDao">
+	 <select id="selectCoreMatBatchList"  parameterType="List" resultType="Map">
+	     SELECT * FROM WMS_CORE_MAT_BATCH WHERE 1=1 
+			AND WERKS=#{WERKS} AND BATCH IS NOT NULL 
+	       <if test="MATNR !=null and MATNR !='' ">
+			AND MATNR=#{MATNR}
+		   </if>
+		   <if test="ASNNO !=null and ASNNO !='' ">
+			AND ASNNO=#{ASNNO}
+		   </if>
+		   <if test="LIFNR !=null and LIFNR !='' ">
+			AND LIFNR=#{LIFNR}
+		   </if>
+		   <if test="RECEIPT_DATE !=null and RECEIPT_DATE !='' ">
+			AND RECEIPT_DATE=#{RECEIPT_DATE}
+		   </if>
+		   <if test="DELIVERY_DATE !=null and DELIVERY_DATE !='' ">
+			AND DELIVERY_DATE=#{DELIVERY_DATE}
+		   </if>
+		   <if test="PRODUCT_DATE !=null and PRODUCT_DATE !='' ">
+			AND PRODUCT_DATE=#{PRODUCT_DATE}
+		   </if>
+		   <if test="EFFECT_DATE !=null and EFFECT_DATE !='' ">
+			AND EFFECT_DATE=#{EFFECT_DATE}
+		   </if>
+	 </select>
+	 
+	 <insert id="insertCoreMatBatch" parameterType="Map"  >
+		insert into WMS_CORE_MAT_BATCH
+		(ID,WERKS,BATCH,MATNR,ASNNO,LIFNR,RECEIPT_DATE,DELIVERY_DATE,F_BATCH,PRODUCT_DATE,
+		EFFECT_DATE,GENERATE_DATE,GENERATOR)
+		values
+		(seq_wms_core_mat_batch.nextval,#{WERKS},#{BATCH},#{MATNR},#{ASNNO},#{LIFNR},#{RECEIPT_DATE},#{DELIVERY_DATE},
+		#{F_BATCH} ,#{PRODUCT_DATE},#{EFFECT_DATE},#{GENERATE_DATE},#{GENERATOR}
+		)
+		
+	</insert>
+	
+	<select id="selectBatchCodeList"  parameterType="List" resultType="Map">
+		select distinct batch_rule_code,batch_rule_text from wms_c_batch_rules where del='0' order by batch_rule_code asc
+	</select>
+	
+	<select id="getMaxBatch"  parameterType="Map" resultType="String">
+		SELECT MAX(SUBSTR(m.BATCH,7 + #{SYS_COUNT},(SELECT FLOW_CODE_LENGTH FROM WMS_C_BATCH_RULES WHERE BATCH_RULE_CODE = #{BATCH_RULE_CODE}))) 
+		AS BATCH FROM WMS_CORE_MAT_BATCH m WHERE SUBSTR(m.BATCH,0,6 + #{SYS_COUNT}) = #{BATCH_DATE} 
+	</select>
+	
+	<delete id="deleteBatch" parameterType="List">
+		DELETE FROM WMS_CORE_MAT_BATCH WHERE BATCH IN 
+		<foreach collection="batchList" item="i" open="(" close=")" separator=",">
+			#{i.BATCH}
+		</foreach>
+	</delete>
+	
+</mapper>

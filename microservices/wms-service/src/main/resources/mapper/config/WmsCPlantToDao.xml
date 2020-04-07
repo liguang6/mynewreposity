@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCPlantToDao">
+	<select id="getCPlantToCount" parameterType="Map" resultType="int">
+		select count(ID) from WMS_C_PLANT_TO 
+		where nvl(DEL,'0')!='X'
+		<if test="WERKS !=null and WERKS !=''">
+			and WERKS_F = #{WERKS}
+		</if>
+		<if test="LGORT !=null and LGORT !=''">
+			and LGORT_F = #{LGORT}
+		</if>
+		<if test="WMS_MOVE_TYPE !=null and WMS_MOVE_TYPE !=''">
+			and WMS_MOVE_TYPE = #{WMS_MOVE_TYPE}
+		</if>
+		<if test="SAP_MOVE_TYPE !=null and SAP_MOVE_TYPE !=''">
+			and SAP_MOVE_TYPE = #{SAP_MOVE_TYPE}
+		</if>
+		<if test="SOBKZ !='' and SOBKZ !=''">
+			and SOBKZ =#{SOBKZ}
+		</if>
+	</select>
+	
+	<select id="getCPlantToList" parameterType="Map" resultType="Map">
+	SELECT * FROM ( 
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+		select * from WMS_C_PLANT_TO 
+		where nvl(DEL,'0')!='X'
+		<if test="WERKS !=null and WERKS !=''">
+			and WERKS_F = #{WERKS}
+		</if>
+		<if test="LGORT !=null and LGORT !=''">
+			and LGORT_F = #{LGORT}
+		</if>
+		<if test="WMS_MOVE_TYPE !=null and WMS_MOVE_TYPE !=''">
+			and WMS_MOVE_TYPE = #{WMS_MOVE_TYPE}
+		</if>
+		<if test="SAP_MOVE_TYPE !=null and SAP_MOVE_TYPE !=''">
+			and SAP_MOVE_TYPE = #{SAP_MOVE_TYPE}
+		</if>
+		<if test="SOBKZ !='' and SOBKZ !=''">
+			and SOBKZ =#{SOBKZ}
+		</if>
+		 ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	</select>
+	
+	<update id="saveUpdate" parameterType="Map" >
+		<if test="ID !=null and ID !=''">
+			update WMS_C_PLANT_TO set WERKS_F=#{WERKS_F},LGORT_F=#{LGORT_F},
+			WERKS_T=#{WERKS_T},LGORT_T=#{LGORT_T},WMS_MOVE_TYPE=#{WMS_MOVE_TYPE},
+			SAP_MOVE_TYPE=#{SAP_MOVE_TYPE},SOBKZ=#{SOBKZ},UPDATER=#{UPDATER},
+			UPDAT_DATE=#{UPDAT_DATE}
+			where ID=#{ID}
+		</if>
+		<if test="ID ==null or ID ==''">
+			insert into WMS_C_PLANT_TO (ID,WERKS_F,LGORT_F,WERKS_T,LGORT_T,WMS_MOVE_TYPE,SAP_MOVE_TYPE,
+			SOBKZ,UPDATER,UPDAT_DATE)
+			values (SEQ_WMS_C_PLANT_TO.NEXTVAL,#{WERKS_F},#{LGORT_F},#{WERKS_T},#{LGORT_T},#{WMS_MOVE_TYPE},
+			#{SAP_MOVE_TYPE},#{SOBKZ},#{UPDATER},#{UPDAT_DATE})
+		</if>
+	</update>
+	
+	<update id="delete" parameterType="String">
+		update WMS_C_PLANT_TO set DEL='X' where ID in (${ids})
+	</update>
+	
+	<select id="getCPlantTo" parameterType="Map" resultType="Map">
+	  select * from WMS_C_PLANT_TO 
+		where nvl(DEL,'0')!='X'
+		<if test="WERKS !=null and WERKS !=''">
+			and WERKS_F = #{WERKS}
+		</if>
+		<if test="LGORT !=null and LGORT !=''">
+			and (LGORT_F = #{LGORT} or LGORT_F is null)
+		</if>
+		<if test="RECEIVE_WERKS !=null and RECEIVE_WERKS !=''">
+			and WERKS_T = #{RECEIVE_WERKS}
+		</if>
+		<if test="RECEIVE_LGORT !=null and RECEIVE_LGORT !=''">
+			and LGORT_T = #{RECEIVE_LGORT}
+		</if>
+		<if test="SOBKZ !='' and SOBKZ !=''">
+			and SOBKZ =#{SOBKZ}
+		</if>
+	</select>
+	
+</mapper>

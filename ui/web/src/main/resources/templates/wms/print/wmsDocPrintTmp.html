@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+    <title>自制品入库单</title>
+    <style>
+        @page {
+            size: 210mm 148.5mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            margin: 0.05in;
+            margin-top:145px;
+            margin-bottom:60px;
+            padding: 0.1em;
+            @top-left{ content:element(header_left)};
+            @top-center{};
+            @top-right{ content: element(header_right)};
+            @bottom-left{
+                content:element(footer_left);
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            };
+            @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;width:15%
+            };
+        }
+        #page-header-left {
+		    position:running(header_left);
+		    margin-bottom:50px;
+     	}
+        
+	    #page-header-center {
+	    	position:running(header_center);
+	    }
+
+	   	#page-header-right {
+		    position:running(header_right);
+	    }
+	    #page-footer-left{
+	    	position:running(footer_left);
+	    }
+    </style>
+</head>
+<body style="font-family: SimSun">
+	<div style="width: 100%;height:340px">
+		<div id="page-header-left">
+			<table style="width: 100%; height: 90px;">
+				<tr style="width: 100%;">
+					<td style="text-align: left; width: 50%; height: 40px;">
+					<img src="${contextPath}/statics/images/byd_logo.png" style="height: 40px;"></img></td>
+					<td style="width: 30%; text-align: left; height: 40px; float: none;" colspan="2">
+						<label style="width: 100%; font-size: 18px;">退货单</label>
+					</td>
+					<td style="width: 20%; text-align: right; height: 40px;"> </td>
+				</tr>
+
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 34%; height: 20px;">
+						公司：
+					</td>
+					<td style="width: 33%; text-align: left; height: 20px;">
+						事业部：</td>
+					<td style="width: 33%; text-align: left; height: 20px;">
+						退货单号：</td>
+				</tr>
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 34%; height: 20px;">
+						工厂：</td>
+					<td style="width: 33%; text-align: left; height: 20px;"></td>
+					<td style="width: 33%; text-align: left; height: 20px;">
+						创建时间：</td>
+				</tr>
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 34%; height: 20px;">
+						供应商：</td>
+					<td style="width: 33%; text-align: left; height: 20px;"></td>
+					<td style="width: 33%; text-align: left; height: 20px;">
+						WMS凭证：<br />SAP凭证：
+					</td>
+				</tr>
+			</table>
+		</div>
+		<table
+			style="border: solid #000000; border-width: 1px 0px 0px 1px; width: 100%;">
+			<tr style="width: 100%; font-size: 12px;">
+				<td style="width: 5%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">序号</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">生产订单</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">物料编码</td>
+				<td style="width: 20%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">物料描述</td>
+				<td style="width: 5%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">单位</td>
+				<td style="width: 5%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">金额</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">批次</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">退货数量</td>
+				<td style="width: 5%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">件量</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">退货原因</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">备注</td>
+			</tr>
+		</table>
+		<div id="page-footer-left">
+			<table style="width: 100%;">
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 18%; height: 10px;">
+						制单：${username}</td>
+					<td style="width: 12%; text-align: left; height: 10px;">车间主管：
+					</td>
+					<td style="width: 15%; text-align: left; height: 10px;">仓管员：</td>
+					<td style="width: 15%; text-align: left; height: 10px;">
+						车间物料员：</td>
+					<td style="width: 15%; text-align: left; height: 10px;"></td>
+					<td style="text-align: left; height: 10px;"></td>
+				</tr>
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 65%; height: 10px;" colspan="4">
+						存根(白) 仓库(绿) 财务(红) 采购(黄)</td>
+					<td style="text-align: left; width: 20%; height: 10px;"></td>
+					<td style="text-align: left; width: 15%; height: 10px;">
+						交单时间:</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	
+	<div style="width: 100%;height:340px">
+		<div id="page-header-left">
+			<table style="width: 100%; height: 90px;">
+				<tr style="width: 100%;">
+					<td style="text-align: left; width: 50%; height: 40px;">
+					<img src="${contextPath}/statics/images/byd_logo.png" style="height: 40px;"></img></td>
+					<td style="width: 30%; text-align: left; height: 40px; float: none;" colspan="2">
+						<label style="width: 100%; font-size: 18px;">退货单2</label>
+					</td>
+					<td style="width: 20%; text-align: right; height: 40px;"> </td>
+				</tr>
+
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 34%; height: 20px;">
+						公司：
+					</td>
+					<td style="width: 33%; text-align: left; height: 20px;">
+						事业部：</td>
+					<td style="width: 33%; text-align: left; height: 20px;">
+						退货单号：</td>
+				</tr>
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 34%; height: 20px;">
+						工厂：</td>
+					<td style="width: 33%; text-align: left; height: 20px;"></td>
+					<td style="width: 33%; text-align: left; height: 20px;">
+						创建时间：</td>
+				</tr>
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 34%; height: 20px;">
+						供应商：</td>
+					<td style="width: 33%; text-align: left; height: 20px;"></td>
+					<td style="width: 33%; text-align: left; height: 20px;">
+						WMS凭证：<br />SAP凭证：
+					</td>
+				</tr>
+			</table>
+		</div>
+		<table
+			style="border: solid #000000; border-width: 1px 0px 0px 1px; width: 100%;">
+			<tr style="width: 100%; font-size: 12px;">
+				<td style="width: 5%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">序号</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">生产订单</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">物料编码</td>
+				<td style="width: 20%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">物料描述</td>
+				<td style="width: 5%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">单位</td>
+				<td style="width: 5%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">金额</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">批次</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">退货数量</td>
+				<td style="width: 5%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">件量</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">退货原因</td>
+				<td style="width: 10%; border: solid #000000; border-width: 0px 1px 1px 0px; font-weight: bold;">备注</td>
+			</tr>
+		</table>
+		<div id="page-footer-left">
+			<table style="width: 100%;">
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 18%; height: 10px;">
+						制单2：${username}</td>
+					<td style="width: 12%; text-align: left; height: 10px;">车间主管：
+					</td>
+					<td style="width: 15%; text-align: left; height: 10px;">仓管员：</td>
+					<td style="width: 15%; text-align: left; height: 10px;">
+						车间物料员：</td>
+					<td style="width: 15%; text-align: left; height: 10px;"></td>
+					<td style="text-align: left; height: 10px;"></td>
+				</tr>
+				<tr style="width: 100%; font-size: 11px;">
+					<td style="text-align: left; width: 65%; height: 10px;" colspan="4">
+						存根(白) 仓库(绿) 财务(红) 采购(黄)</td>
+					<td style="text-align: left; width: 20%; height: 10px;"></td>
+					<td style="text-align: left; width: 15%; height: 10px;">
+						交单时间:</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+</body>
+</html>

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.WmsDocPackingQueryDao">
+
+    <!--  <select id="getPackingByLabelNo" parameterType="Map" resultType="Map">
+         select LABEL_NO as labelNo,BOX_QTY,UNIT,LGORT,LABEL_NO,LIFNR,BATCH,F_BATCH,QC_RESULT_CODE from WMS_CORE_LABEL
+         where label_no = #{label_no}
+     </select>-->
+
+
+    <select id="getPackingByLabelNo" parameterType="java.util.List"
+            resultType="Map">
+        select LABEL_NO as labelNo,BOX_QTY,UNIT,LGORT,LABEL_NO,LIFNR,BATCH,F_BATCH,QC_RESULT_CODE from WMS_CORE_LABEL
+        where label_no in
+        <foreach collection="list" index="index" item="item" open="("
+                 separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+
+
+
+
+    <select id="getDocPackingList" parameterType="List" resultType="Map">
+        SELECT * FROM(
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+        select * from
+        ( select REGEXP_SUBSTR(to_char(a.label_no) ,'[^,]+',1,l) labelN0,a.WMS_NO,a.WMS_ITEM_NO,a.WMS_MOVE_TYPE,a.MATNR,
+        a.MAKTX,a.PO_NO from
+
+        ( SELECT * FROM
+        ( SELECT d.werks,d.wh_number,D.WMS_NO,WMS_ITEM_NO,WMS_MOVE_TYPE,MATNR,MAKTX,PO_NO,D.LABEL_NO FROM WMS_CORE_WMSDOC_ITEM D
+        LEFT JOIN WMS_CORE_WMSDOC_HEAD H ON H.WMS_NO=D.WMS_NO
+        WHERE 1=1
+        and d.label_no is not null
+        <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+        <if test="WERKS !=null and WERKS !='' ">
+            AND D.WERKS=#{WERKS}
+        </if>
+        <if test="WH_NUMBER !=null and WH_NUMBER  !='' ">
+            AND D.WH_NUMBER =#{WH_NUMBER }
+        </if>
+        <if test="WMS_MOVE_TYPE !=null and WMS_MOVE_TYPE !='' ">
+            AND D.WMS_MOVE_TYPE=#{WMS_MOVE_TYPE}
+        </if>
+        <if test="LGORT !=null and LGORT !='' ">
+            AND D.LGORT=#{LGORT}
+        </if>
+        <if test="MATNR !=null and MATNR !='' ">
+            AND D.MATNR=#{MATNR}
+        </if>
+        <if test="LIFNR !=null and LIFNR !='' ">
+            AND D.LIFNR=#{LIFNR}
+        </if>
+        <if test="COST_CENTER !=null and COST_CENTER !='' ">
+            AND D.COST_CENTER=#{COST_CENTER}
+        </if>
+        <if test="CREATOR !=null and CREATOR !='' ">
+            AND D.CREATOR=#{CREATOR}
+        </if>
+        <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+            AND D.CREATE_DATE&gt;=#{CREATE_DATE_START}
+        </if>
+        <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+            AND D.CREATE_DATE&lt;=#{CREATE_DATE_END}
+        </if>
+        <if test="JZ_DATE_START !=null and JZ_DATE_START !='' ">
+            AND H.JZ_DATE&gt;=#{JZ_DATE_START}
+        </if>
+        <if test="JZ_DATE_END !=null and JZ_DATE_END !='' ">
+            AND H.JZ_DATE&lt;=#{JZ_DATE_END}
+        </if>
+        <if test="PZ_DATE_START !=null and PZ_DATE_START !='' ">
+            AND H.PZ_DATE&gt;=#{PZ_DATE_START}
+        </if>
+        <if test="PZ_DATE_END !=null and PZ_DATE_END !='' ">
+            AND H.PZ_DATE&lt;=#{PZ_DATE_END}
+        </if>
+        <if test="WMS_NO !=null and WMS_NO !='' ">
+            AND D.WMS_NO=#{WMS_NO}  <!-- WMS凭证号 -->
+        </if>
+        <if test="ASN_NO !=null and ASN_NO !='' ">
+            AND D.ASNNO=#{ASN_NO}  <!-- SCM送货单号 -->
+        </if>
+        <if test="PO_NO !=null and PO_NO !='' ">
+            AND D.PO_NO=#{PO_NO}  <!-- 采购顶单号 -->
+        </if>
+        <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+            AND D.SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+        </if>
+        <if test="RECEIPT_NO !=null and RECEIPT_NO !='' ">
+            AND D.RECEIPT_NO=#{RECEIPT_NO}  <!-- 送货单号 -->
+        </if>
+        <if test="BEDNR !=null and BEDNR !='' ">
+            AND D.BEDNR=#{BEDNR}  <!-- 需求跟踪号 -->
+        </if>
+        <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+            AND D.SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+        </if>)
+        ) a,
+
+        (SELECT LEVEL l FROM DUAL CONNECT BY LEVEL&lt;100) b
+
+        WHERE l&lt;=LENGTH(to_char(a.label_no)) - LENGTH(REPLACE(to_char(a.label_no),','))+1
+
+        ) xx
+
+
+
+        left join
+        (select LABEL_NO as labelNo,BOX_QTY,UNIT,LGORT,LABEL_NO,LIFNR,BATCH,F_BATCH,QC_RESULT_CODE from WMS_CORE_LABEL )
+        xn
+        on xn.labelNo = xx.labelN0
+
+        )TMP WHERE ROWNUM&lt;=#{END} )WHERE ROW_ID> #{START}
+        <if test="orderBy !=null and orderBy !='' ">
+            ORDER BY ${orderBy}
+        </if>
+    </select>
+
+    <select id="getDocPackingCount" parameterType="Map" resultType="int">
+        SELECT count(*) FROM(
+        select * from
+        ( select REGEXP_SUBSTR(to_char(a.label_no) ,'[^,]+',1,l) labelN0,a.WMS_NO,a.WMS_ITEM_NO,a.WMS_MOVE_TYPE,a.MATNR,
+        a.MAKTX,a.PO_NO from
+
+        ( SELECT * FROM
+        ( SELECT d.werks,d.wh_number,D.WMS_NO,WMS_ITEM_NO,WMS_MOVE_TYPE,MATNR,MAKTX,PO_NO,D.LABEL_NO FROM WMS_CORE_WMSDOC_ITEM D
+        LEFT JOIN WMS_CORE_WMSDOC_HEAD H ON H.WMS_NO=D.WMS_NO
+        WHERE 1=1
+        and d.label_no is not null
+        <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+        <if test="WERKS !=null and WERKS !='' ">
+            AND D.WERKS=#{WERKS}
+        </if>
+        <if test="WH_NUMBER !=null and WH_NUMBER  !='' ">
+            AND D.WH_NUMBER =#{WH_NUMBER }
+        </if>
+        <if test="WMS_MOVE_TYPE !=null and WMS_MOVE_TYPE !='' ">
+            AND D.WMS_MOVE_TYPE=#{WMS_MOVE_TYPE}
+        </if>
+        <if test="LGORT !=null and LGORT !='' ">
+            AND D.LGORT=#{LGORT}
+        </if>
+        <if test="MATNR !=null and MATNR !='' ">
+            AND D.MATNR=#{MATNR}
+        </if>
+        <if test="LIFNR !=null and LIFNR !='' ">
+            AND D.LIFNR=#{LIFNR}
+        </if>
+        <if test="COST_CENTER !=null and COST_CENTER !='' ">
+            AND D.COST_CENTER=#{COST_CENTER}
+        </if>
+        <if test="CREATOR !=null and CREATOR !='' ">
+            AND D.CREATOR=#{CREATOR}
+        </if>
+        <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+            AND D.CREATE_DATE&gt;=#{CREATE_DATE_START}
+        </if>
+        <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+            AND D.CREATE_DATE&lt;=#{CREATE_DATE_END}
+        </if>
+        <if test="JZ_DATE_START !=null and JZ_DATE_START !='' ">
+            AND H.JZ_DATE&gt;=#{JZ_DATE_START}
+        </if>
+        <if test="JZ_DATE_END !=null and JZ_DATE_END !='' ">
+            AND H.JZ_DATE&lt;=#{JZ_DATE_END}
+        </if>
+        <if test="PZ_DATE_START !=null and PZ_DATE_START !='' ">
+            AND H.PZ_DATE&gt;=#{PZ_DATE_START}
+        </if>
+        <if test="PZ_DATE_END !=null and PZ_DATE_END !='' ">
+            AND H.PZ_DATE&lt;=#{PZ_DATE_END}
+        </if>
+        <if test="WMS_NO !=null and WMS_NO !='' ">
+            AND D.WMS_NO=#{WMS_NO}  <!-- WMS凭证号 -->
+        </if>
+        <if test="ASN_NO !=null and ASN_NO !='' ">
+            AND D.ASNNO=#{ASN_NO}  <!-- SCM送货单号 -->
+        </if>
+        <if test="PO_NO !=null and PO_NO !='' ">
+            AND D.PO_NO=#{PO_NO}  <!-- 采购顶单号 -->
+        </if>
+        <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+            AND D.SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+        </if>
+        <if test="RECEIPT_NO !=null and RECEIPT_NO !='' ">
+            AND D.RECEIPT_NO=#{RECEIPT_NO}  <!-- 送货单号 -->
+        </if>
+        <if test="BEDNR !=null and BEDNR !='' ">
+            AND D.BEDNR=#{BEDNR}  <!-- 需求跟踪号 -->
+        </if>
+        <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+            AND D.SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+        </if>)
+        ) a,
+
+        (SELECT LEVEL l FROM DUAL CONNECT BY LEVEL&lt;100) b
+
+        WHERE l&lt;=LENGTH(to_char(a.label_no)) - LENGTH(REPLACE(to_char(a.label_no),','))+1
+
+        ) xx
+
+
+
+        left join
+        (select LABEL_NO as labelNo,BOX_QTY,UNIT,LGORT,LABEL_NO,LIFNR,BATCH,F_BATCH,QC_RESULT_CODE from WMS_CORE_LABEL )
+        xn
+        on xn.labelNo = xx.labelN0
+
+        )
+
+
+    </select>
+
+
+</mapper>

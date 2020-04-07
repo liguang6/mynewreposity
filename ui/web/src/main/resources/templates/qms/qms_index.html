@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="webkit" name="renderer">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Cache-Control"
+	content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta content="width=device-width, initial-scale=1, user-scalable=1"
+	name="viewport">
+<meta content="WMS - Powered By csbyd" name="description">
+<meta content="csbyd" name="author">
+<title>WMS</title>
+<link rel="stylesheet" href="${request.contextPath}/statics/fonts/font-icons.min.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/css/bootstrap.min.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/wdScrollTab/TabPanel.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/adminlte/css/AdminLTE.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/jquery-toastr/2.0/toastr.min.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/adminlte/css/skins/skin-green-light.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/css/index.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/css/wms.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/css/common.css">
+<style type="text/css">
+.user-image {
+    float: left;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    margin-right: 10px;
+    margin-top: -2px;
+}
+.navbar-container a {
+	color: white;
+}
+.well {
+	margin-bottom: 10px;
+}
+</style>
+<script src="${request.contextPath}/statics/js/global.min.js"></script>
+<script src="${request.contextPath}/statics/libs/jquery-1.12.4.min.js"></script>
+
+</head>
+<body class="no-skin" style="font-family: 'Microsoft YaHei';">
+	<div class="main-container" id="qms_index" style="overflow-x: hidden; " v-cloak>
+		<div class="main-content">
+			<div class="row navbar-container" style="height: 70px">
+				<div class="navbar-buttons navbar-header pull-left col-xs-5"
+					role="navigation" style="background-color: #2c5976; height: 100%;">
+					<ul class="nav ace-nav">
+						<li style="background-color: #2c5976; margin-top: 8px;display: inline-block;"><a
+							data-toggle="dropdown" href="#" class="dropdown-toggle"
+							style="background-color: #2c5976;"> 
+							<img src="${request.contextPath}/statics/images/user.jpg" class="user-image"> 
+							<span class="user-info" style="vertical-align: baseline;"> 欢迎您,{{user.FULL_NAME}}</span>
+						</a></li>
+						<li class="pull-right" style="border-left: 0; margin-top: 12px;display: inline-block;">
+							<!-- <a style="background-color: #2c5976; display: inline-block;" href="/BMS/"> <span>BMS</span>
+						</a>   --><a style="background-color: #2c5976; display: inline-block;"
+							href="${request.contextPath}/sys/user_center.html"> <span>用户中心</span>
+						</a> <a style="background-color: #2c5976; display: inline-block;"
+							href="/BMS/logout"> <span>登出</span>
+						</a>
+						</li>
+					</ul>
+				</div>
+
+				<div class="navbar-buttons navbar-header  col-xs-7 "
+					style="background-color: #2c5976; left: 10px; height: 100%; overflow-x: auto;">
+					<ul class="nav ace-nav " style="font-size: 11px;">
+						<li class="pull-left" style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							onclick="showPdf();" href="#"> <img src="${request.contextPath}/statics/images/zzj_tz.png" 
+							style="width:31px;height:31px;"/>
+								<p>图纸</p>
+						</a>
+						</li>
+						<li class="pull-left" style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_print.png"
+								style="width:31px;height:31px;" onclick="printMatLabel()" />
+								<p>条码打印</p>
+						</a>
+						</li>
+						<li class="pull-left"
+							style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a
+							style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_jtlist.png"
+								style="width:31px;height:31px;" onclick="testRecord()" />
+								<p>检验记录</p>
+						</a>
+						</li>
+						<li class="pull-left"
+							style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a
+							style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_jj.png" 
+								style="width:31px;height:31px;" onclick="workshopSupply()" />
+								<p>车间供货</p>
+						</a>
+						</li>
+						<li class="pull-left" style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_guide.png"
+								style="width:31px;height:31px;" onclick="jobGuide()" />
+								<p>品质检验</p>
+						</a>
+						</li>
+						<li class="pull-left" style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_progress.png"
+								style="width:31px;height:31px;" onclick="productProgress()" />
+								<p>加工进度</p>
+						</a>
+						</li>
+						<li class="pull-left" style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_jtlist.png"
+								style="width:31px;height:31px;" onclick="matDetailList()" />
+								<p>下料明细</p>
+						</a>
+						</li>
+						<li class="pull-left" style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_guide.png"
+								style="width:31px;height:31px;" onclick="dianYOut()" />
+								<p>电泳外发</p>
+						</a>
+						</li>
+						<li class="pull-left"
+							style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a
+							style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_progress.png"
+								style="width:31px;height:31px;" onclick="dianYCheckIn()" />
+								<p>电泳进仓</p>
+						</a>
+						</li>
+						<li class="pull-left" style="border-left: 0; margin-top: 8px; text-align: center; width: 10%">
+							<a style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_planquery.jpg"
+								style="width:31px;height:31px;" onclick="zzjJtMaterialsPlanQuery()" />
+								<p>加工计划</p>
+						</a>
+						</li>
+						<li class="pull-left" style="border-left: 0; margin-top: 8px;text-align: center; width: 10%">
+							<a style="background-color: #2c5976; display: inline-block; margin-top: -5px; line-height: 13px;"
+							href="#"> <img src="${request.contextPath}/statics/images/zzj_planquery.jpg"
+								style="width:31px;height:31px;" onclick="zzjHandoverQuery()" />
+								<p>交接记录</p>
+						</a>
+						</li>
+					</ul>
+				</div>
+
+			</div>
+
+			<div class="row"
+				style="padding-top: 10px; background-color: #CCCCCC;" id="doc_body">
+
+
+				<div class="tabbable"
+					style="padding-left: 10px; padding-right: 10px;">
+					<ul class="nav nav-tabs" id="myTab">
+						<li id="div1" class="active"><a data-toggle="tab"
+							href="#div_1">机台清单</a></li>
+						<li id="div2"><a data-toggle="tab" href="#div_2">绑定机台</a></li>
+						<li id="div3"><a data-toggle="tab" href="#div_3">产量录入</a></li>
+						<li id="div4"><a data-toggle="tab" href="#div_4">全部计划</a></li>
+						<li id="div5"><a data-toggle="tab" href="#div_5">班组/工序交接</a></li>
+					</ul>
+					<!-- ***********下料明细变更滚动显示DIV *************** -->
+					<div id="demo"
+						style="overflow: hidden; width: 760px; align: center">
+						<table cellspacing="0" cellpadding="10px" align="center"
+							border="0">
+							<tbody>
+								<tr>
+									<td id="marquePic1" valign="bottom">
+										<table width="860px">
+											<tr>
+												<td id="td0" style="font-size: 12pt; color: red;"
+													onclick="pmdChange(this.id)"></td>
+												<td id="td1" style="font-size: 12pt; color: red;"
+													onclick="pmdChange(this.id)"></td>
+												<td id="td2" style="font-size: 12pt; color: red;"
+													onclick="pmdChange(this.id)"></td>
+												<td id="td3" style="font-size: 12pt; color: red;"
+													onclick="pmdChange(this.id)"></td>
+												<td id="td4" style="font-size: 12pt; color: red;"
+													onclick="pmdChange(this.id)"></td>
+											</tr>
+										</table>
+									</td>
+									<td id="marquePic2" valign="bottom"></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<!-- ********************************************* -->
+					<div class="tab-content" id="tab-content">
+						<div id="div_1" class="tab-pane fade in active">
+							<form class="well form-search"
+								style="margin-left: 0px; height: 60px;" name="jt_form">
+								<table>
+									<tbody>
+										<tr>
+											<td class="tab_jt"><span class="tab_require"
+												style="color: red;">*</span>机台：</td>
+											<td class="tab_jt"><span
+												class="input-icon input-icon-right" style="width: 100%;">
+													<input name="jt_no" class="input-medium"
+													style="width: 130px; height: 30px;" type="text" /> <i
+													class="ace-icon fa fa-barcode black bigger-160 btn_scan"
+													style="cursor: pointer" onclick="doScan('jt_no')"> </i>
+											</span></td>
+											<td class="tab_tz"><span class="tab_require"
+												style="color: red;">*</span><span style="font-weight: bold">零部件号：</span></td>
+											<td class="tab_tz"><span
+												class="input-icon input-icon-right" style="width: 100%;">
+													<input name="tz_no" class="input-medium"
+													style="width: 100%; height: 30px;" type="text" /> <i
+													class="ace-icon fa fa-barcode black bigger-160 btn_scan"
+													style="cursor: pointer" onclick="doScan('tz_no')"></i>
+											</span></td>
+											<td class="tab_process">工序：</td>
+											<td class="tab_process"><input type="text"
+												name="process" class="input-medium " style="width: 80px;"
+												readonly /></td>
+											<td class="tab_workgroup">班组：</td>
+											<td class="tab_workgroup"><input type="text"
+												name="workgroup" class="input-medium " style="width: 110px;"
+												readonly /></td>
+											<td class="tab_tz"><span>订单号：</span></td>
+											<td class="tab_tz"><span
+												class="input-icon input-icon-right" style="width: 100%;">
+													<input type="text" name="order" class="input-medium"
+													style="width: 110px; height: 30px;"></input>
+											</span></td>
+										</tr>
+									</tbody>
+								</table>
+							</form>
+							<table id="table_tab1"
+								class="table table-striped table-bordered table-hover"
+								style="font-size: 12px; text-align: center; overflow-x: auto; padding-right: 20px; table-layout: fixed; width: 2500px; word-break: break-all;">
+
+							</table>
+						</div>
+
+						<div id="div_2" class="tab-pane fade">
+							<form class="well form-search"
+								style="margin-left: 0px; min-height: 60px;" name="jt_form">
+
+								<label class="tb_jt"><span class="tab_require"
+									style="color: red;">*</span>机台：</label> <span
+									class="input-icon input-icon-right tb_jt"> <input
+									name="jt_no" class="input-medium"
+									style="width: 130px; height: 30px;" type="text" /> <i
+									class="ace-icon fa fa-barcode black bigger-160 btn_scan"
+									style="cursor: pointer" onclick="doScan('jt_no')"> </i>
+								</span> <label class="tab_order"><span class="tab_require"
+									style="color: red;">*</span>订单：</label> <input type="text" name="order"
+									class="input-medium tab_order"
+									style="width: 100px; height: 30px;"></input> <label
+									class="tab_order"><span class="tab_require"
+									style="color: red;">*</span>批次：</label> <select name="batch"
+									class="input-small tab_order">
+									<option value=''>请选择</option>
+								</select> <label class="tab_tz"><span class="tab_require"
+									style="color: red;">*</span><span>零部件号：</span></label> <span
+									class="input-icon input-icon-right tab_tz"> <input
+									name="tz_no" class="input-medium"
+									style="width: 140px; height: 30px;" type="text" /> <i
+									class="ace-icon fa fa-barcode black bigger-160 btn_scan"
+									style="cursor: pointer" onclick="doScan('tz_no')"></i>
+								</span> <label class="tab_process">工序：</label> <input type="text"
+									name="process" class="input-medium tab_process"
+									style="width: 80px;" readonly />
+
+								<!-- <label class="tab_workgroup">班组：</label> -->
+								<input type="text" name="workgroup"
+									class="input-medium tab_workgroup"
+									style="width: 90px; display: none" readonly /> <label
+									class="tab_date"><span style="color: red;"
+									class="tab_require">*</span><span id="date_span">计划日期：</span></label> <input
+									type="text" class="tab_date"
+									onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});"
+									style="width: 90px;" name="prod_date"> <input
+									class="btn btn-sm btn-success tab_save" name="btnSave"
+									value="保存" style="margin-left: 20px;" type="button">
+							</form>
+							<table id="table_tab2"
+								class="table table-striped table-bordered table-hover"
+								style="font-size: 12px; text-align: center; table-layout: fixed;">
+
+							</table>
+						</div>
+
+						<div id="div_3" class="tab-pane fade">
+							<form class="well form-search"
+								style="margin-left: 0px; min-height: 60px;" name="jt_form">
+								<label class="tb_jt"><span class="tab_require"
+									style="color: red;">*</span>机台：</label> <span
+									class="input-icon input-icon-right tb_jt"> <input
+									name="jt_no" class="input-medium"
+									style="width: 130px; height: 30px;" type="text" /> <i
+									class="ace-icon fa fa-barcode black bigger-160 btn_scan"
+									style="cursor: pointer" onclick="doScan('jt_no')"> </i>
+								</span> <label class="tab_productor"><span class="tab_require"
+									style="color: red;">*</span>加工者：</label> <span
+									class="input-icon input-icon-right tab_productor"> <input
+									type="text" name="productor" class="input-medium "
+									style="width: 100px;" id="productor" /> <i
+									class="ace-icon fa fa-barcode black bigger-160 btn_scan"
+									style="cursor: pointer" onclick="doScan('productor')"> </i>
+								</span> <label class="tab_order"><span class="tab_require"
+									style="color: red;">*</span>订单：</label> <input type="text" name="order"
+									class="input-medium tab_order"
+									style="width: 100px; height: 30px;"></input> <label
+									class="tab_order"><span class="tab_require"
+									style="color: red;">*</span>批次：</label> <select name="batch"
+									class="input-small tab_order">
+									<option value=''>请选择</option>
+								</select> <label class="tab_tz"><span class="tab_require"
+									style="color: red;">*</span><span>零部件号：</span></label> <span
+									class="input-icon input-icon-right tab_tz"> <input
+									name="tz_no" class="input-medium"
+									style="width: 140px; height: 30px;" type="text" /> <i
+									class="ace-icon fa fa-barcode black bigger-160 btn_scan"
+									style="cursor: pointer" onclick="doScan('tz_no')"></i>
+								</span> <label class="tab_process">工序：</label> <input type="text"
+									name="process" class="input-medium tab_process"
+									style="width: 80px;" readonly />
+								<!-- <label class="tab_workgroup">班组：</label> -->
+								<input type="text" name="workgroup"
+									class="input-medium tab_workgroup"
+									style="width: 90px; display: none" readonly /> <label
+									class="tab_date"><span style="color: red;"
+									class="tab_require">*</span><span id="date_span">生产日期：</span></label> <input
+									type="text" class="tab_date"
+									onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});"
+									style="width: 90px;" name="prod_date"> <input
+									class="btn btn-sm btn-success tab_save" name="btnSave"
+									value="保存" style="margin-left: 20px;" type="button">
+							</form>
+							<table id="table_tab3"
+								class="table table-striped table-bordered table-hover"
+								style="font-size: 12px; text-align: center; table-layout: fixed; word-break: break-all; width: 1800px;">
+
+							</table>
+						</div>
+
+						<div id="div_4" class="tab-pane fade ">
+							<form class="well form-search"
+								style="margin-left: 0px; height: 60px;" name="jt_form">
+								<table>
+									<tbody>
+										<tr>
+											<td class="tab_tz"><span class="tab_require"
+												style="color: red;">*</span><span style="font-weight: bold">零部件号：</span></td>
+											<td class="tab_tz"><span
+												class="input-icon input-icon-right" style="width: 100%;">
+													<input name="tz_no" class="input-medium"
+													style="width: 140px; height: 30px;" type="text" /> <i
+													class="ace-icon fa fa-barcode black bigger-160 btn_scan"
+													style="cursor: pointer" onclick="doScan('tz_no')"></i>
+											</span></td>
+											<td class="tab_process">工序：</td>
+											<td class="tab_process"><input type="text"
+												name="process" id="process" class="input-medium "
+												style="width: 80px;" readonly /></td>
+											<td class="tab_tz"><span>材料规格：</span></td>
+											<td class="tab_tz"><input type="text"
+												name="specification" class="input-medium"
+												style="width: 90px; height: 30px;"></input></td>
+											<td class="tab_tz"><span>精度：</span></td>
+											<td class="tab_tz"><input type="text" name="accuracy"
+												class="input-medium" style="width: 90px; height: 30px;"></input>
+											</td>
+											<td class="tab_tz"><span>分包类型：</span></td>
+											<td class="tab_tz"><select multiple="multiple"
+												id="fenbao" name="fenbao" style="width: 130px; height: 0px;"></select>
+											</td>
+											<td class="tab_tz"><span>订单号：</span></td>
+											<td class="tab_tz"><input type="text" name="order"
+												class="input-medium" style="width: 110px; height: 30px;"></input>
+											</td>
+											<td><span id="order_output" style="font-weight: bold"></span></td>
+										</tr>
+									</tbody>
+								</table>
+							</form>
+							<table id="table_tab4"
+								class="table table-striped table-bordered table-hover"
+								style="font-size: 12px; text-align: center; table-layout: fixed; word-break: break-all; width: 2800px;">
+
+							</table>
+						</div>
+
+					</div>
+				</div>
+
+			</div>
+			<div
+				style="position: absolute; z-index: 999; top: 50%; left: 50%; display: none;"
+				class="divLoading">
+				<span><i class="fa fa-spinner fa-spin fa-4x"
+					style="height: 1em;"></i></span>
+			</div>
+			<div id="dialog-confirm" class="hide">
+				<form id="addForm" class="form-horizontal">
+					<div class="form-group">
+						<label class="col-sm-3 control-label no-padding-right">*&nbsp;用户名</label>
+						<div class="col-sm-9">
+							<input type="text" class="input-medium" placeholder="用户名..."
+								id="username" />
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label no-padding-right">*&nbsp;密码</label>
+						<div class="col-sm-9">
+							<input type="password" class="input-medium" placeholder="密码..."
+								id="psw" />
+						</div>
+					</div>
+				</form>
+			</div>
+
+		</div>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/global.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/jquery-migrate-1.4.1.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/vue.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/router.js"></script>
+	<script src="${request.contextPath}/statics/libs/bootstrap.min.js"></script>
+	<script src="${request.contextPath}/statics/plugins/layer/layer.js"></script>
+	<script src="${request.contextPath}/statics/plugins/jqGrid-4.7.1/js/jquery.jqGrid.js"></script>
+	<script src="${request.contextPath}/statics/plugins/jqGrid-4.7.1/jquery.jqGrid.extend.js"></script>
+	<script src="${request.contextPath}/statics/js/wms.js"></script>
+	<script src="${request.contextPath}/statics/js/qms/common/common.js"></script>
+	<script src="${request.contextPath}/statics/js/qms/qms_index.js"></script>
+</body>
+
+</html>

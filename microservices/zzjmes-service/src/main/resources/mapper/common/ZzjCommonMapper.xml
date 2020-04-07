@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.common.dao.ZzjCommonDao">
+	<select id="getPlanBatchList" parameterType="Map" resultType="Map">
+	select batch,quantity from ZZJ_PLAN where 1 = 1
+	<if test="werks != null and werks != ''">
+		and werks = #{werks}
+	</if>
+	<if test="werks_name != null and werks_name != ''">
+		and werks_name = #{werks_name}
+	</if>
+	<if test="workshop != null and workshop != ''">
+		and workshop = #{workshop}
+	</if>
+	<if test="workshop_name != null and workshop_name != ''">
+		and workshop_name = #{workshop_name}
+	</if>
+	<if test="line != null and line !=''">
+		and line = #{line}
+	</if>
+	<if test="line_name != null and line_name !=''">
+		and line_name = #{line_name}
+	</if>
+	<if test="order_no != null and order_no !=''">
+		and order_no = #{order_no}
+	</if>
+	<if test="batch != null and batch !=''">
+	    and batch like CONCAT('%',#{batch},'%')
+	</if>
+	<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+	    and batch like CONCAT('%',#{zzj_plan_batch},'%')
+	</if>
+	</select>
+	
+	<select id="getJTProcess" parameterType="Map" resultType="Map">
+		select machine_code,machine_name,process_code,process_name,section,workgroup,workgroup_name,team,team_name,
+		werks_name,werks,workshop,workshop_name,line_name,line
+		from ZZJ_MACHINE_ASSIGN 
+		where username=#{username} and ifnull(del,'0')!='X'
+	</select>
+	<!--  机台模糊查询-->
+	<select id="getMachineList" parameterType="Map" resultType="Map">
+	select machine_code,machine_name from ZZJ_MACHINE_ASSIGN where del='0'
+	<if test="werks != null and werks != ''">
+		and werks = #{werks}
+	</if>
+	<if test="werks_name != null and werks_name != ''">
+		and werks_name = #{werks_name}
+	</if>
+	<if test="workshop != null and workshop != ''">
+		and workshop = #{workshop}
+	</if>
+	<if test="workshop_name != null and workshop_name != ''">
+		and workshop_name = #{workshop_name}
+	</if>
+	<if test="line != null and line !=''">
+		and line = #{line}
+	</if>
+	<if test="line_name != null and line_name !=''">
+		and line_name = #{line_name}
+	</if>
+	<if test="machine_code != null and machine_code !=''">
+	    and MACHINE_CODE like CONCAT('%',#{machine_code},'%')
+	</if>
+	limit 10
+	</select>
+	<!--  装配位置模糊查询-->
+	<select id="getAssemblyPositionList" parameterType="Map" resultType="Map">
+	select distinct assembly_position from ZZJ_PMD_ITEMS i
+	left join ZZJ_PMD_HEAD h on i.pmd_head_id=h.id where 1=1
+	<if test="werks != null and werks != ''">
+		and h.werks = #{werks}
+	</if>
+	<if test="werks_name != null and werks_name != ''">
+		and h.werks_name = #{werks_name}
+	</if>
+	<if test="workshop != null and workshop != ''">
+		and h.workshop = #{workshop}
+	</if>
+	<if test="workshop_name != null and workshop_name != ''">
+		and h.workshop_name = #{workshop_name}
+	</if>
+	<if test="line != null and line !=''">
+		and h.line = #{line}
+	</if>
+	<if test="line_name != null and line_name !=''">
+		and h.line_name = #{line_name}
+	</if>
+	<if test="assembly_position != null and assembly_position !=''">
+	    and i.assembly_position like CONCAT('%',#{assembly_position},'%')
+	</if>
+	<if test="order_no != null and order_no !=''">
+	    and h.order_no=#{order_no}
+	</if>
+	limit 10
+	</select>
+	<insert id="insertProductionException" parameterType="Map">
+	INSERT INTO ZZJ_PRODUCTION_EXCEPTION (werks,werks_name,workshop,workshop_name,line,line_name,order_no,zzj_pmd_items_id,
+	exception_type_code,exception_type_name,reason_type_code,reason_type_name,detailed_exception,editor,edit_date)
+	<if test="plan_item_id != 0">
+	SELECT H.werks,H.werks_name,H.workshop,H.workshop_name,H.line,H.line_name,H.order_no,I.zzj_pmd_items_id AS 'zzj_pmd_items_id',
+	#{exception_type_code} AS 'exception_type_code',#{exception_type_name} AS 'exception_type_name',
+	#{reason_type_code} AS 'reason_type_code',#{reason_type_name} AS 'reason_type_name',
+	#{detailed_exception} AS 'detailed_exception',#{editor} AS 'editor',#{edit_date} AS 'edit_date'
+	FROM ZZJ_MACHINE_PLAN_ITEMS I LEFT JOIN ZZJ_MACHINE_PLAN_HEAD H ON I.machine_plan_head_id = H.id 
+	WHERE I.id = #{plan_item_id}
+	</if>
+	<if test="plan_item_id == 0">
+	SELECT H.werks,H.werks_name,H.workshop,H.workshop_name,H.line,H.line_name,H.order_no,#{pmd_item_id} AS 'zzj_pmd_items_id',
+	#{exception_type_code} AS 'exception_type_code',#{exception_type_name} AS 'exception_type_name',
+	#{reason_type_code} AS 'reason_type_code',#{reason_type_name} AS 'reason_type_name',
+	#{detailed_exception} AS 'detailed_exception',#{editor} AS 'editor',#{edit_date} AS 'edit_date'
+	FROM ZZJ_PMD_ITEMS I LEFT JOIN ZZJ_PMD_HEAD H ON I.pmd_head_id = H.id 
+	WHERE I.id = #{pmd_item_id}
+	</if>
+	</insert>
+	<update id="updateProductionException" parameterType="Map">
+	UPDATE ZZJ_PRODUCTION_EXCEPTION SET exception_type_code = #{exception_type_code},
+	exception_type_name = #{exception_type_name},reason_type_code = #{reason_type_code},
+	reason_type_name = #{reason_type_name},detailed_exception = #{detailed_exception},
+	editor = #{editor},edit_date = #{edit_date}
+	WHERE id = #{exc_id}
+	</update>
+	<delete id="deleteProductionException" parameterType="Map">
+	DELETE FROM ZZJ_PRODUCTION_EXCEPTION WHERE id = #{exc_id}
+	</delete>
+	<select id="getProductionExceptionList" parameterType="Map" resultType="Map">
+	SELECT * FROM ZZJ_PRODUCTION_EXCEPTION WHERE 
+	<if test="plan_item_id != 0">
+	werks = (SELECT H.werks FROM ZZJ_MACHINE_PLAN_ITEMS I LEFT JOIN ZZJ_MACHINE_PLAN_HEAD H ON I.machine_plan_head_id = H.id 
+	WHERE I.id = #{plan_item_id})
+	AND workshop = (SELECT H.workshop FROM ZZJ_MACHINE_PLAN_ITEMS I LEFT JOIN ZZJ_MACHINE_PLAN_HEAD H ON I.machine_plan_head_id = H.id 
+	WHERE I.id = #{plan_item_id})
+	AND line = (SELECT H.line FROM ZZJ_MACHINE_PLAN_ITEMS I LEFT JOIN ZZJ_MACHINE_PLAN_HEAD H ON I.machine_plan_head_id = H.id 
+	WHERE I.id = #{plan_item_id})
+	AND order_no = (SELECT H.order_no FROM ZZJ_MACHINE_PLAN_ITEMS I LEFT JOIN ZZJ_MACHINE_PLAN_HEAD H ON I.machine_plan_head_id = H.id 
+	WHERE I.id = #{plan_item_id})
+	AND zzj_pmd_items_id = (SELECT I.zzj_pmd_items_id FROM ZZJ_MACHINE_PLAN_ITEMS I LEFT JOIN ZZJ_MACHINE_PLAN_HEAD H ON I.machine_plan_head_id = H.id 
+	WHERE I.id = #{plan_item_id})
+	</if>
+	<if test="plan_item_id == 0">
+	werks = (SELECT H.werks FROM ZZJ_PMD_ITEMS I LEFT JOIN ZZJ_PMD_HEAD H ON I.pmd_head_id = H.id
+	WHERE I.id = #{pmd_item_id})
+	AND workshop = (SELECT H.workshop FROM ZZJ_PMD_ITEMS I LEFT JOIN ZZJ_PMD_HEAD H ON I.pmd_head_id = H.id
+	WHERE I.id = #{pmd_item_id})
+	AND line = (SELECT H.line FROM ZZJ_PMD_ITEMS I LEFT JOIN ZZJ_PMD_HEAD H ON I.pmd_head_id = H.id
+	WHERE I.id = #{pmd_item_id})
+	AND order_no = (SELECT H.order_no FROM ZZJ_PMD_ITEMS I LEFT JOIN ZZJ_PMD_HEAD H ON I.pmd_head_id = H.id 
+	WHERE I.id = #{pmd_item_id})
+	AND zzj_pmd_items_id = #{pmd_item_id} 
+	</if>
+	</select>
+</mapper>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.account.dao.WmsAccountReceiptHxDnDao">
+
+	<select id="getSapVendorByNo" parameterType="String" resultType="Map">
+		SELECT * FROM WMS_SAP_VENDOR v WHERE v.LIFNR = #{LIFNR} AND ROWNUM = 1
+	</select>
+	
+	<select id="getPoItemListByDnItem" resultType="Map">
+        SELECT i.*,m.MAKTX,m.MEINS MEINS,d.XS101T,d.ID HXID,
+        (select FULL_BOX_QTY from WMS_C_MAT_PACKAGE_HEAD where 
+        	PACKAGE_TYPE='01' and nvl(DEL,'0')!='X' and WH_NUMBER=#{params.WH_NUMBER} 
+        	and WERKS=i.WERKS and MATNR=i.MATNR and LIFNR=#{params.LIFNR}  and rownum=1) FULL_BOX_QTY
+        		 FROM WMS_SAP_PO_ITEM i 
+				 LEFT JOIN WMS_SAP_MATERIAL m ON  i.MATNR = m.MATNR AND m.WERKS = i.WERKS
+				 LEFT JOIN WMS_HX_DN d ON i.EBELN = d.EBELN AND i.EBELP = d.EBELP AND (
+				    <foreach collection="dnItemList" index="index" item="a" separator="or" open="(" close=")">
+			            to_number(d.VBELN) = to_number(#{a.VBELN}) AND to_number(d.POSNR) = to_number(#{a.POSNR})
+			        </foreach>	
+			     )			 
+				 WHERE 1=1 
+				 AND(
+				    <foreach collection="dnItemList" index="index" item="b" separator="or" open="(" close=")">
+			            to_number(i.EBELN)=to_number(#{b.VGBEL}) and to_number(i.EBELP)=to_number(#{b.VGPOS})
+			        </foreach>
+				 )
+				 ORDER BY i.EBELP
+	</select>
+
+	
+</mapper>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>采购订单收货工厂权限配置</title> <#include "/web_header.html">
+</head>
+<body>
+
+<div id="rrapp" v-cloak class="wrapper" >
+		<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span class="required"> * </span>采购工厂代码</div>
+									<div class="col-xs-8">
+										<input readonly="readonly" id="werks" name="werks" class="form-control required" placeholder="工厂代码" v-model="poAuth.werks"/>
+<!-- 										<select  name="werks" id="werks" v-model="poAuth.werks">
+										  <#list tag.getUserAuthWerks("IN_KPO_AUTH") as factory> 
+											<option value="${factory.code}">${factory.code}</option>
+										  </#list>
+										</select> -->
+									</div>
+								</div>
+							</div>
+
+							
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label">供应商代码</div>
+									<div class="col-xs-8">
+										<input readonly="readonly" id="lifnr" name="lifnr" class="form-control" @click="getVendorNoFuzzy()" @blur="getVerdorName()" v-model="poAuth.lifnr"/>
+									</div>
+								</div>
+							</div>
+							
+							<div class="col-xs-6">
+								<div class="form-group" style="display: none;">
+									<div class="col-xs-4 control-label"> 供应商名称</div>
+									<div class="col-xs-8">
+										<input readonly="readonly" id="name1" name="name1" class="form-control"  v-model="poAuth.name1"/>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label">采购订单号</div>
+									<div class="col-xs-8">
+										<input readonly="readonly" id="ebeln" name="ebeln" class="form-control "  v-model="poAuth.ebeln"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label">行项目号</div>
+									<div class="col-xs-8">
+										<input readonly="readonly" id="ebelp" name="ebelp" class="form-control "  v-model="poAuth.ebelp"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span ></span>物料号</div>
+									<div class="col-xs-8">
+										<input readonly="readonly" id="matnr" name="matnr" class="form-control" @blur="getMaterialNoFuzzy" v-model="poAuth.matnr"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span ></span>物料描述</div>
+									<div class="col-xs-8">
+										<input  id="txz01" name="txz01" class="form-control" readonly="readonly" v-model="poAuth.txz01"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span ></span>最大可收货数量</div>
+									<div class="col-xs-8">
+										<input readonly="readonly"  id="maxMenge" name="maxMenge" class="form-control"  v-model="poAuth.maxMenge"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span ></span>授权工厂</div>
+									<div class="col-xs-8">
+										<input  id="authWerks" name="authWerks" class="form-control"  v-model="poAuth.authWerks"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+					</div>
+					
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+				</div>
+			</div>
+		</div>
+
+
+	</div>
+
+	<script src="${request.contextPath}/statics/js/wms/config/wms_in_po_item_auth_edit.js?_${.now?long}"></script>
+</body>
+
+
+
+</html>

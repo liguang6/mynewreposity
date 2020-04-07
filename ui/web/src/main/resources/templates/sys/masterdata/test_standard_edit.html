@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>检验标准库维护</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+				<tr>
+					<td>
+					
+					<div class="form-group" style="align:center">
+                        
+								<label class="control-label" style="width:80px" >
+								     <font style="color:red;font-weight:bold">*</font>检验标准类型
+								</label>
+							   	<div  class="control-inline">
+									<select class="required" id="STANDARD_TYPE" name="STANDARD_TYPE" v-model="STANDARD_TYPE" style="width:200px;height:25px">
+									    <#list tag.masterdataDictList('QMS_TEST_STANDARD_TYPE') as dict>
+									      <option value="${dict.code}">${dict.value}</option>
+									    </#list>
+									</select>	
+							    </div>
+						
+					</div>
+					
+				</td>
+				</tr>
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+                        
+								<label class="control-label" style="width:80px" >
+								     检验标准代码
+								</label>
+							   	<div  class="control-inline">
+									<input type="text" style="width:200px;height:25px" class="form-control" name="STANDARD_CODE" id="STANDARD_CODE" v-model="STANDARD_CODE">
+							    </div>
+						
+					</div>
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+								<label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>检验标准名称
+								 </label>
+							   	<div class="control-inline">
+							   	    <input class="required" type="text" style="width:200px;height:25px" class="form-control" name="STANDARD_NAME" id="STANDARD_NAME" v-model="STANDARD_NAME">
+							    </div>
+						</div>
+					</div>
+					</td>
+					</tr>
+					
+					
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/sys/masterdata/test_standard_edit.js?_${.now?long}"></script>
+</body>
+</html>

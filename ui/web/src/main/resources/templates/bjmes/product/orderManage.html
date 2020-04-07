@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>订单管理</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" method="post" class="form-inline" action="${request.contextPath}/bjmes/productManage/getOrderList">
+						<table>
+							<tr>
+								<td id="searchForm">
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">工厂：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_werks" id="search_werks" style="width: 80px;" class="form-control">
+													<!-- <option value="0">全部</option> -->
+													<#list tag.getUserAuthWerks("ZZJMES_ORDER_MANAGE") as factory>
+													<option value="${factory.code}">${factory.code}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">订单：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 140px" id="parentDiv">
+												<input type="text" name="search_order" id="search_order" class="form-control" @click="getOrderNoFuzzy()" @keyup.enter="query" placeholder="订单名称">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">订单类型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_order_type_code" id="search_order_type_code" style="width: 80px;" class="form-control">
+													<option value="">全部</option>
+													<#list tag.masterdataDictList('ORDER_TYPE') as dict>
+													<option value="${dict.code}">${dict.value}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">车型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_bus_type_code" id="search_bus_type_code" style="width: 80px;" class="form-control">
+													<option value="">全部</option>
+													<#list tag.busTypeList('') as dict>
+													<option value="${dict.BUS_TYPE_CODE}">${dict.BUS_TYPE_CODE}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">销售部：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 140px" id="parentDiv">
+												<select name="search_sale_dept_code" id="search_sale_dept_code" style="width: 140px;" class="form-control">
+													<option value="">全部</option>
+													<#list tag.masterdataDictList('SALE_DEPT') as dict>
+													<option value="${dict.value}">${dict.value}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">状态：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_status" id="search_status" style="width: 140px;" class="form-control">
+													<option value="">全部</option>
+													<option value="00">未开始</option>
+													<option value="01">生产中</option>
+													<option value="02">已完成</option>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">年份：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 140px" id="parentDiv">
+												<input type="text" name="search_year" id="search_year" onclick="WdatePicker({dateFmt:'yyyy',isShowClear:false});" class="form-control" value="全部">
+											</div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm" width="180px">
+									<div class="form-group">
+										<input type="submit" id="btnSearchData" class="btn btn-info btn-sm" value="查询" /> 
+										<!-- <input type="button" id="btnAdd" class="btn btn-success btn-sm" value="新增" /> -->
+										<input type="button" id="btnExport" @click="exportExcel()" class="btn btn-warning btn-sm" value="导出" />
+									</div>
+								</td>
+							</tr>
+						</table>
+					</form>
+					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>
+					<table id="tb_excel" style="display: none"></table>
+				</div>
+			</div>
+		</div>
+		
+	<form id="exportForm" method="post" action="${request.contextPath}/zzjmes/order/exportOrder" style="display:none">
+		<input name="search_werks" id="export_werks" type="text"  hidden="hidden">
+		<input name="search_order" id="export_order" type="text"  hidden="hidden">
+		<input name="search_order_type_code" id="export_order_type_code" type="text"  hidden="hidden">
+		<input name="search_bus_type_code" id="export_bus_type_code" type="text"  hidden="hidden">
+		<input name="search_sale_dept_code" id="export_sale_dept_code" type="text"  hidden="hidden">
+		<input name="search_status" id="export_status" type="text"  hidden="hidden">
+		<input name="search_year" id="export_year" type="text"  hidden="hidden">
+		<input name="pageNo" id="pageNo" type="text" value='1' hidden="hidden">
+		<input name="pageSize" id="pageSize" value='5000' type="text" hidden="hidden">
+	</form>
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/bjmes/product/orderManage.js?_${.now?long}"></script>
+</body>
+</html>

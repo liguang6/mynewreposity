@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysRoleDao">
+
+    <select id="queryRoleList"  resultType="java.util.HashMap" parameterType="Map">
+        SELECT * FROM (
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+            select ROLE_ID as roleId,ROLE_NAME as roleName from sys_role a
+            where 1=1
+            <if test="roleName != '' and roleName != null">
+                AND a.role_name like '%'||#{roleName}||'%'
+            </if>
+        )TMP
+        WHERE ROWNUM  &lt;=#{end})
+        WHERE ROW_ID > #{start}
+
+	</select>
+
+    <select id="queryRoleCount" parameterType="Map" resultType="int">
+        SELECT COUNT(1)  FROM sys_role a
+        where 1=1
+        <if test="roleName != '' and roleName != null">
+            AND a.role_name like '%'||#{roleName}||'%'
+        </if>
+
+    </select>
+    
+    <delete id="deleteRoleAuth">
+		delete from sys_role_auth where role_id in
+		<foreach item="roleId" collection="array" open="(" separator="," close=")">
+			#{roleId}
+		</foreach>
+	</delete>
+
+</mapper>

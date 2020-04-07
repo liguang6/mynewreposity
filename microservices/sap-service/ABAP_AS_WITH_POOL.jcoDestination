@@ -1,0 +1,10 @@
+#for tests only !
+#Sat Jun 08 15:30:00 CST 2019
+jco.client.lang=zh
+jco.destination.peak_limit=10
+jco.client.client=800
+jco.client.passwd=20190520
+jco.client.user=tanmeirong
+jco.client.sysnr=00
+jco.destination.pool_capacity=3
+jco.client.ashost=192.168.100.23

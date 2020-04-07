@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.in.dao.StoPrintConfigDao">
+
+
+	<select id="queryList" parameterType="Map" resultType="Map">
+		select *
+		from WMS_C_TIOF_CONFIG t
+		left join WMS_C_DELIVERY_HEAD d on t.WERKS = d.WORKS
+		where t.WERKS = #{WERKS}
+	</select>
+	<update id="edit" parameterType="Map" >
+    begin
+		UPDATE WMS_C_TIOF_CONFIG
+		SET CONSIGNOR_TEL = #{CONSIGNOR_TEL} , CONSIGNOR = #{CONSIGNOR} , CONSIGNOR_ADRESS = #{CONSIGNOR_ADRESS}
+	    , CONSIGNEE_TEL = #{CONSIGNEE_TEL} , CONSIGNEE = #{CONSIGNEE} , CONSIGNEE_ADRESS = #{CONSIGNEE_ADRESS}
+	    WHERE WMS_C_TIOF_CONFIG.WERKS = #{WORKS};
+	    UPDATE WMS_C_DELIVERY_HEAD
+	    SET COMPANY_CODE = #{COMPANY_CODE} , COMPANY_NAME = #{COMPANY_NAME} , COMPANY_ENGLISH = #{COMPANY_ENGLISH}
+	    , TEL = #{TEL} , FAX = #{FAX} , ZIP_CODE = #{ZIP_CODE} , ADRESS = #{ADRESS} , ADRESS_ENGLISH = #{ADRESS_ENGLISH}
+	    WHERE WMS_C_DELIVERY_HEAD.WORKS = #{WORKS};
+	    commit;
+	    end;
+	</update>
+	<insert id="add" parameterType="Map">
+      begin
+		insert into WMS_C_TIOF_CONFIG(WERKS,CONSIGNOR_TEL,CONSIGNOR,CONSIGNOR_ADRESS,CONSIGNEE_TEL,CONSIGNEE,CONSIGNEE_ADRESS)
+		values(#{WORKS},#{CONSIGNOR_TEL},#{CONSIGNEE},#{CONSIGNEE_ADRESS},#{CONSIGNEE_TEL},#{CONSIGNEE},#{CONSIGNEE_ADRESS});
+		insert into WMS_C_DELIVERY_HEAD(WORKS,COMPANY_CODE,COMPANY_NAME,COMPANY_ENGLISH,TEL,FAX,ZIP_CODE,ADRESS,ADRESS_ENGLISH)
+		values(#{WORKS},#{COMPANY_CODE},#{COMPANY_NAME},#{COMPANY_ENGLISH},#{TEL},#{FAX},#{ZIP_CODE},#{ADRESS},#{ADRESS_ENGLISH});
+		commit;
+		end;
+	</insert>
+	<delete id="del" parameterType="Map">
+        begin
+         delete from WMS_C_TIOF_CONFIG
+          WHERE WMS_C_TIOF_CONFIG.WERKS = #{WORKS};
+           delete from WMS_C_DELIVERY_HEAD
+          WHERE WMS_C_DELIVERY_HEAD.WORKS = #{WORKS};
+          commit;
+          end;
+	</delete>
+</mapper>

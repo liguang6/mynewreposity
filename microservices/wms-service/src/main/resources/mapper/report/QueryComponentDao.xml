@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.report.dao.QueryComponentDao">
+
+	<select id="getStockInfoList" parameterType="Map" resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,'' as LIFNR,''as LIKTX,s.SOBKZ,
+		TO_CHAR(SUM(nvl(S.STOCK_QTY,0)) + SUM(nvl(S.RSB_QTY,0)) + sum(nvl(S.XJ_QTY,0))) STOCK_QTY,
+		'' SAL_QTY
+		FROM WMS_CORE_STOCK s
+		WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+		AND S.SOBKZ != 'K' AND S.SOBKZ !='E'
+		<if test="LGORT !=null and LGORT !='' ">
+			and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+			and INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+		</if>
+		group by s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.SOBKZ
+		union all
+		SELECT s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.LIFNR,max(s.LIKTX) LIKTX,s.SOBKZ,
+		TO_CHAR(SUM(nvl(S.STOCK_QTY,0)) + SUM(nvl(S.RSB_QTY,0)) + sum(nvl(S.XJ_QTY,0))) STOCK_QTY,
+		'' SAL_QTY
+		FROM WMS_CORE_STOCK s
+		WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+		AND S.SOBKZ = 'K'
+		<if test="LGORT !=null and LGORT !='' ">
+			and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+			and INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+		</if>
+		group by s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.SOBKZ,s.lifnr
+		union all
+		SELECT s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.LIFNR,max(s.LIKTX) LIKTX,s.SOBKZ,
+		'' STOCK_QTY,
+		TO_CHAR(SUM(nvl(S.STOCK_QTY,0)) + SUM(nvl(S.RSB_QTY,0)) + sum(nvl(S.XJ_QTY,0))) SAL_QTY
+		FROM WMS_CORE_STOCK s
+		WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+		AND S.SOBKZ = 'E'
+		<if test="LGORT !=null and LGORT !='' ">
+			and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+			and INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+		</if>
+		group by s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.SOBKZ,s.lifnr
+		order by MATNR
+		)TMP
+		<if test="END !=null ">
+			WHERE ROWNUM &lt;=#{END}
+		</if>
+		)
+		<if test="START !=null ">
+			WHERE ROW_ID > #{START}
+		</if>
+	</select>
+
+	<select id="getStockInfoCount" parameterType="Map" resultType="int">
+		SELECT count(*)
+		FROM (
+		SELECT s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,'' as LIFNR,''as LIKTX,s.SOBKZ,
+		SUM(nvl(S.STOCK_QTY,0)) + SUM(nvl(S.RSB_QTY,0)) + sum(nvl(S.XJ_QTY,0)) STOCK_QTY
+		FROM WMS_CORE_STOCK s
+		WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+		AND S.SOBKZ != 'K'
+		<if test="LGORT !=null and LGORT !='' ">
+			and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+			and INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+		</if>
+		group by s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.SOBKZ
+		union all
+		SELECT s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,max(s.LIFNR) LIFNR,max(s.LIKTX) LIKTX,s.SOBKZ,
+		SUM(nvl(S.STOCK_QTY,0)) + SUM(nvl(S.RSB_QTY,0)) + sum(nvl(S.XJ_QTY,0)) STOCK_QTY
+		FROM WMS_CORE_STOCK s
+		WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+		AND S.SOBKZ = 'K'
+		<if test="LGORT !=null and LGORT !='' ">
+			and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+			and INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+		</if>
+		group by s.WERKS,s.WH_NUMBER,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.SOBKZ
+		)
+	</select>
+</mapper>

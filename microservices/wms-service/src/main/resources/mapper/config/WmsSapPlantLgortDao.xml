@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsSapPlantLgortDao">
+	 <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,CONCAT(WERKS,'-') || LGORT   AS WERKS_LGORT   FROM WMS_SAP_PLANT_LGORT 
+	        WHERE CONCAT(WERKS,'-') || LGORT  IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+	 </select>
+	 
+	 <select id="selectLgortList"  parameterType="Map" resultType="Map">
+	    SELECT * FROM WMS_SAP_PLANT_LGORT WHERE DEL='0'
+	    <if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		<if test="BAD_FLAG !=null and BAD_FLAG !='' ">
+			AND BAD_FLAG=#{BAD_FLAG}
+		</if>
+		<if test="SOBKZ !=null and SOBKZ !='' ">
+			AND (SOBKZ=#{SOBKZ} or SOBKZ IS NULL)
+		</if>
+		ORDER BY to_number(ID) ASC
+	 </select>
+</mapper>

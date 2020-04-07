@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>车间供货</title>
+<#include "/web_header.html">
+<style type="text/css">
+   .selectBG{
+       color:red;
+    };
+    jqgrow {
+		height: 35px
+	}
+    </style>
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" method="post" class="form-inline" action="#">
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 70px;"><span style="color:red">*</span>工厂：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 80px" id="parentDiv">
+										<select v-model="werks" name="werks" id="werks" style="width: 80px;height: 25px;">
+											<!-- <option value="0">全部</option> -->
+											<#list tag.getUserAuthWerks("ZZJMES_WORKSHOPSUPPLY") as factory>
+												<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+										<input type="text" style="display: none;" name="werks_name" id="werks_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"  style="width: 70px;"><span style="color:red">*</span>车间：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 80px">
+										<select v-model="workshop" name="workshop" id="workshop" style="width: 100%;height: 25px;">
+											<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+										<input type="text" style="display: none;" name="workshop_name" id="workshop_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:70px;"><span style="color:red">*</span>订单：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 100px">
+										<input v-model="order_no" type="text" name="order_no" id="order_no" class="form-control" @click="getOrderNoFuzzy()" @keyup.enter="query" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:70px;"><span style="color:red">*</span>装配位置：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 120px">
+										<input v-model="assembly_position" type="text" name="assembly_position" id="assembly_position" class="form-control"  @click="getAssemblyPositionNoFuzzy()">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px;">零部件：</label>
+								<div class="control-inline" style="width:150px;">
+									<span class="input-icon input-icon-right" style="width:100%"><!-- @keyup.enter="queryMatInfo" -->
+										<input  v-model="zzj_no" id="zzj_no" name="zzj_no" type="text" autocomplete="off" style="width:100%">
+										<i onclick="doScan('zzj_no')" class="ace-icon fa fa-barcode black bigger-180 btn_scan" style="cursor: pointer;"></i>
+									</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px;">车付数：</label>
+								<div class="control-inline" style="width:50px;">
+										<input  v-model="batch_quantity" id="batch_quantity" name="batch_quantity" type="text" class="form-control" style="width:100%">
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width:70px;"><span style="color:red">*</span>使用车间：</label>
+								<div class="control-inline" style="width:80px;">
+                                     <select v-model="use_workshop" name="use_workshop" id="use_workshop" style="width: 80px;height: 25px;">
+										<option v-for="w in useWorkshoplist" :value="w.NAME">{{ w.NAME }}</option>
+								  	 </select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:70px;">使用工序：</label>
+								<div class="control-inline" style="width:80px;">
+					                 <select v-model="process" name="process" id="process" style="width: 100%;height: 25px;">
+											<option v-for="w in processList" :value="w.PROCESS_CODE">{{ w.PROCESS_NAME }}</option>
+									  </select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label"></label>
+								<div class="control-inline" style="width:80px;align:center">
+					                	<span style="font-size:15px;color:red;font-weight:bold;"  v-cloak title="件数/种类数">{{total_qty}}/{{total_type}}</span>
+								</div>
+							</div>
+							<div class="form-group">
+						        <input type="button" id="btnQuery" @click="query" class="btn btn-primary btn-sm" value="交接" /> 
+								<input type="button" id="btnSave" @click="save" class="btn btn-success btn-sm" value="保存" /> 
+								<input type="button" id="btnClear" @click="clearTable"  class="btn btn-default btn-sm" value="清空" />
+							</div>
+						</div>
+					</form>	
+ 					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="loginDiv" style="display: none; padding: 10px;">
+	   <form id="loginLogin"  method="post" action="" style="float:left;margin-left: 5px;">
+			<div class="form-group" style="align:center;margin-top:15px">
+	               <div  style="float:left;width:100%">
+						<label style="float:left;width:30%" class="col-sm-3 control-label no-padding-right" >
+						     <font style="color:red;font-weight:bold">*</font>用户名：
+						</label>
+					   	<div style="float:left;width:70%" class="col-sm-8">
+					        <input  id="username" name="username" type="text" autocomplete="off"  style="width:100%">
+	                    </div>
+				</div>
+			</div>
+			<div class="form-group" style="align:center;margin-top:15px">
+	               <div  style="float:left;width:100%">
+						<label style="float:left;width:30%" class="col-sm-3 control-label no-padding-right" >
+						     <font style="color:red;font-weight:bold">*</font>密码：
+						</label>
+						   <div style="float:left;width:70%" class="col-sm-8"id = "textOrPsw">
+							<input type="password" style="display:none;width:0;height:0;"><!--加隐藏的密码框 防止输入用户名后默认带出密码-->
+							<input  id="psw" name="psw" type="password" onfοcus="pswFocus" autocomplete="off"style="width:100%">
+	                    </div>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><span id="resultMsg"></span></h4>
+		<br/>
+		<form id="print_inspection" target="_blank" method="post" action="${request.contextPath}/zzjmes/matHandover/workshopSupplyPreview" style="width:100px;float:left;margin-left: 5px;">
+			<button id="btnPrint2" class="btn btn-primary btn-sm" type="submit">打印供货清单</button>
+			<input name="order_no" id="order_no" type="text" hidden="hidden">
+			<input name="matList" id="matList" type="text" hidden="hidden">
+		</form>
+	</div>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/workshopSupply.js?_${.now?long}"></script>
+</body>
+</html>

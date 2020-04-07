@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>进仓单查询</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<script type="text/javascript" src="${request.contextPath}/statics/js/dynamicColum.js"></script>
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+					    <form id="searchForm" method="post" class="form-inline"  action="#" >
+						    <div class="row">
+						    <div class="form-group">
+	                           <label class="control-label"  style="width:80px">退货单类型：</label>
+								<div class="control-inline">
+									<div class="input-group"  style="width:112px">
+									   	<select class="form-control" name="RETURN_DOC_TYPE" id="returnDocType" @change="returnDocTypeChange"  style="width:100px">
+									   	    <option value="">全部</option>
+									   	    
+									    </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+	                           <label class="control-label"  style="width:60px">退货类型：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:100px">
+									   	<select class="form-control" name="RETURN_TYPE" id="returnType" >
+									   	    <option value="">全部</option>
+									    </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 45px">工厂：</label>
+								<div class="control-inline" style="width: 60px;">
+									<select class="form-control" name="WERKS" id="werks" v-model="werks" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("QUERY_RETURN_ORDER") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;">仓库号：</label>
+								<div class="control-inline" style="width: 60px;">
+									<select class="form-control" name="WH_NUMBER" id="wh">
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+	                           <label class="control-label"  style="width: 50px;">状态：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   	<select class="form-control" name="RETURN_STATUS" id="returnStatus" >
+									   	    <option value="">全部</option>
+									   	    <option value="00">已创建</option>
+									   	    <option value="01">已下架</option>
+									   	    <option value="02">已完成</option>
+									   	    <option value="03">已删除</option>
+									    </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+									<label class="control-label" style="width: 60px">创建日期：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width:170px">
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+			                                    <input type="text" id="createDateStart" name="CREATE_DATE_START" 
+												class="form-control width-300" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>
+											<div class="input-group" style="width:80px">
+											    <input type="text" id="createDateEnd" name="CREATE_DATE_END"
+												class="form-control width-300" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					   
+						<div class="row">
+						<div class="form-group">
+	                          <label class="control-label" style="width: 80px">供应商代码：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 120px;">
+									   	<input type="text" id="lifnr" name="LIFNR" style="width: 90px;" class="form-control" />
+									    <input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#lifnr'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+						   <div class="form-group">
+	                          <label class="control-label" style="width: 60px">退货单号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   	<input type="text" id="returnNo" name="RETURN_NO" v-model="returnNo" style="width: 80px;" class="form-control" />
+									    <input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#returnNo'))" style="width: 15px;"/>
+									</div>
+								</div>
+							</div>
+						   <div class="form-group">
+	                          <label class="control-label"  style="width:45px">料号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   	<input type="text" id="matnr" name="MATNR" style="width: 80px;" class="form-control" />
+									    <input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#matnr'))" style="width: 20px;"/>
+									</div>
+								</div>
+							</div>
+								<div class="form-group">
+									<button type="button" class="btn btn-primary btn-sm" @click="detail">查询</button>
+									<button type="button" id="btnPrint1" class="btn btn-primary btn-sm">小letter打印</button>
+									<button type="button" id="btnPrint2" class="btn btn-primary btn-sm">大letter打印</button>
+									<button type="button" class="btn btn-primary btn-sm" @click="close">关闭</button>
+								</div>
+								<div class="form-group">
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   <select id="example-getting-started" multiple="multiple" style="display: none;">
+											<option value="COST_CENTER">成本中心</option>
+											<option value="WBS">WBS</option>
+											<option value="HEADER_TXT">抬头文本</option>
+											<option value="RSNUM">预留编号</option>
+											<option value="RECEIPT_NO">收货单号</option>
+											<option value="RECEIPT_ITEM_NO">收货单行项目</option>
+											<option value="ASNNO">SCM送货单号</option>
+											<option value="ASNITM">SCM送货单行项目</option>
+											<option value="PO_NO">采购订单号</option>
+											<option value="PO_ITEM_NO">采购订单行项目</option>
+											<option value="MO_NO">生产订单号</option>
+											<option value="MO_ITEM_NO">生产订单行项目</option>
+											<option value="SAP_OUT_NO">SAP交货单号</option>
+											<option value="SAP_OUT_ITEM_NO">SAP交货单行项目</option>
+											<option value="RETURN_NO">退货单号</option>
+											<option value="RETURN_ITEM_NO">退货单行项目</option>
+										</select> 
+									</div>
+								</div>
+							</div>
+							</div>
+							
+						</form>
+					<div id="divDataGrid" style="width:100%;overflow:auto;">
+						<table id="dataGrid"></table>
+<!-- 						<div id="dataGridPage"></div> -->
+					</div>	
+					<table id="tb_excel" style="display:none"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/returngoodsDetailQuery.js?_${.now?long}"></script>
+</body>
+</html>

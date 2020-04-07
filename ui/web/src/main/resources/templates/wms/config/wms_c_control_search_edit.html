@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${tag.getLocale("SEARCH_TO_CONTROL_FLAG","M")}</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak style="width: 700px">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form class="form-horizontal" id="saveForm" action="#"
+						method="post">
+						<div class="form-group" style="align: center; margin-top: 15px">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right"> <font
+									style="color: red; font-weight: bold">*</font>${tag.getLocale("WAREHOUSECODE","M")}：
+								</label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" name="warehouseCode" id="warehouseCode" @blur="getOutRule()"
+										class="form-control required" 
+										v-model="controlsearch.warehouseCode"  @click="getWhNoFuzzy()" 
+										placeholder='${tag.getLocale("WAREHOUSECODE","M")}'/>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									出入库类型： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<select id="controlFlagType" name="controlFlagType" @change="getControlFlag();getAreaSearch()"
+										v-model="controlsearch.controlFlagType" style="width: 100%">
+										<option value='01'>出库</option>
+										<option value='00'>入库</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right"> ${tag.getLocale("CONTROL_FLAG","M")}：
+								</label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+								<!--  	<input type="text" id="controlFlag" name="controlFlag"
+										class="form-control "
+										v-model="controlsearch.controlFlag"
+										placeholder="${tag.getLocale("CONTROL_FLAG","M")}" />   -->
+									<select name="controlFlag" id="controlFlag" v-model="controlsearch.controlFlag" style="height: 30px;width:100%">
+										<option v-for="c in ctlList" :value="c.controlFlag" :key="c.id">{{ c.controlFlag }}</option>
+									</select>	
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									${tag.getLocale("WH_BUSINESS_TYPE","M")}： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="whBusinessType" name="whBusinessType"
+										class="form-control " v-model="controlsearch.whBusinessType"
+										placeholder="${tag.getLocale("WH_BUSINESS_TYPE","M")}" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									${tag.getLocale("LGORT","M")}： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="lgort" name="lgort"
+										class="form-control " v-model="controlsearch.lgort"
+										placeholder="${tag.getLocale("LGORT","M")}" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									${tag.getLocale("STOCK_TYPE","M")}： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<select id="stockType" name="stockType" 
+										v-model="controlsearch.stockType" style="width: 100%">
+										<option value='Z'>自有</option>
+										<option value='K'>寄售</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									<font style="color: red; font-weight: bold">*</font>${tag.getLocale("STORAGE_TYPE_SEARCH_ORDER","M")}： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+								<!-- 	<input type="text" id="storageAreaSearch"
+										name="storageAreaSearch" class="form-control required"
+										v-model="controlsearch.storageAreaSearch"
+										placeholder="${tag.getLocale("STORAGE_TYPE_SEARCH_ORDER","M")}" />  -->
+										
+									<select name="storageAreaSearch" id="storageAreaSearch" v-model="controlsearch.storageAreaSearch" style="height: 30px;width:100%">
+										<option v-for="s in searchList" :value="s.storageAreaSearch" :key="s.id">{{ s.storageAreaSearch }}</option>
+									</select>	
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									${tag.getLocale("OUT_RULES","M")}： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<!--	<input type="text" id="outRule" name="outRule"
+										class="form-control " v-model="controlsearch.outRule"
+										placeholder="${tag.getLocale("OUT_RULES","M")}" /> -->
+										
+									<select name="outRule" id="outRule" v-model="controlsearch.outRule" style="height: 30px;width:100%">
+										<option v-for="r in ruleList" :value="r.outRule" :key="r.id">{{ r.outRule }}</option>
+									</select>	
+								</div>
+							</div>
+						</div>
+							<!-- <div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									${tag.getLocale("STATUS","M")}： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<select id="status" name="status"
+										v-model="controlsearch.status" style="width: 100%">
+										<option value='0'>启用</option>
+										<option value='1'>禁用</option>
+									</select>
+								</div>
+							</div>
+						</div>	-->
+						<button id="btnSubmit" type="submit" hidden="true"></button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script
+		src="${request.contextPath}/statics/js/wms/config/wms_c_control_search_edit.js?_${.now?long}"></script>
+</body>
+</html>

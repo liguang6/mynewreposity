@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>条码打印</title>
+    <#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+<div id="rrapp" v-cloak>
+    <div class="wrapper">
+        <div class="main-content">
+            <div class="box box-main">
+                <div class="box-body">
+                    <form id="searchForm" class="form-inline" action="${request.contextPath}/out/picking/shippingLabelcs">
+                        <input  id="REQUIREMENT_NO" name="REQUIREMENT_NO" class="form-control" style="display:none"  />
+						<input  id="WH_NUMBER" name="WH_NUMBER" class="form-control" style="display:none"  />
+						<input  id="MATNR" name="MATNR" class="form-control" style="display:none"  />
+						<input name="pageSize" value="2147483647" style="display:none"  />
+                    </form>
+                    <table id="dataGrid"></table>
+                </div>
+                <table id="tb_excel" style="display:none"></table>
+
+                <form id="print" target="_blank" method="post" action="${request.contextPath}/docPrint/shipLabelPreviewcs" >
+                    <button hidden="hidden" id="printButton" type="submit"></button>
+                    <input name="labelList" id="labelList" type="text" hidden="hidden">
+                    <input name="LIKTX" id="LIKTX" type="text" value="标签打印" hidden="hidden">
+                </form>
+                <form id="printA4" target="_blank" method="post" action="${request.contextPath}/docPrint/shipLabelPreviewcs" >
+                    <button hidden="hidden" id="printButtonA4" type="submit"></button>
+                    <input name="labelListA4" id="labelListA4" type="text" hidden="hidden">
+                    <input name="LIKTXA4" id="LIKTXA4" type="text" value="标签打印" hidden="hidden">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/out/shippingLabelcs.js?_${.now?long}"></script>
+</body>
+</html>

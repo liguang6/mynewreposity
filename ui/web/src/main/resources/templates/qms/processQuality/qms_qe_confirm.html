@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>收货</title>  
+<#include "/web_header.html">
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper" id="page_div">
+		<div class="main-content">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" :action="formUrl">
+						<div class="form-group">
+							<label class="control-label">工厂：</label>
+							<div class="control-inline" style="width:150px;">
+							<select class="input-medium" name="WERKS" id="WERKS" style="height: 30px;width: 150px;" >
+							   <#list tag.getUserAuthWerks("QMS_QE_CONFIRM") as WERKS>
+							      <option value="${WERKS.code}" >${WERKS.NAME}</option>
+							   </#list>
+							</select>
+							</div>
+						</div>
+					<!-- 	<div class="form-group">
+							<label class="control-label">检验类别：</label>
+							<div class="control-inline" style="width:70px;">
+							<select class="input-medium" name="TEST_TYPE" id="TEST_TYPE" style="height: 30px;width: 70px;" v-model="TEST_TYPE">
+							   <option value="01">大巴</option>
+							   <option value="02">专用车</option>
+							</select>
+							</div>
+						</div> -->
+						<input type="hidden" name="TEST_TYPE" v-model="TEST_TYPE">
+						<div class="form-group">	
+							<label class="control-label" >订单：</label>
+							<div class="control-inline" >
+							<input id="ORDER_NO" name="ORDER_NO"  class="input-medium" style="width: 90px; height: 30px;" type="text" /> 						
+							</div>
+						</div>
+						<div class="form-group">	
+							<!-- <label class="control-label" v-if="TEST_TYPE=='01'">车号：</label>
+							<label class="control-label" v-if="TEST_TYPE=='02'">VIN：</label> -->
+							<label class="control-label" >车号/VIN：</label>
+							<div class="control-inline" >
+							<span class="input-icon input-icon-right" style="width: 170px;">
+							<input  id="VIN"  class="input-medium" style="width: 170px; height: 30px;" type="text"/>
+							<input type="hidden" name="BUS_NO"  v-model="BUS_NO"/> 
+							<input type="hidden" name="VIN"  v-model="VIN"/>
+							<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('VIN')"> </i>
+							</span>
+							</div>
+						</div>
+						<div class="form-group"> 
+							<label class="control-label">检验节点：</label>
+							<div class="control-inline">
+								<select style="height: 30px;width:90px;" class="input-medium"  name="TEST_NODE" id="TEST_NODE"  >
+									<option value=''>全部</option>		
+									<option v-for="node in TEST_NODE_LIST"  :key="node.TEST_NODE" :value="node.TEST_NODE">
+										{{node.TEST_NODE}}
+									</option>								
+								</select>
+							</div>							
+						</div>
+						<div class="form-group" style="display:none">
+							<div class="control-inline">
+								<select style="height: 30px;width:90px;" class="input-medium"  name="STATUS" id="STATUS"  >
+									<option value='合格' selected>合格</option>					
+								</select>							
+							</div>
+						</div>
+						<div class="form-group"  >
+						<label class="control-label" >状态：</label>
+							<div class="control-inline">
+								<select style="height: 30px;width:90px;" class="input-medium"  name="CONFIRM_STATUS" id="CONFIRM_STATUS"  >
+									<option value='' >全部</option>
+									<option value='N'  selected>未确认</option>
+									<option value='Y' >已确认</option>					
+								</select>
+								
+							</div>
+						</div>
+										
+						<div class="form-group">
+							<button type="button" class="btn btn-primary btn-sm" @click="query">查询</button>
+							<button type="button" class="btn btn-success btn-sm" @click="confirm" >确认</button>						
+						</div>
+						
+						<input type="hidden" name="TEST_CLASS"  value="整车"> 
+					</form>
+					
+					<div id="divDataGrid" style="width:100%;overflow:auto;" >
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+				</div>	
+					
+				</div>
+			</div>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/qms/processQuality/qms_qe_confirm.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.account.dao.WmsAccountKPODao">
+
+	<select id="getKPOWmsDocInfo" parameterType="List" resultType="Map">
+		SELECT w.WERKS GR_WERKS,w.WH_NUMBER,w.WMS_NO REF_WMS_NO,w.WMS_ITEM_NO REF_WMS_ITEM_NO,w.BUSINESS_NAME,w.BUSINESS_TYPE,w.BUSINESS_CLASS,w.WMS_MOVE_TYPE,
+			w.LIFNR,i.LIKTX,w.SOBKZ,w.MATNR,w.MAKTX,w.LGORT,w.UNIT,(nvl(w.QTY_WMS,'0')-nvl(w.QTY_CANCEL,'0')) QTY_WMS,
+			(nvl(w.QTY_WMS,'0')-nvl(w.QTY_CANCEL,'0')-nvl(x.QTY_WMS,'0')-nvl(x.QTY_CANCEL,'0')) QTY_SAP_101,
+			w.BATCH,w.BATCH_SAP,w.BEDNR,w.RECEIVER,
+			w.PO_NO,w.PO_ITEM_NO,i.CREATE_DATE,o.WERKS,w.ITEM_TEXT,w.RECEIPT_NO,w.RECEIPT_ITEM_NO,w.INBOUND_NO,w.INBOUND_ITEM_NO,
+			(nvl(x.QTY_WMS,'0')-nvl(x.QTY_CANCEL,'0')-nvl(w.QTY_SAP,'0') ) QTY_TRANSFER
+			FROM WMS_CORE_WMSDOC_ITEM w
+			INNER JOIN WMS_SAP_PO_ITEM o ON w.PO_NO = o.EBELN AND w.PO_ITEM_NO = o.EBELP AND  o.WERKS = #{WERKS} 
+			LEFT JOIN WMS_CORE_WMSDOC_ITEM x ON w.WMS_NO = x.REF_WMS_NO AND w.WMS_ITEM_NO = x.REF_WMS_ITEM_NO AND x.WMS_MOVE_TYPE = '101DS' 
+			AND nvl(x.DEL,'0')!='X' AND (nvl(x.QTY_WMS,'0')-nvl(x.QTY_CANCEL,'0')) >0 
+			LEFT JOIN WMS_IN_INBOUND_ITEM i ON w.INBOUND_ITEM_NO = i.INBOUND_ITEM_NO AND w.INBOUND_NO = i.INBOUND_NO
+			<if test="BEDNR !=null and BEDNR !='' ">
+				AND i.BEDNR LIKE CONCAT(CONCAT('%', #{BEDNR}),'%')
+			</if>
+			WHERE w.WMS_MOVE_TYPE = '105DS' AND nvl(w.DEL,'0')!='X' 
+			AND (nvl(w.QTY_WMS,'0')-nvl(w.QTY_CANCEL,'0')) >0
+			AND nvl(w.SAP_MOVE_TYPE,' ') =' ' 
+			AND w.WERKS = #{GR_WERKS} AND w.WH_NUMBER=#{WH_NUMBER}
+			AND o.WERKS = #{WERKS} 
+			<if test="BEDNR !=null and BEDNR !='' ">
+				AND w.BEDNR LIKE CONCAT(CONCAT('%', #{BEDNR}),'%')
+			</if>
+			<if test="LIFNR !=null and LIFNR !='' ">
+				AND w.LIFNR = #{LIFNR}
+			</if>
+			<if test="CREATE_DATE_S !=null and CREATE_DATE_S !='' ">
+				AND w.CREATE_DATE &gt;= CONCAT(#{CREATE_DATE_S},' 00:00:00')
+		   	</if>
+		   	<if test="CREATE_DATE_E !=null and CREATE_DATE_E !='' ">
+				AND w.CREATE_DATE &lt;= CONCAT(#{CREATE_DATE_E},' 23:59:59')
+		   	</if>
+		    ORDER BY w.WMS_NO ASC,w.WMS_ITEM_NO ASC
+	</select>
+	
+	<update id="updateWmsDocSapMoveType" parameterType="List">
+    	update WMS_CORE_WMSDOC_ITEM 
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="QTY_SAP =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO} then #{d.QTY_SAP}
+                </foreach>
+            </trim>
+            <trim prefix="SAP_MOVE_TYPE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO} then #{d.SAP_MOVE_TYPE}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO}
+        </foreach>
+	</update>
+	
+	<update id="updateWmsDocCancelFlag" parameterType="List">
+    	update WMS_CORE_WMSDOC_ITEM 
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="REVERSAL_FLAG =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WMS_NO=#{d.REF_WMS_NO} and WMS_ITEM_NO=#{d.REF_WMS_ITEM_NO} then #{d.REVERSAL_FLAG}
+                </foreach>
+            </trim>
+            <trim prefix="CANCEL_FLAG =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WMS_NO=#{d.REF_WMS_NO} and WMS_ITEM_NO=#{d.REF_WMS_ITEM_NO} then #{d.CANCEL_FLAG}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WMS_NO=#{d.REF_WMS_NO} and WMS_ITEM_NO=#{d.REF_WMS_ITEM_NO}
+        </foreach>
+	</update>
+	
+</mapper>

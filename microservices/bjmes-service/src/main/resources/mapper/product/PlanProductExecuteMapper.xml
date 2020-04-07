@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.bjmes.modules.product.dao.PlanProductExecuteDao">
+	 
+	 <select id="getOrderProducts" parameterType="Map" resultType="Map">
+	 	SELECT cp.product_type_code,cp.product_type_name,group_concat(concat(op.product_code,':',cp.product_name)) product_str
+		FROM BJMES_ORDER_PRODUCTS op
+		LEFT JOIN BJMES_C_PRODUCTS cp on cp.product_code = op.product_code
+		where op.order_no = #{order_no} and ifnull(cp.process_code,'')!=''
+		group by cp.product_type_code
+	 </select>
+
+	<select id="getProductPlanList" parameterType="Map" resultType="Map">
+		SELECT op.werks,op.werks_name,op.workshop,op.workshop_name,op.order_no,op.product_code,cp.product_name,
+		p.id plan_id,ifnull(p.plan_qty,0) plan_qty,op.single_qty*wo.order_qty require_qty,cp.product_type_code,
+		cp.product_type_name,p.plan_date,p.creator,p.creat_date,p.editor,p.edit_date,p.plan_workgroup,wo.order_desc,
+		(select ifnull(sum(p1.plan_qty),0) from BJMES_PLAN p1 
+		where p1.product_code = p.product_code and p1.order_no=p.order_no and p1.workshop=p.workshop
+		) total_plan_qty
+		FROM BJMES_ORDER_PRODUCTS op
+		LEFT JOIN BJMES_PLAN p on p.product_code=op.product_code and p.werks=op.werks
+		and p.workshop=op.workshop and p.order_no=op.order_no
+		LEFT JOIN BJMES_WERKS_ORDER wo on wo.order_no=op.order_no
+		LEFT JOIN BJMES_C_PRODUCTS cp on cp.product_code=op.product_code
+		WHERE op.werks = #{werks} and op.workshop = #{workshop} and op.order_no = #{order_no}
+		<if test="product_type_code !=null and product_type_code !='' ">
+		and cp.product_type_code = #{product_type_code}
+		</if>
+		<if test="product_code !=null and product_code !='' ">
+		and cp.product_code = #{product_code}
+		</if>
+		<if test="start_date !=null and start_date !='' ">
+		and p.plan_date >= #{start_date}
+		</if>
+		<if test="end_date !=null and end_date !='' ">
+		and p.plan_date &lt;= #{end_date}
+		</if>
+	</select>
+
+	<insert id="saveProductPlan" parameterType="List" >
+		INSERT INTO BJMES_PLAN (order_no,werks,werks_name,workshop,workshop_name,product_code,plan_workgroup,
+		plan_qty,plan_date,editor,edit_date,creator,creat_date) values 
+		<foreach collection="list" item="d" open=" " close=" " separator=" ,">
+			(#{d.order_no},#{d.werks},#{d.werks_name},#{d.workshop},#{d.workshop_name},#{d.product_code},#{d.plan_workgroup},
+			#{d.plan_qty},#{d.plan_date},#{d.creator},#{d.create_date},#{d.creator},#{d.create_date})
+		</foreach>
+	</insert>
+
+	<update id="updateProductPlan" parameterType="List">
+		<foreach collection="list" item="d"  separator=" ;">
+			update BJMES_PLAN set plan_qty = #{d.plan_qty} , plan_workgroup = #{d.plan_workgroup} , plan_date = #{d.plan_date},
+			editor = #{d.creator} , edit_date =#{d.create_date}
+			where id =#{d.plan_id}
+		</foreach>
+	</update>
+
+	<select id="getProcessFlow" parameterType="Map" resultType="Map">
+		SELECT p.product_code,p.product_name,p.process_code,p.process_name,f.node_code,f.node_name,f.seq,
+		f.offline_plan_node_flag,f.online_plan_node_flag
+		FROM BJMES_C_PRODUCTS p
+		LEFT JOIN BJMES_C_PROCESS_FLOW f on f.process_flow_code=p.process_flow_code
+		WHERE f.`status`='0' and f.scan_flag='X' and p.`status`='0'
+		and p.product_code = #{product_code}
+		order by f.seq
+	</select>
+
+	<select id="getLastScanInfo" parameterType="Map" resultType="Map">
+		SELECT s.* FROM BJMES_PD_SCAN s
+		WHERE s.product_no=#{product_no}
+		order by s.id desc limit 1
+	</select>
+
+	<select id="getProdSubParts" parameterType="Map" resultType="Map">
+		SELECT p1.*,k.key_parts_no,k.id key_parts_id
+		FROM BJMES_C_PRODUCTS p
+		LEFT JOIN BJMES_C_PRODUCTS p1 on p1.parent_product_id=p.id and p1.parent_process_code=#{parent_process_code}
+		LEFT JOIN BJMES_PD_KEY_PARTS k on p1.product_code=k.key_parts_code and k.product_no=#{product_no}
+		where p.product_code=#{product_code} and p1.`status`='0'
+	</select>
+	
+	<select id="getPDProductList" parameterType="Map" resultType="Map">
+		SELECT p.product_no,p.product_code,p.werks,p.werks_name,p.workshop,p.workshop_name,p.order_no,c.product_name
+		FROM BJMES_PD_PRODUCTS p
+		LEFT JOIN BJMES_C_PRODUCTS c on c.product_code = p.product_code
+		WHERE p.product_no like concat('%',#{product_no},'%')
+
+	</select>
+
+	<select id="getProductInfo" parameterType="Map" resultType="Map">
+		SELECT p.product_no,p.product_code,p.werks,p.werks_name,p.workshop,p.workshop_name,p.order_no,o.order_desc
+		FROM BJMES_PD_PRODUCTS p
+		LEFT JOIN BJMES_WERKS_ORDER o on o.order_no=p.order_no
+		WHERE p.product_no = #{product_no}
+	</select>
+
+	<insert id="savePDScanInfo" parameterType="Map">
+		INSERT INTO BJMES_PD_SCAN (product_no,order_no,werks,werks_name,workshop,workshop_name,line,line_name,node_code,
+		node_name,scanner,scan_time,scan_type) values 
+		(#{product_no},#{order_no},#{werks},#{werks_name},#{workshop},#{workshop_name},#{line},#{line_name},
+		#{node_code},#{node_name},#{scanner},#{scan_time},#{scan_type})
+	</insert>
+
+	<update id="savePDKey_Parts" parameterType="List">
+		<foreach collection="list" item="d" separator=";">
+			<if test="d.key_parts_id !=null and d.key_parts_id !=''">
+			update BJMES_PD_KEY_PARTS set key_parts_no = #{d.key_parts_no},scanner=#{d.scanner},scan_time=#{d.scan_time}
+			where id = #{d.key_parts_id}
+			</if>	
+			<if test="d.key_parts_id ==null or d.key_parts_id ==''">
+				insert into BJMES_PD_KEY_PARTS (product_no,order_no,werks,werks_name,workshop,workshop_name,line,
+				line_name,node_code,node_name,key_parts_code,key_parts_name,key_parts_no,scanner,scan_time) 
+				values
+				(#{d.product_no},#{d.order_no},#{d.werks},#{d.werks_name},#{d.workshop},#{d.workshop_name},#{d.line},
+				#{d.line_name},#{d.node_code},#{d.node_name},#{d.product_code},#{d.product_name},#{d.key_parts_no},
+				#{d.scanner},#{d.scan_time})
+			</if>
+		</foreach>
+	</update>
+
+	<update id="savePDProductsInfo" parameterType="Map">
+		update BJMES_PD_PRODUCTS set latest_node_code=#{node_code} 
+		<if test="online_plan_node_flag =='X'.toString() and scan_type='online'.toString() ">
+			,online_date =#{scan_time}
+		</if>
+		<if test="offline_plan_node_flag =='X'.toString() and scan_type='offline'.toString() ">
+			,offline_date =#{scan_time}
+		</if>
+		where product_no=#{product_no} and werks =#{werks} and order_no=#{order_no}
+	</update>
+
+	<select id="getProductByKeyparts" parameterType="Map" resultType="Map">
+		SELECT k.product_no,p.order_no,k.key_parts_no
+		FROM BJMES_PD_PRODUCTS p
+		LEFT JOIN BJMES_PD_KEY_PARTS k on p.product_no=k.key_parts_no
+		WHERE p.product_no=#{key_parts_no}
+	</select>
+</mapper>
+	 

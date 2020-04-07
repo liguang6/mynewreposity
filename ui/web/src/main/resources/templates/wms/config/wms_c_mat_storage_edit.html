@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>物料存储配置</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" class="wrapper">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post" style="margin-top:20px">
+					<div class="row">
+					   <div class="col-xs-6">
+                            <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 工厂代码
+								</div>
+								<div class="col-sm-8">
+									<!-- <input type="text" class="form-control required" id="werks" 
+									 @click="getPlantNoFuzzy" name="werks" placeholder="工厂代码" v-model="matstorage.werks"/> -->
+								     <select  name="werks" id="werks" v-model="matstorage.werks" class="required"  style="width:100%;height:25px">
+										<#list tag.getUserAuthWerks("WMS_C_MAT_STORAGE") as factory> 
+											<option value="${factory.code}">${factory.code}</option>
+										</#list>
+									</select>
+						    	</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 仓库代码
+								</div>
+								<div class="col-sm-8">
+									<!-- <input type="text" class="form-control required" id="whNumber" @blur="whNumerBlur()"
+									 @click="getWhNoFuzzy" name="whNumber" placeholder="仓库代码" v-model="matstorage.whNumber"/> -->
+									 <select  name="whNumber" id="whNumber" v-model="matstorage.whNumber" class="required" style="width:100%;height:25px">
+										<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+					   <div class="col-xs-6">
+                           <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 物料号
+								</div>
+								<div class="col-sm-8">
+									<input type="text" class="form-control required" id="matnr" 
+									 @click="getMaterialNoFuzzy" name="matnr" placeholder="物料号" v-model="matstorage.matnr"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									物料描述
+								</div>
+								<div class="col-sm-8">
+									<input type="text" class="form-control" id="maktx"  readonly="true"
+									 name="maktx" placeholder="物料描述" v-model="matstorage.maktx"/>
+								</div>
+							</div>
+						</div>
+					</div>
+<!-- 					<div class="row"> -->
+<!-- 					    <div class="col-xs-6"> -->
+<!-- 							<div class="form-group"> -->
+<!-- 								<div class="col-sm-4 control-label"> -->
+<!-- 									<span class="required"> * </span> 存储类型代码 -->
+<!-- 								</div> -->
+<!-- 								<div class="col-sm-8"> -->
+<!-- 									<input type="text" id="storageAreaCode" class="form-control required"  -->
+<!-- 										name="storageAreaCode" placeholder="存储类型代码" v-model="matstorage.storageAreaCode"/> -->
+<!-- 								</div> -->
+<!-- 							</div> -->
+<!-- 						</div> -->
+<!-- 						<div class="col-xs-6"> -->
+<!-- 							<div class="form-group"> -->
+<!-- 								<div class="col-sm-4 control-label"> -->
+<!-- 									<span class="required"> * </span> 存储模式 -->
+<!-- 								</div> -->
+<!-- 								<div class="col-sm-8"> -->
+<!-- 									<select id="storageModel" name="storageModel" v-model="matstorage.storageModel" style="width:100%"> -->
+<!-- 									   	    <option value='00'>固定存储</option> -->
+<!-- 									   	    <option value='01'>随机存储</option> -->
+<!-- 							   	    </select> -->
+<!-- 								</div> -->
+<!-- 							</div> -->
+<!-- 						</div> -->
+<!-- 					</div> -->
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									入库控制标识
+								</div>
+						<!-- 	<div class="col-sm-8">
+								    <input type="text" id="inControlFlag" class="form-control" 
+									@click="getControlFlagInNoFuzzy" name="inControlFlag" placeholder="入库控制标识" v-model="matstorage.inControlFlag"/>
+								</div>    -->	
+								<div class="col-sm-8">
+								<select name="inControlFlag" id="inControlFlag" v-model="matstorage.inControlFlag" style="height: 30px;width:100%">
+										<option v-for="c in inList" :value="c.controlFlag" :key="c.id">{{ c.controlFlag }}</option>
+									</select>	
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									出库控制标识
+								</div>
+					<!-- 			<div class="col-sm-8">
+								     <input type="text" id="outControlFlag" class="form-control" 
+									 @click="getControlFlagOutFuzzy" name="outControlFlag" placeholder="出库控制标识" v-model="matstorage.outControlFlag"/>
+								</div>  -->	
+								<div class="col-sm-8">
+									<select name="inControlFlag" id="inControlFlag" v-model="matstorage.inControlFlag" style="height: 30px;width:100%">
+										<option v-for="c in outList" :value="c.controlFlag" :key="c.id">{{ c.controlFlag }}</option>
+									</select>	
+								</div> 
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									长
+								</div>
+								<div class="col-sm-8">
+								<input type="text" id="length" class="form-control number" 
+										name="length" placeholder="长" v-model="matstorage.length" />
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									宽
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="width" class="form-control number" 
+										name="width" placeholder="宽" v-model="matstorage.width" />
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									高
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="height" class="form-control number" 
+										name="height" placeholder="高" v-model="matstorage.height"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									长宽高单位
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="sizeUnit" class="form-control" 
+										name="sizeUnit" placeholder="长宽高单位" v-model="matstorage.sizeUnit"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									体积
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="volum" class="form-control number" 
+										name="volum" placeholder="体积" v-model="matstorage.volum"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									体积单位
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="volumUnit" class="form-control" 
+										name="volumUnit" placeholder="体积单位" v-model="matstorage.volumUnit"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 重量
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="weight" class="form-control required number"
+										name="weight" placeholder="重量" v-model="matstorage.weight"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span>重量单位
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="weightUnit" class="form-control required"
+										name="weightUnit" placeholder="重量单位" v-model="matstorage.weightUnit"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span>最小包装单位
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="storageUnit" class="form-control required"
+										name="storageUnit" placeholder="最小库存" v-model="matstorage.storageUnit"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span>单存储单元数量
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="qty" class="form-control required number"
+										name="qty" placeholder="数量" v-model="matstorage.qty"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									最大库存
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="stockL" class="form-control number"
+										name="stockL" placeholder="最大库存" v-model="matstorage.stockL"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									最小库存
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="stockM" class="form-control number"
+										name="stockM" placeholder="最小库存" v-model="matstorage.stockM"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									启用最小包装
+								</div>
+								<div class="col-sm-8">
+									<select id="mpqFlag" name="mpqFlag" v-model="matstorage.mpqFlag" style="width:100%">
+									   	    <option value='0'>否</option>
+									   	    <option value='X'>是</option>
+							   	    </select>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									启用外部批次
+								</div>
+								<div class="col-sm-8">
+									<select id="externalBatchFlag" name="externalBatchFlag" v-model="matstorage.externalBatchFlag" style="width:100%">
+									   	    <option value='0'>否</option>
+									   	    <option value='X'>是</option>
+							   	    </select>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									相关联物料
+								</div>
+								<div class="col-sm-7">
+									<input type="text" id="correlationMaterial" class="form-control"
+										name="correlationMaterial" placeholder="相关联物料" v-model="matstorage.correlationMaterial"/>
+									
+								</div>
+								<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#correlationMaterial'))" />
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									排斥物料
+								</div>
+								<div class="col-sm-7">
+									<input type="text" id="repulsiveMaterial" class="form-control"
+										name="repulsiveMaterial" placeholder="排斥物料" v-model="matstorage.repulsiveMaterial"/>
+								</div>
+								
+								<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#repulsiveMaterial'))"/>	
+								
+							</div>
+						</div>
+					</div>
+					<!--  <div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									单存储单元数量
+								</div>
+								<div class="col-sm-7">
+									<input type="text" id="storageUnitQty" class="form-control"
+										name="storageUnitQty" placeholder="单存储单元数量" v-model="matstorage.storageUnitQty"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label"></div>
+								<div class="col-sm-7"></div>
+							</div>
+						</div>
+					</div>-->
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_c_mat_storage_edit.js?_${.now?long}"></script>
+</body>
+</html>

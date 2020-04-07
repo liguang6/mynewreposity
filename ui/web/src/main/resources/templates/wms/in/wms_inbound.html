@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>收货进仓单</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+                   <form id="searchForm" class="form-inline" action="#">
+						<!-- 查询条件 -->
+						<table>
+						<tr>
+							<td width="100%">
+								 <div class="form-group">
+									<label class="control-label"><span style="color:red">*</span>工厂：</label>
+									<div class="control-inline" style="width:60px;">
+										<select class="" v-model="werks" name="werks" style="height: 26px;width: 60px;" id="werks" >
+										   <#list tag.getUserAuthWerks("INBOUND") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										   </#list>
+										</select>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label"><span style="color:red">*</span>仓库号：</label>
+									<div class="control-inline" style="width:60px;">
+										<select class="" v-model="whNumber" name="whNumber" id="whNumber" style="height: 26px;width: 60px;">
+										 <option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+										</select>
+									</div>
+								</div>
+									<div class="form-group">
+										<label class="control-label">质检状况：</label>
+										<div class="control-inline" style="width:70px;">
+										<select class="form-control" name="qcResult" id="qcResult" style="height: 28px;width: 70px;">	
+											<option value='01'>合格</option>
+											<option value='02'>不合格</option>
+										</select>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label">送货单号：</label>
+										<div class="control-inline">
+											<input type="text" id="asnNo" class="form-control" name="asnNo" value="" style="width: 100px;" />
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label">供应商代码：</label>
+										<div class="control-inline" >
+											<input style="width: 80px;" id="lifnr" name="lifnr" class="form-control" @click="getVendorNoFuzzy()" />
+										</div>
+									</div>
+								<div class="form-group">
+									<label class="control-label">批次：</label>
+									<div class="control-inline">
+										<input type="text" id="batch" name="batch" value=""
+											class="form-control "  style="width: 100px;"/>
+									</div>
+								</div>
+								 <div class="form-group">
+									<label class="control-label">仓管员：</label>
+									<div class="control-inline" style="width: 100px;">
+										<select class="form-control" name="whManager" id="whManager" style="width: 100px;height:28px;">
+										 <option value="" >全部</option>
+										 <option v-for="w in relatedareaname" :value="w.AUTHORIZE_CODE" :key="w.AUTHORIZE_CODE">{{ w.MANAGER }}</option>
+										</select>
+									</div>
+								</div> 
+								</td>
+							</tr>
+						
+						<tr>
+						<td width="100%">
+							<div class="form-group">
+								<label class="control-label">库位：</label>
+								<div class="control-inline">
+									<input type="text" id="lgort" name="lgort" value="" style="width: 55px;"
+										class="form-control" />
+								</div>
+							</div>
+	
+							<div class="form-group">
+								<label class="control-label" style="width: 60px;">收货日期：</label>
+								<div class="control-inline">
+									<input type="text"  id="receiptDateStart" name="receiptDateStart" value=""
+										class="form-control width-300"  style="width: 80px;" v-model="receiptDateStart"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										/>
+								</div>
+								-
+								<div class="control-inline">
+									<input type="text"  id="receiptDateEnd" name="receiptDateEnd" value=""
+										class="form-control width-300" style="width: 80px;" v-model="receiptDateEnd"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false,onpicked:function(pd){}});"
+										 />
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label">料号：</label>
+								<div class="control-inline">
+									<input type="text" id="matnr" class="form-control" name="matnr" value="" style="width: 90px;" />
+								</div>
+							</div>
+								
+								<div class="form-group">
+								    <input type="button" id="btnqueryinbound" @click="query" class="btn btn-primary btn-sm " value="查询"/>
+									<button type="reset" id="reset" class="btn btn-info btn-sm">重置</button>
+								</div>
+								
+								<div class="form-group">
+									<label class="control-label">源库位：</label>
+									<div class="control-inline" style="width: 60px;">
+									<select name="sLgort" id="sLgort" style="height: 28px;width: 60px;">	
+										<option value='00ZJ'>00ZJ</option>
+									</select>
+									</div>
+								</div>
+								<div class="form-group">
+								<label class="control-label">目标库位：</label>
+								<div class="control-inline" style="width: 60px;">
+									<select class="input-medium" name="dLgort" id="dLgort" style="height: 28px;width: 60px;">
+									 <option v-for="l in lgortlist" :value="l.LGORT" :key="l.LGORT">{{ l.LGORT }}</option>
+									</select>
+									</div>
+								</div>
+								<input type="button" id="btnupdatelgort" @click="btnupdatelgort" class="btn btn-primary btn-sm" value="库位修改"/>
+								<div class="form-group" style="float: right;">
+								    <input type="button" id="saveOperation"  @click="save" class="btn btn-success btn-sm" value="创建进仓单"/>
+								</div>
+							</td>
+							</tr>
+					</table>
+				   </form>
+					<div id="pgtoolbar1" class="table-responsive table2excel">
+						<table id="dataGrid"></table>
+					</div>
+					<form id="print" target="_blank" method="post" action="${request.contextPath}/docPrint/inBoundPreview" >
+						<button hidden="hidden" id="printButton" type="submit"></button>
+						<input hidden="hidden" name="inboundNo" id="inboundNo" type="text" >
+						<input hidden="hidden" name="subInBoundType" id="subInBoundType" value="01" type="text" >
+					</form>
+					<form id="print3" target="_blank" method="post" action="${request.contextPath}/docPrint/inBoundPreview" >
+						<button hidden="hidden" id="printButton3" type="submit"></button>
+						<input hidden="hidden" name="inboundNo3" id="inboundNo3" type="text" >
+						<input hidden="hidden" name="subInBoundType3" id="subInBoundType3" value="03" type="text" >
+					</form>
+					<div id="resultLayer" style="display: none; padding: 10px;">
+						<h4>创建成功！进仓单号：<span id="inboundNoLayer">-</span></h4>
+						<br/>
+						<input type="button" id="btnPrint" class="btn btn-info btn-sm" value="小letter打印" @click="printSmallInbound"/>
+						<input type="button" id="btnPrint" class="btn btn-info btn-sm" value="大letter打印" @click="printInbound"/>
+						<input type="button" id="btnDetail" class="btn btn-info btn-sm" value="查看明细" @click="queryDetail"/>
+					</div>
+			</div>
+		</div>
+		
+		<div class="hide" style="dispaly:none" id="inboundWeiwai">
+			<form id="searchForm_weiwai" method="post" class="form-inline"  action="${request.contextPath}/in/wmsinbound/sapComponentlist">
+						
+							<table>
+								<tr>
+									<td width="100%">
+										<div class="form-group">
+											<label class="control-label" >
+											    采购订单：
+											</label>
+										   	<div class="control-inline" id="poNo_ww" style="width: 100px;">
+										    </div>
+										</div>
+										
+										<div class="form-group">
+											<label class="control-label">
+											   行号：
+											</label>
+										   	<div class="control-inline" id="poItemNO_ww">
+										    </div>
+										</div>
+										
+										<div class="form-group">
+											<label  class="control-label">
+											    供应商代码：
+											</label>
+										   	<div class="control-inline" id="lifnr_ww">
+										    </div>
+										</div>
+										
+										<div class="form-group">
+											<label  class="control-label">
+											    供应商名称：
+											</label>
+										   	<div class="control-inline" id="liktx_ww">
+										    </div>
+										</div>
+									</td>
+									</tr>
+									<tr>
+									<td width="100%">
+										<div class="form-group">
+											<label  class="control-label">
+											    进仓料号：
+											</label>
+										   	<div class="control-inline" id="matnr_ww">
+										    </div>
+										</div>
+										<div class="form-group">
+											<label  class="control-label">
+											    描述：
+											</label>
+										   	<div class="control-inline" id="maktx_ww">
+										    </div>
+										</div>
+										<div class="form-group">
+											<label  class="control-label">
+											    数量：
+											</label>
+										   	<div class="control-inline" id="inQty_ww">
+										    </div>
+										</div>
+										<div class="form-group">
+										   <div class="form-group">
+											    <!--  <input type="button" id="saveOperation_ww" onclick="confirm_ww()" class="btn btn-success btn-sm" value="确定"/>-->
+											 </div>
+										</div>
+									</td>
+									<input type="text" id="werks_ww" name="werks_ww" value="" style="width: 55px;display:none"
+										class="form-control" />
+								</tr>
+							</table>
+						</form>
+						<!--  <div id="links">
+								<a href='#' class='btn' id='newOperation_ww' onclick='newoper_n()'><i class='fa fa-plus' aria-hidden='true'></i></a> 
+						</div>-->
+						<table class="table table-striped table-bordered" id="inboundWeiWaiTable" style="font-size:12px;">
+							<thead>
+								<tr>
+									<!--  <th width="20px;"></th>-->
+									<th width="20px;"><a href='#' class='btn' id='newOperation_ww' onclick='newoper_n()'><i class='fa fa-plus' aria-hidden='true'></i></a> </th>
+									<th width="110px;">料号</th>
+									<th width="300px;">物料描述</th>
+									<th width="130px;">批次</th>
+									<th width="60px;">消耗数量</th>
+									<th width="60px;">单位</th>
+								</tr>
+							</thead>
+							<tbody>
+														
+							</tbody>
+						</table>
+						
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/in/wms_inbound.js?_${.now?long}"></script>
+</body>
+</html>

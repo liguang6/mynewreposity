@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>下料明细管理</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<div id="searchDiv" method="post" class="form-inline" action = "#">
+					<table>
+						<tr>
+							<td>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">工厂：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select v-model="search_werks" name="search_werks" id="search_werks" style="width: 150px;height: 25px;" >
+											<!-- <option value="0">全部</option> -->
+											<#list tag.getUserAuthWerks("ZZJMES_PMD_SEARCH") as factory>
+											<option value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">*订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+										<input type="text" name="search_order" id="search_order" @click="getOrderNoFuzzy()" class="form-control" placeholder="订单名称">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">车间：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select v-model="search_workshop" name="search_workshop" id="search_workshop" style="width: 150px;height:25px;background-color:white">
+										<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">线别：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select v-model="search_line" name="search_line" id="search_line" style="width: 100px;height:25px;background-color:white">
+										<option v-for="w in linelist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							</td>
+							<td width="200px">
+								<div class="form-group">
+									<input type="button" @click="query" id="btnSearchData" class="btn btn-info btn-sm" value="查询" /> 
+									<input type="button" @click="query_nopic" id="btnSearchNoPic" class="btn btn-info btn-sm" value="无图检索" /> 
+									<input type="button" id="btnExport" @click="exportExcel()" class="btn btn-success btn-sm" value="导出" />
+								</div>
+							</td>
+						</tr>
+							<tr>
+								<td>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">零部件号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<!-- <input type="text" name="search_zzj_no" id="search_zzj_no" class="form-control" placeholder="零部件号/名称"> -->
+											<span class="input-icon input-icon-right" style="width: 124px;">
+											<input type="text" name="search_zzj_no" id="search_zzj_no" placeholder="零部件号/名称" class="form-control" style="width: 124px;"/>
+											<!-- <i class="ace-icon glyphicon glyphicon-plus black bigger-120 btn_scan " style="cursor: pointer" @click="moreZzjNo();"> </i> -->
+											<i onclick="doScan('zzj_no')" class="ace-icon fa fa-barcode black bigger-180 btn_scan" style="cursor: pointer;"></i>
+											</span>
+											<input type="button"  class="btn btn-default btn-sm" value=".." @click="moreZzjNo();" style="width: 5px;float:right"/>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">工艺流程：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+												<input type="text" name="search_process_flow" id="search_process_flow" class="form-control" placeholder="工艺流程">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">图号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_material_no" id="search_material_no" class="form-control" placeholder="图号">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">工段：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+												<input type="text" name="search_section" id="search_section" class="form-control" placeholder="工段">
+											</div>
+										</div>
+									</div>
+								</td>
+								<td width="200px">
+									<div class="form-group">
+										<input type="button" id="btnSearch" @click="searchMore" class="btn btn-default btn-sm" value="展开" />
+										<input type="radio" checked="checked" name="Stype" value="new" id="Stype_new" />最新数据
+										<input type="radio" name="Stype" value="his" id="Stype_his" />变更纪录
+									</div>
+								</td>
+							</tr>
+					</table>
+					</div>		
+					<form id="searchForm" method="post" class="form-inline hide" action="#">
+						<table>
+							<tr>
+								<td>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">装配位置：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input vm-model="assembly_position" type="text" name="search_assembly_position" id="search_assembly_position" class="form-control" placeholder="装配位置">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">使用车间：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+												<input type="text" name="search_use_workshop" id="search_use_workshop" class="form-control" placeholder="使用车间">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">使用工序：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_process" id="search_process" class="form-control" placeholder="使用工序">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">表面处理：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+												<input type="text" name="search_surface_treatment" id="search_surface_treatment" class="form-control" placeholder="表面处理">
+											</div>
+										</div>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">加工设备：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_process_machine" id="search_process_machine" class="form-control" placeholder="加工设备">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">分包类型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+												<select name="search_subcontracting_type" id="search_subcontracting_type" style="width: 150px;" class="form-control">
+													<option value="">全部</option>
+													<#list tag.masterdataDictList('ZZJ_SUB_TYPE') as dict>
+													<option value="${dict.value}">${dict.value}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">下料尺寸：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_filling_size" id="search_filling_size" class="form-control" placeholder="下料尺寸">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">材料规格：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+												<input type="text" name="search_specification" id="search_specification" class="form-control" placeholder="材料/规格">
+											</div>
+										</div>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">材料类型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<select name="search_cailiao_type" id="search_cailiao_type" style="width: 150px;" class="form-control">
+													<option value="">全部</option>
+													<#list tag.masterdataDictList('ZZJ_CAILIAO_TYPE') as dict>
+													<option value="${dict.value}">${dict.value}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">孔径：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+												<input type="text" name="search_aperture" id="search_aperture" class="form-control" placeholder="孔径">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">变更主体：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_change_subject" id="search_change_subject" class="form-control" placeholder="变更主体">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">变更类型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+												<select name="search_change_type" id="search_change_type" style="width: 150px;" class="form-control">
+													<option value="">全部</option>
+													<option value="1">技改</option>
+													<option value="2">非技改</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">埋板：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_maiban" id="search_maiban" class="form-control" placeholder="埋板">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">板厚：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+												<input type="text" name="search_banhou" id="search_banhou" class="form-control" placeholder="板厚">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">特殊尺寸：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_filling_size_max" id="search_filling_size_max" class="form-control" placeholder="特殊大尺寸">
+											</div>
+										</div>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</form>
+					
+					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>
+					<table id="tb_excel" style="display: none"></table>
+				</div>
+			</div>
+		</div>
+		<div id="ecnLayer" class="box-body" style="display: none; padding: 10px;">
+			<table id="ecnTable" class="table">
+				<thead>
+					<tr>
+						<th>&nbsp;&nbsp;</th>
+						<th width="30%">开始车号</th>
+						<th width="30%">结束车号</th>
+						<th width="30%">单车用量</th>
+					</tr>
+				</thead>
+				<tbody id="ecntbody" class="exp-table">
+				<tr>
+				<td></td>
+				<td><input type="text" disabled="disabled" value="1"/></td>
+				<td><input id="end_busnum" disabled="disabled" type="text" value=""/></td>
+				<td><input id="ecnt_value" disabled="disabled" type="text" value=""/></td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	
+		<div id="moreZzjNoLayer" class="wrapper" style="display: none; padding: 10px;">
+			<div id="links"><!-- 批量查询生产订单 -->
+				<a href='#' class='btn' id='newOperation_1'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+				<a href='#' class='btn' id='newReset_1'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+			</div>
+			<div id="tab1_1" class="table-responsive table2excel" data-tablename="Test Table 1">
+				<table id="dataGrid_1"></table>
+			</div>
+		</div>
+	<form id="searchPageForm"  method="post" action="${request.contextPath}/zzjmes/pmdManager/getPmdListPage" style="display:none">
+		<input name="WERKS" id="searchPage_werks" type="text"  hidden="hidden">
+		<input name="ORDER_NO" id="searchPage_order" type="text"  hidden="hidden">
+		<input name="WORKSHOP" id="searchPage_workshop" type="text"  hidden="hidden">
+		<input name="LINE" id="searchPage_line" type="text"  hidden="hidden">
+		<input name="ZZJ_NO" id="searchPage_zzj_no" type="text"  hidden="hidden">
+		<input name="PROCESS_FLOW" id="searchPage_process_flow" type="text"  hidden="hidden">
+		<input name="SECTION" id="searchPage_section" type="text"  hidden="hidden">
+		<input name="MATERIAL_NO" id="searchPage_material_no" type="text"  hidden="hidden">
+		<input name="ASSEMBLY_POSITION" id="searchPage_assembly_position" type="text"  hidden="hidden">
+		<input name="USE_WORKSHOP" id="searchPage_use_workshop" type="text"  hidden="hidden">
+		<input name="PROCESS" id="searchPage_process" type="text"  hidden="hidden">
+		<input name="SURFACE_TREATMENT" id="searchPage_surface_treatment" type="text"  hidden="hidden">
+		<input name="PROCESS_MACHINE" id="searchPage_process_machine" type="text"  hidden="hidden">
+		<input name="SUBCONTRACTING_TYPE" id="searchPage_subcontracting_type" type="text"  hidden="hidden">
+		<input name="FILLING_SIZE" id="searchPage_filling_size" type="text"  hidden="hidden">
+		<input name="SPECIFICATION" id="searchPage_specification" type="text"  hidden="hidden">
+		<input name="CAILIAO_TYPE" id="searchPage_cailiao_type" type="text"  hidden="hidden">
+		<input name="APERTURE" id="searchPage_aperture" type="text"  hidden="hidden">
+		<input name="CHANGE_SUBJECT" id="searchPage_change_subject" type="text"  hidden="hidden">
+		<input name="CHANGE_TYPE" id="searchPage_change_type" type="text"  hidden="hidden">
+		<input name="MAIBAN" id="searchPage_maiban" type="text"  hidden="hidden">
+		<input name="BANHOU" id="searchPage_banhou" type="text"  hidden="hidden">
+		<input name="FILLING_SIZE_MAX" id="searchPage_filling_size_max" type="text"  hidden="hidden">
+		<input name="NO_PIC" id="searchPage_nopic" type="text" value="0" hidden="hidden">
+		<input name="Stype" id="searchPage_Stype" type="text" value="new" hidden="hidden">
+	</form>	
+	<form id="exportForm"  method="post" action="${request.contextPath}/zzjmes/pmdManager/exportPmd" style="display:none">
+		<input name="WERKS" id="export_werks" type="text"  hidden="hidden">
+		<input name="ORDER_NO" id="export_order" type="text"  hidden="hidden">
+		<input name="WORKSHOP" id="export_workshop" type="text"  hidden="hidden">
+		<input name="LINE" id="export_line" type="text"  hidden="hidden">
+		<input name="ZZJ_NO" id="export_zzj_no" type="text"  hidden="hidden">
+		<input name="PROCESS_FLOW" id="export_process_flow" type="text"  hidden="hidden">
+		<input name="SECTION" id="export_section" type="text"  hidden="hidden">
+		<input name="MATERIAL_NO" id="export_material_no" type="text"  hidden="hidden">
+		<input name="ASSEMBLY_POSITION" id="export_assembly_position" type="text"  hidden="hidden">
+		<input name="USE_WORKSHOP" id="export_use_workshop" type="text"  hidden="hidden">
+		<input name="PROCESS" id="export_process" type="text"  hidden="hidden">
+		<input name="SURFACE_TREATMENT" id="export_surface_treatment" type="text"  hidden="hidden">
+		<input name="PROCESS_MACHINE" id="export_process_machine" type="text"  hidden="hidden">
+		<input name="SUBCONTRACTING_TYPE" id="export_subcontracting_type" type="text"  hidden="hidden">
+		<input name="FILLING_SIZE" id="export_filling_size" type="text"  hidden="hidden">
+		<input name="SPECIFICATION" id="export_specification" type="text"  hidden="hidden">
+		<input name="CAILIAO_TYPE" id="export_cailiao_type" type="text"  hidden="hidden">
+		<input name="APERTURE" id="export_aperture" type="text"  hidden="hidden">
+		<input name="CHANGE_SUBJECT" id="export_change_subject" type="text"  hidden="hidden">
+		<input name="CHANGE_TYPE" id="export_change_type" type="text"  hidden="hidden">
+		<input name="MAIBAN" id="export_maiban" type="text"  hidden="hidden">
+		<input name="BANHOU" id="export_banhou" type="text"  hidden="hidden">
+		<input name="NO_PIC" id="export_nopic" type="text" value="0" hidden="hidden">
+		<input name="Stype" id="export_Stype" type="text" value="new" hidden="hidden">
+		<input name="FILLING_SIZE_MAX" id="export_filling_size_max" type="text"  hidden="hidden">
+	</form>
+	
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/pmdSearch.js?_${.now?long}"></script>
+</body>
+</html>

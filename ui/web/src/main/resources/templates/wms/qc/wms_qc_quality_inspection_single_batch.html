@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>单批质检</title>  
+<#include "/web_header.html">
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+.control-label {
+	width: 100px;
+}
+
+.op {
+	padding: 0 8px;
+}
+
+table tr th {
+	text-align: center;
+	background-color: #f2f2f2;
+}
+
+.control-inline span {
+	word-wrap: break-word;
+	word-break: break-all;
+	overflow: hidden;
+	font-size: 12px;
+    font-weight: bold;
+}
+
+.control-inline {
+    padding-bottom: 3px;
+}
+
+.fa-times {
+    color:#f1403c
+}
+.fa-plus {
+    color:#00a65a
+}
+
+[v-cloak] {
+      display: none;
+}
+</style>
+</head>
+<body class="hold-transition" >
+	<div class="wrapper"  id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+
+					<div class="form-inline">
+						
+						<!-- 查询条件 -->
+						<div class="row">
+						 <div class="form-group">
+							<label class="control-label">WMS批次：</label>
+							<div class="control-inline" style="width:175px" >
+								<span v-cloak>{{itemTemplate.batch}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label" >工厂代码：</label>
+							<div class="control-inline" style="width:175px" >
+								<span v-cloak>{{itemTemplate.werks}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">仓库号：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{itemTemplate.whNumber}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">库位：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{itemTemplate.lgort}}</span>
+							</div>
+						</div>
+						
+							<div class="form-group">
+							<label class="control-label" >需求跟踪号：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{itemTemplate.trackingNo}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">物料号：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{itemTemplate.matnr}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">物料描述：</label>
+							<div class="control-inline" style="width:175px" >
+								<span v-cloak>{{itemTemplate.maktx}}</span>
+							</div>
+						</div>
+						<!-- </div>
+						
+						<div class="row"> -->
+						
+					
+						
+						<div class="form-group">
+							<label class="control-label">供应商代码：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{itemTemplate.lifnr}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">供应商名称：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{itemTemplate.liktx}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">送检数量：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{itemTemplate.inspectionQty}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">收货日期：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{itemTemplate.receiptDate}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">成本中心 ：</label>
+							<div class="control-inline" style="width:175px">
+								<input type="text" placeholder="成品中心" class="form-control" v-model="costcenter" />
+								<p><span v-cloak>{{costCenterName}}</span></p>
+							</div>
+						</div>
+
+						</div>
+						
+					</div>
+					
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#'
+								class='btn' id='saveOperation' @click="save"><i class='fa fa-check'
+								aria-hidden='true'></i> 保存</a> 
+								
+								<a href="#" class="btn"
+								id="backOperation" title="返回" onclick="js.closeCurrentTabPage()"><i class="fa fa-filter"></i> 返回</a>
+						</div>
+					</div>
+					<div style="overflow:auto;display:block">
+					<table v-cloak class="table table-bordered table-hover auto-word-break" id="data-table" style="text-align:center" >
+					   <tr>
+					   <th width="10%">操作</th>
+					   <th width="15%">送检单号</th>
+					   <th width="10%">行项目</th>
+					   <th width="5%">单位</th>
+					   <th width="5%">送检数量</th>
+					   <th width="10%">质检数量</th>
+					   <th width="10%">品质判定</th>
+					   <th width="15%">不合格原因</th>
+					   <th width="10%">质检员</th>
+					   <th width="10%">破坏数量</th>
+					   </tr>
+					   
+					   <tr v-cloak v-for="(t,index) in items" :key="t.id">
+					     <td style="text-align: center;"><a href="#" class="op" @click="remove(index)"><i class="fa fa-times" aria-hidden="true"></i></a> <a href="#" class="op" @click="add(index)"><i class="fa fa-plus"></i></a></td>
+					     <td>{{t.inspectionNo}}</td>
+					     <td>{{t.inspectionItemNo}}</td>
+					     <td>{{t.unit}}</td>
+					     <td>{{t.inspectionQty}}</td>
+					     <td><input type="text"  class="form-control" v-model="t.checkedQty"/></td>
+					     <td>
+					     <select  @change="resultChange($event,index)" v-model="t.qcResultCode">
+					       <option v-for="s in qcResultCodes" :key="s.id" :value="s.qcResultCode">{{s.qcResultName}}</option>
+					     </select> 
+					     </td>
+					     <td @click="openReturnReason(index)" style="cursor:pointer;color:#e9686b">{{t.returnreason}}</td>
+					     <td><input type="text"  class="form-control" v-model="t.qcPeople"/></td>
+					     <td>
+					         <input v-if="t.destoryVisiable === false" type="number"  class="form-control" v-model="t.destoryQty" disabled="disabled"/>
+					         <input v-else="t.destoryVisiable" type="number"  class="form-control" v-model="t.destoryQty" />
+					     </td>
+					   </tr>
+					</table>
+					</div>					
+				</div>
+			</div>
+		</div>
+		
+		<div id="returnreason" style="display: none; text-align: center;" >
+		   	<div class="row">
+				<div style="padding-top: 30px;" class="col-md-12 ui-sortable">
+						<select style="width: 180px;height: 28px;" name="reason_type" id="reason_type" v-model="reason_type" 
+												 > 
+							   <option value=''>全部</option>
+							<#list tag.wmsDictList("QC_RETURN_REASONS_TYPE") as dict>
+							   <option value="${dict.code}">${dict.value}</option>
+							</#list>
+						 </select>
+						<select style="width: 500px;height: 28px;" id="reasons" v-model="reasonCode">
+					     	<option v-for="r in returnreasons" :value="r.reasonCode" :key="r.id" :data-reasonType="r.reasonType" >{{r.reasonDesc}}</option>
+					   </select>
+				</div>
+			</div>
+		   
+		</div>
+		
+		<!-- 初始化变量  -->
+		<input id="inspectionItemNo" value="${inspectionItemNo}" hidden="hidden"/>
+		<input id="inspectionNo" value="${inspectionNo}" hidden="hidden"/>
+		<input id="type" value="${type}" hidden="hidden"/>
+		<input id="batch" value="${batch}" hidden="hidden"/>
+		<input id="werks" value="${werks}" hidden="hidden"/>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/wms/qc/wms_qc_quality_inspection_single_batch.js?_${.now?long}"></script>
+</body>
+
+
+</html>

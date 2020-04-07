@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.produce.dao.QmTestRecordDao">
+    <select id="getTestRecordList" parameterType="Map" resultType="Map">
+	   select h.test_tool_no,h.outward_standard,h.size_standard,h.zzj_no,h.zzj_name,h.product_test,h.product_test_date,
+	   i.outward_result,i.size_result,i.test_result,h.material_no,
+	   i.result_type,i.retest_result,h.id head_id,i.id from  ZZJ_QM_TEST_RECORD_HEAD h 
+		 left join ZZJ_QM_TEST_RECORD_ITEMS i on  i.zzj_qm_test_head_id = h.id
+		where 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and h.zzj_plan_batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and h.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and h.workshop = #{workshop}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and h.order_no = #{order_no}
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+			and h.zzj_no = #{zzj_no}
+		</if>
+	    <if test="id != null and id != ''">
+			and i.id = #{id}
+		</if>
+		<if test="head_id != null and head_id != ''">
+			and h.id = #{head_id}
+		</if>
+	</select>
+	<insert id="saveHead" parameterType="Map" useGeneratedKeys="true" keyProperty="id">
+     	<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_QM_TEST_RECORD_HEAD (order_no,werks,werks_name,workshop,workshop_name,zzj_no,
+		zzj_plan_batch,outward_standard,size_standard,test_tool_no,product_test,product_test_date,product_test_result,
+		product_editor,product_edit_date,qc_test,qc_test_date,test_result,qc_editor,qc_edit_date,material_no,zzj_name)
+		values (#{order_no},#{werks},#{werks_name},#{workshop},#{workshop_name},#{zzj_no},
+		#{zzj_plan_batch},#{outward_standard},#{size_standard},#{test_tool_no},#{product_test},
+		#{product_test_date},#{product_test_result},#{product_editor},#{product_edit_date},#{qc_test},#{qc_test_date},
+		#{test_result},#{qc_editor},#{qc_edit_date},#{material_no},#{zzj_name})
+     </insert>
+     <insert id="saveItems" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_QM_TEST_RECORD_ITEMS 
+		(zzj_qm_test_head_id,result_type,outward_result,size_result,test_result,retest_result,retest_desc)
+		values
+		<foreach collection="detail_list" item="detail" index="index" separator=",">
+			(#{zzj_qm_test_head_id},#{result_type},#{detail.outward_result},#{detail.size_result},#{detail.test_result},#{detail.retest_result},#{detail.retest_desc})
+		</foreach>		
+	</insert>
+	<update id='updateHead' parameterType="Map">
+		update ZZJ_QM_TEST_RECORD_HEAD t set 
+		 t.outward_standard=#{outward_standard} ,
+		 t.size_standard=#{size_standard}, t.product_test_result=#{product_test_result}
+		 <if test="result_type ==0">
+		     <if test="product_test !=null and product_test !=''">
+				, t.product_test=#{product_test}
+			 </if>
+			 <if test="product_test_date !=null and product_test_date !=''">
+				, t.product_test_date=#{product_test_date}
+			 </if>
+			 <if test="test_tool_no !=null and test_tool_no !=''">
+			    ,t.test_tool_no=#{test_tool_no}
+			 </if>
+			 <if test="product_editor !=null and product_editor !=''">
+				, t.product_editor=#{product_editor}
+			 </if>
+			 <if test="product_edit_date !=null and product_edit_date !=''">
+				, t.product_edit_date=#{product_edit_date}
+			 </if>
+		 </if>
+		 <if test="result_type ==1">
+		     <if test="qc_test !=null and qc_test !=''">
+				, t.qc_test=#{qc_test}
+			 </if>
+			 <if test="qc_test_date !=null and qc_test_date !=''">
+				, t.qc_test_date=#{qc_test_date}
+			 </if>
+			 <if test="qc_editor !=null and qc_editor !=''">
+				, t.qc_editor=#{qc_editor}
+			 </if>
+			 <if test="qc_edit_date !=null and qc_edit_date !=''">
+				, t.qc_edit_date=#{qc_edit_date}
+			 </if>
+			 <if test="test_result !=null and test_result !=''">
+				, t.test_result=#{test_result}
+			 </if>
+		 </if>
+		 where id=#{head_id}
+	</update>
+	<update id="updateItems" parameterType="List" >
+		update ZZJ_QM_TEST_RECORD_ITEMS set
+		outward_result=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.outward_result}
+		</foreach>
+		,size_result=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.size_result}
+		</foreach>
+		,test_result=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.test_result}
+		</foreach>
+		,retest_desc=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.retest_desc}
+		</foreach>
+		,retest_result=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.retest_result}
+		</foreach>
+		where id in
+		<foreach collection="detail_list" item="detail" index="index" separator="," open=" (" close=")">
+			#{detail.id}
+		</foreach>
+	</update>
+	<select id="getPmdInfo" parameterType="Map" resultType="Map">
+	   select sum(ifnull(i.quantity,0)*ifnull(p.quantity,0)) as demand_quantity,i.zzj_name,i.material_no 
+	     from ZZJ_PMD_HEAD h
+	     left join ZZJ_PMD_ITEMS i on i.pmd_head_id = h.id
+		 left join ZZJ_PLAN p on  h.werks=p.werks and h.workshop=p.workshop and
+		    p.line=h.line and p.order_no=h.order_no
+		where 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and p.batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and h.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and h.workshop = #{workshop}
+		</if>
+		<if test="line != null and line !=''">
+			and h.line = #{line}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and h.order_no = #{order_no}
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+			and i.zzj_no = #{zzj_no}
+		</if>
+	    <if test="pmd_item_id != null and pmd_item_id != '' and pmd_item_id != 0">
+			and i.id = #{pmd_item_id}
+		</if>
+		group by zzj_name,material_no
+	</select>
+	<select id="getOrderList" parameterType="Map" resultType="Map">
+	SELECT * FROM ZZJ_WERKS_ORDER WHERE werks = #{werks} AND order_no = #{order_no}
+	</select>
+	<select id="getHeadList" parameterType="Map" resultType="Map">
+	   select h.*,(case h.test_result when '0' then 'OK' when '1' then 'NG' end) test_result_desc,
+	   (case h.product_test_result when '0' then 'OK' when '1' then 'NG' end) product_test_result_desc,
+	   concat(o.order_no,' ',order_name,' ',bus_type_code,' ',order_qty,'台') order_desc,p.quantity,'${login_user}' as login_user
+	   from  ZZJ_QM_TEST_RECORD_HEAD h 
+	   left join ZZJ_WERKS_ORDER o on o.order_no=h.order_no
+	    left join ZZJ_PLAN p on p.order_no=h.order_no and p.werks=h.werks and p.workshop=h.workshop and p.batch=h.zzj_plan_batch
+		where 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and h.zzj_plan_batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and h.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and h.workshop = #{workshop}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and h.order_no = #{order_no}
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+		  <if test="zzj_no.indexOf(',')==-1">
+               and (h.zzj_no like concat('%',#{zzj_no},'%') or h.zzj_name like concat('%',#{zzj_no},'%'))	  
+          </if>
+          <if test="zzj_no.indexOf(',')!=-1">
+               and FIND_IN_SET(h.zzj_no,#{zzj_no})>0 
+          </if>
+		</if>
+		<if test="test_result != null and test_result != ''">
+		    <if test="result_type == 0">
+			     and h.product_test_result = #{test_result}
+			</if>
+			<if test="result_type == 1">
+			     and h.test_result = #{test_result}
+			</if>
+		</if>
+		<if test="result_type == 0">
+		    <if test="start_date != null and start_date != ''">
+				and h.product_test_date &gt;= #{start_date}
+			</if>
+			<if test="end_date != null and end_date != ''">
+				and h.product_test_date &lt;= #{end_date}
+			</if>
+		</if>
+		<if test="result_type == 1">
+		    <if test="start_date != null and start_date != ''">
+				and h.qc_test_date &gt;= #{start_date}
+			</if>
+			<if test="end_date != null and end_date != ''">
+				and h.qc_test_date &lt;= #{end_date}
+			</if>
+		</if>
+		<if test="limit != null and limit !=''">
+		   LIMIT #{start},#{limit}
+		</if>
+	</select>
+	<select id="getHeadCount" parameterType="Map" resultType="int">
+	   select count(1) from  ZZJ_QM_TEST_RECORD_HEAD h 
+		where 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and h.zzj_plan_batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and h.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and h.workshop = #{workshop}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and h.order_no = #{order_no}
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+		  <if test="zzj_no.indexOf(',')==-1">
+               and (h.zzj_no like concat('%',#{zzj_no},'%') or h.zzj_name like concat('%',#{zzj_no},'%'))	  
+          </if>
+          <if test="zzj_no.indexOf(',')!=-1">
+               and FIND_IN_SET(h.zzj_no,#{zzj_no})>0 
+          </if>
+		</if>
+		<if test="test_result != null and test_result != ''">
+			<if test="result_type == 0">
+			     and h.product_test_result = #{test_result}
+			</if>
+			<if test="result_type == 1">
+			     and h.test_result = #{test_result}
+			</if>
+		</if>
+		<if test="result_type == 0">
+		    <if test="start_date != null and start_date != ''">
+				and h.product_test_date &gt;= #{start_date}
+			</if>
+			<if test="end_date != null and end_date != ''">
+				and h.product_test_date &lt;= #{end_date}
+			</if>
+		</if>
+		<if test="result_type == 1">
+		    <if test="start_date != null and start_date != ''">
+				and h.qc_test_date &gt;= #{start_date}
+			</if>
+			<if test="end_date != null and end_date != ''">
+				and h.qc_test_date &lt;= #{end_date}
+			</if>
+		</if>
+	</select>
+	<delete id="deleteHead" parameterType="Map" >
+		delete from  ZZJ_QM_TEST_RECORD_HEAD where FIND_IN_SET(id,#{ids})>0
+	</delete>
+	<delete id="deleteItems" parameterType="Map" >
+		delete from  ZZJ_QM_TEST_RECORD_ITEMS where result_type=#{result_type} and FIND_IN_SET(zzj_qm_test_head_id,#{ids})>0
+	</delete>
+</mapper>

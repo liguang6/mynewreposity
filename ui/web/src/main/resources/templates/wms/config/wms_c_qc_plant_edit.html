@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>工厂质检配置</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="vue" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="newForm">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label"> <span class="required"> * </span> 工厂代码</label>
+									<div class="col-xs-8">
+										<!-- <input v-model="entity.werks" onclick="getPlantNoSelect('#werks',null,function(werks){vm.entity.werks = $(werks).val();});" id="werks" name="werks" class="form-control required" placeholder="工厂代码"/> -->
+									    <select  name="werks" id="werks" v-model="entity.werks" class="required"   style="width:100%;height:25px">
+											<#list tag.getUserAuthWerks("WMS_C_QC_PLANT") as factory> 
+												<option value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+
+								
+								<div class="form-group">
+									<div class="col-sm-4 control-label"> <span class="required"> * </span> WMS业务类型
+									</div>
+									<div class="col-sm-8">
+										<!-- <input v-model="entity.businessCode" id="businessCode"  name="businessCode" class="form-control required" placeholder="WMS业务类型代码"/> -->
+										<select v-model="entity.businessName" id="businessName" name="businessName" class="required" style="width:100%">
+											<option v-for="t in businessList" :key="t.CODE" :value="t.CODE" >
+												{{t.BUSINESS_NAME}}
+											</option>
+										</select>
+									</div>
+								</div>
+								
+							</div>
+
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span>  质检标识
+									</div>
+									<div class="col-sm-8">
+										<select v-model="entity.testFlag"  style="width:100%">
+										   <!-- <option value="00">质检</option>
+										   <option value="01">免检</option>
+                                           <option value="02">无需质检</option> -->
+                                           <#list tag.wmsDictList('QC_TEST_FLAG') as d> 
+                                             <option value="${d.code}">${d.value}</option> 
+                                           </#list>
+										</select>
+											
+									</div>
+								</div>
+
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										有效开始日期
+									</div>
+									<div class="col-sm-8">
+									<input type="text" id="startDate" class="form-control required"
+											name="startDate" placeholder="有效开始日期" v-model="entity.startDate"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){vm.entity.startDate = pd.cal.getDateStr();}});"
+											/> 
+										
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 有效截止日期
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="endDate" class="form-control required"
+											name="endDate" placeholder="有效截止日期" v-model="entity.endDate"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){vm.entity.endDate = pd.cal.getDateStr();}});"
+											/> 
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+							
+							</div>
+						</div>
+						
+				
+						
+						<div class="row">
+							<div class="col-xs-12">
+
+								<div class="form-group">
+									<div class="col-sm-2 control-label">
+										备注
+									</div>
+									<div class="col-sm-10">
+											<textarea v-model="entity.memo" class="form-control" rows="3">
+											  {{entity.memo}}
+											</textarea>
+									</div>
+								</div>
+
+							</div>
+
+							
+						</div>
+						
+						
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+	
+	<script type="text/javascript">
+	
+	
+	  var vm = new Vue({
+		  el:"#vue",
+		  data:{entity:{},businessList:[]},		  
+		  methods:{
+			  save:function(){
+				  $("#newForm").trigger("submit");
+			  },
+			  init:function(id){
+				  //更新操作，初始化加载数据
+				  $.ajax({
+						url:baseUrl + "config/wmscqcplant/info/"+id+"/",
+						success:function(resp){
+							if(resp.code === 0){
+                                this.entity = resp.data;
+                                $("#werks").attr("readonly",true);
+                                $("#businessName").attr("disabled",true);
+							}else{
+								alert(resp.msg);
+							}
+						}.bind(this)
+					})
+			  }
+		  },
+		  created: function(){
+			  this.businessList = getBusinessList('01');
+			  //alert(this.businessList.length);
+		  },
+	  })
+	  
+	   $(function(){	
+			$("#newForm").validate({
+				submitHandler:function(e) {
+					vm.entity.werks=$("#werks").val();
+					var url = baseUrl + "config/wmscqcplant/save";
+					//默认为新增操作
+					if(vm.entity.id !== undefined && vm.entity.id !== null && vm.entity.id !== ''){
+						//如果ID不为空，则表示是更新操作。
+						url = baseUrl + "config/wmscqcplant/update";
+					}
+					$.ajax({//提交更新数据
+						url : url,
+						type : "POST",
+						contentType : "application/json",
+						data : JSON.stringify(vm.entity),
+						success : function(rep) {
+							if (rep.code === 0) {
+								close();
+							} else {
+								alert("保存失败，"+rep.msg);
+							}
+						}
+					})
+
+				}
+			});
+		})
+	</script>
+</body>
+</html>

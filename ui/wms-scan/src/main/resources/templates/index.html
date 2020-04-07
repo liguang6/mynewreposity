@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_menu.css" />
+        <title></title>
+        <script type="text/javascript">
+
+	        document.onkeydown = function(){
+
+	            if(window.event.keyCode == 49){
+	            	window.location="index2.html?m=1";
+	            }
+	            if(window.event.keyCode == 50){
+	            	window.location ="index2.html?m=2";
+	            }
+	            if(window.event.keyCode == 51){
+	            	 window.location="index2.html?m=3";
+	            }
+	            if(window.event.keyCode == 52){
+	            	window.location="index2.html?m=4";
+	            }
+	            if(window.event.keyCode == 53){
+	            	window.location="index2.html?m=5";
+	            }
+	            if(window.event.keyCode == 54){
+	            	window.location="index2.html?m=6";
+	            }
+	            if(window.event.keyCode == 55){
+	            	window.location="logout";
+	            }
+	            if(window.event.keyCode == 118){
+	            	history.back(-1);
+	            }
+
+	        }
+        </script>
+    </head>
+
+    <body>
+        <div id="global_content_smq">
+            <div >
+                <div class="smq_menu">
+                    <div class="smq_menu_h2">PDA主菜单</div>
+                    <ul align="center" style="padding-top:5px;">
+                        <li><a href="index2.html?m=1">1.收货</a></li>
+                        <li><a href="index2.html?m=2">2.进仓</a></li>
+                        <li><a href="index2.html?m=3">3.出仓</a></li>
+                        <li><a href="index2.html?m=4">4.库内</a></li>
+                        <li><a href="index2.html?m=5">5.退货</a></li>
+                        <li><a href="index2.html?m=6">6.盘点</a></li>
+                        <li><a href="logout">7.注销</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

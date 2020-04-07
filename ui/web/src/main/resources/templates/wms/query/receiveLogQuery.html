@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>收货日志查询</title>
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+
+</head>
+<body>
+	<div class="wrapper" id="vue-app">
+		<div class="main-content" id="vue-app">
+			<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/receivelogs/list" >
+						<table border="0">
+						<tr>
+							<td>
+								<div class="form-group">
+								<label class="control-label" >工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select style="width: 100%;" class="form-control" name="WERKS" id="WERKS" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("A225") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							
+								<label class="control-label">仓库：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select  class="input-medium" v-model="whNumber" name="WHNUMBER" id="WHNUMBER" style="height: 28px;width: 100%;">
+									 <option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+								
+								<label class="control-label">物料号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="matnr" name="MATNR"  style="width: 80px;" class="form-control" />
+									</div>
+									<div class="input-group">
+										<input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#matnr'))" style="width: 15px;"/>
+									</div>
+								</div>
+								
+	                           <label class="control-label">供应商：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   	<input type="text" id="LIFNR" name="LIFNR" style="width: 100px;" class="form-control width-200" />
+									</div>
+								</div>
+							
+									<label class="control-label" style="width: 60px">操作时间：</label>
+									
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+			                                    <input type="text" id="ETA_DATE_START" name="ETA_DATE_START" 
+												class="form-control width-300" style="width: 100px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>-
+											<div class="input-group" style="width:80px">
+											    <input type="text" id="ETA_DATE_END" name="ETA_DATE_END"
+												class="form-control width-300" style="width: 100px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+									
+								<div class="form-group">
+									<button type="submit" id="queryscm" name="queryscm"  class="btn btn-primary btn-sm">查询</button>
+									<button type="reset" class="btn btn-primary btn-sm">重置</button>
+								</div>
+							</td>
+					</tr>
+					</table>
+					</form>
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+					
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/receiveLogQuery.js?_${.now?long}"></script>
+</body>
+</html>

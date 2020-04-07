@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>机台维护</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+				<tr>
+					<td>
+					<div class="form-group">
+                        
+								<label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>工厂：
+								 </label>
+							   	<div  class="control-inline">
+							   	    <select class="required" name="werks" id="werks"  style="width:200px;height:25px" v-model="machineAssign.werks">
+		                                <#list tag.getUserAuthWerks("MACHINE_MNG") as factory> 
+		                                    <option value="${factory.code}">${factory.NAME}</option>
+		                                </#list>
+		                            </select>
+							    </div>
+						
+					</div>
+					
+					<div class="form-group">
+                        
+								<label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>车间：
+								</label>
+							   	<div class="control-inline">
+									<select class="required" style="width:200px;height:25px;" name="workshop" id="workshop" v-model="machineAssign.workshop">
+										<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+									</select>
+							    </div>
+							    
+						
+					</div>
+					</td>
+					</tr>
+					
+					<tr>
+						<td>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>班组：
+								 </label>
+							   	<div class="control-inline">
+									   <select class="required" style="width:200px;height:25px" name="workgroup" id="workgroup" onchange="vm.onWorkGroupChange(event)" v-model="machineAssign.workgroup">
+											<option value="">请选择</option>
+										<option v-for="w in workgrouplist" :value="w.CODE">{{ w.NAME }}</option>
+									</select>
+							    </div>
+						</div>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>小班组：
+								 </label>
+							   	<div class="control-inline">
+							   	    <select class="required" style="width:200px;height:25px" name="workteam" id=workteam v-model="machineAssign.workteam" >
+										 <option v-for="w in workteamlist" :value="w.CODE" >{{ w.NAME }}</option>
+									</select>
+							    </div>
+						</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>线别：
+								 </label>
+							   	<div class="control-inline">
+							   	    <select class="required" style="width:200px;height:25px" name="line" id="line"  v-model="machineAssign.line">
+										<option v-for="w in linelist" :value="w.CODE">{{ w.NAME }}</option>
+									</select>
+							    </div>
+						</div>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>工序名称：
+								 </label>
+							   	<div class="control-inline">
+									   <select class="required" style="width:200px;height:25px" name="process" id="process"  v-model="machineAssign.process">
+										<option v-for="w in processlist" :value="w.PROCESS_CODE">{{ w.PROCESS_NAME }}</option>
+									</select>
+							    </div>
+						</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>工段：
+								 </label>
+							   	<div class="control-inline">
+							   	    <select class="required" style="width:200px;height:25px" name="section" id="section"  v-model="machineAssign.section">
+										<#list tag.masterdataDictList('SECTION') as dict>
+									      <option value="${dict.code}">${dict.value}</option>
+										</#list>
+									</select>
+									
+							    </div>
+						</div>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>设备类型：
+								 </label>
+							   	<div class="control-inline">
+							   	    <select class="required" style="width:200px;height:25px" name="devicetype" id="devicetype"  v-model="machineAssign.devicetype">
+										<option v-for="w in devicetypelist" :value="w.DEVICECODE">{{ w.DEVICENAME }}</option>
+									</select>
+							    </div>
+						</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<div class="form-group" style="align:center">
+		                            <label class="control-label" style="width:80px">
+									     <font style="color:red;font-weight:bold">*</font>机台名称：
+									 </label>
+								   	<div class="control-inline">
+								   	    <select class="required" style="width:200px;height:25px" name="machine" id="machine"  v-model="machineAssign.machine">
+											<option v-for="w in machinelist" :value="w.MACHINE_CODE">{{ w.MACHINE_NAME }}</option>
+										</select>
+								    </div>
+							</div>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								    <font style="color:red;font-weight:bold">*</font> 机台编号
+								 </label>
+							   	<div class="control-inline">
+							   	    <input class="required" type="text"  id="machinecode" style="width:200px;height:25px"
+									 name="machinecode"  v-model="machineAssign.machinecode" readOnly="readonly"/>
+							    </div>
+						</div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<div class="form-group" style="align:center">
+		                            <label class="control-label" style="width:80px">
+									     设备规格：
+									 </label>
+								   	<div class="control-inline">
+							   	    <input type="text"  id="specificationModel" style="width:200px;height:25px"
+									 name="specificationModel"  v-model="machineAssign.specificationModel" readOnly="readonly"/>
+							    	</div>
+							</div>
+						
+							<div class="form-group" style="align:center">
+		                            <label class="control-label" style="width:80px">
+									     <font style="color:red;font-weight:bold">*</font>状态：
+									 </label>
+								   	<div class="control-inline">
+							   	    <select class="required" id="status" name="status" style="width:200px;height: 25px;" v-model="machineAssign.status" > 
+										   <option value='00'>正常</option>
+										   <option value='01'>停用</option>
+									</select>
+							    	</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td >
+							<div class="form-group" style="align:center">
+		                            <label class="control-label" style="width:80px">
+									     <font style="color:red;font-weight:bold">*</font>人员
+									 </label>
+								   	<div class="control-inline">
+								   	    <input class="required" type="text"  id="username1"  @click="getUserInfoNoFuzzy()" style="width:200px;height:25px"
+										 name="username1"  v-model="machineAssign.username" />
+								    </div>
+							</div>
+							<div class="form-group" style="align:center">
+		                            <label class="control-label" style="width:80px">
+									     资产编号
+									 </label>
+								   	<div class="control-inline">
+								   	    <input type="text"  id="assets" style="width:200px;height:25px"
+										 name="assets"  v-model="machineAssign.assets" />
+								    </div>
+							</div>
+						</td>
+					</tr>
+					
+						<tr>
+							<td >
+							<div class="form-group" style="align:center">
+		                            <label class="control-label" style="width:80px">
+									    备注:
+									 </label>
+								   	<div class="control-inline">
+								   	    <input type="text"  id="memo" style="width:200px;height:25px"
+										 name="memo"  v-model="machineAssign.memo" />
+								    </div>
+							</div>
+							</td>
+						</tr>
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/zzjmes/config/machine_assign_edit.js?_${.now?long}"></script>
+</body>
+</html>

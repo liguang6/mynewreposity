@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>STO发货单</title>
+    <style>
+        @page {
+            size: 220mm ${PAGEWIDTH}; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            margin: 0.05in;
+            margin-top:180px;
+            margin-bottom:250px;
+            padding: 0.1em;
+            @top-left{ content:element(header_left)};
+            @top-center{ content: element(header_center)};
+            @top-right{ content: element(header_right)};
+            @bottom-left{
+                content:element(footer_left);
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            };
+            /* @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;width:15%
+            }; */
+        }
+        #page-header-left {
+            position:running(header_left);
+            margin-bottom:50px;
+        }
+
+        #page-header-center {
+            position:running(header_center);
+        }
+
+        #page-header-right {
+            position:running(header_right);
+        }
+        #page-footer-left{
+            position:running(footer_left);
+        }
+    </style>
+</head>
+<body style="font-family: SimSun">
+<div id="page-header-left">
+    <table style="width: 100%;height: 90px;">
+        <tr style="width: 100%;">
+            <td  style="text-align: left;width: 20%;height: 40px;" rowspan="2">
+                <img src="${contextPath}/statics/images/byd_logo.png" style="height: 40px;"></img>
+            </td>
+            <td  style="text-align: left;width: 10%;height: 20px;" >
+            </td>
+            <td style="text-align: left;height: 20px;float: none;" colspan="2">
+                <label style="width: 100%;font-size: 20px;font-weight: bold;">${COMPANY_NAME}</label>
+            </td>
+           <!-- <td style="width: 20%;text-align: right;height: 40px;">
+                <img src="${barCode}" style="height: 70px;"></img>
+            </td>-->
+        </tr>
+        <tr style="width: 100%;">
+            <td  style="text-align: left;width: 10%;height: 20px;" >
+            </td>
+            <td style="text-align: left;height: 20px;float: none;" colspan="2">
+                <label style="font-size: 20px;font-weight: bold;">${COMPANY_ENGLISH}</label>
+            </td>
+        </tr>
+        <tr style="width: 100%;height: 10px;">
+
+        </tr>
+        <tr style="width: 100%;">
+            <td style="text-align: center;height: 20px;float: none;" >
+            </td>
+            <td style="text-align: left;height: 20px;float: none;" colspan="2">
+                <label style="font-size: 15px;">地址：${ADRESS}</label>
+            </td>
+            <td style="text-align: center;height: 20px;float: none;" >
+                <label style="font-size: 15px;">邮编：ZIP_CODE</label>
+            </td>
+
+        </tr>
+        <tr style="width: 100%;">
+            <td style="text-align: center;height: 20px;float: none;" >
+            </td>
+            <td style="text-align: left;height: 20px;float: none;" colspan="3" >
+                <label style="font-size: 15px;">${ADRESS_ENGLISH}</label>
+            </td>
+
+        </tr>
+        <tr style="width: 100%;">
+            <td style="text-align: left;height: 20px;float: none;" >
+            </td>
+            <td style="text-align: left;height: 20px;float: none;" colspan="2">
+            <label style="width: 100%;font-size: 15px;">Tel: ${TEL}</label>
+            </td>
+            <td style="text-align: center;height: 20px;float: none;" >
+            <label style="font-size: 15px;">Fax:${FAX}</label>
+            </td>
+
+        </tr>
+        <tr style="width: 100%;height: 10px;">
+
+        </tr>
+        <tr style="width: 100%;">
+            <td style="text-align: right;height: 20px;float: none;" colspan="2">
+            </td>
+            <td style="text-align: center;height: 20px;float: none;">
+                <label style="width: 100%;font-size: 25px;font-weight: bold;">发货单</label>
+            </td>
+            <td style="text-align: center;height: 20px;float: none;" >
+                <img src="${barCode}" style="height: 50px;"></img>
+            </td>
+
+        </tr>
+        <tr style="width: 100%;height: 10px;">
+
+        </tr>
+    </table>
+
+    <table style="width: 99%;border:solid #000000; border-width:1px 0px 0px 1px;margin-left: 40px;">
+        <tr style="width: 100%;font-size:13px;" >
+            <td style="text-align: left;width: 20%;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                发货日期：
+            </td>
+            <td style="text-align: left;width: 30%;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                <input class="form-control" style="width: 200px;" value="${CREATE_DATE}"/>
+            </td>
+            <td style="width: 20%;text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                发货单号：
+            </td>
+            <td style="width: 30%;text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                ${RETURN_NO}
+            </td>
+        </tr>
+        <tr style="width: 100%;height: 5px;">
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 0px 0px 0px;" >
+
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 0px 0px;" >
+
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 0px 0px 0px;" >
+
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 0px 0px;" >
+
+            </td>
+        </tr>
+        <tr style="width: 100%;font-size:13px;font-weight: bold;border:solid #000000;" >
+            <td style="text-align: center;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" colspan="2" valign="top">
+                销售方工厂
+            </td>
+            <td style="text-align: center;font-weight: bold;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" colspan="2">
+                采购方工厂
+            </td>
+        </tr>
+        <tr style="width: 100%;font-size:13px;border:solid #000000; border-width:1px 0px 0px 1px; " >
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                311凭证
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                收货方凭证
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+
+            </td>
+        </tr>
+        <tr style="width: 100%;font-size:13px; " >
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                工厂代码:
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                ${WERKS}
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                工厂代码:
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                ${RECEIVE_WERKS}
+            </td>
+        </tr>
+        <tr style="width: 100%;font-size:13px;border:solid #000000; border-width:1px 0px 0px 1px; " >
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                联系方式:
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                ${CONSIGNOR_TEL}
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                联系方式：
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                ${CONSIGNEE_TEL}
+            </td>
+        </tr>
+        <tr style="width: 100%;font-size:13px;border:solid #000000; border-width:1px 0px 0px 1px; " >
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                发货人：
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+               ${CONSIGNOR}
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                收货人：
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+               ${CONSIGNEE}
+            </td>
+        </tr>
+        <tr style="width: 100%;font-size:13px;border:solid #000000; border-width:1px 0px 0px 1px; " >
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                发货方地址：
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+              ${CONSIGNOR_ADRESS}
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                收货方地址：
+            </td>
+            <td style="text-align: left;height: 20px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+              ${CONSIGNEE_ADRESS}
+            </td>
+        </tr>
+
+    </table>
+
+
+    <table style="border:solid #000000; border-width:1px 0px 0px 1px;width: 99%;margin-top: 30px;margin-left:40px;">
+        <tr style="width: 100%;font-size: 18px;">
+            <td colspan="5" style="border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;text-align: center;height: 20px;">发货明细</td>
+        </tr>
+        <tr style="width: 100%;font-size: 13px;height: 20px;">
+            <td style="width: 15%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">BYD物料</td>
+            <td style="width: 46%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">物料描述</td>
+            <td style="width: 13%; border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">发货数量</td>
+            <td style="width: 13%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">实收数量</td>
+            <td style="width: 13%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">备注</td>
+        </tr>
+        <#list itemList as item>
+        <tr style="width: 100%;font-size: 13px;height: 20px;">
+            <td style="border:solid #000000;border-width:0px 1px 1px 0px;">${item.MATNR}</td>
+            <td style="border:solid #000000;border-width:0px 1px 1px 0px;">${item.MAKTX}</td>
+            <td style="border:solid #000000;border-width:0px 1px 1px 0px;">${item.QTY}</td>
+            <td style="border:solid #000000;border-width:0px 1px 1px 0px;">${item.QTY_REAL}</td>
+            <td style="border:solid #000000;border-width:0px 1px 1px 0px;">${item.BATCH}</td>
+        </tr>
+    </#list>
+    </table>
+</div>
+
+
+<div id="page-footer-left">
+    <table style="border:solid #000000; border-width:1px 0px 0px 0px;width: 99%;margin-left:40px;margin-bottom: 250px">
+
+        <tr style="width: 100%;font-size:13px;height: 30px" >
+            <td style="text-align: left;width: 17%;height: 10px;border:solid #000000;border-width:0px 1px 1px 1px;"  >
+                制单：
+            </td>
+            <td style="text-align: left;width: 20%;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;"  >
+                ${CREATOR}
+            </td>
+            <td style="width: 12%;text-align: left;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                业务员/商务
+            </td>
+            <td style="text-align: left;width: 20%;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;"  >
+
+            </td>
+            <td style="width: 12%;text-align: left;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;" >
+                仓管：
+            </td>
+            <td style="text-align: left;width: 20%;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;"  >
+
+            </td>
+
+        </tr>
+        <tr style="width: 100%;font-size:13px;height: 30px;" >
+            <td style="text-align: left;height: 10px;border:solid #000000;border-width:0px 1px 1px 1px;">
+                出货检验
+            </td>
+            <td style="text-align: left;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;">
+
+            </td>
+            <td style="text-align: left;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;">
+                收货司机
+            </td>
+            <td style="text-align: left;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;">
+
+            </td>
+            <td style="text-align: left;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;">
+                其他
+            </td>
+            <td style="text-align: left;height: 10px;border:solid #000000;border-width:0px 1px 1px 0px;">
+
+            </td>
+
+        </tr>
+        <tr style="width: 100%;font-size: 13px;height: 100px;">
+            <td style="text-align: left;">
+                送货单位(盖章)：
+            </td>
+            <td style="text-align: left;" colspan="2">
+            </td>
+            <td style="text-align: left;" >
+                收货单位(盖章)：
+            </td>
+            <td style="text-align: left;" colspan="2">
+            </td>
+
+        </tr>
+
+        <tr style="width: 100%;font-size: 13px;">
+            <td style="text-align: left;height: 10px;" >
+                经办人(签字)：
+            </td>
+            <td style="text-align: left;height: 10px;" colspan="2" >
+
+            </td>
+            <td style="text-align: left;height: 10px;">
+                经办人(签字)：
+            </td>
+            <td style="text-align: left;height: 10px;" colspan="2" >
+
+            </td>
+
+        </tr>
+
+    </table>
+</div>
+</body>
+</html>

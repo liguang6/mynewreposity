@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>设备类型维护</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+					<tr>
+					<td>
+					
+					<div class="form-group" style="align:center">
+								<label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>设备编码
+								</label>
+							   	<div class="control-inline">
+									<input type="text" style="width:200px;height:25px" class="form-control required" name="deviceTypeCode" id="deviceTypeCode" v-model="deviceType.deviceTypeCode">
+							    </div>
+					</div>
+					
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+								<label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>设备类型名称
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" style="width:200px;height:25px" class="form-control required" name="deviceTypeName" id="deviceTypeName" v-model="deviceType.deviceTypeName">
+							    </div>
+					</div>
+					
+					
+					</td>
+					</tr>
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/sys/masterdata/device_type_edit.js?_${.now?long}"></script>
+</body>
+</html>

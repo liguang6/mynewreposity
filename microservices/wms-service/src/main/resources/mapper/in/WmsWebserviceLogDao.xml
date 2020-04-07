@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.in.dao.WmsWebserviceLogDao">
+
+
+	<select id="queryLogCount"  parameterType="Map" resultType="int">
+		select count(*) cnt from (select distinct weblog.PK_LOG, weblog.biz_id, weblog.flow_no, weblog.from_no, weblog.to_no,
+		weblog.vstatus, weblog.cturid, weblog.ctdt, weblog.upurid, weblog.updt  from WMS_WEBSERVICE_LOG weblog
+		where 1=1
+		<if test="FLOW_NO !=null and FLOW_NO !='' ">
+			and weblog.flow_no=#{FLOW_NO}
+		</if>
+		<if test="VSTATUS !=null and VSTATUS !='' ">
+			and weblog.vstatus=#{VSTATUS}
+		</if>
+		<if test="DATE_START !=null and DATE_START !='' ">
+			<![CDATA[
+			and to_date(weblog.ctdt, 'yyyy-mm-dd hh24:mi:ss') >= to_date(#{DATE_START}, 'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		<if test="DATE_END !=null and DATE_END !='' ">
+			<![CDATA[
+			and to_date(weblog.ctdt, 'yyyy-mm-dd hh24:mi:ss') <= to_date(#{DATE_END}, 'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		)
+	</select>
+
+
+	<select id="queryLogInfos" parameterType="map" resultType="map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (select distinct weblog.PK_LOG, weblog.biz_id, weblog.flow_no, weblog.from_no, weblog.to_no,
+		weblog.vstatus, weblog.cturid, weblog.ctdt, weblog.upurid, weblog.updt  from WMS_WEBSERVICE_LOG weblog
+		where 1=1
+		<if test="FLOW_NO !=null and FLOW_NO !='' ">
+			and weblog.flow_no=#{FLOW_NO}
+		</if>
+		<if test="VSTATUS !=null and VSTATUS !='' ">
+			and weblog.vstatus=#{VSTATUS}
+		</if>
+		<if test="DATE_START !=null and DATE_START !='' ">
+			<![CDATA[
+			and to_date(weblog.ctdt, 'yyyy-mm-dd hh24:mi:ss') >= to_date(#{DATE_START}, 'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		<if test="DATE_END !=null and DATE_END !='' ">
+			<![CDATA[
+			and to_date(weblog.ctdt, 'yyyy-mm-dd hh24:mi:ss') <= to_date(#{DATE_END}, 'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+
+		) TMP
+		<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+		order by ctdt desc
+	</select>
+
+	<select id="queryByPkLog" resultType="com.byd.wms.business.modules.in.entity.WmsWebServiceLogEntity" parameterType="Long">
+		select weblog.PK_LOG, weblog.biz_id, weblog.flow_no, weblog.from_no, weblog.to_no,
+      			from_jsondata,to_jsondata,weblog.vstatus, weblog.cturid, weblog.ctdt,
+      			 weblog.upurid, weblog.updt  from WMS_WEBSERVICE_LOG weblog
+        where weblog.PK_LOG = #{pkLog}
+
+	</select>
+
+	<insert id="insertLogInfos" parameterType="List">
+		insert into WMS_WEBSERVICE_LOG (pk_log, biz_id, flow_no, from_no, to_no, from_jsondata,
+		 to_jsondata, vstatus, cturid, ctdt, upurid, updt)
+		SELECT SEQ_WMS_WEBSERVICE_LOG_PKLOG.nextval.m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.biz_id},#{d.flow_no},#{d.from_no},#{d.to_no},
+			#{d.from_jsondata},#{d.to_jsondata},#{d.vstatus},#{d.cturid},#{d.ctdt},#{d.upurid},#{d.updt}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+	<insert id="saveLogInfos" parameterType="Map">
+		INSERT INTO WMS_WEBSERVICE_LOG (pk_log, biz_id, flow_no, from_no, to_no, from_jsondata,
+		to_jsondata, vstatus, cturid, ctdt, upurid, updt)
+		SELECT SEQ_WMS_WEBSERVICE_LOG_PKLOG.nextval.m.* from(
+		<foreach collection="add_list" item="d" index="index" separator="union all">
+			select
+			#{d.biz_id},#{d.flow_no},#{d.from_no},#{d.to_no},
+			#{d.from_jsondata},#{d.to_jsondata},#{d.vstatus},#{d.cturid},#{d.ctdt},#{d.upurid},#{d.updt}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+
+</mapper>

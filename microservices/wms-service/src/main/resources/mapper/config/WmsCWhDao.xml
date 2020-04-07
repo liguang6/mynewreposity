@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCWhDao">
+	 <update id="delById" parameterType="long">
+	      UPDATE WMS_CORE_WH SET DEL='X' WHERE ID=#{id}
+	 </update>
+	  <update id="deleteBatch" parameterType="list">
+	      UPDATE WMS_CORE_WH SET DEL='X' WHERE ID IN
+	      <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			 #{item}
+		  </foreach>
+	 </update>
+	 
+	 <select id="getWmsCWhList" parameterType="Map" resultType="Map">
+	 SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+	 	SELECT M.*,S.WERKS_NAME FROM WMS_C_WH M
+		LEFT JOIN
+		WMS_SAP_PLANT S ON M.WERKS=S.WERKS 
+		WHERE S.DEL='0' AND M.DEL_FLAG='0'
+      	<if test="werks != null and werks !=''">
+		        AND M.WERKS = #{werks}
+		</if>
+      	<if test="whNumber != null and whNumber !=''">
+		        AND M.WH_NUMBER = #{whNumber}
+		</if>
+		ORDER BY  EDIT_DATE DESC
+		) TMP 
+		 WHERE ROWNUM  &lt;=#{end})  
+	  WHERE ROW_ID > #{start}
+	  
+	 </select>
+	 
+	 <select id="getWmsCWhCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_C_WH  WHERE DEL_FLAG='0' 
+	  <if test="werks != null and werks !=''">
+		        AND WERKS = #{werks}
+		</if>
+      	<if test="whNumber != null and whNumber !=''">
+		        AND WH_NUMBER = #{whNumber}
+		</if>      
+    </select>
+    
+    <select id="getWmsCWh" parameterType="Map" resultType="Map">
+	 	SELECT * FROM WMS_C_WH M
+		WHERE M.DEL_FLAG='0'
+      	<if test="werks != null and werks !=''">
+		    AND M.WERKS = #{werks}
+		</if>
+      	<if test="whNumber != null and whNumber !=''">
+			AND M.WH_NUMBER = #{whNumber}
+		</if>
+	 </select>
+</mapper>

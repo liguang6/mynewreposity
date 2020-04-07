@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>用户编辑</title>
+<#include '/header.html'/>
+</head>
+<body>
+    
+	<div class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-header with-border">
+					<div class="box-title">
+						<i class="fa icon-people"></i> 编辑用户
+					</div>
+					<div class="box-tools pull-right">
+						<button type="button" class="btn btn-box-tool"
+							data-widget="collapse">
+							<i class="fa fa-minus"></i>
+						</button>
+					</div>
+				</div>
+				<form id="inputForm" action="${request.contextPath}/sys/user/update" method="post"
+					class="form-horizontal">
+					<input style="display: none;" name="userId" value="${user.userId}"/>
+					<div class="box-body">
+						<div class="form-unit">基本信息</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required ">*</span> 归属机构：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<div class="input-group treeselect" id="officeDiv" >
+											<input id="deptId" type="hidden"
+												name="deptId" value="${user.deptId!''}" class="isReset" />
+											<input id="deptName" type="text"
+												name="deptName"  onclick="showDept()"
+												class="form-control required " readonly="readonly"
+												value="${user.deptName!''}"
+												 />
+												<span
+												class="input-group-btn"><a id="officeButton"
+												href="javascript:" class="btn btn-default "><i
+													class="fa fa-search"></i></a> </span>
+										</div>
+
+										<!-- 选择部门 -->
+										<div id="deptLayer" style="display: none; padding: 10px;">
+											<ul id="deptTree" class="ztree"></ul>
+										</div>
+										<script type="text/javascript">
+										var ztree;
+
+										var setting = {
+												data: {
+											        simpleData: {
+											            enable: true,
+											            idKey: "deptId",
+											            pIdKey: "parentId",
+											            rootPId: -1
+											        },
+											        key: {
+											            url:"nourl"
+											        }
+											    }
+										}
+										
+										   $(function(){
+											   $.get(baseURL + "masterdata/dept/ztreeDepts", function(r){
+											        ztree = $.fn.zTree.init($("#deptTree"), setting, r);
+											    })
+										   });
+										
+										    function showDept(){
+										    	layer.open({
+										    		type : 1,
+										    		offset : '50px',
+										    		skin : 'layui-layer-molv',
+										    		title : "选择部门",
+										    		area : [ '300px', '450px' ],
+										    		shade : 0,
+										    		shadeClose : false,
+										    		content : jQuery("#deptLayer"),
+										    		btn : [ '确定', '取消' ],
+										    		btn1 : function(index) {
+										    			var node = ztree.getSelectedNodes();
+										    			//选择上级部门
+										    			var deptId = node[0].deptId;
+										    			var deptName = node[0].name;
+										    			$("#deptId").val(deptId);
+										    			$("#deptName").val(deptName);
+										    			layer.close(index);
+										    		}
+										    	});
+										    }
+										</script>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required ">*</span> 姓名：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+											<input id="fullName" type="text"
+												name="fullName" 
+												class="form-control required fullName"
+												minlength="2" maxlength="10"
+												value="${user.fullName!''}"
+												/>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required ">*</span> 登录账号：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<input type="text" id="username"
+											name="username"  minlength="4" maxlength="20"
+											class="form-control required userName"
+											value="${user.username!''}"
+										/>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required">*</span> 工号：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<input type="text" id="staffNumber" name="staffNumber" value="${user.staffNumber!''}"
+											maxlength="32" class="form-control required " />
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""><span
+										class="required ">*</span> 电子邮箱：<i
+										class="fa icon-question hide"></i> </label>
+									<div class="col-sm-8">
+										<div class="input-group">
+											<input type="text" id="email" name="email" value="${user.email!''}"
+												maxlength="300" class="form-control required email" /> <span
+												class="input-group-addon"><i
+												class="fa fa-fw fa-envelope"
+												style="margin-top: -2px; display: block;"></i></span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 手机号码：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<div class="input-group">
+											<input type="text" id="mobile" name="mobile" value="${user.mobile!''}"
+												maxlength="100" class="form-control mobile" /> <span
+												class="input-group-addon"><i
+												class="fa fa-fw fa-mobile"
+												style="margin-top: -2px; display: block;"></i></span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-unit">详细信息</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 在职状态：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select class="form-control" name="workingStatus" >
+										   <option value="">请选择</option>
+										   <#list tag.wmsDictList('working_status') as dict>
+										      <#if user.workingStatus?? && dict.code == user.workingStatus>
+										          <option value="${dict.code}" selected="selected">${dict.value}</option>
+										         <#else>
+										         <option value="${dict.code}">${dict.value}</option>
+										      </#if>
+										   </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 最高学历：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select class="form-control" name="highestEducation" >
+										   <option value="">请选择</option>
+										   <#list tag.wmsDictList('highest_education') as dict>
+										      <#if  user.highestEducation?? && dict.code == user.highestEducation>
+										          <option value="${dict.code}" selected="selected">${dict.value}</option>
+										          <#else>
+										          <option value="${dict.code}">${dict.value}</option>    
+										      </#if>  
+										   </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 所在岗位：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select id="job"
+											name="employee.employeePosts" class="form-control"
+											multiple="true">
+											<option value="ceo">总经理</option>
+											<option value="cfo">财务经理</option>
+											<option value="hrm">人力经理</option>
+											<option value="dept">部门经理</option>
+											<option value="user">普通员工</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 性别：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select class="form-control" name="sex">
+										   <option value="">请选择</option>
+										   <#list tag.wmsDictList('sex') as dict>
+										      <#if dict.code == user.sex>
+										          <option value="${dict.code}" selected="selected">${dict.value}</option>
+										          <#else>
+										          <option value="${dict.code}">${dict.value}</option>    
+										      </#if>
+										   </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 政治面貌：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select class="form-control" name="politicalStatus">
+										   <option value="">请选择</option>
+										   <#list tag.wmsDictList('political_status') as dict>
+										      <#if dict.code == user.politicalStatus>
+										          <option value="${dict.code}" selected="selected">${dict.value}</option>
+										          <#else>
+										          <option value="${dict.code}">${dict.value}</option>    
+										      </#if>
+										   </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 员工级别：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select class="form-control" name="staffLevel">
+										   <option value="">请选择</option>
+										   <#list tag.wmsDictList('staff_level') as dict>
+										      <#if dict.code == user.staffLevel>
+										          <option value="${dict.code}" selected="selected">${dict.value}</option>
+										          <#else>
+										          <option value="${dict.code}">${dict.value}</option>
+										      </#if>
+										     
+										   </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 底薪：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<input class="form-control" type="number" name="basicSalary" value="${user.basicSalary!''}"/>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 技能系数：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select class="form-control" name="skillParameter">
+										   <option value="">请选择</option>
+										   <#list tag.wmsDictList('staff_level') as dict>
+										      <#if dict.code == user.skillParameter>
+										         <option value="${dict.code}" selected="selected">${dict.value}</option>
+										         <#else>
+										         <option value="${dict.code}">${dict.value}</option>
+										      </#if>
+										   </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="form-group">
+									<label class="control-label col-sm-2" title=""> <span
+										class="required hide">*</span> 备注信息：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-10">
+										<textarea id="remarks" name="remarks" rows="4" maxlength="500"
+											class="form-control ">${user.remarks!''}</textarea>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+			
+
+					<div class="box-footer">
+						<div class="row">
+							<div class="col-sm-offset-2 col-sm-10">
+								<button type="submit" class="btn btn-sm btn-primary"
+									id="btnSubmit">
+									<i class="fa fa-check"></i> 保 存
+								</button>
+								&nbsp;
+								<button type="button" class="btn btn-sm btn-default"
+									id="btnCancel" onclick="js.closeCurrentTabPage()">
+									<i class="fa fa-reply-all"></i> 关 闭
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+<script type="text/javascript">
+  $(document).ready(function(){
+	  $("#inputForm").validate({
+		  submitHandler:function(e){
+			  $.ajax({
+				 url:$("#inputForm").attr("action"),
+				 type : "POST",
+				 contentType : "application/json",
+				 data : JSON.stringify($("#inputForm").serializeObject()),
+				 success:function(resp){
+					 if(resp.code === 0){
+						 alert("更新成功");
+					 }else{
+						 alert("更新失败, " + resp.msg);
+					 }
+				 }
+			  });
+		  }
+	  });
+  });
+</script>
+</body>
+</html>

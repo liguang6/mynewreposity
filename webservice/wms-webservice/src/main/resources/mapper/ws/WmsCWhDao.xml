@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCWhDao">
+	
+    <select id="getWmsCWh" parameterType="Map" resultType="Map">
+	 	SELECT * FROM WMS_C_WH M
+		<where>
+			<if test="WERKS != null and WERKS !=''">
+			     M.WERKS = #{WERKS}
+			</if>
+	      	<if test="WH_NUMBER != null and WH_NUMBER !=''">
+				AND M.WH_NUMBER = #{WH_NUMBER}
+			</if>
+		</where> 
+      	
+	 </select>
+</mapper>

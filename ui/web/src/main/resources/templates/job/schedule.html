@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>定时任务</title>
+<#include "/header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-header" v-show="showList">
+					<div class="box-title">
+						<i class="fa icon-notebook"></i> 定时任务
+					</div>
+					<div class="box-tools pull-right">
+						<a href="#" class="btn btn-default" id="btnSearch" @click="query" title="查询"><i class="fa fa-filter"></i> 查询</a>
+						<#if checkAuthTag.hasPermission("sys/schedule/save")>
+						<a class="btn btn-default" @click="add"><i class="fa fa-plus"></i>&nbsp;新增</a>
+						</#if>
+						<#if checkAuthTag.hasPermission("sys/schedule/update")>
+						<a class="btn btn-default" @click="update"><i class="fa fa-pencil-square-o"></i>&nbsp;修改</a>
+						</#if>
+						<#if checkAuthTag.hasPermission("sys/schedule/delete")>
+						<a class="btn btn-default" @click="del"><i class="fa fa-trash-o"></i>&nbsp;删除</a>
+						</#if>
+						<#if checkAuthTag.hasPermission("sys/schedule/pause")>
+						<a class="btn btn-default" @click="pause"><i class="fa fa-pause"></i>&nbsp;暂停</a>
+						</#if>
+						<#if checkAuthTag.hasPermission("sys/schedule/resume")>
+						<a class="btn btn-default" @click="resume"><i class="fa fa-play"></i>&nbsp;恢复</a>
+						</#if>
+						<#if checkAuthTag.hasPermission("sys/schedule/run")>
+						<a class="btn btn-default" @click="runOnce"><i class="fa fa-arrow-circle-right"></i>&nbsp;立即执行</a>
+						</#if>
+						<#if checkAuthTag.hasPermission("sys/schedule/log")>
+						<a id="schedule_log" style="float:right;" href="javascript:" data-href="job/schedule_log.html" class="addTabPage btn btn-danger"> 定时任务日志查询</a>
+						</#if>
+					</div>
+				</div>
+				<div class="box-body">
+						<form id="searchForm" action="${request.contextPath}/sys/schedule/list" method="post" class="form-inline hide" >
+							<div class="form-group">
+								<label class="control-label">bean名称：</label>
+								<div class="control-inline">
+									<input type="text" class="form-control" name="beanName" @keyup.enter="query" placeholder="bean名称">
+								</div>
+							</div>
+							<div class="form-group">
+								<button type="submit" @click="query" class="btn btn-primary btn-sm">查询</button>
+								<button type="reset" class="btn btn-default btn-sm">重置</button>
+							</div>
+						</form>
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+				</div>
+			</div>
+		</div>
+</div>
+
+<script src="${request.contextPath}/statics/js/job/schedule.js?_${.now?long}"></script>
+</body>
+</html>

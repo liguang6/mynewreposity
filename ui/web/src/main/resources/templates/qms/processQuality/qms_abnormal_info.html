@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>故障选择</title>  
+<#include "/web_header.html">
+<style type="text/css">
+	.form-group{
+		padding-top:10px;
+	}
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper" id="page_div">
+		<div class="main-content">
+
+					<form class="form-horizontal"  id="saveForm" action="#" method="post">
+					<div class="row form-group">
+							<label class="control-label col-xs-3" ><span class="color:red">*</span>责任单位：</label>
+							<div class="control-inline col-xs-3" >
+							<select id="RESP_UNIT" v-model="RESP_UNIT" class="input-medium" style="width:100%;height:30px;">
+								<!-- <#list tag.qmsDictList("res_unit") as unit> 
+	                                   <option value="${unit.value}">${unit.value}</option>
+	                            </#list> -->
+	                            <option v-for="item in RESP_UNIT_LIST" :value="item.NAME">{{item.NAME}}</option>
+							</select>
+							</div>
+							<label class="control-label col-xs-2" ><span class="color:red">*</span>责任班组：</label>
+							<div class="control-inline col-xs-4" >
+							<select id="RESP_WORKGROUP" v-model="RESP_WORKGROUP" class="input-medium" style="width:100%;height:30px;">
+								<option v-for="item in RESP_WORKGROUP_LIST">{{item.NAME}}</option>
+							</select>
+							</div>
+					</div>
+					<div class="row form-group" >
+							<label class="control-label col-xs-3">原因分析：</label>
+							<div class="control-inline col-xs-9" >
+							<input type="text" id="REASON"  v-model="REASON" style="width:100%;height:30px;" />
+							</div>
+					</div>
+					<div class="row form-group" >
+							<label class="control-label col-xs-3">处理方案：</label>
+							<div class="control-inline col-xs-9" >
+							<input type="text" id="SOLUTION"  v-model="SOLUTION" style="width:100%;height:30px;" />
+							</div>
+					</div>
+					
+					<div class="row form-group" >						
+								<label class="control-label col-xs-3">返修人：</label>
+								<div class="control-inline col-xs-3" >
+								<input type="text" id="SOLUTION_PERSON"  v-model="SOLUTION_PERSON" style="width:100%;height:30px;" />
+								</div>
+								<label class="control-label col-xs-2">确认人：</label>
+								<div class="control-inline col-xs-4" >
+								<input type="text" id="CONFIRMOR"  v-model="CONFIRMOR" style="width:100%;height:30px;" disabled/>
+								</div>
+					</div>
+					
+					<div class="row form-group" >						
+								<label class="control-label col-xs-3"><span class="color:red">*</span>不良来源：</label>
+								<div class="control-inline col-xs-3" >
+								<select id="BAD_SOURCE" v-model="BAD_SOURCE" class="input-medium" style="width:100%;height:30px;">
+								<#list tag.qmsDictList("bad_source") as unit> 
+	                                   <option value="${unit.value}">${unit.value}</option>
+	                            </#list>
+								</select>
+								</div>
+								<label class="control-label col-xs-2"><span class="color:red">*</span>不良分类：</label>
+								<div class="control-inline col-xs-4" >
+								<select id="BAD_CLASS" v-model="BAD_CLASS" class="input-medium" style="width:100%;height:30px;">
+								<!-- <#list tag.qmsDictList("bad_type") as unit> 
+	                                   <option value="${unit.value}">${unit.value}</option>
+	                            </#list> -->
+	                            <option v-for="fault_type in FAULT_TYPE_LIST">{{fault_type}}</option>
+	                            <option value="其他">其他</option>
+								</select>
+								</div>
+					</div>
+					
+					<div class="row form-group" >
+							<label class="control-label col-xs-3">备注：</label>
+							<div class="control-inline col-xs-9" >
+							<textarea id="MEMO"  v-model="MEMO" class="input-large"  style="width:100%" rows=2>	 </textarea>
+							</div>
+					</div>
+					
+					
+					</form>						
+					</div>
+		</div>	
+<script src="${request.contextPath}/statics/js/qms/processQuality/qms_abnormal_info.js?_${.now?long}"></script>
+</body>
+</html>

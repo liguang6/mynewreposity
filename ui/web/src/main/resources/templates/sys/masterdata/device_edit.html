@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>设备维护</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+					<tr>
+					<td>
+					
+					<div class="form-group" style="align:center">
+								<label class="control-label" style="width:80px" >
+								     <font style="color:red;font-weight:bold">*</font>工厂
+								</label>
+							   	<div class="control-inline">
+									<select  name="werks" id="werks" @change="getdeviceCode" style="width:200px;height:25px" v-model="device.werks">
+		                                <#list tag.getUserAuthWerks("MASTERDATA_DEVICE") as factory> 
+		                                    <option value="${factory.code}">${factory.NAME}</option>
+		                                </#list>
+		                            </select>
+							    </div>
+							    <input type="text" style="display: none;" name="werksName" id="werksName" >
+					</div>
+					
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     设备编码
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" class=" required" id="deviceCode" style="width:200px;height:25px"
+									 name="deviceCode" @click="getDeviceTypeNoFuzzy()"  v-model="device.deviceCode" />
+							    </div>
+						</div>
+						
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     设备名称
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" class=" required" id="deviceName" style="width:200px;height:25px"
+									 name="deviceName"  v-model="device.deviceName" readOnly="readonly"/>
+							    </div>
+						</div>
+						
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     机台编码
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" class=" required" id="machineCode" style="width:200px;height:25px"
+									 name="machineCode"  v-model="device.machineCode" readOnly="readonly"/>
+							    </div>
+						</div>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     机台名称
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" class=" required" id="machineName" style="width:200px;height:25px"
+									 name="machineName"  v-model="device.machineName" />
+							    </div>
+						</div>
+						
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     规格型号
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" id="specificationModel"  style="width:200px;height:25px"
+									 name="specificationModel"  v-model="device.specificationModel" />
+							    </div>
+						</div>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     状态
+								 </label>
+							   	<div  class="control-inline">
+									 <select class="required" id="status" name="status" style="width:200px;height: 25px;" v-model="device.status" > 
+										   <option value='00'>正常</option>
+										   <option value='01'>停用</option>
+									</select>
+							    </div>
+						</div>
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     备注
+								 </label>
+							   	<div  class="control-inline">
+									 <textarea type="text"  id="memo" name="memo" style="width:200px;height:25px"  v-model="device.memo"  rows="3">
+									
+									</textarea>
+							    </div>
+						</div>
+					</td>
+					</tr>
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/sys/masterdata/device_edit.js?_${.now?long}"></script>
+</body>
+</html>

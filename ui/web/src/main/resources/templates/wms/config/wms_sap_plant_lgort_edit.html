@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>新增 |编辑仓库库存地点</title><#include "/web_header.html">
+<style>
+.wms-select {width: 100%;}
+</style>
+</head>
+<body>
+
+<div id="vue" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="newForm">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label"> <span class="required"> * </span> 工厂代码</label>
+									<div class="col-xs-8">
+										<!-- <input v-model="entity.werks" onclick="getPlantNoSelect('#werks',null,function(werks){vm.entity.werks = $(werks).val();});"  id="werks" name="werks" class="form-control required" placeholder="工厂代码"/> -->
+									    <select  name="werks" id="werks" v-model="entity.werks" class="required"  style="width:100%;height:25px">
+											<#list tag.getUserAuthWerks("WMS_SAP_PLANT_LGORT") as factory> 
+												<option value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+
+								
+								<div class="form-group">
+									<div class="col-sm-4 control-label"> <span class="required"> * </span> 库存地点代码
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.lgort" id="lgort"  name="lgort" class="form-control required" placeholder="库存地点代码"/>
+									</div>
+								</div>
+								
+							</div>
+
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span>  库存地点名称
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="lgortName" class="form-control required"
+											name="lgortName" placeholder="库存地点名称" v-model="entity.lgortName"/> 
+											
+									</div>
+								</div>
+
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										库存类型
+									</div>
+									<div class="col-sm-8">
+									<select name="sobkz" v-model="entity.sobkz" class="wms-select">
+									   <option value=""></option>
+									   <option value="Z">Z</option>
+									   <option value="K">K</option>
+									</select>
+										
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 不良品库
+									</div>
+									<div class="col-sm-8">
+										<select name="badFlag" v-model="entity.badFlag" class="wms-select">
+									       <option value="X">是</option>
+									       <option value="0">否</option>
+									    </select>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+								
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+
+<script type="text/javascript">
+
+var vm = new Vue({
+	el:"#vue",
+	data:{entity:{}},
+	created:function(){
+		
+	},
+	methods:{
+		save:function(){
+			$("#newForm").trigger("submit");
+		},
+		getPlantNoFuzzy:function(){
+			getPlantNoSelect("#werks",null,null);
+		},
+		init:function(id){
+			
+			$.ajax({
+				url:baseUrl + "config/sapPlantLgort/get",
+				data:{"id":id},
+				success:function(resp){
+					if(resp.code === 0){
+						$("#werks").attr("readonly",true);
+						$("#lgort").attr("readonly",true);
+						this.entity = resp.data;
+					}else{
+						alert(resp.msg);
+					}
+				}.bind(this)
+			})
+		}
+	}
+});
+
+
+$(function(){
+	$("#newForm").validate({
+	submitHandler:function(e) {
+		// VUE绑定读取不到通过模糊查找选中的值，所以重新赋值
+		vm.entity.werks=$('#werks').val();
+		var url = vm.entity.id == null ? "config/sapPlantLgort/save" : "config/sapPlantLgort/update";
+		$.ajax({
+			url : baseUrl + url,
+			type : "POST",
+			contentType : "application/json",
+			data : JSON.stringify(vm.entity),
+			success : function(rep) {
+				if (rep.code === 0) {
+					close();
+				} else {
+					alert(rep.msg);
+				}
+			}
+		})
+
+	}
+   });
+});
+</script>
+</body>
+
+</html>

@@ -1,0 +1,151 @@
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+            	width: 228px;
+                border:1px solid #6FACEF;
+            }
+            .box label{
+			    float: left;line-height: 18px;width: 74px;
+			    text-align: right;padding-left: 2px;
+			}
+            .box input{
+			    width: 136px;border:none;border-bottom:1px solid #6FACEF;
+			}
+			.box div input{
+			    width: 91px;
+			}
+            body{text-align:center}
+        </style>
+        
+        <title>送货单收货</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <div id="global_content_smq">
+            <div class="smq_test" >
+                <h2>送货单收货</h2>
+                <div>
+                    <button id = "input" onclick="rback()" >录入</button>
+                    <button id = "dataTable" onclick="docItem()" >数据表</button>
+                    <button id = "header" onclick="postDiv()" >抬头</button>
+                </div>
+                <div id="divInfo" style="color:red;text-align:center;visibility: hidden;">error</div>
+                <div id="div1">
+                    <div class="box">
+                        <label id="barcodeLabel" style="text-align:right;">条码号</label>
+                        <div>
+                            <input id="barcode" name="barcode"  type="text"/>
+                            <button id="scan" onclick="scanPre();" >扫描</button>
+                        </div>
+                    </div>
+                    <div class="box">
+                        <label style="text-align:right;">收料房存放区</label>
+                        <input id="areaCode" name="areaCode"  type="text" />
+                    </div>
+                    
+                </div>
+
+                <div id="div2">
+                	<div class="box">
+                        <label >已扫箱数:</label>
+                        <label id="boxlabel"></label>
+                    </div>
+                    <div class="box">
+                        <label >条码号:</label>
+                        <label id="barcodelabel" style="width:130px;"></label>
+                    </div>
+                    <div class="box">
+                        <label >物料号:</label>
+                        <label id="matnrlabel" style="width:130px;"></label>
+                    </div>
+                    <div class="box">
+                        <label >物料描述:</label>
+                        <label id="maktxlabel" style="width:130px;"></label>
+                    </div>
+                    <div class="box">
+                        <label >数量:</label>
+                        <label id="qtylabel" style="width:130px;"></label>
+                    </div>
+                    <div class="box">
+                        <label >批次:</label>
+                        <label id="batchlabel" style="width:130px;">&nbsp;</label>
+                    </div>
+                    <div class="box"></div>
+                </div>
+
+                <div id="div3" style="display:none;">
+                    <table id="dataGrid"></table>
+					<div id='pager'></div>
+
+                </div>
+                
+                <div id="div4" style="display:none;">
+                    <table id="dataGrid1"></table>
+					<div id='pager1'></div>
+
+                </div>
+                
+                <div id="div5" style="display:none;">
+                    <div class="box">
+                        <label >凭证日期</label>
+                        <input id="docDate" name="docDate"  type="text" />
+                    </div>
+                    <div class="box">
+                        <label >记账日期</label>
+                        <input id="debitDate" name="debitDate"  type="text" />
+                    </div>
+                    <div class="box">
+                        <label >抬头文本</label>
+                        <input id="headertxt" name="headertxt"  type="text" />
+                    </div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                </div>
+                
+                <div id="div6" style="display:none;">
+                    <div class="box">
+                        <label >WMS凭证:</label>
+                        <label id="wmsno"></label>
+                    </div>
+                    <div class="box">
+                        <label >SAP凭证:</label>
+                        <label id="sapdoc" style="width:130px;"></label>
+                    </div>
+                    <div class="box">
+                        <label >收货单号:</label>
+                        <label id="receiptno" style="width:130px;"></label>
+                    </div>
+                    <div class="box">
+                        <label >送检单号:</label>
+                        <label id="iqcno" style="width:130px;"></label>
+                    </div>
+                    <div class="box">
+                        <label >作业时长:</label>
+                        <label id="operationTime" style="width:130px;"></label>
+                    </div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                </div>
+                
+                <div style="text-align:center;">
+					<button id="btn1" onclick="postDiv()"> 过账</button>
+					<button id="btn7" onClick="confirm();" style="display:none;"> 确认</button>
+					<button id="btn3" onClick='window.location.replace("${request.contextPath}/index2.html?m=1")' >取消</button>
+					<button id="btn4" type="reset" onClick="rback();" style="display:none;"> 返回</button>
+					<button id='btn5'  style="display:none;">删除</button>
+					<button id="btn6" type="reset" onClick="docItem();" style="display:none;"> 返回</button>
+					<button id="btn8" onClick='window.location.replace("${request.contextPath}/index2.html?m=1")' style="display:none;">完成</button>
+				</div>
+            </div>
+        </div>
+	<script src="${request.contextPath}/statics/js/in/asnReceipt.js?_${.now?long}"></script>
+    </body>
+</html>

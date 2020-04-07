@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>生产异常查询</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" method="post" class="form-inline" action="${request.contextPath}/zzjmes/productionException/getProductionExceptionPage">
+						<table>
+							<tr>
+								<td id="searchForm">
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">工厂：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+												<select name="search_werks" id="search_werks" onchange="vm.onWerksChange(event)" style="width: 100px;" class="form-control">
+													<!-- <option value="0">全部</option> -->
+													<#list tag.getUserAuthWerks("ZZJMES_EXCEPTION_QUERY") as factory>
+													<option value="${factory.code}">${factory.code}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">*订单：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+												<input type="text" name="search_order" id="search_order" @click="getOrderNoFuzzy()" onchange="vm.onOrderChange(event)" class="form-control" placeholder="订单名称">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">车间：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_workshop" id="search_workshop" onchange="vm.onWorkshopChange(event)" style="width: 80px;height:25px;background-color:white">
+												<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 50px">线别：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_line" id="search_line" onchange="vm.onLineChange(event)" style="width: 80px;height:25px;background-color:white">
+												<option v-for="w in linelist" :value="w.CODE">{{ w.NAME }}</option>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 50px">零部件：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+												<input type="text" name="search_product_no" id="search_order" style="width: 120px;height:25px;background-color:white" class="form-control" placeholder="零部件">
+											</div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm" width="180px">
+									<div class="form-group">
+										<input type="submit" id="btnSearchData" class="btn btn-info btn-sm" value="查询" /> 
+										<input type="button" id="btnConfirm" @click="exceptionConfirm" class="btn btn-success btn-sm" value="处理" />
+										<input type="button" id="btnExport" @click="exportExcel" class="btn btn-warning btn-sm" value="导出" />
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">异常类型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+												<select name="search_exception_type_code" id="search_exception_type_code" class="input-small" style="height:25px;width:100px">
+												<option value=''>全部</option>
+												<#list tag.masterdataDictList('EXCEPTION_TYPE') as dict><option value="${dict.value}">${dict.value}</option>
+												</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">异常原因：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+												<select name="search_reason_type_code" id="search_reason_type_code" class="input-small" style="height:25px;width:120px">
+												<option value=''>全部</option>
+												<#list tag.masterdataDictList('ABNORMAL_REASON') as dict><option value="${dict.value}">${dict.value}</option>
+												</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">是否处理：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_solution" id="search_solution" class="input-small" style="height:25px;width:80px">
+												<option value='-1'>全部</option>
+												<option value='1'>已处理</option>
+												<option value='0'>未处理</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</td>
+								<td></td>
+							</tr>
+						</table>
+					</form>
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+					<table id="tb_excel" style="display: none"></table>
+				</div>
+			</div>
+		</div>
+		<div id="addLayer" class="box-body" style="display: none; padding: 10px;">
+			<form id="addOrderForm" class="form-inline" action="#">
+				<table>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px;font-size:14px">处理方案：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<input type="text" name="exception_ids" id="exception_ids" style="display:none" class="form-control">
+										<textarea id="solution" rows="3" cols="50"></textarea>
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<form id="exportForm"  method="post" action="${request.contextPath}/zzjmes/productionException/exportException" style="display:none">
+			<input name="search_werks" id="export_werks" type="text"  hidden="hidden">
+			<input name="search_order" id="export_order" type="text"  hidden="hidden">
+			<input name="search_workshop" id="export_workshop" type="text"  hidden="hidden">
+			<input name="search_line" id="export_line" type="text"  hidden="hidden">
+			<input name="search_product_no" id="export_product_no" type="text"  hidden="hidden">
+			<input name="search_exception_type_code" id="export_exception_type_code" type="text"  hidden="hidden">
+			<input name="search_reason_type_code" id="export_reason_type_code" type="text"  hidden="hidden">
+			<input name="search_solution" id="export_solution" type="text"  hidden="hidden">
+		</form>
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/productionExceptionQuery.js?_${.now?long}"></script>
+</body>
+</html>

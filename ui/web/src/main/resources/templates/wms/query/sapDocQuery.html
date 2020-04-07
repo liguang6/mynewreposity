@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SAP凭证查询</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/sapDocQuery/list" >
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">工厂：</label>
+								<div class="control-inline" style="width: 80px;">
+									<select class="form-control" name="PLANT" id="werks" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("QUERY_SAP_DOC") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+	                           <label class="control-label" style="width: 60px">移动类型：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									    <input type="text" id="moveType" name="MOVE_TYPE" style="width: 80px;" class="form-control" />
+									    <input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#moveType'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+	                           <label class="control-label" style="width: 70px">SAP凭证：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									    <input type="text" id="matDoc" name="MAT_DOC" style="width: 80px;" class="form-control" />
+									    <input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#matDoc'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+	                           <label class="control-label" style="width: 60px">料号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									    <input type="text" id="material" name="MATERIAL" style="width: 80px;" class="form-control" />
+									    <input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#material'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+									<label class="control-label" style="width: 60px">过账日期：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width:180px">
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+			                                    <input type="text" id="pstngDateStart" name="PSTNG_DATE_START" 
+												class="form-control" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>
+											<div class="input-group" style="width:80px">
+											    <input type="text" id="pstngDateEnd" name="PSTNG_DATE_END"
+												class="form-control" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+						    <div class="form-group">
+								<label class="control-label" style="width: 60px;">库位：</label>
+								<div class="control-inline" style="width: 80px;">
+									<select class="form-control" name="LGORT" id="lgort">
+									   <option value="">全部</option>
+										<option v-for="w in lgort" :value="w.LGORT" :key="w.LGORT">{{ w.LGORT }}</option>
+									</select>
+								</div>
+							</div>
+						    <div class="form-group">
+	                           <label class="control-label" style="width: 60px">批次：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									    <input type="text" id="batch" name="BATCH" style="width: 80px;" class="form-control" />
+									    <input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#batch'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+						    <div class="form-group">
+	                           <label class="control-label" style="width: 70px">WMS凭证：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									    <input type="text" id="refWmsNo" name="REF_WMS_NO" style="width: 80px;" class="form-control" />
+									    <input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#refWmsNo'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+									<label class="control-label" style="width: 60px">凭证日期：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width:170px">
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+			                                    <input type="text" id="docDateStart" name="DOC_DATE_START" 
+												class="form-control" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>
+											<div class="input-group" style="width:80px">
+											    <input type="text" id="docDateEnd" name="DOC_DATE_END"
+												class="form-control" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-sm">查询</button>
+								<button type="button" class="btn btn-primary btn-sm" @click="exp">导出</button>
+							</div>
+						</div>
+					</form>
+					<div id="divDataGrid" style="width:100%;overflow:auto;">
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>	
+					<table id="tb_excel" style="display:none"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/sapDocQuery.js?_${.now?long}"></script>
+</body>
+</html>

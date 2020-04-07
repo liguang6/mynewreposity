@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.produce.dao.PmdManagerDao">
+	<select id="getPmdList" parameterType="Map" resultType="Map">
+	SELECT @rowno:=@rowno+1 id,H.id h_id,H.order_no,H.werks,H.werks_name,H.workshop,H.workshop_name,H.line,H.line_name,
+	I.id i_id,I.pmd_head_id,I.change_from,I.no,I.material_no,I.zzj_no,I.zzj_name,I.mat_description,I.mat_type,I.specification,
+	I.filling_size,I.cailiao_type,I.assembly_position,I.process,I.process_name,I.process_sequence,
+	I.process_flow,I.process_time,I.process_machine,I.subcontracting_type,I.aperture,I.accuracy_demand,
+	I.surface_treatment,I.weight,I.use_workshop,I.unit,I.quantity,I.loss,I.total_weight,I.memo,I.
+	processflow_memo,I.section,I.maiban,I.banhou,I.filling_size_max,I.sap_mat,I.change_description,
+	I.change_subject,I.change_type,I.edit_date,I.editor,I.creator,I.creat_date
+	<if test="Stype =='new'">
+	,(SELECT COUNT(P.ID) FROM ZZJ_MACHINE_PLAN_ITEMS P WHERE P.zzj_pmd_items_id = I.id) AS P_ID 
+	</if>
+	<if test="Stype =='his'">
+	,I.operate_type
+	</if>
+	FROM ZZJ_PMD_HEAD H 
+	<if test="Stype =='new'">
+	RIGHT JOIN ZZJ_PMD_ITEMS I ON I.pmd_head_id = H.id,
+	</if>
+	<if test="Stype =='his'">
+	RIGHT JOIN ZZJ_PMD_ITEMS_H I ON I.pmd_head_id = H.id,
+	</if>
+	(select @rowno:=0) t
+	WHERE H.werks = #{WERKS} AND H.order_no = #{ORDER_NO} AND H.workshop = #{WORKSHOP} AND H.line = #{LINE}
+	<if test="ZZJ_NO !=null and ZZJ_NO !=''">
+	<choose>
+		<when test='ZZJ_NO.indexOf(",") != -1'>
+		AND I.zzj_no IN ${ZZJ_NO}
+		</when>
+		<otherwise>
+		AND (I.zzj_no LIKE CONCAT('%',#{ZZJ_NO},'%') OR I.zzj_name LIKE CONCAT('%',#{ZZJ_NO},'%') )
+		</otherwise>
+	</choose>
+	</if>
+	<if test="PROCESS !=null and PROCESS !=''">
+	AND I.process LIKE CONCAT('%',#{PROCESS},'%')
+	</if>
+	<if test="SECTION !=null and SECTION !=''">
+	AND I.section LIKE CONCAT('%',#{SECTION},'%')
+	</if>
+	<if test="MATERIAL_NO !=null and MATERIAL_NO !=''">
+	AND I.material_no LIKE CONCAT('%',#{MATERIAL_NO},'%')
+	</if>
+	<if test="ASSEMBLY_POSITION !=null and ASSEMBLY_POSITION !=''">
+	AND I.assembly_position LIKE CONCAT('%',#{ASSEMBLY_POSITION},'%')
+	</if>
+	<if test="USE_WORKSHOP !=null and USE_WORKSHOP !=''">
+	AND I.use_workshop LIKE CONCAT('%',#{USE_WORKSHOP},'%')
+	</if>
+	<if test="SURFACE_TREATMENT !=null and SURFACE_TREATMENT !=''">
+	AND I.surface_treatment LIKE CONCAT('%',#{SURFACE_TREATMENT},'%')
+	</if>
+	<if test="PROCESS_MACHINE !=null and PROCESS_MACHINE !=''">
+	AND I.process_machine LIKE CONCAT('%',#{PROCESS_MACHINE},'%')
+	</if>
+	<if test="SUBCONTRACTING_TYPE !=null and SUBCONTRACTING_TYPE !=''">
+	AND I.subcontracting_type = #{SUBCONTRACTING_TYPE}
+	</if>
+	<if test="FILLING_SIZE !=null and FILLING_SIZE !=''">
+	AND I.filling_size LIKE CONCAT('%',#{FILLING_SIZE},'%')
+	</if>
+	<if test="SPECIFICATION !=null and SPECIFICATION !=''">
+	AND I.specification LIKE CONCAT('%',#{SPECIFICATION},'%')
+	</if>
+	<if test="CAILIAO_TYPE !=null and CAILIAO_TYPE !=''">
+	AND I.cailiao_type = #{CAILIAO_TYPE}
+	</if>
+	<if test="APERTURE !=null and APERTURE !=''">
+	AND I.aperture LIKE CONCAT('%',#{APERTURE},'%')
+	</if>
+	<if test="CHANGE_SUBJECT !=null and CHANGE_SUBJECT !=''">
+	AND I.change_subject LIKE CONCAT('%',#{CHANGE_SUBJECT},'%')
+	</if>
+	<if test="CHANGE_TYPE !=null and CHANGE_TYPE !=''">
+	AND I.change_type = #{CHANGE_TYPE}
+	</if>
+	<if test="MAIBAN !=null and MAIBAN !=''">
+	AND I.maiban LIKE CONCAT('%',#{MAIBAN},'%')
+	</if>
+	<if test="BANHOU !=null and BANHOU !=''">
+	AND I.banhou LIKE CONCAT('%',#{BANHOU},'%')
+	</if>
+	<if test="PROCESS_FLOW !=null and PROCESS_FLOW !=''">
+	AND I.process_flow LIKE CONCAT('%',#{PROCESS_FLOW},'%')
+	</if>
+	<if test="FILLING_SIZE_MAX !=null and FILLING_SIZE_MAX !=''">
+	AND I.filling_size_max LIKE CONCAT('%',#{FILLING_SIZE_MAX},'%')
+	</if>
+	<if test="MAP_NO != null and MAP_NO.size() > 0">
+		AND I.material_no NOT IN
+		<foreach collection="MAP_NO" item="item" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</if>
+	<if test="orderBy != '' and orderBy != null">
+	ORDER BY ${orderBy}
+	</if>
+	<if test="pageSize != '' and pageSize != null">
+	LIMIT ${start},${pageSize} 
+	</if>
+	</select>
+	<select id="getPmdListTotalCount" parameterType="Map" resultType="int">
+	SELECT COUNT(*) FROM ZZJ_PMD_HEAD H 
+	<if test="Stype =='new'">
+	RIGHT JOIN ZZJ_PMD_ITEMS I ON I.pmd_head_id = H.id
+	</if>
+	<if test="Stype =='his'">
+	RIGHT JOIN ZZJ_PMD_ITEMS_H I ON I.pmd_head_id = H.id
+	</if>
+	WHERE H.werks = #{WERKS} AND H.order_no = #{ORDER_NO} AND H.workshop = #{WORKSHOP} AND H.line = #{LINE}
+	<if test="ZZJ_NO !=null and ZZJ_NO !=''">
+	<choose>
+		<when test='ZZJ_NO.indexOf(",") != -1'>
+		AND I.zzj_no IN ${ZZJ_NO}
+		</when>
+		<otherwise>
+		AND (I.zzj_no LIKE CONCAT('%',#{ZZJ_NO},'%') OR I.zzj_name LIKE CONCAT('%',#{ZZJ_NO},'%') )
+		</otherwise>
+	</choose>
+	</if>
+	<if test="PROCESS !=null and PROCESS !=''">
+	AND I.process LIKE CONCAT('%',#{PROCESS},'%')
+	</if>
+	<if test="SECTION !=null and SECTION !=''">
+	AND I.section LIKE CONCAT('%',#{SECTION},'%')
+	</if>
+	<if test="MATERIAL_NO !=null and MATERIAL_NO !=''">
+	AND I.material_no LIKE CONCAT('%',#{MATERIAL_NO},'%')
+	</if>
+	<if test="ASSEMBLY_POSITION !=null and ASSEMBLY_POSITION !=''">
+	AND I.assembly_position LIKE CONCAT('%',#{ASSEMBLY_POSITION},'%')
+	</if>
+	<if test="USE_WORKSHOP !=null and USE_WORKSHOP !=''">
+	AND I.use_workshop LIKE CONCAT('%',#{USE_WORKSHOP},'%')
+	</if>
+	<if test="SURFACE_TREATMENT !=null and SURFACE_TREATMENT !=''">
+	AND I.surface_treatment LIKE CONCAT('%',#{SURFACE_TREATMENT},'%')
+	</if>
+	<if test="PROCESS_MACHINE !=null and PROCESS_MACHINE !=''">
+	AND I.process_machine LIKE CONCAT('%',#{PROCESS_MACHINE},'%')
+	</if>
+	<if test="SUBCONTRACTING_TYPE !=null and SUBCONTRACTING_TYPE !=''">
+	AND I.subcontracting_type = #{SUBCONTRACTING_TYPE}
+	</if>
+	<if test="FILLING_SIZE !=null and FILLING_SIZE !=''">
+	AND I.filling_size LIKE CONCAT('%',#{FILLING_SIZE},'%')
+	</if>
+	<if test="SPECIFICATION !=null and SPECIFICATION !=''">
+	AND I.specification LIKE CONCAT('%',#{SPECIFICATION},'%')
+	</if>
+	<if test="CAILIAO_TYPE !=null and CAILIAO_TYPE !=''">
+	AND I.cailiao_type = #{CAILIAO_TYPE}
+	</if>
+	<if test="APERTURE !=null and APERTURE !=''">
+	AND I.aperture LIKE CONCAT('%',#{APERTURE},'%')
+	</if>
+	<if test="CHANGE_SUBJECT !=null and CHANGE_SUBJECT !=''">
+	AND I.change_subject LIKE CONCAT('%',#{CHANGE_SUBJECT},'%')
+	</if>
+	<if test="CHANGE_TYPE !=null and CHANGE_TYPE !=''">
+	AND I.change_type = #{CHANGE_TYPE}
+	</if>
+	<if test="MAIBAN !=null and MAIBAN !=''">
+	AND I.maiban LIKE CONCAT('%',#{MAIBAN},'%')
+	</if>
+	<if test="BANHOU !=null and BANHOU !=''">
+	AND I.banhou LIKE CONCAT('%',#{BANHOU},'%')
+	</if>
+	<if test="PROCESS_FLOW !=null and PROCESS_FLOW !=''">
+	AND I.process_flow LIKE CONCAT('%',#{PROCESS_FLOW},'%')
+	</if>
+	<if test="FILLING_SIZE_MAX !=null and FILLING_SIZE_MAX !=''">
+	AND I.filling_size_max LIKE CONCAT('%',#{FILLING_SIZE_MAX},'%')
+	</if>
+	<if test="MAP_NO != null and MAP_NO.size() > 0">
+		AND I.material_no NOT IN
+		<foreach collection="MAP_NO" item="item" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</if>
+	</select>
+	
+	<select id="getPmdProcessPlanCount" parameterType="Map" resultType="int">
+	SELECT COUNT(*) FROM ZZJ_MACHINE_PLAN_ITEMS I
+	LEFT JOIN ZZJ_MACHINE_PLAN_HEAD H ON I.machine_plan_head_id = H.id
+	WHERE H.werks = #{werks} AND H.workshop = #{workshop} AND H.order_no = #{order_no} AND H.line = #{line} AND I.zzj_no = #{zzj_no}
+	AND I.plan_process = #{plan_process} 
+	</select>
+	
+	<select id="getPmdMapNoList" parameterType="Map" resultType="Map">
+	SELECT DISTINCT I.material_no FROM ZZJ_PMD_HEAD H 
+	LEFT JOIN ZZJ_PMD_ITEMS I ON I.pmd_head_id = H.id
+	WHERE H.werks = #{WERKS} AND H.order_no = #{ORDER_NO} AND H.workshop = #{WORKSHOP} AND H.line = #{LINE}
+	<if test="ZZJ_NO !=null and ZZJ_NO !=''">
+	AND I.zzj_no = #{ZZJ_NO}
+	</if>
+	<if test="PROCESS !=null and PROCESS !=''">
+	AND I.process = #{PROCESS}
+	</if>
+	<if test="SECTION !=null and SECTION !=''">
+	AND I.section = #{SECTION}
+	</if>
+	<if test="MATERIAL_NO !=null and MATERIAL_NO !=''">
+	AND I.material_no = #{MATERIAL_NO}
+	</if>
+	<if test="ASSEMBLY_POSITION !=null and ASSEMBLY_POSITION !=''">
+	AND I.assembly_position = #{ASSEMBLY_POSITION}
+	</if>
+	<if test="USE_WORKSHOP !=null and USE_WORKSHOP !=''">
+	AND I.use_workshop = #{USE_WORKSHOP}
+	</if>
+	<if test="SURFACE_TREATMENT !=null and SURFACE_TREATMENT !=''">
+	AND I.surface_treatment = #{SURFACE_TREATMENT}
+	</if>
+	<if test="PROCESS_MACHINE !=null and PROCESS_MACHINE !=''">
+	AND I.process_machine = #{PROCESS_MACHINE}
+	</if>
+	<if test="SUBCONTRACTING_TYPE !=null and SUBCONTRACTING_TYPE !=''">
+	AND I.subcontracting_type = #{SUBCONTRACTING_TYPE}
+	</if>
+	<if test="FILLING_SIZE !=null and FILLING_SIZE !=''">
+	AND I.filling_size = #{FILLING_SIZE}
+	</if>
+	<if test="SPECIFICATION !=null and SPECIFICATION !=''">
+	AND I.specification = #{SPECIFICATION}
+	</if>
+	<if test="CAILIAO_TYPE !=null and CAILIAO_TYPE !=''">
+	AND I.cailiao_type = #{CAILIAO_TYPE}
+	</if>
+	<if test="APERTURE !=null and APERTURE !=''">
+	AND I.aperture = #{APERTURE}
+	</if>
+	<if test="CHANGE_SUBJECT !=null and CHANGE_SUBJECT !=''">
+	AND I.change_subject = #{CHANGE_SUBJECT}
+	</if>
+	<if test="CHANGE_TYPE !=null and CHANGE_TYPE !=''">
+	AND I.change_type = #{CHANGE_TYPE}
+	</if>
+	<if test="MAIBAN !=null and MAIBAN !=''">
+	AND I.maiban = #{MAIBAN}
+	</if>
+	<if test="BANHOU !=null and BANHOU !=''">
+	AND I.banhou = #{BANHOU}
+	</if>
+	<if test="PROCESS_FLOW !=null and PROCESS_FLOW !=''">
+	AND I.process_flow = #{PROCESS_FLOW}
+	</if>
+	<if test="FILLING_SIZE_MAX !=null and FILLING_SIZE_MAX !=''">
+	AND I.filling_size_max = #{FILLING_SIZE_MAX}
+	</if>
+	</select>
+	
+	<select id="getMasterDataMapNoList" parameterType="Map" resultType="Map">
+	SELECT DISTINCT MAP_NO FROM WMSTEST.MASTERDATA_PDM_MAP m WHERE MAP_NO IN
+		<foreach collection="mapno_list" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+		</foreach>	 
+	</select>
+	
+	<update id="editPmdItem" parameterType="Map">
+	UPDATE ZZJ_PMD_ITEMS SET change_from = #{change_from},no = #{no},material_no = #{material_no},zzj_no = #{zzj_no},
+	zzj_name = #{zzj_name},mat_description = #{mat_description},mat_type = #{mat_type},specification = #{specification},
+	filling_size = #{filling_size},cailiao_type = #{cailiao_type},assembly_position = #{assembly_position},process = #{process},
+	process_name = #{process_name},process_sequence = #{process_sequence},process_flow = #{process_flow},process_time = #{process_time},
+	process_machine = #{process_machine},subcontracting_type = #{subcontracting_type},aperture = #{aperture},
+	accuracy_demand = #{accuracy_demand},surface_treatment = #{surface_treatment},weight = #{weight},use_workshop = #{use_workshop},
+	unit = #{unit},quantity = #{quantity},loss = #{loss},total_weight = #{total_weight},memo = #{memo},processflow_memo = #{processflow_memo},
+	section = #{section},maiban = #{maiban},banhou = #{banhou},filling_size_max = #{filling_size_max},sap_mat = #{sap_mat},
+	change_description = #{change_description},change_subject = #{change_subject},change_type = #{change_type},
+	edit_date = #{edit_date},editor = #{editor},process_product=#{process_product},process_guide=#{process_guide}
+	WHERE id = #{id}
+	</update>
+	
+	<update id="delPmdItem" parameterType="Map">
+	INSERT INTO ZZJ_PMD_ITEMS_H
+	(operate_type, pmd_head_id, `no`, sap_mat, sap_description, mat_description, mat_type, specification, unit, loss, quantity, 
+	weight, total_weight, use_workshop, process, process_name, assembly_position, zzj_no, zzj_name, material_no, filling_size, 
+	accuracy_demand, surface_treatment, memo, processflow_memo, change_description, change_subject, cailiao_type, subcontracting_type, 
+	process_sequence, process_flow, process_time, process_machine, process_product, process_guide, `section`, aperture, maiban, 
+	banhou, filling_size_max, change_type, change_from, ecn_quantity, edit_date, editor, creator, creat_date)
+	SELECT '02' operate_type, pmd_head_id, `no`, sap_mat, sap_description, mat_description, mat_type, specification, unit, loss, quantity, 
+	weight, total_weight, use_workshop, process, process_name, assembly_position, zzj_no, zzj_name, material_no, filling_size, 
+	accuracy_demand, surface_treatment, memo, processflow_memo, change_description, change_subject, cailiao_type, subcontracting_type, 
+	process_sequence, process_flow, process_time, process_machine, process_product, process_guide, `section`, aperture, maiban, 
+	banhou, filling_size_max, change_type, change_from, ecn_quantity, edit_date, editor, creator, creat_date
+	FROM ZZJ_PMD_ITEMS WHERE id in ( ${ids} );
+	DELETE FROM ZZJ_PMD_ITEMS WHERE id in ( ${ids} )
+	</update>
+	
+	<insert id="addPmdItem" parameterType="Map" useGeneratedKeys="true" keyProperty="id">
+	INSERT INTO ZZJ_PMD_ITEMS (pmd_head_id,
+	change_from,no,material_no,zzj_no,zzj_name,mat_description,mat_type,specification,
+	filling_size,cailiao_type,assembly_position,process,process_name,process_sequence,
+	process_flow,process_time,process_machine,subcontracting_type,aperture,accuracy_demand,
+	surface_treatment,weight,use_workshop,unit,quantity,loss,total_weight,memo,
+	processflow_memo,section,maiban,banhou,filling_size_max,sap_mat,change_description,
+	change_subject,change_type,creator,creat_date) VALUES 
+	((SELECT id FROM ZZJ_PMD_HEAD WHERE order_no = #{order_no} AND werks =  #{werks} AND workshop =  #{workshop} AND line =  #{line} LIMIT 1),
+	#{change_from},#{no},#{material_no},#{zzj_no},#{zzj_name},#{mat_description},#{mat_type},#{specification},
+	#{filling_size},#{cailiao_type},#{assembly_position},#{process},#{process_name},#{process_sequence},
+	#{process_flow},#{process_time},#{process_machine},#{subcontracting_type},#{aperture},#{accuracy_demand},
+	#{surface_treatment},#{weight},#{use_workshop},#{unit},#{quantity},#{loss},#{total_weight},#{memo},
+	#{processflow_memo},#{section},#{maiban},#{banhou},#{filling_size_max},#{sap_mat},#{change_description},
+	#{change_subject},#{change_type},#{creator},#{creat_date})
+	</insert>
+	<insert id="addPmdItemHistory" parameterType="Map">
+	INSERT INTO ZZJ_PMD_ITEMS_H (pmd_head_id,operate_type,change_from,no,material_no,zzj_no,zzj_name,mat_description,mat_type,specification,
+	filling_size,cailiao_type,assembly_position,process,process_name,process_sequence,
+	process_flow,process_time,process_machine,subcontracting_type,aperture,accuracy_demand,
+	surface_treatment,weight,use_workshop,unit,quantity,loss,total_weight,memo,
+	processflow_memo,section,maiban,banhou,filling_size_max,sap_mat,change_description,
+	change_subject,change_type,creator,creat_date) VALUES 
+	((SELECT id FROM ZZJ_PMD_HEAD WHERE order_no = #{order_no} AND werks =  #{werks} AND workshop =  #{workshop} AND line =  #{line} LIMIT 1),
+	#{operate_type},#{change_from},#{no},#{material_no},#{zzj_no},#{zzj_name},#{mat_description},#{mat_type},#{specification},
+	#{filling_size},#{cailiao_type},#{assembly_position},#{process},#{process_name},#{process_sequence},
+	#{process_flow},#{process_time},#{process_machine},#{subcontracting_type},#{aperture},#{accuracy_demand},
+	#{surface_treatment},#{weight},#{use_workshop},#{unit},#{quantity},#{loss},#{total_weight},#{memo},
+	#{processflow_memo},#{section},#{maiban},#{banhou},#{filling_size_max},#{sap_mat},#{change_description},
+	#{change_subject},#{change_type},#{editor},#{edit_date})
+	</insert>
+	
+	<delete id="delPmdEnc" parameterType="Map">
+	DELETE FROM ZZJ_PMD_ECN WHERE zzj_pmd_items_id = #{id}
+	</delete>
+	<insert id="addPmdEnc" parameterType="List">
+	INSERT INTO ZZJ_PMD_ECN (zzj_pmd_items_id,from_no,to_no,quantity,creator,create_date)
+	VALUES
+	<foreach collection="list" item="d" index="index" separator=",">
+	(
+	#{d.zzj_pmd_items_id},#{d.from_no},#{d.to_no},#{d.quantity},#{d.creator},#{d.create_date}
+	)
+	</foreach>
+	</insert>
+	
+	<select id="getProductionExceptionList" parameterType="Map" resultType="Map">
+	SELECT E.*,I.zzj_no as product_no,I.zzj_name,I.material_no  
+	FROM ZZJ_PRODUCTION_EXCEPTION E 
+	LEFT JOIN ZZJ_PMD_ITEMS I on E.zzj_pmd_items_id = I.id 
+	WHERE E.werks = #{search_werks} AND E.workshop = #{search_workshop}
+	AND E.line = #{search_line}
+	<if test="search_order !=null and search_order !=''">
+	AND E.order_no = #{search_order}
+	</if>
+	<if test="search_product_no !=null and search_product_no !=''">
+	AND I.zzj_no = #{search_product_no}
+	</if>
+	<if test="search_exception_type_code !=null and search_exception_type_code !=''">
+	AND E.exception_type_code = #{search_exception_type_code}
+	</if>
+	<if test="search_reason_type_code !=null and search_reason_type_code !=''">
+	AND E.reason_type_code = #{search_reason_type_code}
+	</if>
+	<if test="search_solution ==1">
+	AND E.solution IS NOT NULL
+	</if>
+	<if test="search_solution ==0">
+	AND E.solution IS NULL
+	</if>
+	<if test="orderBy != '' and orderBy != null">
+	ORDER BY ${orderBy}
+	</if>
+	<if test="pageSize != '' and pageSize != null">
+	LIMIT ${start},${pageSize} 
+	</if>
+	</select>
+	<select id="getProductionExceptionCount" parameterType="Map" resultType="int">
+	SELECT COUNT(*) 
+	FROM ZZJ_PRODUCTION_EXCEPTION E
+	LEFT JOIN ZZJ_PMD_ITEMS I on E.zzj_pmd_items_id = I.id 
+	WHERE E.werks = #{search_werks} AND E.workshop = #{search_workshop}
+	AND E.line = #{search_line}
+	<if test="search_order !=null and search_order !=''">
+	AND E.order_no = #{search_order}
+	</if>
+	<if test="search_product_no !=null and search_product_no !=''">
+	AND i.zzj_no = #{search_product_no}
+	</if>
+	<if test="search_exception_type_code !=null and search_exception_type_code !=''">
+	AND E.exception_type_code = #{search_exception_type_code}
+	</if>
+	<if test="search_reason_type_code !=null and search_reason_type_code !=''">
+	AND E.reason_type_code = #{search_reason_type_code}
+	</if>
+	<if test="search_solution ==1">
+	AND E.solution IS NOT NULL
+	</if>
+	<if test="search_solution ==0">
+	AND solution IS NULL
+	</if>
+	</select>
+	<update id="exceptionConfirm" parameterType="Map">
+	UPDATE ZZJ_PRODUCTION_EXCEPTION SET solution = #{solution},processor = #{processor},
+	process_date = #{process_date}
+	WHERE id in ( ${exc_ids} )
+	</update>
+	
+	<update id="editSubcontracting" parameterType="Map">
+	UPDATE ZZJ_SUBCONTRACTING_ITEMS SET outsourcing_quantity = #{outsourcing_quantity},
+	weight = #{weight},total_weight = #{total_weight},quantity = #{quantity},memo = #{memo},
+	edit_date = #{edit_date},editor = #{editor}
+	WHERE id = #{id}
+	</update>
+	
+	<select id="getSubcontractingList" parameterType="Map" resultType="Map">
+	SELECT @rowno:=@rowno+1 id,I.id IID,P.id PID,I.order_no,I.product_order,P.sap_mat,P.zzj_no,P.zzj_name,P.process,I.outsourcing_quantity,
+	P.unit,I.weight,I.total_weight,P.quantity,I.memo,P.assembly_position,P.use_workshop,P.process_flow,
+	I.sender,I.editor,I.edit_date
+	FROM ZZJ_SUBCONTRACTING_ITEMS I 
+	LEFT JOIN ZZJ_SUBCONTRACTING_HEAD H ON I.outsourcing_head_id = H.id
+	LEFT JOIN ZZJ_PMD_ITEMS P ON I.zzj_pmd_items_id = P.id ,
+	(select @rowno:=0) t
+	WHERE
+	H.werks = #{werks} AND H.workshop = #{workshop} AND H.line = #{line}
+	<if test="order_no !=null and order_no !=''">
+	AND I.order_no = #{order_no}
+	</if>
+	<if test="zzj_plan_batch !=null and zzj_plan_batch !=''">
+	AND I.zzj_plan_batch = #{zzj_plan_batch}
+	</if>
+	<if test="ZZJ_NO !=null and ZZJ_NO !=''">
+	<choose>
+		<when test='ZZJ_NO.indexOf(",") != -1'>
+		AND I.zzj_no IN ${ZZJ_NO}
+		</when>
+		<otherwise>
+		AND (I.zzj_no LIKE CONCAT('%',#{ZZJ_NO},'%') OR P.zzj_name LIKE CONCAT('%',#{ZZJ_NO},'%') )
+		</otherwise>
+	</choose>
+	</if>
+	<if test="product_order !=null and product_order !=''">
+	AND I.product_order = #{product_order}
+	</if>
+	<if test="sender !=null and sender !=''">
+	AND I.sender = #{sender}
+	</if>
+	<if test="business_date_start !=null and business_date_start !=''">
+	AND I.business_date &lt;= #{business_date_start}
+	</if>
+	<if test="business_date_end !=null and business_date_end !=''">
+	AND I.business_date >= #{business_date_end}
+	</if>
+	<if test="orderBy != '' and orderBy != null">
+	ORDER BY ${orderBy}
+	</if>
+	<if test="pageSize != '' and pageSize != null">
+	LIMIT ${start},${pageSize} 
+	</if>
+	</select>
+	<select id="getSubcontractingCount" parameterType="Map" resultType="int">
+	SELECT COUNT(*) FROM ZZJ_SUBCONTRACTING_ITEMS I LEFT JOIN ZZJ_SUBCONTRACTING_HEAD H
+	ON I.outsourcing_head_id = H.id 
+	LEFT JOIN ZZJ_PMD_ITEMS P ON I.zzj_pmd_items_id = P.id
+	WHERE
+	H.werks = #{werks} AND H.workshop = #{workshop} AND H.line = #{line}
+	<if test="order_no !=null and order_no !=''">
+	AND I.order_no = #{order_no}
+	</if>
+	<if test="zzj_plan_batch !=null and zzj_plan_batch !=''">
+	AND I.zzj_plan_batch = #{zzj_plan_batch}
+	</if>
+	<if test="ZZJ_NO !=null and ZZJ_NO !=''">
+	<choose>
+		<when test='ZZJ_NO.indexOf(",") != -1'>
+		AND I.zzj_no IN ${ZZJ_NO}
+		</when>
+		<otherwise>
+		AND (I.zzj_no LIKE CONCAT('%',#{ZZJ_NO},'%') OR P.zzj_name LIKE CONCAT('%',#{ZZJ_NO},'%') )
+		</otherwise>
+	</choose>
+	</if>
+	<if test="product_order !=null and product_order !=''">
+	AND I.product_order = #{product_order}
+	</if>
+	<if test="sender !=null and sender !=''">
+	AND I.sender = #{sender}
+	</if>
+	<if test="business_date_start !=null and business_date_start !=''">
+	AND I.business_date &lt;= #{business_date_start}
+	</if>
+	<if test="business_date_end !=null and business_date_end !=''">
+	AND I.business_date >= #{business_date_end}
+	</if>
+	</select>
+
+	<select id="getSubcontractingItemList" parameterType="Map" resultType="Map">
+	SELECT * FROM ZZJ_SUBCONTRACTING_ITEMS WHERE outsourcing_head_id = #{head_id}
+	</select>
+	<update id="editSubcontractingItem" parameterType="Map">
+	UPDATE ZZJ_SUBCONTRACTING_ITEMS SET outsourcing_quantity = #{outsourcing_quantity},
+	weight = #{weight},total_weight = #{total_weight},edit_date=#{edit_date},editor=#{editor}
+	WHERE outsourcing_head_id = #{head_id} AND item_no = #{item_no}
+	</update>
+
+	<select id="getSubcontractingHeadList" parameterType="Map" resultType="Map">
+	SELECT DISTINCT H.id,H.outsourcing_no,H.werks,H.werks_name,H.workshop,H.workshop_name,
+	H.line,H.vendor,H.total_weight,H.business_date,H.memo,H.editor,H.edit_date
+	FROM ZZJ_SUBCONTRACTING_HEAD H 
+	LEFT JOIN ZZJ_SUBCONTRACTING_ITEMS I ON I.outsourcing_head_id = H.id
+	LEFT JOIN ZZJ_PMD_ITEMS P ON I.zzj_pmd_items_id = P.id
+	WHERE	H.werks = #{werks} AND H.workshop = #{workshop} AND H.line = #{line}
+	<if test="order_no !=null and order_no !=''">
+	AND I.order_no = #{order_no}
+	</if>
+	<if test="zzj_plan_batch !=null and zzj_plan_batch !=''">
+	AND I.zzj_plan_batch = #{zzj_plan_batch}
+	</if>
+	<if test="ZZJ_NO !=null and ZZJ_NO !=''">
+	<choose>
+		<when test='ZZJ_NO.indexOf(",") != -1'>
+		AND I.zzj_no IN ${ZZJ_NO}
+		</when>
+		<otherwise>
+		AND I.zzj_no LIKE CONCAT('%',#{ZZJ_NO},'%')
+		</otherwise>
+	</choose>
+	</if>
+	<if test="product_order !=null and product_order !=''">
+	AND I.product_order = #{product_order}
+	</if>
+	<if test="sender !=null and sender !=''">
+	AND I.sender = #{sender}
+	</if>
+	<if test="business_date_start !=null and business_date_start !=''">
+	AND I.business_date &lt;= #{business_date_start}
+	</if>
+	<if test="business_date_end !=null and business_date_end !=''">
+	AND I.business_date >= #{business_date_end}
+	</if>
+	<if test="orderBy != '' and orderBy != null">
+	ORDER BY ${orderBy}
+	</if>
+	<if test="pageSize != '' and pageSize != null">
+	LIMIT ${start},${pageSize} 
+	</if>
+	</select>
+	<select id="getSubcontractingHeadCount" parameterType="Map" resultType="int">
+	SELECT COUNT(DISTINCT H.id) sub_count
+	FROM ZZJ_SUBCONTRACTING_HEAD H 
+	LEFT JOIN ZZJ_SUBCONTRACTING_ITEMS I ON I.outsourcing_head_id = H.id
+	WHERE	H.werks = #{werks} AND H.workshop = #{workshop} AND H.line = #{line}
+	<if test="order_no !=null and order_no !=''">
+	AND I.order_no = #{order_no}
+	</if>
+	<if test="zzj_plan_batch !=null and zzj_plan_batch !=''">
+	AND I.zzj_plan_batch = #{zzj_plan_batch}
+	</if>
+	<if test="ZZJ_NO !=null and ZZJ_NO !=''">
+	<choose>
+		<when test='ZZJ_NO.indexOf(",") != -1'>
+		AND I.zzj_no IN ${ZZJ_NO}
+		</when>
+		<otherwise>
+		AND I.zzj_no LIKE CONCAT('%',#{ZZJ_NO},'%')
+		</otherwise>
+	</choose>
+	</if>
+	<if test="product_order !=null and product_order !=''">
+	AND I.product_order = #{product_order}
+	</if>
+	<if test="sender !=null and sender !=''">
+	AND I.sender = #{sender}
+	</if>
+	<if test="business_date_start !=null and business_date_start !=''">
+	AND I.business_date &lt;= #{business_date_start}
+	</if>
+	<if test="business_date_end !=null and business_date_end !=''">
+	AND I.business_date >= #{business_date_end}
+	</if>
+	</select>
+
+</mapper>

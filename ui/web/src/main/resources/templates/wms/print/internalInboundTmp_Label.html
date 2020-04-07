@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+    <title>标签</title>
+    <style>
+        @page {
+            size: 100mm 100mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            margin: 0.05in;
+            padding: 0.1em;
+/*             @bottom-center{
+                content:"CSCC © 版权所有";
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            }; */
+            @top-center { content: element(header) };
+/*             @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;
+            }; */
+        }
+    </style>
+</head>
+<body style="font-family: SimSun;width: 100%;height: 100%;" >
+	<div style="width: 100%;height: 99%;font-size: 11px;">
+		<table style="border:solid #000000; border-width:1px 0px 0px 1px;width: 100%;height: 100%;">
+			<tr style="width: 100%;">
+				<td style="width: 20%;height:8%;border:solid #000000; border-width:0px 1px 1px 0px;" rowspan="2">
+					<img src="${contextPath}/statics/images/byd_logo.png" style="height: 40px;"></img>
+				</td>
+				<td style="width: 80%;height:4%;text-align: center;border:solid #000000;border-width:0px 1px 1px 0px;" colspan="3"> 
+					产品标识单
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 30px;height:4%;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					<label class="control-label" style="width: 100%;">${DIV}</label>
+				</td>
+				<td style="font-size:9px;text-align: center;width: 15%;height:4%;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;">${WERKS}</label>
+				</td>
+				<td style="text-align: center;width: 30%;height:4%;border:solid #000000; border-width:0px 1px 1px 0px;" >
+				</td>
+				
+			</tr>
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:40px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					物料描述
+				</td>
+				<td style="font-size:9px;text-align: center;width: 50%;height:40px;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;">${MAKTX}</label>
+				</td>
+				<td style="border:solid #000000;  border-width:0px 1px 1px 0px;text-align: center;" rowspan="4">
+					<img src="${barCode}" style="height:120px;"></img>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:20px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					物料编码
+				</td>
+				<td style="font-size:9px;text-align: center;width: 50%;height:20px;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;font-weight:bold">${MATNR}</label>
+				</td>
+				
+			</tr>
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:30px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					数量
+				</td>
+				<td style="font-size:9px;text-align: center;width: 50%;height:30px;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;font-weight:bold">${IN_QTY}</label>
+				</td>
+			</tr>
+			<tr>
+				<td style="font-size:9px;text-align: center;width: 20%;height:20px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					批次
+				</td>
+				<td style="font-size:9px;text-align: center;width: 50%;height:20px;border:solid #000000; border-width:0px 1px 1px 0px;" colspan="2">
+					<label class="control-label" style="width: 100%;font-weight:bold">${BATCH}</label>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					产品图号
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${DRAWING_NO}</label>
+				</td>
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					工位
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${PRO_STATION}</label>
+				</td>
+			</tr>	
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					车型
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${CAR_TYPE}</label>
+				</td>
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					班次
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${WORKGROUP_NO}</label>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					模具编号
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${MOULD_NO}</label>
+				</td>
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					单号
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${LABEL_NO}</label>
+				</td>
+			</tr>	
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					生产日期
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${PRODUCT_DATE}</label>
+				</td>
+				<td style="font-size:9px;text-align: center;width: 20%;height:60px;border:solid #000000; border-width:0px 1px 1px 0px;" rowspan="4">
+					IPQC
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:60px;border:solid #000000; border-width:0px 1px 1px 0px;" rowspan="4">
+					OQC/IQC
+				</td>
+			</tr>	
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					订单号
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${DDH}</label>
+				</td>
+				
+			</tr>
+			<tr style="width: 100%;">
+				
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					作业员
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${OPERATOR}</label>
+				</td>
+			</tr>	
+			<tr style="width: 100%;">
+				
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					需求跟踪号
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${BEDNR}</label>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					销售订单号
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${SO_NO}</label>
+				</td>
+				<td style="font-size:9px;text-align: center;width: 20%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;" >
+					行项目号
+				</td>
+				<td style="font-size:9px;text-align: center;width: 30%;height:15px;border:solid #000000; border-width:0px 1px 1px 0px;">
+					<label class="control-label" style="width: 100%;font-weight:bold">${SO_ITEM_NO}</label>
+				</td>
+			</tr>	
+		</table>
+	</div>
+</body>
+</html>

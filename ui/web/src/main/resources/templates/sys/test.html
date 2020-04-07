@@ -1,0 +1,109 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta content="webkit" name="renderer"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/><meta http-equiv="Expires" content="0"/>
+<meta content="width=device-width, initial-scale=1, user-scalable=1" name="viewport"/>
+<meta content="JeeSite Demo V4.0 - Powered By JeeSite" name="description"/>
+<meta content="ThinkGem, http://jeesite.com" name="author"/>
+<title>公司管理 - JeeSite Demo V4.0</title>
+<#include "/header.html">
+
+<link rel="stylesheet" href="${request.contextPath}/statics/css/vmes.css">
+<link rel="stylesheet" href="${request.contextPath}/statics/css/common.css">
+</head><body class="hold-transition ">
+<div class="wrapper"><div class="main-content">
+	<div class="box box-main">
+		<div class="box-header">
+			<div class="box-title">
+				<i class="fa icon-fire"></i> 公司管理
+			</div>
+			<div class="box-tools pull-right">
+				<a href="#" class="btn btn-default" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a>
+				<a href="#" class="btn btn-default" id="btnRefreshTree" title="刷新"><i class="fa fa-refresh"></i> 刷新</a>
+				<a href="#" class="btn btn-default" id="btnExpandTreeNode" title="展开一级"><i class="fa fa-angle-double-down"></i> 展开</a>
+				<a href="#" class="btn btn-default" id="btnCollapseTreeNode" title="折叠全部"><i class="fa fa-angle-double-up"></i> 折叠</a>
+					<a href="/js/a/sys/company/form" class="btn btn-default btnTool" title="新增公司"><i class="fa fa-plus"></i> 新增</a>
+			</div>
+		</div>
+		<div class="box-body">
+			<form id="searchForm" action="${request.contextPath}/sys/dept/list" method="post" class="form-inline hide" 
+				data-page-no="" data-page-size="" data-order-by="">
+				<div class="form-group">
+					<label class="control-label">公司代码：</label>
+					<div class="control-inline">
+						<input type="text" id="viewCode" name="viewCode" value="" maxlength="100" class="form-control width-120" />
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="control-label">公司名称：</label>
+					<div class="control-inline">
+						<input type="text" id="companyName" name="companyName" value="" maxlength="200" class="form-control width-120" />
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="control-label">公司全称：</label>
+					<div class="control-inline">
+						<input type="text" id="fullName" name="fullName" value="" maxlength="200" class="form-control width-120" />
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="control-label">状态：</label>
+					<div class="control-inline width-60">
+						<select id="status" name="status" class="form-control">
+							<option value="">&nbsp;</option>
+							<option value="0">正常</option>
+							<option value="2">停用</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<button type="submit" class="btn btn-primary btn-sm">查询</button>
+					<button type="reset" class="btn btn-default btn-sm">重置</button>
+				</div>
+			</form>
+			<table id="dataGrid"></table>
+			<div id="jqGridPager"></div>
+		</div>
+	</div>
+</div>
+</div>
+
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+
+<script>
+// 初始化DataGrid对象
+$('#dataGrid').dataGrid({
+	searchForm: $("#searchForm"),
+	columnModel: [
+		{header:'公司名称', name:'name', index:'a.company_name', width:250, align:"left", frozen:true, formatter: function(val, obj, row, act){
+			return '<a href="/js/a/sys/company/form?companyCode='+row.companyCode+'" class="btnList" data-title="编辑公司">'+(val||row.id)+'</a>';
+		}},
+		{header:'公司全称', name:'name', index:'a.full_name', width:200, align:"left"},
+		{header:'公司名称', name:'name', index:'a.tree_sort', width:80, align:"center"},
+		{header:'操作', name:'actions', width:130, sortable:false, title:false, formatter: function(val, obj, row, act){
+			var actions = [];
+				actions.push('<a href="/js/a/sys/company/form?companyCode='+row.companyCode+'" class="btnList" title="编辑公司"><i class="fa fa-pencil"></i></a>&nbsp;');
+				if (row.status == Global.STATUS_NORMAL){
+					actions.push('<a href="/js/a/sys/company/disable?companyCode='+row.companyCode+'" class="btnList" title="停用公司" data-confirm="确认要停用该公司吗？"><i class="glyphicon glyphicon-ban-circle"></i></a>&nbsp;');
+				}
+				if (row.status == Global.STATUS_DISABLE){
+					actions.push('<a href="/js/a/sys/company/enable?companyCode='+row.companyCode+'" class="btnList" title="启用公司" data-confirm="确认要启用该公司吗？"><i class="glyphicon glyphicon-ok-circle"></i></a>&nbsp;');
+				}
+				actions.push('<a href="/js/a/sys/company/delete?companyCode='+row.companyCode+'" class="btnList" title="删除公司" data-confirm="确认要删除该公司及所有子公司吗？" data-deltreenode="'+row.id+'"><i class="fa fa-trash-o"></i></a>&nbsp;');
+				actions.push('<a href="/js/a/sys/company/form?parentCode='+row.id+'" class="btnList" title="新增下级公司"><i class="fa fa-plus-square"></i></a>&nbsp;');
+			return actions.join('');
+		}}
+	],
+	treeGrid: false,			// 启用树结构表格
+	defaultExpandLevel: 0,		// 默认展开的层次
+	expandNodeClearPostData: 'viewCode,companyName,fullName,', // 展开节点清理请求参数数据（一般设置查询条件的字段属性，否则在查询后，不能展开子节点数据）	// 加载成功后执行事件
+	viewrecords: true,
+    height: 250,
+    rowNum: 5,
+    pager: "#jqGridPager",
+	ajaxSuccess: function(data){
+		
+	}
+});
+</script>

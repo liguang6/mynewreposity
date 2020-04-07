@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<#include "/header.html">
+</head>
+<body class="hold-transition ">
+<div class="wrapper">
+		<div class="main-content">
+								<div class="box box-main">
+									<div class="box-header">
+										<div class="box-title">
+											<i class="fa fa-file-text-o"></i> 用户管理
+										</div>
+										<div class="box-tools pull-right">
+											<a href="#" class="btn btn-default" id="btnSearch" title="查询"><i
+												class="fa fa-filter"></i> 查询</a> 
+												<a href="${request.contextPath}/sys/new_user_1.html" class="btn btn-default btnTool" title="新增用户"><i
+												class="fa fa-plus"></i> 新增</a>												
+										</div>
+									</div>
+									<div class="box-body">
+									   
+										<form id="searchForm" class="form-inline" action="${request.contextPath}/sys/user/list">
+											<div class="form-group">
+												<label class="control-label">用户名：</label>
+												<div class="control-inline">
+													<input type="text" id="username1" name="username1" value=""
+														maxlength="64" class="form-control width-90" v-model="q.username"/>
+												</div>
+											</div>
+
+											<div class="form-group">
+												<label class="control-label">所属部门：</label>
+												<div class="input-group">
+													<input type="text" readonly="readonly" style="width: 90px" class="form-control" id="deptName" placeholder="所属部门" onclick="selectDept()">
+													<input type="text" name="deptId" id="deptId" style="display: none" />
+													<span class="input-group-addon"><i
+														class="fa fa-search"></i></span>
+												</div>
+											</div>
+
+											<div class="form-group">
+												<label class="control-label">邮箱：</label>
+												<div class="control-inline">
+													<input type="text" id="email" name="email" value=""
+														maxlength="64" class="form-control width-90" v-model="q.email" />
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label">状态：</label>
+												<div class="control-inline width-90">
+
+													<select id="status" name="status" class="form-control " v-model="q.status">
+														<option value="">&nbsp;</option>
+														<option value="1">正常</option>
+														<option value="0">禁用</option>
+													</select>
+												</div>
+											</div>
+											
+											<div class="form-group">
+												<label class="control-label">电话号码：</label>
+												<div class="control-inline">
+													<input type="text" id="mobile" name="mobile" v-model="q.mobile"
+														value="" maxlength="500" class="form-control width-90" />
+												</div>
+											</div>
+											
+											<div class="form-group">
+												<button type="submit"  class="btn btn-primary btn-sm">查询</button>
+												<button type="reset" class="btn btn-default btn-sm">重置</button>
+												<button  onclick="uploadExcel()" class="btn btn-success btn-sm">导入</button>
+												<a href="${request.contextPath}/statics/excel/import-user.xlsx" class="btn btn-default btn-sm"><i class="fa fa-download"></i>下载导入模板</a>
+											</div>
+											</form>
+										
+										
+										
+										<table id="jqGrid"></table>
+										<div id="jqGridPage"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+	<!-- 选择部门 -->
+	<div id="deptLayer" style="display: none; padding: 10px;">
+		<ul id="deptTree" class="ztree"></ul>
+	</div>
+
+	<!-- 选择导入用户模板Excel文件 -->
+	<div id="uploadExcel" style="display: none; padding: 10px;">
+		<form id="uploadExcelForm" action="${request.contextPath}/vmes-admin/sys/user/import"
+			method="post" enctype="multipart/form-data">
+			<div class="form-group">
+				<div>
+					<input type="file" id="excel" name="excel" readonly="readonly"
+						placeholder="选择导入用户模板excel文件" />
+				</div>
+				<div class="help-block">选择下载的模板文件</div>
+			</div>
+		</form>
+	</div>
+			<script src="${request.contextPath}/statics/js/sys/user.js?_${.now?long}"></script>
+</body>
+</html>

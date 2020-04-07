@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>检验单查询</title> <#include "/web_header.html">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/jspdf/jspdf.min.js"></script>
+
+<style>
+.table-head-list {
+	list-style-type: none;
+	background-color: #f1f1f1;
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+.table-head-list li {
+	display: inline;
+	padding: 3px 6px;
+}
+</style>
+</head>
+
+<body>
+	<div class="wrapper">
+		<div class="main-content" id="vue-app">
+			<div class="box box-main">
+
+				<div class="box-body">
+					<div class="row">
+						<ul class="table-head-list">
+							<li>送检单号: {{tpl.INSPECTION_NO}}</li>
+							<li>工厂: {{tpl.WERKS}}</li>
+							<li>送检单类型: {{tpl.INSPECTION_TYPE==='01'?'来料质检':'库存复检'}}</li>
+							<li>送检单状态: {{tpl.inspectionStatusName}}</li>
+							<li>创建人: {{tpl.CREATOR}}</li>
+							<!-- <li><a class="btn btn-success"  target="_blank" href="${request.contextPath}/qc/redirect/printInspectionItem?inspectionNo=${inspectionNo!''}">小纸打印</a></li> -->
+							<li>
+							<form id="print_inspection" target="_blank" method="post" action="${request.contextPath}/docPrint/inspectionLabelPreview" style="width:100px;display: inline-block;">
+								<button id="btnPrint" class="btn btn-primary btn-sm" type="submit">送检单打印</button>
+								<input name="inspectionList" id="inspectionList" type="text" hidden="hidden"  v-model="inspectionList">
+							</form>
+							<!-- <a class="btn btn-success" @click="print()">大纸打印</a> -->							
+							</li>
+							<li><a class="btn btn-success" href="${request.contextPath}/wms/qc/wms_qc_query_inspection_list.html">返回</a></li>
+						</ul>
+					</div>
+
+					<table class="table table-bordered">
+						<tr>
+							<th></th>
+							<th>批次</th>
+							<th>料号</th>
+							<th>物料描述</th>
+							<th>单位</th>
+							<th>送检数量</th>
+							<th>供应商代码</th>
+							<th>供应商名称</th>
+							<th>需求跟踪号</th>
+						</tr>
+						<tr v-for="(item,index) in inspectionItems">
+						    <td>{{index + 1}}</td>
+							<td>{{item.batch}}</td>
+							<td>{{item.matnr}}</td>
+							<td>{{item.maktx}}</td>
+							<td>{{item.unit}}</td>
+							<td>{{item.inspectionQty}}</td>
+							<td>{{item.lifnr}}</td>
+							<td>{{item.liktx}}</td>
+							<td>{{item.bednr}}</td>
+						</tr>						
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<input hidden="hidden" id="inspectionNo" value="${inspectionNo!''}"/>
+	<script src="${request.contextPath}/statics/js/wms/qc/wms_qc_query_inspection_item.js?_${.now?long}"></script>
+</html>

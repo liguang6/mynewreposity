@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>欢迎页</title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="${request.contextPath}/statics/css/bootstrap.min.css">
+	<script src="${request.contextPath}/statics/libs/jquery-1.12.4.min.js"></script>
+	<#include '/header.html'/>
+	<style>
+		li{
+			padding-top:7px
+		}
+		[v-cloak] {
+		    display: none;
+		}
+	</style>
+</head>
+<body class="hold-transition ">
+	<div id="rrapp" class="wrapper">
+		<div class="content pb0">
+			<div class="row" >
+				<section id="section_l" class="col-md-7 ui-sortable">
+					<div v-for="cd_l in contentDynamic_L " class="box box-widget" v-cloak>
+			            <div class="box-header ui-sortable-handle" style="cursor: move;">
+			              <i :class="cd_l.ICON"></i>
+			              <h3 class="box-title">{{cd_l.KANBAN_MSG}} 
+			              	<small v-if="cd_l && cd_l.contentData" class="label label-warning">{{cd_l.contentData.length}}</small>
+			              	<small v-else class="label label-warning">0</small>
+			              </h3>
+			              	<span v-if="cd_l.WERKS !=null && cd_l.WERKS !='' " >
+				              	工厂：
+			               		<select :id="'WERKS_'+cd_l.ID" class="input-medium" style="height: 22px;width:60px;" @change="queryConChanged('WERKS','L',cd_l.ID)" >
+								      <option v-for="werks in cd_l.userAuthWerksList" :value="werks.code">{{werks.code}}</option>
+								</select>
+							</span>
+			             	<span v-if="cd_l.WH_NUMBER !=null && cd_l.WH_NUMBER !='' " >
+				              	仓库号：
+			               		<select :id="'WH_NUMBER_'+cd_l.ID" class="input-medium" style="height: 22px;width:60px;" @change="queryConChanged('WH_NUMBER','L',cd_l.ID)" >
+								      <option v-for="wh in cd_l.userAuthWhList" :value="wh.code">{{wh.code}}</option>
+								</select>
+							</span>
+							<span v-if="cd_l.MAT_MANAGER !=null && cd_l.MAT_MANAGER !='' " >
+				              	人员：
+			               		<select :id="'MAT_MANAGER_'+cd_l.ID" class="input-medium" style="height: 22px;width:65px;" @change="queryConChanged('MAT_MANAGER','L',cd_l.ID)" >
+								      <option v-for="manager in cd_l.matManagerList" v-if="manager" :value="manager.MANAGER_STAFF">{{manager.MANAGER}}</option>
+								</select>
+							</span>
+			              <div class="box-tools pull-right">
+				                <!-- button with a dropdown 
+				                <div class="btn-group open">
+				                  <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+				                    <i class="fa fa-bars"></i></button>
+				                  <ul class="dropdown-menu pull-right" role="menu">
+				                    <li><a href="#">Add new event</a></li>
+				                    <li><a href="#">Clear events</a></li>
+				                    <li class="divider"></li>
+				                    <li><a href="#">View calendar</a></li>
+				                  </ul> -->
+	<!-- 			                <button type="button" class="btn btn-success btn-sm" data-widget="remove" style="cursor: pointer;"><i class="fa fa-times"></i>
+				                </button> -->
+				           </div>
+			            </div>
+			            <!-- /.box-header -->
+			            <div v-if="Object.keys(contentDynamic_L).length >1" class="box-body" style="overflow: scroll;" v-bind:style="{height: cd_l.MIN_HIGH}"  >
+			            	<div v-if="cd_l.KANBAN_CLASS=='-0' " class="todo-list ui-sortable">
+			            		<h4>&nbsp;&nbsp;&nbsp;程序猿努力开发中，敬请期待...</h4>
+			            	</div>
+			              	<!-- See dist/js/pages/dashboard.js to activate the todoList plugin -->
+			              	<ul v-if="cd_l.KANBAN_CLASS=='03' " class="todo-list ui-sortable">
+			              		<!-- 我的任务 -->
+			              		<li style="padding:5px;" v-for="cData in cd_l.contentData">
+				                	<!-- <span class="handle"></span> -->
+				                  	<!-- todo text -->
+				                  	<span style="font-weight:1;margin-left: 1px;" class="text" @click = "doTask(cd_l,cData)" >{{cData.TASK_CONTENT}}</span>
+				                  	<!-- Emphasis label -->
+				                  	<small style="font-weight:1;"  @click = "doTask(cd_l,cData)" v-if="cData.DANGER_FLAG == '0'" class="label label-success"><i class="fa fa-clock-o"></i> {{cData.CREATE_DATE}}</small>
+				                  	<small style="font-weight:1;" @click = "doTask(cd_l,cData)" v-if="cData.DANGER_FLAG == 'X'" class="label label-danger"><i class="fa fa-clock-o"></i> {{cData.CREATE_DATE}}</small>
+				                  	<!-- General tools such as edit or delete-->
+<!-- 				                  	<div class="tools">
+				                    	<i class="fa fa-edit"></i>
+				                  	</div> -->
+			                	</li>
+			              	</ul>
+			            </div>
+		            	<div v-else class="box-body" style="overflow: scroll;height: 480px;" >
+			            	<div v-if="cd_l.KANBAN_CLASS=='-0' " class="todo-list ui-sortable">
+			            		<h4>&nbsp;&nbsp;&nbsp;程序猿努力开发中，敬请期待...</h4>
+			            	</div>
+			              	<!-- See dist/js/pages/dashboard.js to activate the todoList plugin -->
+			              	<ul v-if="cd_l.KANBAN_CLASS=='03' " class="todo-list ui-sortable">
+			              		<!-- 我的任务 -->
+			              		<li style="padding:5px;" v-for="cData in cd_l.contentData">
+				                	<!-- <span class="handle"></span> -->
+				                  	<!-- todo text -->
+				                  	<span style="font-weight:1;margin-left: 1px;" class="text" @click = "doTask(cd_l,cData)" >{{cData.TASK_CONTENT}}</span>
+				                  	<!-- Emphasis label -->
+				                  	<small style="font-weight:1;"  @click = "doTask(cd_l,cData)" v-if="cData.DANGER_FLAG == '0'" class="label label-success"><i class="fa fa-clock-o"></i> {{cData.CREATE_DATE}}</small>
+				                  	<small style="font-weight:1;" @click = "doTask(cd_l,cData)" v-if="cData.DANGER_FLAG == 'X'" class="label label-danger"><i class="fa fa-clock-o"></i> {{cData.CREATE_DATE}}</small>
+				                  	<!-- General tools such as edit or delete-->
+<!-- 				                  	<div class="tools">
+				                    	<i class="fa fa-edit"></i>
+				                  	</div> -->
+			                	</li>
+			              	</ul>
+			            </div>			            
+			            
+			    	</div>
+					
+				</section>
+				
+				<section id="section_r" class="col-md-5 ui-sortable">
+					<div v-for="cd_r in contentDynamic_R"  class="box box-success box-widget" v-cloak>
+			        	<div class="box-header ui-sortable-handle" style="cursor: move;">
+			            	<i :class="cd_r.ICON"></i>
+			              	<h3 class="box-title">{{cd_r.KANBAN_MSG}}</h3>
+<!-- 				              <div class="box-tools pull-right" data-toggle="tooltip" title="" data-original-title="Status">
+				                <div class="btn-group" data-toggle="btn-toggle">
+				                  <button type="button" class="btn btn-default btn-sm active"><i class="fa fa-square text-green"></i>
+				                  </button>
+				                  <button type="button" class="btn btn-default btn-sm"><i class="fa fa-square text-red"></i></button>
+				                </div>
+				              </div> -->
+			        	</div>
+				       	<div v-if="cd_r.KANBAN_CLASS =='02' && cd_r.KANBAN_TYPE =='03' " class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; ">
+				        	<div class="box-body" style="overflow: scroll; width: auto;" v-bind:style="{height: cd_r.MIN_HIGH}" >
+				              <!-- chat item -->
+				              	<div v-for="cData in cd_r.contentData " class="item">
+				                	<p class="message">
+				                  		<a href="javascript:void(0);" @click ="showMessage(cData.KANBAN_MSG,cData.CONTENTS)" class="name">
+				                    		<small class="text-muted pull-right"><i class="fa fa-clock-o"></i> {{cData.EDIT_DATE}}</small>
+				                    		{{cData.KANBAN_MSG}}
+				                  		</a>
+				               	 	</p>
+				                <!-- /.attachment -->
+				              	</div>
+				              <!-- /.item -->
+				            </div>
+				            <div class="slimScrollBar" style="background: rgb(0, 0, 0); width: 7px; position: absolute; top: 0px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; right: 1px; height: 188.822px;"></div>
+				            <div class="slimScrollRail" style="width: 7px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; right: 1px;"></div>
+						</div>
+						
+						<div v-if="cd_r.KANBAN_CLASS =='02' && (cd_r.KANBAN_TYPE =='01' || cd_r.KANBAN_TYPE =='02') " class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; ">
+				        	<div class="box-body" style="overflow: scroll; width: auto;" v-bind:style="{height: cd_r.MIN_HIGH}" >
+				              <!-- chat item -->
+				              	<div v-for="cData in cd_r.contentData " class="item">
+				                	<p class="message">
+				                  		<a v-if="(cData.DOWNLOAD ==null || cData.DOWNLOAD =='') && (cData.TARGET ==null || cData.TARGET =='') " :href="cData.HREF"  class="name" >
+				                    		<small class="text-muted pull-right"><i class="fa fa-envelope-o"></i> {{cData.LINK_NAME}}</small>
+				                    		{{cData.KANBAN_MSG}}
+				                  		</a>
+				                  		<a v-if="cData.DOWNLOAD !=null && cData.DOWNLOAD !='' " :href="cData.HREF" :download="cData.DOWNLOAD" class="name" >
+				                    		<small class="text-muted pull-right"><i class="fa fa-link"></i> {{cData.LINK_NAME}}</small>
+				                    		{{cData.KANBAN_MSG}}
+				                  		</a>
+				                  		<a v-if="cData.TARGET !=null && cData.TARGET !='' " :href="cData.HREF" :target="cData.TARGET" class="name" >
+				                    		<small class="text-muted pull-right"><i class="fa fa-link"></i> {{cData.LINK_NAME}}</small>
+				                    		{{cData.KANBAN_MSG}}
+				                  		</a>
+				                  		
+				               	 	</p>
+				                <!-- /.attachment -->
+				              	</div>
+				              <!-- /.item -->
+				            </div>
+				            <div class="slimScrollBar" style="background: rgb(0, 0, 0); width: 7px; position: absolute; top: 0px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; right: 1px; height: 188.822px;"></div>
+				            <div class="slimScrollRail" style="width: 7px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; right: 1px;"></div>
+						</div>
+						
+					</div>
+				</section>
+
+				<section id="section_m" class="col-md-12 ui-sortable">
+					<div v-for="cd_m in contentDynamic_M " class="box box-widget" v-cloak>
+		            	<div v-if="cd_m.KANBAN_CLASS=='04'" class="box-header ui-sortable-handle" style="cursor: move;">
+			              	<i :class="cd_m.ICON"></i>
+			              	<h3 class="box-title">{{cd_m.KANBAN_MSG}} 
+			              </h3>
+			            </div>					
+						<div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; ">
+							<div v-if="cd_m.KANBAN_CLASS=='04'" class="box-body" style="overflow: scroll; width: auto;" >
+								<iframe :src="'${request.contextPath}/'+cd_m.CONTENT_URL" v-bind:style="{height: cd_m.MIN_HIGH}"  style="width: 100%;border-top-width: 0px;border-right-width: 0px;border-bottom-width: 0px;border-left-width: 0px;"  >
+									
+								</iframe>
+							</div>
+						</div>
+					</div>
+				</section>
+				
+			</div>
+		</div>
+	</div>
+
+</body>
+
+<script>
+	var baseUrl = '${request.contextPath}/';
+	
+	var vm = new Vue({
+		el : '#rrapp',
+		data : {
+			contentDynamic_L: {},
+			contentDynamic_R: {},
+			contentDynamic_M: {},
+			
+			WERKS:"",
+			WH_NUMBER:"",
+		},
+		watch:{
+			WERKS:{
+				handler:function(newVal,oldVal){
+					
+				}
+			}
+		},
+		methods : {
+			//获取用户看板清单
+			getUserKanban: function(){
+				let contentDynamic_L = {};
+				let contentDynamic_R = {};
+				let contentDynamic_M = {};
+				
+				js.loading('获取用户看板信息..');
+				$.ajax({
+					url:baseUrl+"sys/user/getUserKanban",
+					type:"post",
+					async: false,
+					dataType:"json",
+					data:{
+					},
+					success:function(response){
+						if(response.code==500){
+							js.showErrorMessage(response.msg);
+							return false;
+						}
+						if(response.code=='0'){
+							for(var i=0;i<response.data.length;i++){
+								var row = response.data[i];
+								//获取看板查询条件
+								if(row.WERKS == undefined || row.WERKS == null || row.WERKS =='null' || row.WERKS ==''){
+									var QUERY_REQUIRED = row.QUERY_REQUIRED;
+									if( QUERY_REQUIRED != null && QUERY_REQUIRED !='null' && QUERY_REQUIRED!='' && QUERY_REQUIRED.indexOf("WERKS") != -1){
+										//工厂查询条件为必填项，获取工厂列表
+										if(row.MENU_KEY == null || row.MENU_KEY =='null' || row.MENU_KEY ==''){
+											js.showErrorMessage("工厂为获取看板内容的必须查询条件，需维护获取看板内容工厂权限的菜单KEY！");
+											return false;
+										}
+										var userAuthWerksList = getUserAuthWerksList(row.MENU_KEY);
+										row['WERKS'] = userAuthWerksList[0].CODE;
+										row['userAuthWerksList'] = userAuthWerksList;
+									}
+								}
+								if(row.WH_NUMBER == undefined || row.WH_NUMBER == null || row.WH_NUMBER =='null' || row.WH_NUMBER ==''){
+									if(QUERY_REQUIRED != null && QUERY_REQUIRED !='null' && QUERY_REQUIRED!='' && QUERY_REQUIRED.indexOf("WH_NUMBER") != -1){
+										//仓库号查询条件为必填项，获取仓库号列表
+										if(row.MENU_KEY == null || row.MENU_KEY =='null' || row.MENU_KEY ==''){
+											js.showErrorMessage("仓库号为获取看板内容的必须查询条件，需维护获取看板内容仓库号权限的菜单KEY！");
+											return false;
+										}
+										var userAuthWhList = getUserAuthWhList(row.MENU_KEY);
+										row['WH_NUMBER'] = userAuthWhList[0].CODE;
+										row['userAuthWhList'] = userAuthWhList;
+									}
+								}
+								if(row.MAT_MANAGER == undefined || row.MAT_MANAGER == null || row.MAT_MANAGER =='null' || row.MAT_MANAGER ==''){
+									if(QUERY_REQUIRED != null && QUERY_REQUIRED !='null' && QUERY_REQUIRED!='' && QUERY_REQUIRED.indexOf("MAT_MANAGER") != -1){
+										//获取物料管理员清单
+										var matManagerList = getMatManager(row.WH_NUMBER,row.KANBAN_TYPE);
+										row['MAT_MANAGER'] = matManagerList[0].MANAGER_STAFF;
+										row['matManagerList'] = matManagerList;
+									}
+								}
+								
+								
+								//获取动态内容
+								row = getContentData(row);
+								
+								if(row.FLOAT1=="L"){
+									contentDynamic_L[row.ID] = row;
+								}
+								if(row.FLOAT1=="R"){
+									contentDynamic_R[row.ID] = row;
+								}
+								if(row.FLOAT1=="M"){
+									contentDynamic_M[row.ID] = row;
+								}
+							}
+							
+							if(JSON.stringify(contentDynamic_L)=='{}'){
+								contentDynamic_L[0] = {'KANBAN_MSG':"我的任务",'MIN_HIGH':'480px','CONTENT_URL':"",'KANBAN_CLASS':'-0','ICON':"fa fa-flag-o"};
+							}
+							
+						}
+					}
+				})
+				js.closeLoading();
+				
+				this.contentDynamic_L = contentDynamic_L;
+				this.contentDynamic_R = contentDynamic_R;
+				this.contentDynamic_M = contentDynamic_M;
+			},
+		},
+		created:function(){
+			//this.WERKS=$("#WERKS").find("option").first().val();
+			this.getUserKanban();
+		}
+	});
+	
+	//看板查询条件变更，重新获取看板内容
+	function queryConChanged(TYPE,FLOAT1,ROW_ID){
+		var contentObj = null;
+		var contentDynamicMap = null;
+		if(FLOAT1 == 'L'){
+			contentDynamicMap = vm.contentDynamic_L;
+		}
+		if(FLOAT1 == 'R'){
+			contentDynamicMap = vm.contentDynamic_R;
+		}
+		if(FLOAT1 == 'M'){
+			contentDynamicMap = vm.contentDynamic_M;
+		}
+		contentObj = contentDynamicMap[ROW_ID];
+		var queryConId ="";
+		if(TYPE=='WH_NUMBER'){
+			queryConId = 'WH_NUMBER_'+ROW_ID;
+		}
+		if(TYPE=='WERKS'){
+			queryConId = 'WERKS_'+ROW_ID;
+		}
+		if(TYPE=='MAT_MANAGER'){
+			//物料管理员， 质检员-仓管员
+			queryConId = 'MAT_MANAGER_'+ROW_ID;
+		}
+		contentObj[TYPE] = $("#"+queryConId).val();
+		contentObj = getContentData(contentObj);
+		contentDynamicMap[ROW_ID] = contentObj;
+		if(FLOAT1 == 'L'){
+			vm.contentDynamic_L = contentDynamicMap ;
+		}
+		if(FLOAT1 == 'R'){
+			vm.contentDynamic_R = contentDynamicMap ;
+		}
+		if(FLOAT1 == 'M'){
+			vm.contentDynamic_M = contentDynamicMap ;
+		}
+	}
+	
+	//根据看板URL及配置的必要条件获取看板详细内容
+	//contentObj 为看板对象
+	function getContentData(contentObj) {
+		var queryData = {};
+		var QUERY_REQUIRED = contentObj.QUERY_REQUIRED;
+		
+		if( QUERY_REQUIRED != null && QUERY_REQUIRED !='null' && QUERY_REQUIRED!=''){
+			var qArr = QUERY_REQUIRED.split(",");
+			for(var i=0;i<qArr.length; i++){
+				var q = qArr[i];
+				if( q.length > 0){
+					queryData[q] = contentObj[q];
+				}
+			}
+		}
+		if( contentObj.CONTENT_URL != null && contentObj.CONTENT_URL !='null' && contentObj.CONTENT_URL!=''){
+			queryData['KANBAN_TYPE'] = contentObj.KANBAN_TYPE;
+			js.loading('获取看板内容...');	
+			$.ajax({
+				url:baseUrl+contentObj.CONTENT_URL,
+				type:"post",
+				async:false,
+				dataType:"json",
+				data: queryData,
+				success:function(response){
+					if(response.code==500){
+						js.showErrorMessage("获取看板内容失败："+response.msg);
+						return false;
+					}
+					if(response.code=='0'){
+						contentObj['contentData'] = response.data;
+					}
+				}
+			});
+			js.closeLoading();
+			return contentObj;
+		}else{
+			contentObj['contentData'] = [];
+			return contentObj;
+		}
+	}
+	
+	
+	//显示系统通知详细内容
+	function showMessage(KANBAN_MSG,CONTENTS){
+		layer.open({
+			  type: 1, 
+			  content: 
+				  '&nbsp;&nbsp;&nbsp;'+CONTENTS,
+		   	  title : KANBAN_MSG,
+		   	  offset : [ '500px', '250px' ],
+		   	  area : [ '400px', '300px' ],
+		   	  shade : 0,
+		   	  shadeClose : false,
+		   	btn : [ '确定', '取消' ],
+			btn1 : function(index) {
+				layer.close(index);
+			}
+		});
+	}
+	
+	//处理任务
+	function doTask(contentObj,task){
+		if(contentObj.KANBAN_TYPE == '04'){
+			//来料质检任务处理
+			var WERKS = task.WERKS;
+			var WH_NUMBER = task.WH_NUMBER;
+			var MATNR = task.MATNR;
+			var BATCH = task.BATCH;
+			js.addTabPage(null, '<i class="fa fa-plus" style="font-size:12px">来料质检</i>',
+						'wms/qc/wms_qc_quality_inspection.html?WERKS='+WERKS+'&WH_NUMBER='
+								+WH_NUMBER+'&MATNR='+MATNR+'&BATCH='+BATCH, 
+						true, true);
+		}else if(contentObj.KANBAN_TYPE == '05'){
+			//来料进仓任务处理
+			var WERKS = task.WERKS;
+			var WH_NUMBER = task.WH_NUMBER;
+			var MATNR = task.MATNR;
+			var BATCH = task.BATCH;
+			js.addTabPage(null, '<i class="fa fa-plus" style="font-size:12px">收货进仓单</i>',
+						'wms/in/wms_inbound.html?WERKS='+WERKS+'&WH_NUMBER='
+								+WH_NUMBER+'&MATNR='+MATNR+'&BATCH='+BATCH, 
+						true, true);
+		}else{
+			alert('未知任务类型，待开发...');
+		}
+	}
+
+	//根据菜单KEY获取用户有权限的仓库号清单
+	function getUserAuthWhList(MENU_KEY){
+		var userAuthWhList = [];
+		js.loading('获取用户权限仓库号...');
+		$.ajax({
+			url:baseUrl+"sys/user/getUserAuthWh",
+			type:"post",
+			async: false,
+			dataType:"json",
+			data:{
+				'MENU_KEY':MENU_KEY
+			},
+			success:function(response){
+				if(response.code==500){
+					js.showErrorMessage(response.msg);
+					return false;
+				}
+				if(response.code=='0'){
+					userAuthWhList = response.data;
+				}
+			}
+		});
+		js.closeLoading();
+		return userAuthWhList;
+	}
+	
+	//根据菜单KEY获取用户有权限的工厂清单
+	function getUserAuthWerksList(MENU_KEY){
+		var userAuthWerksList = [];
+		js.loading('获取用户权限工厂...');
+		$.ajax({
+			url:baseUrl+"sys/user/getUserAuthWerks",
+			type:"post",
+			async: false,
+			dataType:"json",
+			data:{
+				'MENU_KEY':MENU_KEY
+			},
+			success:function(response){
+				if(response.code==500){
+					js.showErrorMessage(response.msg);
+					return false;
+				}
+				if(response.code=='0'){
+					userAuthWerksList = response.data;
+				}
+			}
+		});
+		js.closeLoading();
+		return userAuthWerksList;
+	}
+	
+	//根据仓库号、看板类型获取物料管理员清单
+	function getMatManager(WH_NUMBER,KANBAN_TYPE){
+		var MANAGER_TYPE = "01"; //01 仓库员 02 QC
+		if(KANBAN_TYPE =="04"){
+			//来料质检任务
+			MANAGER_TYPE = "02";
+		}
+		var userManagerList = [];
+		js.loading('获取物料管理清单...');
+		$.ajax({
+			url:baseUrl+"common/getMatManager",
+			type:"post",
+			async: false,
+			dataType:"json",
+			data:{
+				'WH_NUMBER': WH_NUMBER,
+				'MANAGER_TYPE': MANAGER_TYPE
+			},
+			success:function(response){
+				if(response.code==500){
+					js.showErrorMessage(response.msg);
+					return false;
+				}
+				if(response.code=='0'){
+					userManagerList = response.data;
+				}
+			}
+		});
+		js.closeLoading();
+		return userManagerList;
+	}
+	
+</script>
+</html>

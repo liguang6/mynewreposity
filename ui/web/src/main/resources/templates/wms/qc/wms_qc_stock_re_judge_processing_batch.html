@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库存复检-单批质检之质检中</title>  
+<#include "/web_header.html">
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+.control-label {
+	width: 100px;
+}
+
+.op {
+	padding: 0 8px;
+}
+
+table tr th {
+	text-align: center;
+	background-color: #f2f2f2;
+}
+
+.control-inline span {
+	word-wrap: break-word;
+	word-break: break-all;
+	overflow: hidden;
+	font-size: 12px;
+    font-weight: bold;
+}
+
+.control-inline {
+    padding-bottom: 3px;
+}
+
+.fa-times {
+    color:#f1403c
+}
+.fa-plus {
+    color:#00a65a
+}
+</style>
+</head>
+<body class="hold-transition" >
+	<div class="wrapper"  id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+
+					<div class="form-inline">
+						
+						<!-- 查询条件 -->
+						<div class="row">
+						 <div class="form-group">
+							<label class="control-label">WMS批次：</label>
+							<div class="control-inline" style="width:175px" >
+								<span>{{itemTemplate.BATCH}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label" >工厂代码：</label>
+							<div class="control-inline" style="width:175px" >
+								<span>{{itemTemplate.WERKS}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">仓库号：</label>
+							<div class="control-inline" style="width:175px">
+								<span>{{itemTemplate.WH_NUMBER}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">库位：</label>
+							<div class="control-inline" style="width:175px">
+								<span>{{itemTemplate.LGORT}}</span>
+							</div>
+						</div>
+						
+							<div class="form-group">
+							<label class="control-label" >需求跟踪号：</label>
+							<div class="control-inline" style="width:175px">
+								<span>{{itemTemplate.BEDNR}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">物料号：</label>
+							<div class="control-inline" style="width:175px">
+								<span>{{itemTemplate.MATNR}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">物料描述：</label>
+							<div class="control-inline" style="width:175px" >
+								<span>{{itemTemplate.MAKTX}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">供应商代码：</label>
+							<div class="control-inline" style="width:175px">
+								<span>{{itemTemplate.LIFNR}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">供应商名称：</label>
+							<div class="control-inline" style="width:175px">
+								<span>{{itemTemplate.LIKTX}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">送检数量：</label>
+							<div class="control-inline" style="width:175px">
+								<span>{{itemTemplate.INSPECTION_QTY}}</span>
+							</div>
+						</div>
+						
+						<!-- <div class="form-group">
+							<label class="control-label">收货日期：</label>
+							<div class="control-inline" style="width:175px">
+								<span>{{itemTemplate.RECEIPT_DATE}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">成本中心 ：</label>
+							<div class="control-inline" style="width:175px">
+								<input type="text" placeholder="成品中心" class="form-control"/>
+							</div>
+						</div> -->
+
+						</div>
+						
+					</div>
+					
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#'
+								class='btn' id='saveOperation' @click="save"><i class='fa fa-check'
+								aria-hidden='true'></i> 保存</a> 
+								
+								<a href="#" class="btn"
+								id="backOperation" @click="back()" title="返回" ><i class="fa fa-filter"></i> 返回</a>
+						</div>
+					</div>
+					
+					<table class="table table-bordered table-hover auto-word-break" id="data-table" style="text-align:center" >
+					   <tr>
+					   <th width="10%">操作</th>
+					   <th width="15%">送检单号</th>
+					   <th width="10%">行项目</th>
+					   <th width="5%">单位</th>
+					   <th width="5%">送检数量</th>
+					   <th width="10%">质检数量</th>
+					   <th width="10%">品质判定</th>
+					   <th width="15%">不合格原因</th>
+					   <th width="10%">质检员</th>
+					   <!-- <th width="10%">破坏数量</th> -->
+					   </tr>
+					   
+					   <tr v-for="(t,index) in items" :key="t.ID">
+					     <td style="text-align: center;"><a href="#" class="op" @click="remove(index)"><i class="fa fa-times" aria-hidden="true"></i></a> <a href="#" class="op" @click="add(index)"><i class="fa fa-plus"></i></a></td>
+					     <td>{{t.INSPECTION_NO}}</td>
+					     <td>{{t.INSPECTION_ITEM_NO}}</td>
+					     <td>{{t.UNIT}}</td>
+					     <td>{{t.INSPECTION_QTY}}</td>
+					     <td><input type="text"  class="form-control" v-model="t.RESULT_QTY"/></td>
+					     <td>
+					     <select  @change="resultChange($event,index)" v-model="t.QC_RESULT_CODE" class="form-control">
+					       <option v-for="s in qcResultCodes" :key="s.id" :value="s.code">{{s.value}}</option>
+					     </select> 
+					     </td>
+					     <td @click="openReturnReason(index)" style="cursor:pointer;color:#e9686b">{{t.QC_RESULT}}</td>
+					     <td><input type="text"  class="form-control" v-model="t.QC_PEOPLE"/></td>
+					    <!--  <td>
+					         <input v-if="t.destoryVisiable === false" type="number"  class="form-control" v-model="t.DESTROY_QTY" disabled="disabled"/>
+					         <input v-else="t.destoryVisiable" type="number"  class="form-control" v-model="t.DESTROY_QTY" />
+					     </td> -->
+					   </tr>
+					</table>					
+				</div>
+			</div>
+		</div>
+		
+		<div id="returnreason" style="display: none; text-align: center;" >
+		   <select id="reasons" v-model="reasonCode">
+		     <option v-for="r in returnreasons" :value="r.reasonCode" :key="r.id">{{r.reasonDesc}}</option>
+		   </select>
+		</div>
+		
+		<!-- 初始化变量  -->
+		<input id="inspectionItemNo" value="${inspectionItemNo}" hidden="hidden"/>
+		<input id="inspectionNo" value="${inspectionNo}" hidden="hidden"/>
+		<input id="type" value="${type}" hidden="hidden"/>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/wms/qc/wms_qc_stock_re_judge_processing_batch.js?_${.now?long}"></script>
+</body>
+
+
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>来料质检之已质检改判</title>  
+<#include "/web_header.html">
+<style type="text/css">
+.control-label {
+	width: 100px;
+}
+
+.op {
+	padding: 0 8px;
+}
+
+table tr th {
+	text-align: center;
+	background-color: #f2f2f2;
+}
+
+
+.control-inline span {
+	word-wrap: break-word;
+	word-break: break-all;
+	overflow: hidden;
+	font-size: 12px;
+    font-weight: bold;
+}
+
+.control-inline {
+    padding-bottom: 3px;
+}
+.fa-times {
+    color:#f1403c
+}
+.fa-plus {
+    color:#00a65a
+}  
+[v-cloak] {
+      display: none;
+}
+</style>
+</head>
+<body class="hold-transition" >
+	<div class="wrapper"  id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+
+					<div class="form-inline">
+						
+						<!-- 查询条件 -->
+						<div class="row">
+						 <div class="form-group">
+							<label class="control-label">收货单号：</label>
+							<div class="control-inline" style="width:175px" >
+								<span v-cloak>{{receipt.receiptNo}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label" >WMS批次：</label>
+							<div class="control-inline" style="width:175px" >
+								<span v-cloak>{{receipt.batch}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">工厂：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{receipt.werks}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">仓库号：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{receipt.whNumber}}</span>
+							</div>
+						</div>
+						
+							<div class="form-group">
+							<label class="control-label" >库位：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{receipt.lgort}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">物料号：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{receipt.matnr}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">物料描述：</label>
+							<div class="control-inline" style="width:175px" >
+								<span v-cloak>{{receipt.maktx}}</span>
+							</div>
+						</div>
+						<!-- </div>
+						
+						<div class="row"> -->
+						
+					
+						
+						<div class="form-group">
+							<label class="control-label">供应商代码：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{receipt.lifnr}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">供应商名称：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{receipt.liktx}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">可改判数量：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{receipt.updateable}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">收货日期：</label>
+							<div class="control-inline" style="width:175px">
+								<span v-cloak>{{receipt.receiptDate}}</span>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label">成本中心 ：</label>
+							<div class="control-inline" style="width:175px">
+								<input type="text" placeholder="成品中心" class="form-control" v-model="costcenter" @blur="checkCostCenter()"/>
+								<p><span v-cloak>{{costcenterName}}</span></p>
+							</div>
+						</div>
+
+						</div>
+						
+					</div>
+					
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#'
+								class='btn' id='saveOperation'  @click="save"><i class='fa fa-check'
+								aria-hidden='true' ></i> 保存</a> 
+								
+								<a href="#" class="btn"
+								id="backOperation" title="返回" onclick="js.closeCurrentTabPage()"><i class="fa fa-chevron-left" aria-hidden="true"></i> 返回</a>
+						</div>
+					</div>
+					<div style="overflow:auto;display:block">
+					<table class="table table-bordered" id="data-table" style="text-align:center" >
+					   <tr>
+					   <th >操作</th>
+					   <th >送检单号</th>
+					   <th >行项目</th>
+					   <th >单位</th>
+					   <th>物料号</th>
+					   <th >物料描述</th>
+					   <th>可改判数量</th>
+					   <th>改判数量</th>
+					   <th >品质判定</th>
+					   <th>不合格原因</th>
+					   <th>质检员</th>
+					   <th>破坏数量</th>
+					   </tr>
+					   <tr  v-for="(t,index) in items" :title="returnAndInBoundAlertWord(t)" v-cloak>
+					     
+					       <td style="text-align: center;"><a href="#" class="op" @click="remove(index)"><i class="fa fa-times" aria-hidden="true"></i></a> <a href="#" class="op" @click="add(index)"><i class="fa fa-plus"></i></a></td>
+					       <td>{{t.inspectionNo}}</td>
+					       <td>{{t.inspectionItemNo}}</td>
+					       <td>{{t.unit}}</td>
+					       <td>{{t.matnr}}</td>
+					       <td>{{t.maktx}}</td>
+					       <td>{{t.updateable}}</td>
+					       <td><input v-model="t.resultQty" type="number" class="form-control"/></td>
+					       <td>
+					       		
+					          		<select :disabled="returnAndInBoundAlertWord(t).length > 0" v-model="t.qcResultCode" @change="openReturnReason(index)">
+					           			<option v-for="d in qcResult" :value="d.qcResultCode" :key="d.id">{{ d.qcResultName }}</option>
+					           		</select>
+					           
+					        </td>
+					        <td @click="openReturnReason(index)" style="cursor:pointer;color:#e9686b">{{t.qcResult}}</td>
+					        <td><input v-model="t.qcPeople" type="text" class="form-control" style='width:100px'/></th>
+					        <td>
+					          <input v-if="t.destoryEditable === true"  v-model="t.destroyQty" type="number" class="form-control" style='width:100px'/>
+					          <input v-else v-model="t.destroyQty" type="number" class="form-control" disabled="disabled" style='width:100px'/>
+					        </td>
+					        
+					   </tr>
+					</table>	
+					</div>				
+				</div>
+			</div>
+		</div>
+
+        <div id="returnreason" style="display: none; text-align: center;" >
+		   <select id="reasons" v-model="reasonCode">
+		     <option v-for="r in returnreasons" :value="r.reasonCode" :key="r.id">{{r.reasonDesc}}</option>
+		   </select>
+		</div>
+
+	</div>
+	<input hidden="hidden" name="id" id ="receiptId" value="${id}"/>
+	<script src="${request.contextPath}/statics/js/wms/qc/wms_qc_has_inspected_re_judge.js?_${.now?long}"></script>
+</body>
+
+
+</html>

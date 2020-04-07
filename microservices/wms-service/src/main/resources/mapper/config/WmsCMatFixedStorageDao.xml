@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCMatFixedStorageDao">
+
+	<resultMap id="wmsCMatFixedStorageMap" type="com.byd.wms.business.modules.config.formbean.WmsCMatFixedStorageFormbean" >
+        <result property="id" column="ID"/>
+        <result property="werks" column="WERKS"/>
+        <result property="whNumber" column="WH_NUMBER"/>
+        <result property="matnr" column="MATNR"/>
+        <result property="maktx" column="MAKTX"/>
+        <result property="storageAreaCode" column="STORAGE_AREA_CODE"/>
+        <result property="binCode" column="BIN_CODE"/>
+        <result property="seqno" column="SEQNO"/>
+        <result property="qty" column="QTY"/>
+        <result property="stockM" column="STOCK_M"/>
+        <result property="stockL" column="STOCK_L"/>
+        <result property="lgort" column="LGORT"/>
+        <result property="sobkz" column="SOBKZ"/>
+        <result property="lifnr" column="LIFNR"/>
+        <result property="editor" column="EDITOR"/>
+        <result property="editDate" column="EDIT_DATE"/>
+    </resultMap>
+    
+    <select id="queryFixedStorage" parameterType="Map" resultMap="wmsCMatFixedStorageMap">
+		SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+         	select wcm.*,wsm.maktx 
+			from wms_c_mat_fixed_storage wcm, wms_sap_material wsm
+			where wcm.matnr = wsm.matnr
+			  and wcm.werks = wsm.werks
+			  and wcm.del = 0
+			  <if test="werks != null and werks !=''">
+			      AND wcm.WERKS=#{werks} 
+			  </if>
+			  <if test="whNumber != null and whNumber !=''">
+			      AND wcm.WH_NUMBER = #{whNumber}
+			  </if>
+			  <if test="matnr != null and matnr !=''">
+			      AND wcm.matnr=#{matnr} 
+			  </if>
+		  ) TMP 
+		 WHERE ROWNUM  &lt;=#{END}
+		 <if test="AUTHSQL_WH_NUMBER != null and AUTHSQL_WH_NUMBER != ''">
+			and ${AUTHSQL_WH_NUMBER}
+		 </if>
+		 )  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+
+  </select>
+  
+  <select id="getListCount" parameterType="Map" resultType="int">
+  	  select COUNT(1) from 
+  	    (select wcm.werks,wcm.matnr,wcm.wh_number
+			from wms_c_mat_fixed_storage wcm, wms_sap_material wsm
+			where wcm.matnr = wsm.matnr
+		  	  and wcm.werks = wsm.werks 
+		  	  and wcm.del = 0
+	      <if test="werks != null and werks !=''">
+			  AND wcm.WERKS=#{werks} 
+		  </if>
+		  <if test="whNumber != null and whNumber !=''">
+			  AND wcm.WH_NUMBER = #{whNumber}
+		  </if>
+		  <if test="matnr != null and matnr !=''">
+			  AND wcm.matnr=#{matnr} 
+		  </if>
+		)
+		where 1=1
+		<if test="AUTHSQL_WH_NUMBER != null and AUTHSQL_WH_NUMBER != ''">
+			and ${AUTHSQL_WH_NUMBER}
+		</if>
+  </select>
+  
+  <select id="validate"  parameterType="List" resultType="Map">
+  		SELECT ID,CONCAT(WH_NUMBER,'-') || CONCAT(WERKS,'-') || CONCAT(MATNR,'-') ||BIN_CODE  AS UNIQUE_STR  FROM wms_c_mat_fixed_storage 
+	        WHERE CONCAT(WH_NUMBER,'-') || CONCAT(WERKS,'-') || CONCAT(MATNR,'-') ||BIN_CODE IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+  </select>
+  
+  <select id="findEmptyBin"  parameterType="Map" resultType="com.byd.wms.business.modules.config.entity.WmsCMatFixedStorageEntity">
+  	select distinct wcmfs.* from WMS_CORE_WH_BIN wcwb,
+              WMS_C_MAT_FIXED_STORAGE wcmfs
+        where wcwb.wh_number = wcmfs.wh_number
+          and wcwb.bin_code = wcmfs.bin_code
+          and wcwb.empty_bin = '0'
+          and wcmfs.del ='0'
+          <if test="whNumber != null and whNumber !=''">
+			  AND wcmfs.WH_NUMBER = #{whNumber}
+		  </if>
+          <if test="werks != null and werks !=''">
+			  AND wcmfs.WERKS=#{werks} 
+		  </if>
+		  <if test="matnr != null and matnr !=''">
+			  AND wcmfs.matnr=#{matnr} 
+		  </if>
+		  <if test="storageAreaCode != null and storageAreaCode !=''">
+			  AND wcmfs.storage_area_code=#{storageAreaCode} 
+		  </if>
+		  <!-- <if test="lgort != null and lgort !=''">
+			  AND wcmfs.lgort=#{lgort} 
+		  </if>
+		  <if test="sobkz != null and sobkz !=''">
+			  AND wcmfs.sobkz=#{sobkz} 
+		  </if>
+		  <if test="lifnr != null and lifnr !=''">
+			  AND wcmfs.lifnr=#{lifnr} 
+		  </if> -->
+          order by wcmfs.seqno 
+  </select>
+  
+  <select id="findAlreadyBin" parameterType="Map" resultType="Map">
+  	select distinct wcmfs.*, wcs.stock_qty from 
+              WMS_C_MAT_FIXED_STORAGE wcmfs,
+              WMS_CORE_STOCK wcs
+        where wcmfs.wh_number = wcs.wh_number
+          and wcmfs.werks = wcs.werks
+          and wcmfs.matnr = wcs.matnr
+          and wcmfs.bin_code = wcs.bin_code
+          and wcmfs.del ='0'
+          <if test="whNumber != null and whNumber !=''">
+			  AND wcmfs.WH_NUMBER = #{whNumber}
+		  </if>
+          <if test="werks != null and werks !=''">
+			  AND wcmfs.WERKS=#{werks} 
+		  </if>
+		  <if test="matnr != null and matnr !=''">
+			  AND wcmfs.matnr=#{matnr} 
+		  </if>
+		  <if test="storageAreaCode != null and storageAreaCode !=''">
+			  AND wcmfs.storage_area_code=#{storageAreaCode} 
+		  </if>
+		  <!-- <if test="lgort != null and lgort !=''">
+			  AND wcmfs.lgort=#{lgort} 
+		  </if>
+		  <if test="sobkz != null and sobkz !=''">
+			  AND wcmfs.sobkz=#{sobkz} 
+		  </if>
+		  <if test="lifnr != null and lifnr !=''">
+			  AND wcmfs.lifnr=#{lifnr} 
+		  </if> -->
+          order by wcmfs.seqno 
+  </select>
+</mapper>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysDataPermissionObjectDao">
+
+
+	<select id="queryDataPermissionObjectList" resultType="java.util.HashMap" parameterType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+			select a.id,a.AUTH_FIELDS as AUTHFIELDS,a.AUTH_NAME as AUTHNAME,a.MENU_ID as MENUID,b.name as MENUname from SYS_AUTH_OBJECT a
+			left join sys_menu b on a.menu_id = b.menu_id
+			where 1=1
+			AND a.DEL='0'
+			<if test="menuId != '' and menuId != null">
+				AND a.menu_Id = #{menuId}
+			</if>
+			order by a.id
+		)TMP
+		WHERE ROWNUM  &lt;=#{end})
+		WHERE ROW_ID > #{start}
+	</select>
+
+	<select id="selectSysDataPermissionObjectById" resultType="java.util.HashMap" parameterType="Map">
+		select a.id,a.AUTH_FIELDS as AUTHFIELDS,a.AUTH_NAME as AUTHNAME,a.MENU_ID as MENUID,b.name as MENUname from SYS_AUTH_OBJECT a
+			left join sys_menu b on a.menu_id = b.menu_id
+		where 1=1
+        AND a.id = #{id}
+        AND a.DEL='0'
+	</select>
+
+	<select id="getSysDataPermissionObjectCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM SYS_AUTH_OBJECT a
+		left join sys_menu b on a.menu_id = b.menu_id
+		where 1=1
+		and a.DEL='0'
+		<if test="menuId != '' and menuId != null">
+			AND a.menu_Id = #{menuId}
+		</if>
+
+    </select>
+
+
+
+	
+</mapper>

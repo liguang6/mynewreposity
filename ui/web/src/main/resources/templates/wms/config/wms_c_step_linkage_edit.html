@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${tag.getLocale(" ","M")}</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak style="width: 700px">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form class="form-horizontal" id="saveForm" action="#"
+						method="post">
+						<div class="form-group" style="align: center; margin-top: 15px">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right"> <font
+									style="color: red; font-weight: bold">*</font>${tag.getLocale("WAREHOUSECODE","M")}：
+								</label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" name="warehouseCode" id="warehouseCode"
+										class="form-control required"
+										v-model="steplinkage.warehouseCode" @click="getWhNoFuzzy()"
+										placeholder='${tag.getLocale("WAREHOUSECODE","M")}'/>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									发出工厂： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="werksFrom" name="werksFrom"
+										class="form-control " v-model="steplinkage.werksFrom"
+										placeholder="发出工厂" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									接收工厂： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="werksTo" name="werksTo"
+										class="form-control " v-model="steplinkage.werksTo"
+										placeholder="接收工厂" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									凭证类型： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="docType" name="docType"
+										class="form-control " v-model="steplinkage.docType"
+										placeholder="凭证类型" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									采购组： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="ekgrp" name="ekgrp"
+										class="form-control " v-model="steplinkage.ekgrp"
+										placeholder="采购组" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									税码： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="taxCode" name="taxCode"
+										class="form-control " v-model="steplinkage.taxCode"
+										placeholder="税码" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									事业部名称： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="buName" name="buName"
+										class="form-control " v-model="steplinkage.buName"
+										placeholder="事业部名称" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									接收采购组织： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="ekorg" name="ekorg"
+										class="form-control " v-model="steplinkage.ekorg"
+										placeholder="接收采购组织" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									接收公司代码： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="bukrs" name="bukrs"
+										class="form-control " v-model="steplinkage.bukrs"
+										placeholder="接收公司代码" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									客户代码： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="kunnr" name="kunnr"
+										class="form-control " v-model="steplinkage.kunnr"
+										placeholder="客户代码" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									供应商代码： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="lifnr" name="lifnr"
+										class="form-control " v-model="steplinkage.lifnr"
+										placeholder="供应商代码" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									销售凭证类型： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="soDocType" name="soDocType"
+										class="form-control " v-model="steplinkage.soDocType"
+										placeholder="销售凭证类型" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									销售组织： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="soGroup" name="soGroup"
+										class="form-control " v-model="steplinkage.soGroup"
+										placeholder="销售组织" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									分销渠道： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="soChannel" name="soChannel"
+										class="form-control " v-model="steplinkage.soChannel"
+										placeholder="分销渠道" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									分销渠道： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="productGroup" name="productGroup"
+										class="form-control " v-model="steplinkage.productGroup"
+										placeholder="分销渠道" />
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 30%"
+									class="col-sm-3 control-label no-padding-right">
+									装运点： </label>
+								<div style="float: left; width: 45%" class="col-sm-8">
+									<input type="text" id="shippingPoint" name="shippingPoint"
+										class="form-control " v-model="steplinkage.shippingPoint"
+										placeholder="装运点" />
+								</div>
+							</div>
+						</div>
+						
+						
+						
+						<button id="btnSubmit" type="submit" hidden="true"></button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script
+		src="${request.contextPath}/statics/js/wms/config/wms_c_step_linkage_edit.js?_${.now?long}"></script>
+</body>
+</html>

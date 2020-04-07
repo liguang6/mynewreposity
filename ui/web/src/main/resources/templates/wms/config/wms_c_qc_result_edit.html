@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>质检结果配置</title>
+<#include "/web_header.html">
+<style type="text/css">
+select {width: 100%}
+</style>
+</head>
+<body>
+<div id="vue" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="newForm">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label"> 工厂代码</label>
+									<div class="col-xs-8">
+										<!-- <input v-model="entity.werks" onclick="getPlantNoSelect('#werks',null,function(werks){vm.entity.werks = $(werks).val();});" id="werks" name="werks" class="form-control" placeholder="工厂代码"/> -->
+                                        <select class="" name="werks" id="werks" v-model="entity.werks">
+                                            <option value="">请选择</option>
+                                            <#list tag.getUserAuthWerks("WMS_C_QC_RESULT") as factory> 
+                                                <option value="${factory.code}">${factory.code}</option>
+                                            </#list>
+                                        </select>
+                                    </div>
+								</div>
+							</div>
+                           <div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label"> <span class="required"> * </span> 质检结果类型
+									</div>
+									<div class="col-sm-8">
+										<select v-model="entity.qcResultCode" @change="qcResultCodeChange" id="qcResultCode" class="required">
+										   <#list tag.wmsDictList("QC_RESULT_CODE") as dict>
+										       <option value="${dict.code}">${dict.value}</option>
+										   </#list>
+										</select>
+									</div>
+								</div>					
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 可进仓标识
+									</div>
+									<div class="col-sm-8">
+										<select v-model="entity.whFlag" id="whFlag" class="required">
+									       <option value="0">不能进仓</option>
+									       <option value="X">可进仓</option>
+									   </select>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+							<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 可退货标识
+									</div>
+									<div class="col-sm-8">
+										<select v-model="entity.returnFlag" class="required">
+									       <option value="0">不能退货</option>
+									       <option value="X">可退货</option>
+									   </select>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 评审标识
+									</div>
+									<div class="col-sm-8">
+										<select v-model="entity.reviewFlag" class="required">
+									       <option value="0">不需评审</option>
+									       <option value="X">需要评审</option>
+									   </select>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+							<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 是否良品进仓标识
+									</div>
+									<div class="col-sm-8">
+										<select v-model="entity.goodFlag" class="required">
+									       <option value="0">良品</option>
+									       <option value="X">不良品</option>
+									   </select>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+							<div class="row">
+							
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span>质检状态
+									</div>
+									<div class="col-sm-8">
+									 <select v-model="entity.qcStatus" class="required">
+									     <#list tag.wmsDictList("QC_STATUS") as dict>
+									        <option value="${dict.code}">${dict.value}</option>
+									     </#list>
+									 </select>
+										
+									</div>
+								</div>
+							</div>
+							<!-- <div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label"> <span class="required"> * </span> 质检结果类型名称
+									</div>
+									<div class="col-sm-8">
+										<input class="form-control" v-model="entity.qcResultName" name="qcResultName"/>
+									</div>
+								</div>
+							</div> -->
+						</div>
+							
+						
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+	
+	<script type="text/javascript">
+	
+	
+	  var vm = new Vue({
+		  el:"#vue",
+		  data:{entity:{},qcResultDict:[]},
+		  created:function(){
+			    $.ajax({
+			    	url:baseUrl + "wms/dict/getDictlist",
+			    	dataType:"json",
+			    	type:"post",
+			    	data:{"TYPE":"QC_RESULT_CODE"},
+			    	success:function(resp){
+			    		this.qcResultDict = resp.list;
+			    	}
+			    });
+		  },
+		  methods:{
+			  save:function(){
+				  $("#newForm").trigger("submit");
+			  },
+			  init:function(id){
+				  //更新操作，初始化加载数据
+				  $.ajax({
+						url:baseUrl + "config/wmscqcresult/info/"+id+"/",
+						success:function(resp){
+							if(resp.code === 0){
+                                this.entity = resp.data;
+                                $('#werks').attr("disabled",true);
+                                 $('#qcResultCode').attr("disabled",true);
+							}else{
+								alert(resp.msg);
+							}
+						}.bind(this)
+					})
+			  },
+			  qcResultCodeChange:function(){
+				  //同步更新质检结果状态名称，从字典匹配。
+				  var code = this.entity.qcResultCode;
+				  var name;
+				  this.qcResultDict.map(function(val){
+					 if(val.code === code){
+						 name = val.value;
+					 } 
+				  });
+				  this.entity.qcResultName = name;
+			  }
+		  }
+	  })
+	  
+	  $(function(){			
+			$("#newForm").validate({
+				submitHandler:function(e) {
+					vm.entity.werks=$("#werks").val();
+					vm.entity.qcResultCode=$("#qcResultCode").val();
+					vm.entity.qcResultName=$("#qcResultCode :selected").text();
+					var url = baseUrl + "config/wmscqcresult/save";
+					if(vm.entity.whFlag=='' || vm.entity.whFlag==undefined){
+						js.showErrorMessage("可进仓标示不能为空");
+						return;
+					}
+					if(vm.entity.returnFlag=='' || vm.entity.returnFlag==undefined){
+						js.showErrorMessage("可退货标识不能为空");
+						return;
+					}
+					if(vm.entity.reviewFlag=='' || vm.entity.reviewFlag==undefined){
+						js.showErrorMessage("评审标识标示不能为空");
+						return;
+					}
+					if(vm.entity.goodFlag=='' || vm.entity.goodFlag==undefined){
+						js.showErrorMessage("是否良品进仓标识不能为空");
+						return;
+					}
+					if(vm.entity.qcStatus=='' || vm.entity.qcStatus==undefined){
+						js.showErrorMessage("质检状态不能为空");
+						return;
+					}
+					
+					if( (vm.entity.qcStatus == '00' || vm.entity.qcStatus == '01') && (vm.entity.whFlag !='0' || vm.entity.returnFlag !='0')){
+						//未质检、质检中状态 可进仓 可退货 必须为 否
+						js.showErrorMessage("未质检、质检中状态可进仓,可退货标识必须为 否！");
+						return false;
+					}
+					if(vm.entity.qcStatus == '02' && vm.entity.whFlag =='0' && vm.entity.returnFlag =='0'){
+						js.showErrorMessage("已质检状态可进仓,可退货标识不能同时为否！");
+						return false;
+					}
+					if(vm.entity.qcStatus == '02' && vm.entity.whFlag =='X' && vm.entity.returnFlag =='X'){
+						js.showErrorMessage("已质检状态可进仓,可退货标识不能同时为是！");
+						return false;
+					}
+					
+					//默认为新增操作
+					if(vm.entity.id !== undefined && vm.entity.id !== null && vm.entity.id !== ''){
+						//如果ID不为空，则表示是更新操作。
+						url = baseUrl + "config/wmscqcresult/update";
+					}
+					$.ajax({//提交更新数据
+						url : url,
+						type : "POST",
+						contentType : "application/json",
+						data : JSON.stringify(vm.entity),
+						success : function(rep) {
+							if (rep.code === 0) {
+                                 js.showMessage('操作成功');
+								close();
+							} else {
+                                 js.showErrorMessage("保存失败，"+rep.msg);
+							}
+						}
+					})
+
+				}
+			});
+		})
+	</script>
+</body>
+</html>

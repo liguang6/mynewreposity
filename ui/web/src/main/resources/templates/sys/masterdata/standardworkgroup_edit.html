@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>标准班组维护</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+				<tr>
+					<td>
+					
+					<div class="form-group" style="align:center">
+                        
+								<label class="control-label" style="width:80px" >
+										<font style="color:red;font-weight:bold">*</font>车间：
+								</label>
+							   	<div  class="control-inline">
+									<select class="required" v-model="WORKSHOP_CODE" style="width:200px;height: 25px;" id="WORKSHOP" name="WORKSHOP">
+										<option value="">全部</option> 
+									    <#list tag.masterdataDictList('WORKSHOP') as dict>
+									      <option value="${dict.code}">${dict.value}</option>
+									    </#list>
+									</select>	
+							    </div>
+						
+					</div>
+					
+				</td>
+				</tr>
+				<tr>
+					<td>
+					<div class="form-group" style="align:center">
+                        
+								<label class="control-label" style="width:80px" >
+									<font style="color:red;font-weight:bold">*</font>类别：
+								</label>
+							<div  class="control-inline">
+							   	<div  class="control-inline">
+									<select  class="required" id="TYPE" name="TYPE" style="width:200px;height: 25px;" v-model="TYPE" > 
+										<option value='0' selected='true'>标准班组</option>
+										<option value='1'>标准小班组</option>
+								 </select>
+							    </div>
+						
+							</div>
+					</div>
+					</td>
+				</tr>
+
+				<tr>
+					<td>
+					<div class="form-group" style="align:center;display: none;" id="PARENT_WORKGROUP_NO_DIV" name="PARENT_WORKGROUP_NO_DIV">
+                        <div  style="float:left;width:100%;" >
+								<label class="control-label" style="width:80px">
+								    父班组：
+								 </label>
+							   	<div class="control-inline">
+									<select style="width:200px;height: 25px;" name="PARENT_WORKGROUP_NO" id="PARENT_WORKGROUP_NO" v-model="PARENT_WORKGROUP_NO">
+										<option v-for="w in workgrouplist" :value="w.WORKGROUP_NO" :key="w.WORKGROUP_NO">
+											{{ w.WORKGROUP_NAME }}</option>
+								   </select>
+							    </div>
+						</div>
+					</div>
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+								<label class="control-label" style="width:80px">
+								    班组代码：
+								 </label>
+							   	<div class="control-inline">
+							   	    <input class="required" type="text" style="width:200px;height:25px" class="form-control" name="WORKGROUP_NO" id="WORKGROUP_NO" v-model="WORKGROUP_NO">
+							    </div>
+						</div>
+					</div>
+					</td>
+					</tr>
+
+					<tr>
+						<td>
+						<div class="form-group" style="align:center">
+							<div  style="float:left;width:100%">
+									<label class="control-label" style="width:80px">
+										班组名称：
+									 </label>
+									   <div class="control-inline">
+										   <input class="required" type="text" style="width:200px;height:25px" class="form-control" name="WORKGROUP_NAME" id="WORKGROUP_NAME" v-model="WORKGROUP_NAME">
+									</div>
+							</div>
+						</div>
+						</td>
+						</tr>
+
+						<tr>
+							<td>
+							<div class="form-group" style="align:center">
+								<div  style="float:left;width:100%">
+										<label class="control-label" style="width:80px">
+											班组职责：
+										 </label>
+										   <div class="control-inline">
+											   <input class="required" type="text" style="width:200px;height:25px" class="form-control" name="RESPONSIBILITY" id="RESPONSIBILITY" v-model="RESPONSIBILITY">
+										</div>
+								</div>
+							</div>
+							</td>
+							</tr>
+
+							<tr>
+								<td>
+								<div class="form-group" style="align:center">
+									<div  style="float:left;width:100%">
+											<label class="control-label" style="width:80px">
+												备注：
+											 </label>
+											   <div class="control-inline">
+												   <input class="required" type="text" style="width:200px;height:25px" class="form-control" name="MEMO" id="MEMO" v-model="MEMO">
+											</div>
+									</div>
+								</div>
+								</td>
+								</tr>
+					
+					
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/sys/masterdata/standardworkgroup_edit.js?_${.now?long}"></script>
+</body>
+</html>

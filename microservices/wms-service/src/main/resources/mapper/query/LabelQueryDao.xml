@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.LabelQueryDao">
+     <select id="getLabelList" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT D.ID,D.LABEL_NO,D.WERKS,D.WH_NUMBER,D.MATNR ,D.MAKTX,D.BATCH,D.LGORT,D.UNIT,
+		      D.SOBKZ,D.LIFNR,D.LIKTX,D.BIN_CODE,D.RECEIPT_NO,D.RECEIPT_ITEM_NO,D.PRODUCT_DATE,
+		      D.QC_RESULT_CODE,B.EFFECT_DATE,
+		      D.INBOUND_NO,D.INBOUND_ITEM_NO,D.BOX_QTY,D.FULL_BOX_QTY,D.EDITOR,D.EDIT_DATE,D.BOX_SN,
+		      D.LABEL_STATUS,R.PO_NO,R.PO_ITEM_NO,R.BEDNR,
+		      i.DRAWING_NO,i.PRO_STATION,i.CAR_TYPE,i.WORKGROUP_NO,i.MOULD_NO,i.OPERATOR,i.SO_NO,i.SO_ITEM_NO,
+		      i.MO_NO,i.MO_ITEM_NO,i.IO_NO,i.COST_CENTER,i.WBS,i.PO_NO PO_NO_E,i.PO_ITEM_NO PO_ITEM_NO_E 
+		       FROM WMS_CORE_LABEL D
+		       LEFT JOIN WMS_IN_RECEIPT R ON D.RECEIPT_NO = R.RECEIPT_NO AND D.RECEIPT_ITEM_NO = R.RECEIPT_ITEM_NO
+		       LEFT JOIN WMS_IN_INBOUND_ITEM i ON D.INBOUND_NO= i.INBOUND_NO AND D.INBOUND_ITEM_NO = i.INBOUND_ITEM_NO 
+		       LEFT JOIN WMS_CORE_MAT_BATCH B ON D.WERKS=B.WERKS AND D.MATNR=B.MATNR  AND D.LIFNR=B.LIFNR AND D.BATCH=B.BATCH
+		       WHERE 1=1 
+		       <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+		       AND D.WERKS=#{WERKS} 
+              <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="LABEL_TYPE != null and LABEL_TYPE =='00'">
+		      	AND NVL(D.RECEIPT_NO,'0') !='0'
+		      </if>
+		      <if test="LABEL_TYPE != null and LABEL_TYPE =='01'">
+		      	AND NVL(D.INBOUND_NO,'0') !='0'
+		      </if>
+		      <if test="LABEL_STATUS != null and LABEL_STATUS !=''">
+		        AND D.LABEL_STATUS = #{LABEL_STATUS}
+		      </if>
+		      <if test="LABEL_NO != null and LABEL_NO !=''">
+		        AND D.LABEL_NO = #{LABEL_NO}
+		      </if>
+		      <if test="LGORT != null and LGORT !=''">
+		        AND D.LGORT = #{LGORT}
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND D.BATCH = #{BATCH}
+		      </if>
+		      <if test="MATNR!= null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND D.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="BIN_CODE != null and BIN_CODE !=''">
+		        AND D.BIN_CODE = #{BIN_CODE}
+		      </if>
+		      <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+				AND D.CREATE_DATE&gt;=CONCAT(#{CREATE_DATE_START}, ' 00:00:00') 
+			   </if>
+			   <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+				AND D.CREATE_DATE&lt;=CONCAT(#{CREATE_DATE_END}, ' 23:59:59')
+			   </if>
+		      <if test="RECEIPT_NO != null and RECEIPT_NO !=''">
+		        AND D.RECEIPT_NO = #{RECEIPT_NO}
+		      </if>
+		      <if test="INBOUND_NO != null and INBOUND_NO !=''">
+		        AND D.INBOUND_NO = #{INBOUND_NO}
+		      </if>
+		      <if test="PO_NO != null and PO_NO !=''">
+		        AND D.RECEIPT_NO IN   (SELECT RECEIPT_NO  FROM WMS_IN_RECEIPT WHERE PO_NO=#{PO_NO})
+		      </if>
+		      <if test="PRODUCT_NO != null and PRODUCT_NO !=''">
+		        AND D.INBOUND_NO IN  (SELECT INBOUND_NO  FROM WMS_IN_INBOUND_ITEM WHERE MO_NO= #{PRODUCT_NO})
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getLabelCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_CORE_LABEL D
+      WHERE 1=1 
+      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+      AND D.WERKS=#{WERKS} 
+          <if test="WH_NUMBER != null and WH_NUMBER !=''">
+	         AND D.WH_NUMBER = #{WH_NUMBER}
+	      </if>
+	      <if test="LABEL_TYPE != null and LABEL_TYPE =='00'">
+	      	AND NVL(D.RECEIPT_NO,'0') !='0'
+	      </if>
+	      <if test="LABEL_TYPE != null and LABEL_TYPE =='01'">
+	      	AND NVL(D.INBOUND_NO,'0') !='0'
+	      </if>
+	      <if test="LABEL_STATUS != null and LABEL_STATUS !=''">
+	         AND D.LABEL_STATUS = #{LABEL_STATUS}
+	      </if>
+	      <if test="LABEL_NO != null and LABEL_NO !=''">
+		        AND D.LABEL_NO = #{LABEL_NO}
+		  </if>	      
+	      <if test="LGORT != null and LGORT !=''">
+	        AND D.LGORT = #{LGORT}
+	      </if>
+	      <if test="BATCH != null and BATCH !=''">
+	        AND D.BATCH = #{BATCH}
+	      </if>
+	      <if test="MATNR != null and MATNR !=''">
+	        AND D.MATNR = #{MATNR}
+	      </if>
+	      <if test="LIFNR != null and LIFNR !=''">
+	        AND D.LIFNR = #{LIFNR}
+	      </if>
+	      <if test="BIN_CODE != null and BIN_CODE !=''">
+	        AND D.BIN_CODE = #{BIN_CODE}
+	      </if>
+	      <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND D.CREATE_DATE&gt;=CONCAT(#{CREATE_DATE_START}, ' 00:00:00') 
+		   </if>
+		   <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND D.CREATE_DATE&lt;=CONCAT(#{CREATE_DATE_END}, ' 23:59:59')
+		   </if>
+	      <if test="RECEIPT_NO != null and RECEIPT_NO !=''">
+	        AND D.RECEIPT_NO = #{RECEIPT_NO}
+	      </if>
+	      <if test="INBOUND_NO != null and INBOUND_NO !=''">
+	        AND D.INBOUND_NO = #{INBOUND_NO}
+	      </if>
+	      <if test="PO_NO != null and PO_NO !=''">
+	        AND D.RECEIPT_NO IN   (SELECT RECEIPT_NO  FROM WMS_IN_RECEIPT WHERE PO_NO=#{PO_NO})
+	      </if>
+	      <if test="PRODUCT_NO != null and PRODUCT_NO !=''">
+	        AND D.INBOUND_NO IN  (SELECT INBOUND_NO  FROM WMS_IN_INBOUND_ITEM WHERE MO_NO= #{PRODUCT_NO})
+	      </if>
+    </select>
+    <select id="getReceiptNoByPoNo" parameterType="Map" resultType="List">
+          SELECT DISTINCT(T.RECEIPT_NO) RECEIPT_NO FROM WMS_IN_RECEIPT T WHERE T.WERKS=#{WERKS} AND T.PO_NO=#{PN_NO}
+    </select>
+    <select id="getInboundNoByPoNo" parameterType="Map" resultType="List">
+          SELECT DISTINCT(T.INBOUND_NO) INBOUND_NO FROM WMS_IN_INBOUND_ITEM T WHERE T.WERKS=#{WERKS} AND T.MO_NO=#{PN_NO}
+    </select>
+</mapper>

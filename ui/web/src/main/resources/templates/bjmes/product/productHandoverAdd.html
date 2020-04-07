@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>部件车间供货</title>
+<#include "/web_header.html">
+<style type="text/css">
+   .selectBG{
+       color:red;
+    };
+    jqgrow {
+		height: 35px
+	}
+    </style>
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" method="post" class="form-inline" action="#">
+						<div class="row">
+						
+							<div class="form-group">
+								<label class="control-label" style="width:70px;"><span style="color:red">*</span>产品编号：</label>
+								<div class="control-inline" style="width:150px;">
+									<span class="input-icon input-icon-right" style="width:100%"><!-- @keyup.enter="queryMatInfo" -->
+										<input  v-model="product_no" id="product_no" name="product_no" type="text" class="form-control" autocomplete="off" style="width:100%">
+										<i onclick="doScan('product_no')" class="ace-icon fa fa-barcode black bigger-180 btn_scan" style="cursor: pointer;"></i>
+									</span>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;"><span style="color:red">*</span>工厂：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 80px" id="parentDiv">
+										<select v-model="werks" name="werks" id="werks" style="width: 80px;height: 25px;">
+											<#list tag.getUserAuthWerks("BJMES_PRODUCT_HANDOVER") as factory>
+												<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+										<input type="text" style="display: none;" v-model="werks_name" id="werks_name" >
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label"  style="width: 50px;"><span style="color:red">*</span>车间：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 80px">
+										<select v-model="workshop" name="workshop" id="workshop" style="width: 100%;height: 25px;">
+											<option v-for="w in workshopList" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+										<input type="text" style="display: none;" v-model="workshop_name" id="workshop_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group"  v-show="show">
+								<label class="control-label" style="width:70px;">接收车间：</label>
+								<div class="control-inline" style="width:80px;">
+                                    <select v-model="receive_workshop" name="receive_workshop" id="receive_workshop" style="width: 80px;height: 25px;">
+										<option v-for="w in receive_workshop_list  " :value="w.CODE">{{ w.NAME }}</option>
+								  	</select>
+								</div>
+							</div>
+							<div class="form-group" v-show="!show" >
+								<label class="control-label" style="width:70px;">交付班组：</label>
+								<div class="control-inline" style="width:80px;">
+                                    <select v-model="deliver_workgroup" name="deliver_workgroup" id="deliver_workgroup" style="width: 100%;height: 25px;">
+										<option v-for="w in workgroupList" :value="w.CODE">{{ w.NAME }}</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group"  v-show="!show">
+								<label class="control-label" style="width:70px;">接收班组：</label>
+								<div class="control-inline" style="width:80px;">
+					                <select v-model="receive_workgroup" name="receive_workgroup" id="receive_workgroup" style="width: 100%;height: 25px;">
+										<option v-for="w in workgroupList" :value="w.CODE">{{ w.NAME }}</option>
+									</select>
+								</div>
+							</div>
+<!-- 							<div class="form-group"> -->
+<!-- 								<label class="control-label"></label> -->
+<!-- 								<div class="control-inline" style="width:80px;align:center"> -->
+<!-- 					                	<span style="font-size:15px;color:red;font-weight:bold;"  v-cloak title="件数/种类数">{{total_qty}}/{{total_type}}</span> -->
+<!-- 								</div> -->
+<!-- 							</div> -->
+							<div class="form-group">
+								<input type="button" id="btnSave" @click="save" class="btn btn-success btn-sm" value="保存" /> 
+								<input type="button" id="btnClear" @click="clearTable"  class="btn btn-default btn-sm" value="清空" />
+							</div>
+						</div>
+					</form>	
+ 					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><span id="resultMsg"></span></h4>
+		<br/>
+		<form id="print_inspection" target="_blank" method="post" action="${request.contextPath}/zzjmes/matHandover/workshopSupplyPreview" style="width:100px;float:left;margin-left: 5px;">
+			<button id="btnPrint2" class="btn btn-primary btn-sm" type="submit">打印供货清单</button>
+			<input name="order_no" id="order_no" type="text" hidden="hidden">
+			<input name="matList" id="matList" type="text" hidden="hidden">
+		</form>
+	</div>
+	<script src="${request.contextPath}/statics/js/bjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/bjmes/product/productHandoverAdd.js?_${.now?long}"></script>
+</body>
+</html>

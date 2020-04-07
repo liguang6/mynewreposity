@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>进仓单查询</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<script type="text/javascript" src="${request.contextPath}/statics/js/dynamicColum.js"></script>
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+                         <form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/inboundQuery/detail" >
+								<div class="row">
+									<div class="form-group">
+										<label class="control-label" style="width: 50px">工厂：</label>
+										<div class="control-inline" style="width: 60px;">
+											<select class="" name="WERKS" id="werks" v-model="werks" style="height: 25px;width:100%">
+											   <#list tag.getUserAuthWerks("QUERY_INBOUND") as factory>
+											      <option value="${factory.code}">${factory.code}</option>
+											   </#list>
+											</select>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 50px;">仓库号：</label>
+										<div class="control-inline" style="width: 60px;">
+	                                        <select class="" v-model="whNumber" name="WH_NUMBER" id="whNumber"   style="height: 25px;width:100%">
+											 <option v-for="w in wh_list" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+											</select>
+										</div>
+									</div>
+									<div class="form-group">
+			                          <label class="control-label" style="width: 70px">进仓单号：</label>
+										<div class="control-inline">
+											<div class="input-group">
+											   	<input type="text" id="inboundNo" name="INBOUND_NO" style="width: 110px;" class="form-control width-300 required" />
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+			                          <label class="control-label" style="width: 75px">供应商代码：</label>
+										<div class="control-inline">
+											<div class="input-group">
+											   	<input type="text" id="lifnr" name="LIFNR" style="width: 70px;" class="form-control width-300" />
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+			                          <label class="control-label" >料号：</label>
+										<div class="control-inline">
+											<div class="input-group">
+											   	<input type="text" id="matnr" name="MATNR" style="width: 90px;" class="form-control width-300" />
+											   	<input type="button" id="btnMore" class="btn btn-default btn-sm" value="..." @click="more($('#matnr'))"/>
+											</div>
+										</div>
+									</div>
+								    <div class="form-group">
+			                          <label class="control-label" >批次：</label>
+										<div class="control-inline">
+											<div class="input-group">
+											   	<input type="text" id="batch" name="BATCH" style="width: 90px;" class="form-control width-300" />
+											</div>
+										</div>
+									</div>
+							</div>
+							<div class="row">
+									<div class="form-group">
+										<label class="control-label" style="width: 50px">库位：</label>
+										<div class="control-inline" style="width: 60px;">
+											<select id="lgort"  class="input-medium"   style="height: 25px;width:100%">
+												<option v-for="t in lgortList"  :key="t.LGORT" :value="t.LGORT">
+													{{t.LGORT}}
+												</option>
+											</select>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 50px;">储位：</label>
+										<div class="control-inline" style="width: 60px;">
+										   	<input type="text" id="binCode" name="BIN_CODE"  class="form-control "  style="width:100%"/>
+
+										</div>
+									</div>
+									<div class="form-group">
+			                           <label class="control-label"  style="width: 70px">状态：</label>
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+											   	<select class="form-control" name="INBOUND_TYPE" id="inboundType" >
+											   	    <option value="">全部</option>
+											   	    <option value="00">创建</option>
+											   	    <option value="01">部分进仓</option>
+											   	    <option value="02">已完成</option>
+											   	    <option value="04">关闭</option>
+											    </select>
+											</div>
+										</div>
+									</div>		
+									
+								<div class="form-group">
+									<button type="submit" class="btn btn-primary btn-sm">查询</button>
+									<button type="button" id="btnPrint1" class="btn btn-primary btn-sm" @click="printInInternalboundSmallList">小letter打印</button>
+									<button type="button" id="btnPrint2" class="btn btn-primary btn-sm" @click="printInboundBigList">大letter打印</button>
+									<!-- <button type="button" id="btnPrint3" class="btn btn-primary btn-sm" @click="printInInternalboundBigList">大letter打印</button> -->
+<!-- 									<button type="button" id="btnDelete" class="btn btn-primary btn-sm" @click="del">关闭/删除</button> -->
+									
+								</div>
+							</div>
+						</form>
+				 <div id="pgtoolbar1">
+				   <div id="links" >
+				   
+				   <a href='#' class='btn' id='exportOperation' onclick="export2Excel()"><i class='fa fa-download' aria-hidden='true'></i> 导出</a>
+				   
+				   </div>
+				</div>
+						<div id="divDataGrid" style="width:100%;overflow:auto;">
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>	
+						<table id="tb_excel" style="display:none"></table>
+						
+						
+					</div>
+			</div>
+		</div>
+	</div>
+	<!--  小letter打印-->
+	<form id="print2" target="_blank" method="post" action="${request.contextPath}/docPrint/inInternalBoundListPreview" >
+		<button hidden="hidden" id="printButton2" type="submit"></button>
+		<input hidden="hidden" name="inboundNo2" id="inboundNo2" type="text" >
+		<input hidden="hidden" name="subInBoundType1" id="subInBoundType1" type="text" >
+	</form> 
+	<!--  大letter打印-->
+	<form id="print3" target="_blank" method="post" action="${request.contextPath}/docPrint/inBoundPreview" >
+		<button hidden="hidden" id="printButton3" type="submit"></button>
+		<input hidden="hidden" name="inboundNo3" id="inboundNo3" type="text" >
+		<input hidden="hidden" name="subInBoundType" id="subInBoundType" type="text" >
+	</form>
+	<script src="${request.contextPath}/statics/js/wms/query/inboundDetailQuery.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>STO送货单查询</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+.v-cloak { display: none }
+	
+.urgent-select {
+	color:#f44444;
+}
+.to_right {
+            width: 0;
+            height: 0;
+            border-left: 50px solid #00FFFF;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+        }
+</style>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+                   <form id="searchForm" class="form-inline" action="#">
+						<!-- 查询条件 -->						
+                            <div class="form-group">
+								<label class="control-label" style="width: 90px"><font style="color:red;font-weight:bold">*</font>STO送货单号：</label>
+								<input type="text"  id="stoNo" name="stoNo" value="${stoNo!''}" class="form-control"  style="width: 120px;"/>
+							</div>
+													
+							<div class="form-group">
+							    <input type="button" id="btnquery" class="btn btn-primary btn-sm " value="查询"/>
+							    <input type="button" id="printSto" @click="printSto" class="btn btn-primary btn-sm " value="STO送货单打印"/>
+							    <input type="button" id="queryLabel" @click="queryLabel" class="btn btn-primary btn-sm " value="STO包装箱条码查询"/>
+							    <input type="button" id="printLabel" @click="printLabel" class="btn btn-primary btn-sm " value="STO包装箱条码打印"/>
+								<button type="reset" class="btn btn-default btn-sm ">重置</button>
+							</div>
+				   </form>
+				   <div id="tab1">
+					<table id="dataGrid"></table>
+				   </div>
+				   <div id="tab2">
+					<table id="dataGrid1"></table>
+				   </div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<form id="print" target="_blank" method="post" action="${request.contextPath}/docPrint/stoLabelPreview" >
+		<button hidden="hidden" id="printButton" type="submit"></button>
+		<input name="stoList" id="stoList" type="text" hidden="hidden">
+	</form>
+	
+	<form id="printLabel" target="_blank" method="post" action="${request.contextPath}/docPrint/labelLabelPreview" >
+		<button hidden="hidden" id="printLabelButton" type="submit"></button>
+		<input name="labelList" id="labelList" type="text" hidden="hidden">
+		<input name="LIKTX" id="LIKTX" type="text" hidden="hidden">
+	</form>
+
+	<script src="${request.contextPath}/statics/js/wms/in/wms_sto_query.js?_${.now?long}"></script>
+</body>
+</html>

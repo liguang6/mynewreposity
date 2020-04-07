@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title></title>
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+                border:1px solid #6FACEF;
+            }
+
+            #loginTitle{
+                line-height:24px;background:transparent url(${request.contextPath}/statics/ins/top_left_.gif) repeat-x;
+                color:#000;text-align:center;
+            }
+
+            #divBox {
+                PADDING-BOTTOM: 30px;
+                PADDING-TOP: 30px;
+                margin: 0px;
+                padding-right: 0px;
+                padding-left: 0px;
+            }
+            P {
+                PADDING-LEFT: 30px;
+                MARGIN-LEFT: 10px;
+                LINE-HEIGHT: 32px;
+                PADDING-TOP: 5px;
+                HEIGHT: 32px;
+                margin-top: 0px;
+                margin-right: 0px;
+                margin-bottom: 0px;
+                padding-right: 0px;
+                padding-bottom: 0px;
+                float: left;
+            }
+            P INPUT {
+                WIDTH: 120px;
+                BORDER-TOP-STYLE: none;
+                BORDER-BOTTOM: #6facef 1px solid;
+                BORDER-RIGHT-STYLE: none;
+                BORDER-LEFT-STYLE: none;
+                margin: 0px;
+                padding: 0px;
+            }
+
+            .btn{
+                border:1px solid #1271EF;background:transparent url(${request.contextPath}/statics/ins/btn_bg.jpg) repeat-x;/**/
+                padding:0 8px;line-height:28px;color: #fff; font-weight:bold;
+            }
+        </style>
+        <script type="text/javascript">
+        	function confirmSelect() {
+        		
+        		$.ajax({
+		        	  url: baseUrl + "SelectWarehouse",
+		        	  dataType : "json",
+		        	  type : "post",
+		        	  data : {
+		        		  "warehouse":$("#warehouse").val()
+		        	  },
+		        	  success:function(resp){
+		        		  if(resp.code == 0){
+		        		  	parent.location.href ='index.html';
+		        		  } else {
+		        			  $("#divInfo").html(resp.msg);
+		        			  document.getElementById("divInfo").style.visibility="visible";
+		        		  }
+		        	  }
+		          })
+        	}
+        	
+	        document.onkeydown = function(){
+	            if(window.event.keyCode == 13){
+	            	confirmSelect();
+	            }
+	        }
+        </script>
+    </head>
+    <body>
+        <form id="form1" name="form1" action="SelectWarehouse">
+            <div id="global_content_smq">
+                <h3 id="loginTitle">仓库选择</h3>
+                <div id="divBox">
+                	<div id="divInfo" style="color:red;text-align:center;visibility: hidden;">error</div>
+                    <p>
+                        <select id="warehouse" name="warehouse" style="width: 120px;">
+                            <#if userAuthWh?exists>
+							        <#list userAuthWh as model>
+							           <option value="${model.CODE}">${model.CODE}</option>
+							        </#list>
+							</#if>
+                        </select>
+                    </p>
+                    <br/><br/>
+                    <div style="text-align:center;">
+                        <button type="button" class="btn" onclick="confirmSelect()">确定</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </body>
+</html>

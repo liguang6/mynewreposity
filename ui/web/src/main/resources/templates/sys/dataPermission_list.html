@@ -1,0 +1,119 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>数据权限配置</title>
+    <#include "/header.html">
+</head>
+<body class="hold-transition ">
+<div class="ui-layout-west" style="overflow-y: hidden">
+    <div class="main-content">
+        <div class="box box-main">
+            <div class="box-header">
+                <div class="box-title">
+                    <i class="fa icon-grid"></i> ${tag.getLocale("ROLE_LIST","M")}
+                </div>
+               <!-- <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool addTabPage" data-href="/js/a/sys/office/list" title="角色列表"><i class="fa fa-edit"></i></button>
+                    <button type="button" class="btn btn-box-tool" id="btnExpand" title="展开" style="display:none;"><i class="fa fa-chevron-up"></i></button>
+                    <button type="button" class="btn btn-box-tool" id="btnCollapse" title="折叠"><i class="fa fa-chevron-down"></i></button>
+                    <button type="button" class="btn btn-box-tool" id="btnRefresh" title="刷新"><i class="fa fa-refresh"></i></button>
+                </div>-->
+            </div>
+
+            <div style="overflow-y: hidden" class="box-body" v-show="showList">
+                <form id="searchForm" action="${request.contextPath}/sys/role/queryAlls" method="post" class="form-inline " data-page-no="" data-page-size="" data-order-by="">
+                    <div class="form-group">
+                        <!--<label class="control-label">${tag.getLocale("ROLENAME","M")}:</label>-->
+                        <input type="text" style="display:none" id="flag" name="flag"  class="form-control" />
+                        <div class="control-inline">
+                            <input type="text" class="form-control" style="width:90px" id="roleName" name="roleName" value=""  size="6" placeholder="${tag.getLocale('ROLENAME','M')}"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">${tag.getLocale("QUERY","M")}</button>
+                        <button type="reset" class="btn btn-default btn-sm">${tag.getLocale("RESET","M")}</button>
+                    </div>
+
+
+
+
+
+
+                </form>
+                <!-- <div class="ui-layout-content" > -->
+                    <table id="dataGrid"></table>
+                    <div id="dataGridPage">
+                    </div>
+                <!-- </div> -->
+
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="ui-layout-center">
+    <iframe id="mainFrame" name="mainFrame" class="ui-layout-content p0"
+            src="${request.contextPath}/sys/dataPermissionList.html"></iframe>
+</div>
+
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+<script type="text/javascript">
+
+
+    var smallUtil=new smallTools();
+    var array = new Array("roleName","menuName","roleId","authFields","authValue","userId","menuId");
+    var languageObj = smallUtil.loadlanguageByPKeyAndLKey(array,"M");
+    //初始化布局
+    $('body').layout({
+        west__size: 239
+
+    });
+
+/*    function bind() {
+        //on方法对动态元素绑定click事件
+        $("#dataGrid1").on("click", function(){
+            var grData = $("#dataGrid1").jqGrid("getRowData")//获取选中的行数据
+            var roleId = grData[0].roleId;
+            var roleName = grData[0].roleName;
+            var mainFrame = $(window.frames['mainFrame'].document);
+            //mainFrame.find("#roleId").val(roleId);
+            //mainFrame.find("#roleName").val(roleName);
+            //mainFrame.find("#btn").click();
+            //$("#btn").click();
+        });
+    }*/
+
+    //加载角色列表数据
+    $(document).ready(function(){
+        $('#dataGrid').dataGrid({
+            searchForm: $("#searchForm"),
+            // datatype : "local",
+            columnModel: [
+                {header:languageObj.roleId, name:'ROLEID',index:"ROLEID", width:100, align:"center", frozen:true, hidden:true},
+                {header:languageObj.roleName, name:'ROLENAME',index:"ROLENAME", width:100, align:"center"},
+
+            ],
+            /*showCheckbox:true,
+            showRownum:false,*/
+            // dataId:'roleId',
+            //viewrecords: true,
+            //scroll:false,
+            rowNum: 300,
+            height: 470,
+            ajaxSuccess: function(data){
+                //bind();
+                $("#flag").val("true");
+            },
+            onSelectRow: function (rowId,status, e) {
+                var id=$('#dataGrid').jqGrid('getGridParam','selrow');
+                var rowData = $("#dataGrid").jqGrid('getRowData',id);
+                var mainFrame = $(window.frames['mainFrame'].document);
+                mainFrame.find("#roleId").val(rowData.ROLEID);
+                mainFrame.find("#roleName").val(rowData.ROLENAME);
+                mainFrame.find("#btn").click();
+
+            }
+
+        });
+
+
+    });
+    
+</script>
+</body>

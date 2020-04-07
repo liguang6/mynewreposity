@@ -1,0 +1,969 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.processQuality.dao.QmsProcessTestDao">
+	
+	<select id="getProcessTestTplList" parameterType="Map" resultType="Map">
+		SELECT h.BUS_TYPE_CODE,h.ORDER_NO,h.TEST_NODE,h.TEST_TYPE, i.*
+		FROM QMS_PROCESS_TEST_RECORD_TEMP_HEAD h
+		LEFT JOIN QMS_PROCESS_TEST_RECORD_TEMP_ITEM i
+		ON h.TEMP_NO=i.TEMP_NO
+		WHERE h.TEST_TYPE=#{TEST_TYPE} and i.TEST_GROUP=#{TEST_GROUP}
+		<if test="ORDER_NO !=null and  ORDER_NO !='' and TEST_TYPE=='01' ">
+			and h.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="BUS_TYPE_CODE !=null and  BUS_TYPE_CODE !='' and TEST_TYPE=='02'  ">
+			and h.BUS_TYPE_CODE=#{BUS_TYPE_CODE} 
+		</if>
+		and h.TEST_NODE=#{TEST_NODE} and i.PATROL_FLAG!='X'
+		and h.TEMP_NO= (select max(h1.TEMP_NO) from QMS_PROCESS_TEST_RECORD_TEMP_HEAD h1
+		where h1.TEST_TYPE=#{TEST_TYPE}  
+		<if test="ORDER_NO !=null and  ORDER_NO !='' and TEST_TYPE=='01' ">
+			and h1.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="BUS_TYPE_CODE !=null and  BUS_TYPE_CODE !='' and TEST_TYPE=='02' ">
+			and h1.BUS_TYPE_CODE=#{BUS_TYPE_CODE} 
+		</if>
+		and h1.TEST_NODE=#{TEST_NODE}
+		) 		
+		
+	</select>
+	
+	<select id="getTestRecordInList" parameterType="Map" resultType="Map">
+		select r.*,r.ID RECORD_ID,a.id ABNORMAL_ID,r.PHOTO PHOTO_URL,
+		concat('{"RESP_UNIT":"',a.RESP_UNIT,'","REASON":"',a.REASON,'","SOLUTION":"',a.SOLUTION,'","SOLUTION_PERSON":"',a.SOLUTION_PERSON,
+		'","RESP_WERKS":"', RESP_WERKS,'","RESP_WORKGROUP":"',RESP_WORKGROUP,
+		'","CONFIRMOR":"',ifnull(a.CONFIRMOR,''),'","BAD_SOURCE":"',a.BAD_SOURCE,'","BAD_CLASS":"',a.BAD_CLASS,'","MEMO":"',a.MEMO,'"}') ABNORMAL_INFO
+		from QMS_PROCESS_TEST_RECORD r
+		LEFT JOIN QMS_PROCESS_TEST_RECORD_ABNORMAL a on a.ID=r.ABNORMAL_ID
+		where r.WERKS=#{WERKS}  and r.ORDER_NO = #{ORDER_NO}
+		<if test="TEST_CLASS=='整车' ">
+			<if test="TEST_TYPE=='01' ">
+				and r.BUS_NO=#{BUS_NO}
+			</if>
+			<if test="TEST_TYPE=='02' ">
+				and r.VIN=#{VIN}
+			</if>
+		</if>
+		<if test="TEST_CLASS=='零部件' ">
+			<if test="TEST_TYPE=='01' ">
+				and r.CUSTOM_NO=#{CUSTOM_NO}
+			</if>
+			<if test="TEST_TYPE=='02' ">
+				and r.CAB_NO=#{CAB_NO}
+			</if>
+		</if>
+		<if test="TEST_GROUP !=null and TEST_GROUP !='' ">
+		and r.TEST_GROUP=#{TEST_GROUP}
+		</if> 
+		<if test="TEST_NODE !=null and TEST_NODE !='' ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if> 
+		order by cast(r.TEMP_ITEM_NO as UNSIGNED) asc
+		<!-- order by case when (r.JUDGE='NG' and ifnull(r.RE_JUDGE,'')!='OK' ) then 1 else 0 end desc -->
+	</select>
+	
+	<select id="getFaultList" parameterType="Map" resultType="Map">
+		SELECT f.FAULT_TYPE,f.FAULT_NAME,GROUP_CONCAT(CONCAT(f.FAULT_CODE,'#',f.SERIOUS_LEVEL)) SERIOUS_LEVEL
+		FROM QMS_C_STANDARD_FAULT_LIBRARY f
+		WHERE 1=1 
+		<if test="faultName!=null and faultName!=''  ">
+			and f.FAULT_NAME like concat('%',#{faultName},'%')
+		</if>		
+		group by f.FAULT_TYPE,f.FAULT_NAME
+		ORDER BY f.FAULT_TYPE
+	</select>
+	
+	<insert id="insertTestRecord" parameterType="List" useGeneratedKeys="true" keyProperty="id">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_PROCESS_TEST_RECORD
+		(TEMP_NO,TEMP_ITEM_NO,WERKS,ORDER_NO,BUS_NO,VIN,CUSTOM_NO,TEST_NODE,TEST_GROUP,TEST_TOOL_NO,
+		PROCESS_NAME,TEST_ITEM,TEST_STANDARD,NUMBER_FLAG,ONE_PASSED_FLAG,PHOTO_FLAG,PATROL_FLAG,
+		TEST_RESULT,JUDGE,RE_TEST_RESULT,RE_JUDGE,PHOTO,CREATOR,CREATE_DATE,FAULT_CODE,CAB_NO,TEST_TYPE,ABNORMAL_ID)
+		values
+		<foreach  collection="list" item="detail" index="index" separator=",">
+		(#{detail.TEMP_NO},#{detail.TEMP_ITEM_NO},#{detail.WERKS},#{detail.ORDER_NO},#{detail.BUS_NO},#{detail.VIN},#{detail.CUSTOM_NO},
+		#{detail.TEST_NODE} ,#{detail.TEST_GROUP},#{detail.TEST_TOOL_NO},#{detail.PROCESS_NAME},#{detail.TEST_ITEM},#{detail.TEST_STANDARD},
+		#{detail.NUMBER_FLAG},#{detail.ONE_PASSED_FLAG},#{detail.PHOTO_FLAG},#{detail.PATROL_FLAG},#{detail.TEST_RESULT},#{detail.JUDGE},
+		#{detail.RE_TEST_RESULT},#{detail.RE_JUDGE},#{detail.PHOTO_URL},#{detail.CREATOR},#{detail.CREATE_DATE},
+		#{detail.FAULT_CODE},#{detail.CAB_NO},#{detail.TEST_TYPE},#{detail.ABNORMAL_ID}
+		)	
+		</foreach>
+	</insert>
+	
+	<update id="updateTestRecord" parameterType="List" >
+		<foreach collection="list" separator=";" item="detail">
+		update QMS_PROCESS_TEST_RECORD set TEST_RESULT=#{detail.TEST_RESULT},FAULT_CODE=#{detail.FAULT_CODE},
+		JUDGE=#{detail.JUDGE},RE_TEST_RESULT=#{detail.RE_TEST_RESULT},RE_JUDGE=#{detail.RE_JUDGE},TEST_TOOL_NO=#{detail.TEST_TOOL_NO},
+		PHOTO=#{detail.PHOTO_URL},
+		<if test="detail.EDITOR !=null and detail.EDITOR !='' ">
+		EDITOR=#{detail.EDITOR},
+		</if>
+		<if test="detail.EDIT_DATE !=null and detail.EDIT_DATE !='' ">
+		EDIT_DATE=#{detail.EDIT_DATE},
+		</if>
+		ABNORMAL_ID=#{detail.ABNORMAL_ID}
+		where TEMP_NO=#{detail.TEMP_NO} and TEMP_ITEM_NO=#{detail.TEMP_ITEM_NO} and WERKS=#{detail.WERKS} 
+		and ORDER_NO=#{detail.ORDER_NO} and TEST_NODE=#{detail.TEST_NODE} and TEST_GROUP=#{detail.TEST_GROUP}
+		<if test="detail.TEST_CLASS=='整车' ">
+			<if test="detail.TEST_TYPE=='01' ">
+				and BUS_NO=#{detail.BUS_NO}
+			</if>
+			<if test="detail.TEST_TYPE=='02' ">
+				and VIN=#{detail.VIN}
+			</if>
+		</if>
+		<if test="detail.TEST_CLASS=='零部件' ">
+			<if test="detail.TEST_TYPE=='01' ">
+				and CUSTOM_NO=#{detail.CUSTOM_NO}
+			</if>
+			<if test="detail.TEST_TYPE=='02' ">
+				and CAB_NO=#{detail.CAB_NO}
+			</if>
+		</if>
+		<if test="detail.RECORD_ID !=null and detail.RECORD_ID !='' " >
+		 and ID=#{detail.RECORD_ID}
+		</if>
+		
+		
+		</foreach>
+	</update>
+	
+	<insert id="insertAbnormal"  parameterType="Map" useGeneratedKeys="true" keyProperty="id">
+	<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_PROCESS_TEST_RECORD_ABNORMAL (RESP_UNIT,REASON,SOLUTION,SOLUTION_PERSON,CONFIRMOR,BAD_SOURCE,
+		BAD_CLASS,MEMO,CREATOR,CREATE_DATE,RESP_WERKS,RESP_WORKGROUP)
+		 values (#{RESP_UNIT},#{REASON},#{SOLUTION},#{SOLUTION_PERSON},#{CONFIRMOR},
+		#{BAD_SOURCE},#{BAD_CLASS},#{MEMO},#{EDITOR},#{EDIT_DATE},#{RESP_WERKS},#{RESP_WORKGROUP}
+		)
+	</insert>
+	
+	<update id="updateAbnormal" parameterType="Map">
+		update QMS_PROCESS_TEST_RECORD_ABNORMAL set RESP_UNIT=#{RESP_UNIT},REASON=#{REASON},
+		SOLUTION=#{SOLUTION},SOLUTION_PERSON=#{SOLUTION_PERSON},BAD_CLASS=#{BAD_CLASS},
+		CONFIRMOR=#{CONFIRMOR},BAD_SOURCE=#{BAD_SOURCE},MEMO=#{MEMO},
+		EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE},RESP_WERKS=#{RESP_WERKS},RESP_WORKGROUP=#{RESP_WORKGROUP}
+		WHERE ID=#{ABNORMAL_ID}
+	</update>
+	
+	<delete id="deleteAbnormal" parameterType="int">
+		delete from QMS_PROCESS_TEST_RECORD_ABNORMAL where ID=#{ABNORMAL_ID}
+	</delete>
+
+	<update id="updateTestAbnormal" parameterType="int">
+		update QMS_PROCESS_TEST_RECORD set ABNORMAL_ID=#{ABNORMAL_ID} where ID=#{TEST_RECORD_ID}
+	</update>
+	
+	<select id="getProcessTestRecordList" parameterType="Map" resultType="Map">
+		SELECT * FROM(
+		SELECT t.*,#{TEST_TYPE} TEST_TYPE,
+		case when t.NG_NUM>0 and t.EMPITY_NUM=0 then '不合格' 
+		when t.NG_NUM=0 and t.EMPITY_NUM=0 then '合格' 
+		when t.EMPITY_NUM>0 and t.TEST_DATE is not null then '未完成' 
+		when t.EMPITY_NUM>0 and t.TEST_DATE is null then '未录入' end as TEST_RESULT,
+		case when CONFIRM_NUM>0 then '未确认' else '已确认' end as CONFIRM_STATUS,
+		(case when t.ONE_PASS_NG_NUM>0 then '不合格' 
+			when (t.CONFIRM_NUM>0 or t.ONE_PASS_NUM=0  ) then ''		
+		else '合格'  end ) as ONE_PASS_STATUS
+		FROM (
+		SELECT r.WERKS,r.ORDER_NO,r.VIN,r.BUS_NO,o.ORDER_TEXT, r.TEST_NODE,
+		IFNULL(r.EDITOR,r.CREATOR) TESTOR,max(IFNULL(r.EDIT_DATE,r.CREATE_DATE)) TEST_DATE,
+		r.CONFIRMOR,r.CONFIRM_DATE,
+		sum(case when ifnull(r.CONFIRMOR,'')='' then 1 else 0 end ) as CONFIRM_NUM,
+		sum(case when (r.JUDGE='NG' and ifnull(r.RE_JUDGE,'')!='OK') then 1 else 0 end ) as NG_NUM,
+		sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		sum(case when (r.JUDGE='NG' and r.ONE_PASSED_FLAG='X' and ifnull(r.CONFIRMOR,'')!='' ) then 1 else 0 end) as ONE_PASS_NG_NUM,
+		sum( case when r.ONE_PASSED_FLAG ='X' then 1 else 0 end ) as ONE_PASS_NUM
+		FROM QMS_PROCESS_TEST_RECORD r
+		left join QMS_MES_ORDER o on o.ORDER_NO =r.ORDER_NO and r.WERKS=o.WERKS
+		WHERE  r.WERKS=#{WERKS} and r.TEST_TYPE=#{TEST_TYPE} 
+		<if test="TEST_GROUP !=null and  TEST_GROUP !='' ">
+		and r.TEST_GROUP = #{TEST_GROUP}
+		</if>
+		<if test="TEST_NODE !=null and TEST_NODE !='' ">
+			and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="TEST_TYPE=='01' ">
+		and ifnull(r.BUS_NO,'')!='' 
+		</if>
+		<if test="TEST_TYPE=='02' ">
+		and ifnull(r.VIN,'')!='' 
+		</if>
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+		and r.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="VIN !=null and VIN !='' ">
+			and (r.VIN=#{VIN} or r.BUS_NO =#{BUS_NO})
+		</if>
+		<if test="BUS_NO !=null and BUS_NO !='' ">
+			and (r.BUS_NO=#{BUS_NO} or r.VIN =#{VIN})
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and r.ONE_PASSED_FLAG ='X' and ifnull(r.CONFIRMOR,'') !=''
+		</if>
+		GROUP BY r.ORDER_NO,r.VIN,r.BUS_NO,r.TEST_NODE ) t ) tmp
+		where 1=1
+		<if test="STATUS !=null and STATUS !='' ">
+			and tmp.TEST_RESULT=#{STATUS}
+		</if>
+		<if test="CONFIRM_STATUS =='Y'.toString()">
+			and tmp.CONFIRM_STATUS='已确认'
+		</if>
+		<if test="CONFIRM_STATUS =='N'.toString()">
+			and tmp.CONFIRM_STATUS='未确认'
+		</if>
+		<if test="START_DATE !=null and START_DATE !='' ">
+			and tmp.TEST_DATE >= concat(#{START_DATE},' 00:00:00')
+		</if>
+		<if test="END_DATE !=null and END_DATE !='' ">
+			and tmp.TEST_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and tmp.ONE_PASS_STATUS = #{ONE_PASS_STATUS}
+		</if>
+		ORDER BY tmp.TEST_DATE desc
+		<if test="start !=null and length !=-1 ">
+		LIMIT #{start},#{length}
+		</if>
+	</select>
+	
+	<select id="getProcessTestRecordCount" parameterType="Map" resultType="int">
+	SELECT count(tmp.id) FROM(
+		SELECT t.*,
+		case when t.NG_NUM>0 and t.EMPITY_NUM=0 then '不合格' 
+		when t.NG_NUM=0 and t.EMPITY_NUM=0 then '合格' 
+		when t.EMPITY_NUM>0 and t.TEST_DATE is not null then '未完成' 
+		when t.EMPITY_NUM>0 and t.TEST_DATE is null then '未录入' end as TEST_RESULT,
+		case when t.CONFIRM_NUM>0 then '未确认' else '已确认' end as CONFIRM_STATUS,
+		(case when t.ONE_PASS_NG_NUM>0 then '不合格' 
+			when (t.CONFIRM_NUM>0 or t.ONE_PASS_NUM=0  ) then ''		
+		else '合格'  end ) as ONE_PASS_STATUS
+		FROM (
+		SELECT r.id,max(IFNULL(r.EDIT_DATE,r.CREATE_DATE)) TEST_DATE,
+		sum(case when ifnull(r.CONFIRMOR,'')='' then 1 else 0 end ) as CONFIRM_NUM,
+		sum(case when (r.JUDGE='NG' and ifnull(r.RE_JUDGE,'')!='OK') then 1 else 0 end ) as NG_NUM,
+		sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		sum(case when (r.JUDGE='NG' and r.ONE_PASSED_FLAG='X' and ifnull(r.CONFIRMOR,'')!='' ) then 1 else 0 end) as ONE_PASS_NG_NUM,
+		sum( case when r.ONE_PASSED_FLAG ='X' then 1 else 0 end ) as ONE_PASS_NUM
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE  r.WERKS=#{WERKS} and r.TEST_TYPE=#{TEST_TYPE} 
+		<if test="TEST_GROUP !=null and  TEST_GROUP !='' ">
+		and r.TEST_GROUP = #{TEST_GROUP}
+		</if>
+		<if test="TEST_NODE !=null and TEST_NODE !='' ">
+			and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="TEST_TYPE=='01' ">
+		and ifnull(r.BUS_NO,'')!='' 
+		</if>
+		<if test="TEST_TYPE=='02' ">
+		and ifnull(r.VIN,'')!='' 
+		</if>
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+		and r.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="VIN !=null and VIN !='' ">
+			and (r.VIN=#{VIN} or r.BUS_NO =#{BUS_NO})
+		</if>
+		<if test="BUS_NO !=null and BUS_NO !='' ">
+			and (r.BUS_NO=#{BUS_NO} or r.VIN =#{VIN})
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and r.ONE_PASSED_FLAG ='X' and ifnull(r.CONFIRMOR,'') !=''
+		</if>
+		
+		GROUP BY r.ORDER_NO,r.VIN,r.BUS_NO,r.TEST_NODE ) t ) tmp
+		where 1=1
+		<if test="STATUS !=null and STATUS !='' ">
+			and tmp.TEST_RESULT=#{STATUS}
+		</if>
+		<if test="CONFIRM_STATUS =='Y'.toString()">
+			and tmp.CONFIRM_STATUS='已确认'
+		</if>
+		<if test="CONFIRM_STATUS =='N'.toString()">
+			and tmp.CONFIRM_STATUS='未确认'
+		</if>
+		<if test="START_DATE !=null and START_DATE !='' ">
+			and tmp.TEST_DATE >= concat(#{START_DATE},' 00:00:00')
+		</if>
+		<if test="END_DATE !=null and END_DATE !='' ">
+			and tmp.TEST_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and tmp.ONE_PASS_STATUS = #{ONE_PASS_STATUS}
+		</if>
+	</select>
+	
+	<select id="getPartsTestRecordList" parameterType="Map" resultType="Map">
+	<if test="TEST_TYPE=='01' ">
+		SELECT * FROM(
+		SELECT t.*,#{TEST_TYPE} TEST_TYPE,
+		case when t.NG_NUM>0 and t.EMPITY_NUM=0 then '不合格' 
+		when t.NG_NUM=0 and t.EMPITY_NUM=0 then '合格' 
+		when t.EMPITY_NUM>0 then '未完成'  end as TEST_RESULT,
+		(case when t.ONE_PASS_NG_NUM>0 then '不合格' 
+			when t.ONE_PASS_NUM=0   then ''		
+		else '合格'  end ) as ONE_PASS_STATUS
+		FROM (
+		SELECT r.WERKS,r.ORDER_NO,r.CUSTOM_NO,r.TEST_NODE,o.ORDER_TEXT,
+		IFNULL(r.EDITOR,r.CREATOR) TESTOR,max(IFNULL(r.EDIT_DATE,r.CREATE_DATE)) TEST_DATE,
+		sum(case when (r.JUDGE='NG' and ifnull(r.RE_JUDGE,'')!='OK' )  then 1 else 0 end ) as NG_NUM,
+		sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		sum(case when (r.JUDGE='NG' and r.ONE_PASSED_FLAG='X' ) then 1 else 0 end) as ONE_PASS_NG_NUM,
+		sum( case when r.ONE_PASSED_FLAG ='X' then 1 else 0 end ) as ONE_PASS_NUM
+		FROM QMS_PROCESS_TEST_RECORD r
+		LEFT JOIN QMS_MES_ORDER o on o.ORDER_NO=r.ORDER_NO
+		WHERE  r.WERKS=#{WERKS} and r.TEST_TYPE='01'  and ifnull(r.CUSTOM_NO,'')!=''
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+		and r.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="TEST_NODE !=null and TEST_NODE !='' ">
+			and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="CUSTOM_NO !=null and CUSTOM_NO !='' ">
+			and r.CUSTOM_NO like concat('%',#{CUSTOM_NO},'%')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and r.ONE_PASSED_FLAG ='X' 
+		</if>
+		
+		GROUP BY r.ORDER_NO,r.CUSTOM_NO,r.TEST_NODE ) t ) tmp
+		where 1=1
+		<if test="STATUS !=null and STATUS !='' ">
+			 and tmp.TEST_RESULT=#{STATUS}
+		</if>
+		<if test="START_DATE !=null and START_DATE !='' ">
+			and tmp.TEST_DATE >= concat(#{START_DATE},' 00:00:00')
+		</if>
+		<if test="END_DATE !=null and END_DATE !='' ">
+			and tmp.TEST_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and tmp.ONE_PASS_STATUS = #{ONE_PASS_STATUS}
+		</if>
+		ORDER BY tmp.TEST_DATE desc
+		<if test="start !=null and length !=-1 ">
+		LIMIT #{start},#{length}
+		</if>
+	</if>
+	<if test="TEST_TYPE=='02' ">
+		SELECT * FROM(
+		SELECT t.*,#{TEST_TYPE} TEST_TYPE,
+		case when t.NG_NUM>0 and t.EMPITY_NUM=0 then '不合格' 
+		when t.NG_NUM=0 and t.EMPITY_NUM=0 then '合格' 
+		when t.EMPITY_NUM>0 and t.TEST_DATE is not null then '未完成' 
+		when t.EMPITY_NUM>0 and t.TEST_DATE is null then '未录入' end as TEST_RESULT,
+		(case when t.ONE_PASS_NG_NUM>0 then '不合格' 
+			when t.ONE_PASS_NUM=0   then ''		
+		else '合格'  end ) as ONE_PASS_STATUS
+		FROM (
+		SELECT b.WERKS,b.ORDER_NO,b.CAB_NO,b.ORDER_TEXT, r.TEST_NODE,
+		IFNULL(r.CREATOR,r.EDITOR) TESTOR,IFNULL(r.CREATE_DATE,r.EDIT_DATE) TEST_DATE,
+		sum(case when (r.JUDGE='NG' and ifnull(r.RE_JUDGE,'')!='OK' ) then 1 else 0 end ) as NG_NUM,
+		sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		sum(case when (r.JUDGE='NG' and r.ONE_PASSED_FLAG='X' ) then 1 else 0 end) as ONE_PASS_NG_NUM,
+		sum( case when r.ONE_PASSED_FLAG ='X' then 1 else 0 end ) as ONE_PASS_NUM
+		FROM QMS_MES_BUS b
+		LEFT JOIN QMS_C_BUS_TYPE_TEST_TYPE y on b.BUS_TYPE_CODE = y.BUS_TYPE_CODE
+		LEFT JOIN QMS_PROCESS_TEST_RECORD r on r.WERKS=#{WERKS} 
+		and b.CAB_NO=r.CAB_NO and ifnull(r.CAB_NO,'')!='' and r.TEST_TYPE=#{TEST_TYPE}
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+		and r.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="TEST_NODE !=null and TEST_NODE !='' ">
+			and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		WHERE  b.WERKS=#{WERKS} and y.TEST_TYPE=#{TEST_TYPE} and ifnull(b.CAB_NO,'')!=''
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+		and b.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="CAB_NO !=null and CAB_NO !='' ">
+			and b.CAB_NO like concat('%',#{CAB_NO},'%')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and r.ONE_PASSED_FLAG ='X' 
+		</if>
+		GROUP BY b.ORDER_NO,b.CAB_NO,r.TEST_NODE ) t ) tmp
+		where 1=1
+		<if test="STATUS !=null and STATUS !='' ">
+			and tmp.TEST_RESULT=#{STATUS}
+		</if>
+		<if test="START_DATE !=null and START_DATE !='' ">
+			and tmp.TEST_DATE >= concat(#{START_DATE},' 00:00:00')
+		</if>
+		<if test="END_DATE !=null and END_DATE !='' ">
+			and tmp.TEST_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and tmp.ONE_PASS_STATUS = #{ONE_PASS_STATUS}
+		</if>
+		ORDER BY tmp.TEST_DATE desc
+		<if test="start !=null and length !=-1 ">
+		LIMIT #{start},#{length}
+		</if>
+	</if>
+	</select>
+	
+	<select id="getPartsTestRecordCount" parameterType="Map" resultType="int">
+	<if test="TEST_TYPE=='01' ">
+		SELECT count(tmp.CUSTOM_NO) FROM(
+		SELECT t.CUSTOM_NO,t.TEST_DATE,
+		case when t.NG_NUM>0 and t.EMPITY_NUM=0 then '不合格' 
+		when t.NG_NUM=0 and t.EMPITY_NUM=0 then '合格' 
+		when t.EMPITY_NUM>0 then '未完成'  end as TEST_RESULT,
+		(case when t.ONE_PASS_NG_NUM>0 then '不合格' 
+			when t.ONE_PASS_NUM=0   then ''		
+		else '合格'  end ) as ONE_PASS_STATUS
+		FROM (
+		SELECT  r.CUSTOM_NO,max(IFNULL(r.EDIT_DATE,r.CREATE_DATE)) TEST_DATE,
+		sum(case when (r.JUDGE='NG' and ifnull(r.RE_JUDGE,'')!='OK' )  then 1 else 0 end ) as NG_NUM,
+		sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		sum(case when (r.JUDGE='NG' and r.ONE_PASSED_FLAG='X' ) then 1 else 0 end) as ONE_PASS_NG_NUM,
+		sum( case when r.ONE_PASSED_FLAG ='X' then 1 else 0 end ) as ONE_PASS_NUM
+		FROM QMS_PROCESS_TEST_RECORD r
+		LEFT JOIN QMS_MES_ORDER o on o.ORDER_NO=r.ORDER_NO
+		WHERE  r.WERKS=#{WERKS} and r.TEST_TYPE='01'  and ifnull(r.CUSTOM_NO,'')!=''
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+		and r.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="TEST_NODE !=null and TEST_NODE !='' ">
+			and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="CUSTOM_NO !=null and CUSTOM_NO !='' ">
+			and r.CUSTOM_NO like concat('%',#{CUSTOM_NO},'%')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and r.ONE_PASSED_FLAG ='X' 
+		</if>
+		GROUP BY r.ORDER_NO,r.CUSTOM_NO,r.TEST_NODE ) t ) tmp
+		where 1=1
+		<if test="STATUS !=null and STATUS !='' ">
+			and tmp.TEST_RESULT=#{STATUS}
+		</if>
+		<if test="START_DATE !=null and START_DATE !='' ">
+			and tmp.TEST_DATE >= concat(#{START_DATE},' 00:00:00')
+		</if>
+		<if test="END_DATE !=null and END_DATE !='' ">
+			and tmp.TEST_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and tmp.ONE_PASS_STATUS = #{ONE_PASS_STATUS}
+		</if>
+	</if>
+	<if test="TEST_TYPE=='02' ">
+		SELECT count(tmp.CAB_NO) FROM(
+		SELECT t.CAB_NO,t.TEST_DATE,
+		case when t.NG_NUM>0 and t.EMPITY_NUM=0 then '不合格' 
+		when t.NG_NUM=0 and t.EMPITY_NUM=0 then '合格' 
+		when t.EMPITY_NUM>0 and t.TEST_DATE is not null then '未完成' 
+		when t.EMPITY_NUM>0 and t.TEST_DATE is null then '未录入' end as TEST_RESULT,
+		(case when t.ONE_PASS_NG_NUM>0 then '不合格' 
+			when t.ONE_PASS_NUM=0   then ''		
+		else '合格'  end ) as ONE_PASS_STATUS
+		FROM (
+		SELECT b.CAB_NO,max(IFNULL(r.EDIT_DATE,r.CREATE_DATE)) TEST_DATE,
+		sum(case when (r.JUDGE='NG' and ifnull(r.RE_JUDGE,'')!='OK' ) then 1 else 0 end ) as NG_NUM,
+		sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		sum(case when (r.JUDGE='NG' and r.ONE_PASSED_FLAG='X' ) then 1 else 0 end) as ONE_PASS_NG_NUM,
+		sum( case when r.ONE_PASSED_FLAG ='X' then 1 else 0 end ) as ONE_PASS_NUM
+		FROM QMS_MES_BUS b
+		LEFT JOIN QMS_C_BUS_TYPE_TEST_TYPE y on b.BUS_TYPE_CODE = y.BUS_TYPE_CODE
+		LEFT JOIN QMS_PROCESS_TEST_RECORD r on r.WERKS=#{WERKS} 
+		and b.CAB_NO=r.CAB_NO and ifnull(r.CAB_NO,'')!='' and r.TEST_TYPE=#{TEST_TYPE}
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+		and r.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="TEST_NODE !=null and TEST_NODE !='' ">
+			and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		WHERE  b.WERKS=#{WERKS} and y.TEST_TYPE=#{TEST_TYPE} and ifnull(b.CAB_NO,'')!=''
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+		and b.ORDER_NO=#{ORDER_NO} 
+		</if>
+		<if test="CAB_NO !=null and CAB_NO !='' ">
+			and b.CAB_NO like concat('%',#{CAB_NO},'%')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and r.ONE_PASSED_FLAG ='X' 
+		</if>
+		GROUP BY b.ORDER_NO,b.CAB_NO,r.TEST_NODE ) t ) tmp
+		where 1=1
+		<if test="STATUS !=null and STATUS !='' ">
+			and tmp.TEST_RESULT=#{STATUS}
+		</if>
+		<if test="START_DATE !=null and START_DATE !='' ">
+			and tmp.TEST_DATE >= concat(#{START_DATE},' 00:00:00')
+		</if>
+		<if test="END_DATE !=null and END_DATE !='' ">
+			and tmp.TEST_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		</if>
+		<if test="ONE_PASS_STATUS !=null and ONE_PASS_STATUS !='' ">
+			and tmp.ONE_PASS_STATUS = #{ONE_PASS_STATUS}
+		</if>
+	</if>
+	</select>
+	
+	<select id="getTestNGRecordList" parameterType="Map" resultType="Map">
+		<if test="TEST_TYPE=='01' ">
+		SELECT a.*,r.JUDGE,a.CREATE_DATE TEST_DATE,r.TEST_RESULT,r.CREATOR,r.TEST_ITEM,o.ORDER_TEXT
+		FROM(
+		SELECT sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		r.BUS_NO,r.VIN,r.TEST_NODE,r.CREATE_DATE,r.ORDER_NO,r.WERKS
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.TEST_TYPE='01' AND(ifnull(r.BUS_NO,'')!='' or ifnull(r.VIN,'')!='')
+		and r.CREATE_DATE>0 and r.CREATE_DATE>=concat(#{START_DATE},' 00:00:00')
+		and r.CREATE_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		<if test="TEST_NODE !='' and TEST_NODE !=null ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="WERKS !='' and WERKS !=null ">
+		and r.WERKS=#{WERKS}
+		</if>
+		GROUP BY r.BUS_NO,r.VIN,r.TEST_NODE
+		) a
+		LEFT JOIN QMS_PROCESS_TEST_RECORD r
+		ON a.BUS_NO= r.BUS_NO AND a.TEST_NODE=r.TEST_NODE 
+		LEFT JOIN QMS_MES_ORDER o on o.ORDER_NO=a.ORDER_NO
+		WHERE a.EMPITY_NUM=0 and r.JUDGE='NG'
+		<if test="TEST_NODE !='' and TEST_NODE!=null ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="WERKS !='' and WERKS  !=null ">
+		and r.WERKS=#{WERKS}
+		</if>
+		order by a.CREATE_DATE,a.BUS_NO
+		</if>
+		<if test="TEST_TYPE=='02' ">
+		SELECT a.*,r.JUDGE,a.CREATE_DATE TEST_DATE,r.TEST_RESULT,r.CREATOR,r.TEST_ITEM,o.ORDER_TEXT
+		FROM(
+		SELECT sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		r.BUS_NO,r.VIN,r.TEST_NODE,r.CREATE_DATE,r.ORDER_NO
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.TEST_TYPE='02' AND ifnull(r.VIN,'')!=''
+		and r.CREATE_DATE>0 and r.CREATE_DATE>=concat(#{START_DATE},' 00:00:00')
+		and r.CREATE_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		<if test="TEST_NODE !='' and TEST_NODE!=null ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="WERKS !='' and WERKS ">
+		and r.WERKS=#{WERKS}
+		</if>
+		GROUP BY r.VIN,r.TEST_NODE
+		) a
+		LEFT JOIN QMS_PROCESS_TEST_RECORD r
+		ON a.VIN= r.VIN AND a.TEST_NODE=r.TEST_NODE 
+		LEFT JOIN QMS_MES_ORDER o on o.ORDER_NO=a.ORDER_NO
+		WHERE a.EMPITY_NUM=0 and r.JUDGE='NG'
+		<if test="TEST_NODE !='' and TEST_NODE!=null ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="WERKS !='' and WERKS ">
+		and r.WERKS=#{WERKS}
+		</if>
+		order by a.CREATE_DATE,a.VIN	
+		</if>
+		
+	</select>
+	
+	<select id="getDPUData" parameterType="Map" resultType="Map">
+		<if test="TEST_TYPE=='01' ">
+		SELECT count(DISTINCT a.BUS_NO) bus_num,sum(case when r.JUDGE='NG' then 1 else 0 end) as bug_num,
+		<if test="WEIDU=='day' " >
+		SUBSTR(a.CREATE_DATE,1,10) item
+		</if>
+		<if test="WEIDU=='week' " >
+		week(a.CREATE_DATE) item
+		</if>
+		<if test="WEIDU=='month' " >
+		month(a.CREATE_DATE) item
+		</if>
+		<if test="WEIDU=='order' " >
+		a.ORDER_NO item
+		</if>	
+		FROM(
+		SELECT sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		r.BUS_NO,r.VIN,r.TEST_NODE,r.ORDER_NO,r.CREATE_DATE
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.TEST_TYPE='01' AND(ifnull(r.BUS_NO,'')!='' or ifnull(r.VIN,'')!='') 
+		and r.CREATE_DATE>0 and r.CREATE_DATE>=concat(#{START_DATE},' 00:00:00')
+		and r.CREATE_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		<if test="TEST_NODE !='' and TEST_NODE!=null ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="WERKS !='' and WERKS ">
+		and r.WERKS=#{WERKS}
+		</if>
+		GROUP BY r.BUS_NO,r.VIN,r.TEST_NODE
+		) a
+		LEFT JOIN QMS_PROCESS_TEST_RECORD r
+		ON a.BUS_NO= r.BUS_NO AND a.TEST_NODE=r.TEST_NODE and r.JUDGE='NG'
+		and r.CREATE_DATE>0 and r.CREATE_DATE>=concat(#{START_DATE},' 00:00:00')
+		and r.CREATE_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		<if test="TEST_NODE !='' and TEST_NODE!=null ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="WERKS !='' and WERKS !=null ">
+		and r.WERKS=#{WERKS}
+		</if>
+		WHERE a.EMPITY_NUM=0 
+		<if test="WEIDU=='day' " >
+		GROUP BY SUBSTR(a.CREATE_DATE,1,10)
+		</if>
+		<if test="WEIDU=='week' " >
+		GROUP BY week(a.CREATE_DATE) 
+		</if>
+		<if test="WEIDU=='month' " >
+		GROUP BY month(a.CREATE_DATE)
+		</if>
+		<if test="WEIDU=='order' " >
+		GROUP BY a.ORDER_NO 
+		</if>
+		
+		</if>
+		
+		<if test="TEST_TYPE=='02' ">
+		SELECT count(DISTINCT a.VIN) bus_num,sum(case when r.JUDGE='NG' then 1 else 0 end) as bug_num,
+		<if test="WEIDU=='day' " >
+		SUBSTR(a.CREATE_DATE,1,10) item
+		</if>
+		<if test="WEIDU=='week' " >
+		week(a.CREATE_DATE) item
+		</if>
+		<if test="WEIDU=='month' " >
+		month(a.CREATE_DATE) item
+		</if>
+		<if test="WEIDU=='order' " >
+		a.ORDER_NO item
+		</if>	
+		FROM(
+		SELECT sum(case when (ifnull(r.JUDGE,'')='' and ifnull(r.RE_JUDGE,'')='') then 1 else 0 end ) as EMPITY_NUM,
+		r.BUS_NO,r.VIN,r.TEST_NODE,r.ORDER_NO,r.CREATE_DATE
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.TEST_TYPE='02' AND ifnull(r.VIN,'')!=''
+		and r.CREATE_DATE>0 and r.CREATE_DATE>=concat(#{START_DATE},' 00:00:00')
+		and r.CREATE_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		<if test="TEST_NODE !='' and TEST_NODE!=null ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="WERKS !='' and WERKS ">
+		and r.WERKS=#{WERKS}
+		</if>
+		GROUP BY r.VIN,r.TEST_NODE
+		) a
+		LEFT JOIN QMS_PROCESS_TEST_RECORD r
+		ON a.VIN= r.VIN AND a.TEST_NODE=r.TEST_NODE and r.JUDGE='NG'
+		and r.CREATE_DATE>0 and r.CREATE_DATE>=concat(#{START_DATE},' 00:00:00')
+		and r.CREATE_DATE &lt;= concat(#{END_DATE},' 23:59:59')
+		<if test="TEST_NODE !='' and TEST_NODE!=null ">
+		and r.TEST_NODE=#{TEST_NODE}
+		</if>
+		<if test="WERKS !='' and WERKS !=null ">
+		and r.WERKS=#{WERKS}
+		</if>
+		WHERE a.EMPITY_NUM=0 
+		<if test="WEIDU=='day' " >
+		GROUP BY SUBSTR(a.CREATE_DATE,1,10)
+		</if>
+		<if test="WEIDU=='week' " >
+		GROUP BY week(a.CREATE_DATE) 
+		</if>
+		<if test="WEIDU=='month' " >
+		GROUP BY month(a.CREATE_DATE)
+		</if>
+		<if test="WEIDU=='order' " >
+		GROUP BY a.ORDER_NO 
+		</if>
+		
+		</if>		
+	</select>
+	
+	<update id="updateProcessTestConfirm" parameterType="List">
+		update QMS_PROCESS_TEST_RECORD 
+		set CONFIRMOR=#{list[0].CONFIRMOR},CONFIRM_DATE=#{list[0].CONFIRM_DATE}
+		where 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			WERKS=#{d.WERKS} and TEST_NODE=#{d.TEST_NODE} 
+			<if test="d.BUS_NO !=null and d.BUS_NO !='' and d.TEST_TYPE=='01' ">
+			and BUS_NO=#{d.BUS_NO}
+			</if>
+			<if test="d.VIN !=null and d.VIN !='' and d.TEST_TYPE=='02' ">
+			and VIN=#{d.VIN}
+			</if>
+			
+		</foreach>
+	</update>
+	
+	<select id="getFTYData" parameterType="Map" resultType="Map">
+		SELECT a.TEST_NODE,a.WERKS,convert((1-ifnull(b.NG_NUM,0)/a.BUS_NUM)*100,DECIMAL(10,2)) as RATE,
+		(a.BUS_NUM-ifnull(b.NG_NUM,0)) as OK_NUM,a.BUS_NUM
+		FROM(
+		SELECT r.TEST_NODE,r.WERKS,
+		<if test="TEST_TYPE=='01' ">
+		count(DISTINCT r.BUS_NO) BUS_NUM
+		</if>
+		<if test="TEST_TYPE=='02' ">
+		count(DISTINCT r.VIN) BUS_NUM
+		</if>		
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.TEST_GROUP='品质' and r.TEST_TYPE=#{TEST_TYPE} and r.ONE_PASSED_FLAG ='X'
+		AND r.WERKS in 
+		<foreach collection="WERKS_LIST" item="WERKS" index="index" separator="," open="(" close=")">
+		#{WERKS}
+		</foreach>
+		AND r.TEST_NODE in 
+		<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+		</foreach>
+		AND ifnull(r.EDIT_DATE,r.CREATE_DATE) >=concat(#{START_DATE},' 00:00:00')
+		and ifnull(r.EDIT_DATE,r.CREATE_DATE) &lt;= concat(#{END_DATE},' 23:59:59')
+		and ifnull(r.CONFIRMOR,'') !=''
+		GROUP BY r.WERKS,r.TEST_NODE ) a
+		LEFT JOIN 
+		(
+		SELECT r.TEST_NODE,r.WERKS,
+		<if test="TEST_TYPE=='01' ">
+		count(DISTINCT r.BUS_NO) NG_NUM
+		</if>
+		<if test="TEST_TYPE=='02' ">
+		count(DISTINCT r.VIN) OK_NUM
+		</if>
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.ONE_PASSED_FLAG ='X' and r.TEST_GROUP='品质' and r.JUDGE='NG' 
+		and r.TEST_TYPE=#{TEST_TYPE}
+		AND r.WERKS in 
+		<foreach collection="WERKS_LIST" item="WERKS" index="index" separator="," open="(" close=")">
+		#{WERKS}
+		</foreach>
+		AND r.TEST_NODE in 
+		<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+		</foreach>
+		and ifnull(r.CONFIRMOR,'') !=''
+		AND ifnull(r.EDIT_DATE,r.CREATE_DATE) >=concat(#{START_DATE},' 00:00:00')
+		and ifnull(r.EDIT_DATE,r.CREATE_DATE) &lt;= concat(#{END_DATE},' 23:59:59')
+		GROUP BY r.WERKS,r.TEST_NODE
+		) b
+		on a.TEST_NODE=b.TEST_NODE and a.WERKS=b.WERKS
+	</select>
+	
+	<select id="getNodesTargetVal" parameterType="Map" resultType="Map">
+	SELECT ifnull(p.TARGET_VALUE,0)*100 TARGET_VALUE,p.TEST_NODE
+	FROM QMS_C_QUALITY_TARGET_PARAMETER p
+	LEFT JOIN(
+	SELECT max(ifnull(p.EDIT_DATE,p.CREATE_DATE)) EDIT_DATE,p.TEST_NODE
+	FROM QMS_C_QUALITY_TARGET_PARAMETER p
+	WHERE p.TEST_TYPE=#{TEST_TYPE} AND p.TARGET_TYPE='01'
+	AND p.TEST_NODE in 
+	<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+	</foreach>
+	GROUP BY p.TEST_NODE
+	) p1 on p.TEST_NODE=p1.TEST_NODE and ifnull(p.EDIT_DATE,p.CREATE_DATE)=p1.EDIT_DATE
+	WHERE p.TEST_TYPE=#{TEST_TYPE}  AND p.TARGET_TYPE='01'
+	AND p.TEST_NODE in 
+	<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+	</foreach>
+	</select>
+
+	<select id="getUnProcessTestList" parameterType="Map" resultType="Map">
+		SELECT VIN,BUS_NO,WERKS,ORDER_NO,ORDER_DESC,TEST_TYPE,TEST_NODE,TEST_ITEM,JUDGE,FAULT_TYPE,RECTIFY_UNIT,TESTOR,TEST_DATE,ID,ID RECORD_ID
+		FROM QMS_UNPROCESS_TEST_RECORD 
+		WHERE WERKS=#{WERKS}
+		<if test="ORDER_NO !=null and ORDER_NO !='' ">
+			and ORDER_NO=#{ORDER_NO}
+		</if>
+		<if test="TEST_TYPE !=null and TEST_TYPE !='' ">
+			and TEST_TYPE = #{TEST_TYPE}
+		</if>
+		<if test="TEST_NODE !=null and TEST_NODE !='' ">
+			and TEST_NODE = #{TEST_NODE}
+		</if>
+		<if test="JUDGE !=null and JUDGE !='' ">
+			and JUDGE = #{JUDGE}
+		</if>
+		<if test="FAULT_TYPE !=null and FAULT_TYPE !='' ">
+			and FAULT_TYPE = #{FAULT_TYPE}
+		</if>
+		<if test="RECTIFY_UNIT !=null and RECTIFY_UNIT !='' ">
+			and RECTIFY_UNIT = #{RECTIFY_UNIT}
+		</if>
+		<if test="BUS_NO !=null and BUS_NO !='' ">
+			and BUS_NO = #{BUS_NO}
+		</if>
+		<if test="VIN !=null and VIN !='' ">
+			and VIN = #{VIN}
+		</if>
+		ORDER BY TEST_DATE desc
+		
+	</select>
+	
+	<delete id="deleteUnTestRecord" parameterType="List">
+		delete from QMS_UNPROCESS_TEST_RECORD where ID in
+		<foreach collection="list" item="RECORD_ID" open="(" close=")" separator=",">
+			#{RECORD_ID}
+		</foreach>
+	</delete>
+	
+	<update id="saveUnTestRecord" parameterType="List">
+		<foreach  collection="list" item="detail" index="index" separator=";">
+			<if test='detail.RECORD_ID !=null and detail.RECORD_ID !="" and detail.UPDATE_FLAG=="X" '>
+			update QMS_UNPROCESS_TEST_RECORD set VIN =#{detail.VIN},BUS_NO=#{detail.BUS_NO},WERKS=#{detail.WERKS},ORDER_NO=#{detail.ORDER_NO},
+			ORDER_DESC=#{detail.ORDER_DESC},TEST_TYPE=#{detail.TEST_TYPE},TEST_NODE=#{detail.TEST_NODE},TEST_ITEM=#{detail.TEST_ITEM},
+			JUDGE=#{detail.JUDGE},FAULT_TYPE=#{detail.FAULT_TYPE},RECTIFY_UNIT=#{detail.RECTIFY_UNIT},TESTOR=#{detail.TESTOR},TEST_DATE=#{detail.TEST_DATE}
+			WHERE ID =#{detail.RECORD_ID}
+			</if>
+			
+			<if test='detail.RECORD_ID ==null or detail.RECORD_ID =="" '>
+			insert into QMS_UNPROCESS_TEST_RECORD (VIN,BUS_NO,WERKS,ORDER_NO,ORDER_DESC,TEST_TYPE,TEST_NODE,TEST_ITEM,JUDGE,FAULT_TYPE,RECTIFY_UNIT,TESTOR,TEST_DATE)
+			values 
+			(#{detail.VIN},#{detail.BUS_NO},#{detail.WERKS},#{detail.ORDER_NO},#{detail.ORDER_DESC},#{detail.TEST_TYPE},#{detail.TEST_NODE},#{detail.TEST_ITEM},#{detail.JUDGE},#{detail.FAULT_TYPE},#{detail.RECTIFY_UNIT},#{detail.TESTOR},#{detail.TEST_DATE})
+			</if>			
+		</foreach>
+
+	</update>
+	
+	<select id="getUnProcessReportData" parameterType="Map" resultType="Map">
+		SELECT TEST_NODE,COUNT(ID) as FAULT_NUM,
+		<if test='WEIDU =="FAULT_TYPE" '>
+		FAULT_TYPE as ITEM
+		</if>
+		<if test='WEIDU =="RECTIFY_UNIT" '>
+		RECTIFY_UNIT as ITEM
+		</if>
+		FROM QMS_UNPROCESS_TEST_RECORD
+		WHERE WERKS=#{WERKS}
+		AND TEST_NODE in 
+		<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+		</foreach>
+		AND TEST_DATE >=concat(#{START_DATE},' 00:00:00')
+		and TEST_DATE &lt;= concat(#{END_DATE},' 23:59:59')		
+		<if test='WEIDU =="FAULT_TYPE" '>
+		GROUP BY TEST_NODE,FAULT_TYPE
+		</if>
+		<if test='WEIDU =="RECTIFY_UNIT" '>
+		GROUP BY TEST_NODE,RECTIFY_UNIT
+		</if>
+	</select>
+	
+	<select id="getBJFtyData" parameterType="Map" resultType="Map">
+		<if test='WEIDU == "order" ' >
+		SELECT a.ORDER_NO as ITEM,convert((1-ifnull(b.NG_NUM,0)/a.BUS_NUM)*100,DECIMAL(10,2)) as RATE,
+		(a.BUS_NUM-ifnull(b.NG_NUM,0)) OK_NUM,a.BUS_NUM
+		FROM(
+		SELECT r.ORDER_NO,count(DISTINCT r.CUSTOM_NO) BUS_NUM
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.TEST_GROUP='品质' and ifnull(r.CUSTOM_NO,'')!='' and r.TEST_TYPE=#{TEST_TYPE} and r.ONE_PASSED_FLAG ='X'
+		AND ifnull(r.EDIT_DATE,r.CREATE_DATE) >=concat(#{START_DATE},' 00:00:00')
+		and ifnull(r.EDIT_DATE,r.CREATE_DATE) &lt;= concat(#{END_DATE},' 23:59:59')
+		AND r.WERKS in 
+		<foreach collection="WERKS_LIST" item="WERKS" index="index" separator="," open="(" close=")">
+		#{WERKS}
+		</foreach>
+		AND r.TEST_NODE in 
+		<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+		</foreach>
+		GROUP BY r.ORDER_NO) a
+		LEFT JOIN 
+		(
+		SELECT r.ORDER_NO,count(DISTINCT r.CUSTOM_NO) NG_NUM
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.ONE_PASSED_FLAG ='X' and r.TEST_GROUP='品质' and r.JUDGE='NG' 
+		and r.TEST_TYPE=#{TEST_TYPE}
+		AND ifnull(r.EDIT_DATE,r.CREATE_DATE) >=concat(#{START_DATE},' 00:00:00')
+		and ifnull(r.EDIT_DATE,r.CREATE_DATE) &lt;= concat(#{END_DATE},' 23:59:59')
+		AND r.WERKS in 
+		<foreach collection="WERKS_LIST" item="WERKS" index="index" separator="," open="(" close=")">
+		#{WERKS}
+		</foreach>
+		AND r.TEST_NODE in 
+		<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+		</foreach>
+		GROUP BY r.ORDER_NO
+		) b
+		on a.ORDER_NO=b.ORDER_NO
+		</if>
+		<if test='WEIDU == "werks" ' >
+		SELECT a.WERKS as ITEM,convert((1-ifnull(b.NG_NUM,0)/a.BUS_NUM)*100,DECIMAL(10,2)) as RATE,
+		(a.BUS_NUM-ifnull(b.NG_NUM,0)) OK_NUM,a.BUS_NUM
+		FROM(
+		SELECT r.WERKS,count(DISTINCT r.CUSTOM_NO) BUS_NUM
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.TEST_GROUP='品质' and ifnull(r.CUSTOM_NO,'')!='' and r.TEST_TYPE=#{TEST_TYPE} and r.ONE_PASSED_FLAG ='X'
+		AND ifnull(r.EDIT_DATE,r.CREATE_DATE) >=concat(#{START_DATE},' 00:00:00')
+		and ifnull(r.EDIT_DATE,r.CREATE_DATE) &lt;= concat(#{END_DATE},' 23:59:59')
+		AND r.WERKS in 
+		<foreach collection="WERKS_LIST" item="WERKS" index="index" separator="," open="(" close=")">
+		#{WERKS}
+		</foreach>
+		AND r.TEST_NODE in 
+		<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+		</foreach>
+		GROUP BY r.WERKS) a
+		LEFT JOIN 
+		(
+		SELECT r.WERKS,count(DISTINCT r.CUSTOM_NO) NG_NUM
+		FROM QMS_PROCESS_TEST_RECORD r
+		WHERE r.ONE_PASSED_FLAG ='X' and r.TEST_GROUP='品质' and r.JUDGE='NG' 
+		and r.TEST_TYPE=#{TEST_TYPE}
+		AND ifnull(r.EDIT_DATE,r.CREATE_DATE) >=concat(#{START_DATE},' 00:00:00')
+		and ifnull(r.EDIT_DATE,r.CREATE_DATE) &lt;= concat(#{END_DATE},' 23:59:59')
+		AND r.WERKS in 
+		<foreach collection="WERKS_LIST" item="WERKS" index="index" separator="," open="(" close=")">
+		#{WERKS}
+		</foreach>
+		AND r.TEST_NODE in 
+		<foreach collection="TEST_NODE_LIST" item="TEST_NODE" index="index" separator="," open="(" close=")">
+		#{TEST_NODE}
+		</foreach>
+		GROUP BY r.WERKS
+		) b
+		on a.WERKS=b.WERKS
+		</if>
+	</select>
+	
+	<select id ="getBJFTYOrderList" parameterType="Map" resultType="String">
+	SELECT distinct r.ORDER_NO
+	FROM QMS_PROCESS_TEST_RECORD r
+	WHERE r.ONE_PASSED_FLAG ='X' and r.TEST_GROUP='品质' and ifnull(r.CUSTOM_NO,'') !=''  and r.TEST_TYPE=#{TEST_TYPE}
+	and r.WERKS in 
+	<foreach collection="WERKS_LIST" item="WERKS" index="index" separator="," open="(" close=")">
+		#{WERKS}
+	</foreach>
+	and ifnull(r.EDIT_DATE,r.CREATE_DATE) >=concat(#{START_DATE},' 00:00:00')
+	and ifnull(r.EDIT_DATE,r.CREATE_DATE) &lt;= concat(#{END_DATE},' 23:59:59')
+	</select>
+	
+	<select id="getFaultScatterData" parameterType="Map" resultType="Map">
+	SELECT COUNT(DISTINCT a.ID) FAULT_NUM,a.RESP_UNIT,
+	<if test="WEIDU=='workgroup' ">
+	a.RESP_WORKGROUP as ITEM
+	</if>
+	<if test="WEIDU=='faultType' ">
+	a.BAD_CLASS as ITEM
+	</if>
+	FROM QMS_PROCESS_TEST_RECORD_ABNORMAL a
+	LEFT JOIN QMS_PROCESS_TEST_RECORD r on r.ABNORMAL_ID=a.ID
+	WHERE a.RESP_WERKS=#{WERKS} and r.TEST_TYPE=#{TEST_TYPE} and a.RESP_UNIT=#{RESP_UNIT}
+	and ifnull(a.EDIT_DATE,r.CREATE_DATE) >=concat(#{START_DATE},' 00:00:00')
+	and ifnull(a.EDIT_DATE,r.CREATE_DATE) &lt;= concat(#{END_DATE},' 23:59:59')
+	<if test="WEIDU=='workgroup' ">
+	GROUP BY a.RESP_WORKGROUP
+	</if>
+	<if test="WEIDU=='faultType' ">
+	GROUP BY a.BAD_CLASS
+	</if>	
+	ORDER BY COUNT(DISTINCT a.ID) desc
+	</select>
+	
+</mapper>

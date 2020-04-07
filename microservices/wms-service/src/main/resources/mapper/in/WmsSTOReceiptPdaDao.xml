@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.in.dao.WmsSTOReceiptPdaDao">
+
+
+
+	<select id="defaultSTOCache" parameterType="map" resultType="map">
+		SELECT T.WERKS, T.MATNR, T.SAP_OUT_NO, SUM(T.QTY) QTY, COUNT(1) COUNT
+		  FROM WMS_PDA_SCAN_CACHE T
+		 WHERE WH_NUMBER=#{WH_NUMBER}
+			AND T.CREATOR =#{CREATOR}
+			AND T.MENU_KEY=#{MENU_KEY}
+		 GROUP BY T.WERKS, T.MATNR, T.SAP_OUT_NO
+
+	</select>
+
+	<select id="getSTOCacheCount" parameterType="map" resultType="int">
+		SELECT COUNT(1)
+		  FROM (SELECT COUNT(1) COUNT
+				  FROM WMS_PDA_SCAN_CACHE T
+				 WHERE WH_NUMBER = #{WH_NUMBER}
+				   AND T.CREATOR = #{CREATOR}
+				   AND T.MENU_KEY = #{MENU_KEY}
+				 GROUP BY T.WERKS, T.MATNR, T.SAP_OUT_NO)
+	</select>
+
+	<select id="getDeliveryPacking" parameterType="map" resultType="map">
+		SELECT I.FACT_NO  WERKS,
+		I.MAT_NO        MATNR,
+		I.MAT_DESC      MAKTX,
+		I.BUNIT         UNIT,
+		I.BUNIT_QTY     QTY,
+		I.BYD_BATCH     BATCH,
+		I.PO_NO         PO_NO,
+		I.PO_TYPE,
+		I.PO_ITEM       PO_ITEM_NO,
+		I.SPEC_QTY      FULL_BOX_QTY,
+		I.CONTAINERCODE BOX_SN,
+		I.END_FLAG      END_FLAG,
+		I.PROD_DATE     PRODUCT_DATE,
+		I.EXPIRY_DATE   EFFECT_DATE,
+		I.BARCODE_NO    LABEL_NO,
+		TYPE_NO			TYPE_NO,
+		(SELECT STATUS_RMK FROM WMS_IN_DELIVERY D WHERE I.DELIVERY_NO=D.DELIVERY_NO) LABEL_STATUS
+		FROM WMS_IN_DELIVERY_PACKING I
+		WHERE 1=1
+		<if test="BARCODE_NO !=null and BARCODE_NO !='' ">
+			and I.BARCODE_NO=#{BARCODE_NO}
+		</if>
+		<if test="FACT_NO !=null and FACT_NO !='' ">
+			and I.FACT_NO=#{FACT_NO}
+		</if>
+		UNION ALL
+		SELECT T.WERKS,
+		T.MATNR,
+		T.MAKTX,
+		T.UNIT,
+		TO_CHAR(T.BOX_QTY) QTY,
+		T.BATCH,
+		T.PO_NO,
+		'' PO_TYPE,
+		T.PO_ITEM_NO,
+		TO_CHAR(T.FULL_BOX_QTY) FULL_BOX_QTY,
+		T.BOX_SN,
+		T.END_FLAG,
+		T.PRODUCT_DATE,
+		T.EFFECT_DATE,
+		T.LABEL_NO,
+		'' TYPE_NO,
+		T.LABEL_STATUS
+		FROM WMS_CORE_LABEL T
+		WHERE 1=1
+		<if test="BARCODE_NO !=null and BARCODE_NO !='' ">
+			and T.LABEL_NO=#{BARCODE_NO}
+		</if>
+		<if test="FACT_NO !=null and FACT_NO !='' ">
+			and T.WERKS=#{FACT_NO}
+		</if>
+
+	</select>
+
+	<select id="validateStorage" parameterType="map" resultType="map">
+		SELECT i.AREA_CODE FROM WMS_C_GR_AREA i
+		WHERE 1=1
+		<if test="AREA_CODE !=null and AREA_CODE !='' ">
+			and i.AREA_CODE=#{AREA_CODE}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+			and i.WERKS=#{WERKS}
+		</if>
+
+	</select>
+
+	<select id="getfirstOpsTime" parameterType="map" resultType="map">
+		SELECT W.CREATE_DATE
+		  FROM WMS_PDA_SCAN_CACHE W
+		 WHERE W.ID = (SELECT MIN(ID)
+						 FROM WMS_PDA_SCAN_CACHE P
+						WHERE P.WH_NUMBER = #{WH_NUMBER}
+						  AND P.CREATOR = #{CREATOR}
+						  AND P.MENU_KEY = #{MENU_KEY})
+
+	</select>
+
+	<update id="calcOpsTime" parameterType="Map">
+		UPDATE WMS_CORE_WMSDOC_HEAD H SET H.OPERATION_TIME = #{OPERATION_TIME}
+		WHERE H.WMS_NO = #{WMS_NO}
+	</update>
+
+</mapper>

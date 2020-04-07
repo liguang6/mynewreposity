@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.returnpda.dao.WmsReMaterialPdaDao">
+	<select id="getWmsDocByLabelNo" parameterType="Map" resultType="Map">
+      select MOVE_STLOC,LGORT,SOBKZ,LIFNR,MATNR
+      from WMS_CORE_WMSDOC_ITEM
+      where SAP_MOVE_TYPE=#{SAP_MOVE_TYPE} and to_char(LABEL_NO) like '%'||#{LABEL_NO}||'%'
+	</select>
+    <select id="getWmsQTYByLabel" parameterType="Map" resultType="Map">
+      select SOBKZ,LIFNR,BOX_QTY,MATNR,UNIT,MAKTX
+      from WMS_CORE_LABEL
+      where to_char(LABEL_NO) = #{LABEL_NO}
+	</select>
+    <select id="getWmsBatchByLabel" parameterType="Map" resultType="Map">
+      select BATCH
+      from WMS_CORE_LABEL
+      where to_char(LABEL_NO) = #{LABEL_NO}
+	</select>
+
+
+    <select id="validateScanCache" parameterType="Map" resultType="Map">
+      select *
+      from WMS_PDA_SCAN_CACHE
+      where to_char(LABEL_NO) = #{LABEL_NO} and MENU_KEY = #{MENU_KEY} and BUSINESS_NAME = #{BUSINESS_NAME}
+	</select>
+
+    <insert id="insertScanCache" parameterType="Map">
+        insert into WMS_PDA_SCAN_CACHE (ID, WERKS, WH_NUMBER, LABEL_NO,
+       MATNR, QTY, BUSINESS_NAME, CREATOR, CREATE_DATE,MENU_KEY,BATCH,
+       BUSINESS_TYPE,MOVE_STLOC,LGORT,SOBKZ,LIFNR,HEADER_TXT,UNIT,MAKTX,BUSINESS_CODE)
+        select WMS_PDA_SCAN_CACHE_SEQ.NEXTVAL as ID,#{WERKS},#{WH_NUMBER},
+        #{LABEL_NO},#{MATNR},#{QTY},#{BUSINESS_NAME},#{CREATOR},#{CREATE_DATE},
+        #{MENU_KEY},#{BATCH},#{BUSINESS_TYPE},#{MOVE_STLOC},#{LGORT},
+        #{SOBKZ},#{LIFNR},#{HEADER_TXT},#{UNIT},#{MAKTX},#{BUSINESS_CODE}
+        from dual
+	</insert>
+    <select id="getPorecCache" parameterType="Map" resultType="Map">
+      select MATNR,MOVE_STLOC,LGORT,SOBKZ,LIFNR,BATCH,HEADER_TXT,CREATE_DATE,UNIT,MAKTX,sum(QTY) as TOTALL_QTY,count(*) as QTY
+      from WMS_PDA_SCAN_CACHE
+      where WERKS =#{WERKS} and WH_NUMBER=#{WH_NUMBER} and BUSINESS_NAME=#{BUSINESS_NAME} and
+      BUSINESS_TYPE=#{BUSINESS_TYPE} and MENU_KEY=#{MENU_KEY} and CREATOR=#{CREATOR}
+      group by MATNR,MOVE_STLOC,LGORT,SOBKZ,LIFNR,BATCH,HEADER_TXT,CREATE_DATE,UNIT,MAKTX
+      ORDER BY CREATE_DATE ASC
+	</select>
+
+    <select id="getScanInfo" parameterType="Map" resultType="Map">
+      select LABEL_NO,BATCH,QTY,CREATE_DATE
+      from WMS_PDA_SCAN_CACHE
+      where WERKS =#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+      and BUSINESS_NAME=#{BUSINESS_NAME} and BUSINESS_TYPE=#{BUSINESS_TYPE} and CREATOR=#{CREATOR}
+      and MENU_KEY=#{MENU_KEY}
+      <if test="MOVE_STLOC!=null and MOVE_STLOC!=''">
+          and MOVE_STLOC=#{MOVE_STLOC}
+      </if>
+        <if test="LGORT!=null and LGORT!=''">
+           and LGORT=#{LGORT}
+        </if>
+        <if test="MATNR!=null and MATNR!=''">
+            and MATNR =#{MATNR}
+        </if>
+        <if test="SOBKZ!=null and SOBKZ!=''">
+            and SOBKZ=#{SOBKZ}
+        </if>
+        <if test="LIFNR!=null and LIFNR!=''">
+            and LIFNR=#{LIFNR}
+        </if>
+        <if test="BATCH!=null and BATCH!=''">
+            and BATCH=#{BATCH}
+        </if>
+      ORDER BY CREATE_DATE ASC
+	</select>
+    <select id="getAllScanInfo" parameterType="list" resultType="Map">
+  select * from (
+        <foreach collection="list" item="d"  separator="union all">
+        select *
+        from WMS_PDA_SCAN_CACHE
+        where WERKS =#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+        and BUSINESS_NAME=#{BUSINESS_NAME} and BUSINESS_TYPE=#{BUSINESS_TYPE} and CREATOR=#{CREATOR}
+        and MENU_KEY=#{MENU_KEY}
+        <if test="MOVE_STLOC!=null and MOVE_STLOC!=''">
+            and MOVE_STLOC=#{d.MOVE_STLOC}
+        </if>
+        <if test="LGORT!=null and LGORT!=''">
+            and LGORT=#{d.LGORT}
+        </if>
+        <if test="MATNR!=null and MATNR!=''">
+            and MATNR =#{d.MATNR}
+        </if>
+        <if test="SOBKZ!=null and SOBKZ!=''">
+            and SOBKZ=#{d.SOBKZ}
+        </if>
+        <if test="LIFNR!=null and LIFNR!=''">
+            and LIFNR=#{d.LIFNR}
+        </if>
+        <if test="BATCH!=null and BATCH!=''">
+            and BATCH=#{d.BATCH}
+        </if>
+
+        </foreach>
+        )m
+        ORDER BY CREATE_DATE ASC
+    </select>
+
+
+    <delete id="removeScanInfo" parameterType="Map">
+     <foreach collection="list" item="l" open="begin" close=";end;" separator=";">
+     delete WMS_PDA_SCAN_CACHE where LABEL_NO = #{l.LABEL_NO} and CREATOR=#{CREATOR}
+         and BUSINESS_NAME=#{BUSINESS_NAME} and BUSINESS_TYPE=#{BUSINESS_TYPE} and WERKS =#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+         and MENU_KEY=#{MENU_KEY}
+     </foreach>
+    </delete>
+
+    <insert id="insertBarCodeLog" parameterType="Map">
+        insert into WMS_REPORT_BARCODE_LOG (ID, WERKS, WH_NUMBER, LABEL_NO,BUSINESS_NAME,WMS_MOVE_TYPE,CREATOR,CREATE_DATE)
+        select WMS_PDA_SCAN_CACHE_SEQ.NEXTVAL as ID,#{WERKS},#{WH_NUMBER},
+        #{LABEL_NO},#{BUSINESS_NAME},#{WMS_MOVE_TYPE},#{CREATOR},#{CREATE_DATE}
+        from dual
+	</insert>
+    <insert id="insertWmsPZ" parameterType="Map">
+     begin
+        insert into WMS_CORE_WMSDOC_ITEM (ID, WERKS, WH_NUMBER, LABEL_NO,BUSINESS_NAME,WMS_MOVE_TYPE,CREATOR,CREATE_DATE)
+        select SEQ_WMS_CORE_WMSDOC_ITEM.NEXTVAL as  ID,#{WERKS},#{WH_NUMBER},
+        #{LABEL_NO},#{BUSINESS_NAME},#{WMS_MOVE_TYPE},#{CREATOR},#{CREATE_DATE}
+        from dual;
+        insert into WMS_CORE_WMSDOC_HEAD (ID,MAT_DOC,WMS_NO,OPERATION_TIME,CREATOR,CREATE_DATE,HEADER_TXT,TYPE,DEL)
+        select SEQ_WMS_CORE_WMSDOC_HEAD.NEXTVAL as ID,#{MAT_DOC},#{WMS_NO},#{OPERATION_TIME},#{CREATOR},#{HEADER_TXT}
+        #{CREATE_DATE},'00','0'
+        from dual;
+        end;
+	</insert>
+    <update id="saveData" parameterType="Map">
+        <foreach collection="dataList" item="l" open="begin" close=";end;" separator=";">
+            update WMS_PDA_SCAN_CACHE set LIFNR = #{l.LIFNR}
+            <if test="l.MOVE_STLOC != null and l.MOVE_STLOC != ''">
+             , MOVE_STLOC =#{l.MOVE_STLOC}
+             </if>
+            <if test="l.LGORT != null and l.LGORT != ''">
+               , LGORT =#{l.LGORT}
+            </if>
+            where CREATOR =#{CREATOR} and MENU_KEY=#{MENU_KEY} and MATNR =#{l.MATNR}  and SOBKZ=#{l.SOBKZ}
+            and BUSINESS_NAME=#{BUSINESS_NAME} and BUSINESS_TYPE=#{BUSINESS_TYPE}
+            and BATCH=#{l.BATCH}
+        </foreach>
+   </update>
+    <update id="updataCoreLabel" parameterType="Map">
+        <foreach collection="list1" item="l" open="begin" close=";end;" separator=";">
+            update WMS_CORE_LABEL set SOBKZ = #{l.SOBKZ},LABEL_STATUS='08',LGORT=#{l.LGORT},CREATOR=#{CREATOR},CREATE_DATA=#{CREATE_DATA}
+            where LABEL_NO=#{l.LABEL_NO}
+        </foreach>
+    </update>
+</mapper>

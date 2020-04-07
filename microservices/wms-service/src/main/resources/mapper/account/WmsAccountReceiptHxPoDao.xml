@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.account.dao.WmsAccountReceiptHxPoDao">
+
+	<select id="getDangerMatList" parameterType="Map" resultType="Map">
+		select MATNR ,GOOD_DATES from wms_c_mat_danger where nvl(DEL,'0') !='X' and WERKS=#{WERKS} and LIFNR=#{LIFNR}
+	</select>
+	
+	<select id="getVendorInfo" parameterType="Map" resultType="Map">
+<!-- 	select p.WERKS,p.VENDOR_FLAG,nvl(v.SHORT_NAME,'') as SHORT_NAME,nvl(v.VENDOR_MANAGER,'')as VENDOR_MANAGER,v.NAME1,v.IS_SCM
+		from WMS_C_PLANT p
+		left join WMS_C_VENDOR v  on p.WERKS=v.WERKS and v.LIFNR=#{LIFNR} and nvl(v.DEL_FLAG,'0') !='X'
+		where p.WERKS=#{WERKS} 
+		and nvl(p.DEL_FLAG,'0') !='X' 
+		and rownum= 1 -->
+		
+		SELECT * FROM (
+			SELECT v.LIFNR,nvl(v.NAME1,' ') NAME1,
+				nvl(cv.SHORT_NAME,' ') as SHORT_NAME,nvl(cv.VENDOR_MANAGER,' ')as VENDOR_MANAGER,nvl(cv.IS_SCM,'0') IS_SCM
+				FROM WMS_SAP_VENDOR v 
+				left join WMS_C_VENDOR cv ON v.LIFNR = cv.LIFNR and nvl(cv.DEL_FLAG,'0') !='X' and cv.WERKS=#{WERKS} 
+				WHERE v.LIFNR = #{LIFNR} ) t1
+				LEFT JOIN 
+				(SELECT p.WERKS,nvl(p.VENDOR_FLAG,'0') VENDOR_FLAG
+				FROM WMS_C_WH p 
+				WHERE  p.WERKS = #{WERKS} AND p.WH_NUMBER = #{WH_NUMBER} and nvl(p.DEL_FLAG,'0') !='X' ) t2 ON 1=1
+	</select>
+	
+	<update id="updateWmsStock" parameterType="List">
+		merge into WMS_CORE_STOCK s using(
+		select m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.F_BATCH,
+		m.BATCH,m.BIN_CODE,m.BIN_NAME,m.MEINS,sum(cast(nvl(m.VIRTUAL_QTY,0) as number)) VIRTUAL_QTY,m.SOBKZ,m.LIFNR,m.LIKTX,m.EDITOR,m.EDIT_DATE
+		from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.F_BATCH} F_BATCH,#{d.BATCH} BATCH,#{d.BIN_CODE} BIN_CODE,#{d.BIN_NAME} BIN_NAME,#{d.MEINS} MEINS,#{d.VIRTUAL_QTY} VIRTUAL_QTY,#{d.SOBKZ} SOBKZ,#{d.LIFNR} LIFNR,
+		#{d.LIKTX} LIKTX,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE
+		from dual
+		</foreach>
+		) m 
+		 group by m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.F_BATCH,m.BATCH,m.BIN_CODE,m.BIN_NAME,m.MEINS,m.VIRTUAL_QTY,m.SOBKZ,m.LIFNR,m.LIKTX,m.EDITOR,m.EDIT_DATE
+		)tmp 
+		on (tmp.WERKS=s.WERKS and tmp.WH_NUMBER=s.WH_NUMBER and tmp.LGORT=s.LGORT and tmp.BIN_CODE = s.BIN_CODE 
+		and tmp.MATNR=s.MATNR and tmp.F_BATCH=s.F_BATCH and tmp.BATCH=s.BATCH and tmp.SOBKZ=s.SOBKZ and tmp.LIFNR=s.LIFNR)
+		when matched then 
+			update  set s.VIRTUAL_QTY=s.VIRTUAL_QTY+tmp.VIRTUAL_QTY
+		when not matched then 
+			insert (ID,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,F_BATCH,BATCH,BIN_CODE,BIN_NAME,MEINS,VIRTUAL_QTY,SOBKZ,LIFNR,
+		LIKTX,EDITOR,EDIT_DATE) 
+		VALUES (SEQ_WMS_CORE_STOCK.nextval,tmp.WERKS,tmp.WH_NUMBER,tmp.LGORT,tmp.MATNR,tmp.MAKTX,
+		tmp.F_BATCH,tmp.BATCH,tmp.BIN_CODE,tmp.BIN_NAME,tmp.MEINS,tmp.VIRTUAL_QTY,tmp.SOBKZ,tmp.LIFNR,tmp.LIKTX,tmp.EDITOR,tmp.EDIT_DATE
+		
+		)
+	</update>
+	
+	
+	<select id="getPOItems" parameterType="Map" resultType="Map">
+		select h.EBELN PO_NO,h.BSART,h.LIFNR,
+			 (select NAME1 from WMS_SAP_VENDOR where LIFNR=h.LIFNR and rownum=1) LIKTX,
+			 i.EBELP PO_ITEM_NO,h.FRGRL,i.WERKS,i.MATNR,i.TXZ01 MAKTX,i.LGORT,i.MENGE,i.MEINS UNIT,nvl(i.SOBKZ,'Z') SOBKZ,i.AFNAM,i.MAX_MENGE,i.BEDNR,
+			 (to_number(nvl(x.XS101,'0'))-to_number(nvl(x.XS102,'0'))) XSQTY,x.id HXID,m.MEINS,i.UMREZ,i.UMREN
+			 from WMS_SAP_PO_HEAD h 
+			 left join WMS_SAP_PO_ITEM i on h.EBELN=i.EBELN 
+			 left join WMS_HX_PO x on x.EBELN=i.EBELN and x.EBELP=i.EBELP
+			 left join WMS_C_WH p on i.WERKS = p.WERKS
+			 left join WMS_SAP_MATERIAL m on i.MATNR = m.MATNR and i.WERKS = m.WERKS		
+			 where h.EBELN=#{PO_NO} 
+						 and nvl(h.FRGRL,'0')!='X' and i.LOEKZ is null and nvl(i.ELIKZ,'0') !='X' 
+						 and nvl(p.HX_FLAG,'0') = 'X'
+						 and (i.MAX_MENGE-to_number(nvl(x.XS101,'0'))+to_number(nvl(x.XS102,'0')))>0
+	</select>
+	
+	<select id="checkHxPoInfo" parameterType="List" resultType="Map">
+		<foreach collection="list" item="d" index="index" separator="union all ">
+			SELECT HP.* FROM 
+				WMS_HX_PO HP WHERE 1=1 
+				AND HP.WERKS = #{d.WERKS} AND HP.WH_NUMBER = #{d.WH_NUMBER} 
+				AND HP.EBELN = #{d.PO_NO} AND HP.EBELP = #{d.PO_ITEM_NO}
+				AND HP.HX_QTY-#{d.QTY_WMS} &lt;0 
+		</foreach>
+	</select>
+	
+</mapper>

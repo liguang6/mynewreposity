@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>仓库储位</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" class="wrapper">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post" style="margin-top:20px">
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 仓库代码
+								</div>
+								<div class="col-sm-8">
+									<select  name="whNumber" id="whNumber" v-model="bin.whNumber" style="width:100%;height:28px" class="required">
+										<#list tag.getUserAuthWh("WMS_CORE_WH_BIN") as factory> 
+											<option value="${factory.code}">${factory.code}</option>
+										</#list>
+									</select>
+								</div>
+							</div>
+						</div>
+					</div>
+	                <div class="row">
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 存储区代码
+								</div>
+								<div class="col-sm-8">
+									<select id="storageAreaCode" name="storageAreaCode" v-model="bin.storageAreaCode" @change="showStorgeAreaName()" class="required" style="width:50%;height:25px">
+									   	  <option value=''>请选择</option>
+							   	    </select>&nbsp;&nbsp;
+							   	    <input type="text" name="areaName" id="areaName" disabled="disabled" style="width:40%" placeholder="存储区名称" />
+								</div>
+							</div>
+						</div>
+						 <div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 储位类型
+								</div>
+								<div class="col-sm-8">
+									<select id="binType" name="binType" v-model="bin.binType" style="width:100%;height:25px" class="required">
+									   	  <option value=''>请选择</option>
+									   	  <option value='00'>虚拟储位</option>
+									   	  <option value='01'>进仓位</option>
+									   	  <option value='02'>存储位</option>
+									   	  <option value='03'>拣配位</option>
+									   	  <option value='04'>试装位</option>
+									   	  <option value='05'>立库位</option>
+							   	    </select>
+								</div>
+							</div>
+						</div>
+					</div>	
+					<div class="row">
+					   <div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 储位代码
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="binCode" class="form-control required"
+										name="binCode" placeholder="储位代码" v-model="bin.binCode"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 储位名称
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="binName" class="form-control required"
+										name="binName" placeholder="储位名称" v-model="bin.binName"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 排
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="binRow" class="form-control required  digits"
+										name="binRow" placeholder="排" v-model="bin.binRow"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 列
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="binColumn" class="form-control required  digits"
+										name="binColumn" placeholder="列" v-model="bin.binColumn"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 层
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="binFloor" class="form-control required  digits"
+										name="binFloor" placeholder="层" v-model="bin.binFloor"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									<span class="required"> * </span> 储位状态 
+								</div>
+								<div class="col-sm-8">
+									<select id="binStatus" name="binStatus" v-model="bin.binStatus" style="width:100%;height:25px" class="required">
+									   	  <option value=''>请选择</option>
+									   	  <option value='01'>可用</option>
+									   	  <option value='00'>未启用</option>
+									   	  <option value='02'>不可用</option>
+									   	  <option value='03'>锁定</option>
+							   	    </select>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									容积
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="vl" class="form-control  number"
+										name="vl" placeholder="容积" v-model="bin.vl"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									容积单位 
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="vlUnit" class="form-control"
+										name="vlUnit" placeholder="容积单位 " v-model="bin.vlUnit"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									承重
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="wt" class="form-control  number"
+										name="wt" placeholder="承重" v-model="bin.wt"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									承重单位 
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="wtUnit" class="form-control"
+										name="wtUnit" placeholder="承重单位" v-model="bin.wtUnit"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									容积使用
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="vlUse" class="form-control  number"
+										name="vtUse" placeholder="容积使用" v-model="bin.vlUse"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									重量使用 
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="wtUse" class="form-control  number"
+										name="wtUse" placeholder="重量使用" v-model="bin.wtUse"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									周转率
+								</div>
+								<div class="col-sm-8">
+									<!-- <input type="text" id="turnoverRate" class="form-control"
+										name="turnoverRate" placeholder="周转率" v-model="bin.turnoverRate"/> -->
+                                    <select id="turnoverRate" name="turnoverRate" v-model="bin.turnoverRate" style="width:100%;height:25px" class="">
+									   	  <option value=''>请选择</option>
+									   	  <option value='H'>高周转率</option>
+									   	  <option value='L'>低周转率</option>
+							   	    </select>
+                                </div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									可容存储单元 
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="aStorageUnit" class="form-control number"
+										name="aStorageUnit" placeholder="可容存储单元" v-model="bin.aStorageUnit"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									占用存储单元
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="uStorageUnit" class="form-control number"
+										name="uStorageUnit" placeholder="占用存储单元" v-model="bin.uStorageUnit"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									X轴 
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="x" class="form-control number"
+										name="x" placeholder="X轴" v-model="bin.x"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-6">
+                               <div class="form-group">
+								<div class="col-sm-4 control-label">
+									Y轴
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="y" class="form-control number"
+										name="y" placeholder="Y轴" v-model="bin.y"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="form-group">
+								<div class="col-sm-4 control-label">
+									Z轴 
+								</div>
+								<div class="col-sm-8">
+									<input type="text" id="z" class="form-control number"
+										name="z" placeholder="Z轴" v-model="bin.z"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_core_wh_bin_edit.js?_${.now?long}"></script>
+</body>
+</html>

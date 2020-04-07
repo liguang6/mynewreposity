@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>收料房退货确认</title>
+<#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+	<div id="rrapp" v-cloak>
+		<div class="wrapper">
+			<div class="main-content">
+				<div class="box box-main">
+					<div id="bodyDiv" class="box-body">
+						<form id="searchForm" class="form-inline" action="#">
+							<table>
+							<tr>
+								<td id="searchForm" width="80%">
+									<div class="form-group">
+										<label class="control-label" style="width:65px"><span style="color:red">*</span>工厂：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<select class="form-control" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+											   <#list tag.getUserAuthWerks("RG_RROF") as factory> 
+											      <option value="${factory.code}">${factory.code}</option>
+											   </#list>
+											</select>
+											</div>
+										</div>
+										<label class="control-label" style="width:71px"><span style="color:red">*</span>仓库号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<select class="form-control" name="wh" id="wh">
+												<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+											</select>
+											</div>
+										</div>
+										<label class="control-label"><span style="color:red">*</span>退货单号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:80px" id="parentDiv">
+											<input type="text" id="return_no" name="return_no" value="" style="width: 100px;" class="form-control width-300" />
+											</div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm" width="150px">
+									<div class="form-group">
+										<input type="button" id="btnSearchData" class="btn btn-primary btn-sm" value="查询"/>		
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td id="searchForm">
+									<div class="form-group">
+										<label class="control-label"><span style="color:red">*</span>凭证日期：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<input type="text" id="date_pz" name="dateStart" value="" onClick="WdatePicker({el:'date_pz',dateFmt:'yyyy-MM-dd'});" style="width: 85px;" class="form-control" />
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label"><span style="color:red">*</span>过帐日期：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<input type="text" id="date_gz" name="dateStart" value="" onClick="WdatePicker({el:'date_gz',dateFmt:'yyyy-MM-dd'});" style="width: 85px;" class="form-control" />
+											</div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm">
+									<div class="form-group">
+										<input type="button" id="btnReset" class="btn btn-info btn-sm" value="重置"/>
+										<input type="button" id="btnConfirm" class="btn btn-success btn-sm" value="确认退货"/>
+									</div>
+								</td>
+							</tr>					
+							</table>
+
+						</form>
+						<div id="tab1" class="table-responsive table2excel" data-tablename="Test Table 1">
+						<table id="dataGrid"></table>
+						</div>
+						<!-- <div id="dataGridPage"></div> -->
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="resultLayer" style="display: none; padding: 10px;">
+			<h4>操作成功！<span id="msg">-</span></h4>
+			<br/>
+		</div>
+	</div>
+	<style>
+	.jqgrow{height:35px}
+	</style>
+	<script src="${request.contextPath}/statics/js/wms/returngoods/receiveRoomOutConfirm.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.knpda.dao.WmsPdaKnCommonDao">
+	
+	<select id="getLabelInfoList" parameterType="Map" resultType="Map">
+	SELECT * FROM ( 
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+			SELECT wm_concat(label_no)label,matnr,maktx,lifnr,lgort f_lgort,SUM(box_qty)qty,COUNT(box_sn)box_qty,lgort,batch,unit 
+		    FROM(
+		        SELECT t.label_no, t.matnr,t.maktx,t.lifnr,t.lgort,t.box_sn,t.box_qty,t.batch,t.unit FROM WMS_CORE_LABEL T
+				WHERE 
+				 T.WERKS = #{WERKS}
+				 AND T.WH_NUMBER = #{WH_NUMBER}
+				<if test="LABEL_NO_LIST != null ">		
+					AND	LABEL_NO in
+					<foreach collection="LABEL_NO_LIST" item="LABEL_NO" index="index" separator="," open="(" close=")">
+						#{LABEL_NO}
+					</foreach>
+				</if>
+				<if test="LABEL_STATUS != null and LABEL_STATUS !=''">
+				 AND T.LABEL_STATUS = #{LABEL_STATUS}
+				</if>
+				<if test="SOBKZ != null and SOBKZ !=''">
+				 AND T.SOBKZ = #{SOBKZ}
+				</if>	
+			)
+			GROUP BY  matnr,maktx,lifnr,lgort,batch,unit
+		)TMP 
+		WHERE ROWNUM  &lt;=#{end})  
+	WHERE ROW_ID > #{start} 		
+	</select>
+	<select id="getLabelInfoListCount" parameterType="Map" resultType="int">
+		SELECT COUNT(1) FROM (
+			SELECT wm_concat(label_no)label,matnr,lifnr,SUM(box_qty)qty,COUNT(box_sn)box_qty,lgort,batch 
+		    FROM(
+		        SELECT t.label_no, t.matnr,t.lifnr,t.lgort,t.box_sn,t.box_qty,t.batch FROM WMS_CORE_LABEL T
+				WHERE 		
+				T.WERKS = #{WERKS}
+				AND T.WH_NUMBER = #{WH_NUMBER}
+				<if test="LABEL_NO_LIST != null ">		
+					AND	LABEL_NO in
+					<foreach collection="LABEL_NO_LIST" item="LABEL_NO" index="index" separator="," open="(" close=")">
+						#{LABEL_NO}
+					</foreach>
+				</if>
+				<if test="LABEL_STATUS != null and LABEL_STATUS !=''">
+				 AND T.LABEL_STATUS = #{LABEL_STATUS}
+				</if>
+				<if test="SOBKZ != null and SOBKZ !=''">
+				 AND T.SOBKZ = #{SOBKZ}
+				</if>
+			)
+			GROUP BY  matnr,lifnr,lgort,batch
+		)TMP 
+	</select>
+	<select id="getPdaLabelInfo" parameterType="Map" resultType="Map">
+	SELECT * FROM ( 
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+			SELECT *
+			FROM WMS_CORE_LABEL T
+			WHERE 
+			T.WERKS = #{WERKS}
+			AND T.WH_NUMBER = #{WH_NUMBER}
+			AND LABEL_NO in
+			<foreach collection="LABEL_NO_LIST" item="LABEL_NO" open="(" close=")" separator=",">
+				#{LABEL_NO}
+			</foreach>	
+			<if test="LABEL_STATUS != null and LABEL_STATUS !=''">
+			 AND T.LABEL_STATUS = #{LABEL_STATUS}
+			</if>
+			<if test="SOBKZ != null and SOBKZ !=''">
+			 AND T.SOBKZ = #{SOBKZ}
+			</if>
+			)TMP 
+		WHERE ROWNUM  &lt;=#{end})  
+	WHERE ROW_ID > #{start} 
+	</select>
+	<select id="getPdaLabelInfoCount" parameterType="Map" resultType="int">
+	SELECT COUNT(1) FROM (	
+		SELECT *
+		FROM WMS_CORE_LABEL T
+		WHERE 
+		T.WERKS = #{WERKS}
+			AND T.WH_NUMBER = #{WH_NUMBER}
+			AND LABEL_NO in
+			<foreach collection="LABEL_NO_LIST" item="LABEL_NO" open="(" close=")" separator=",">
+				#{LABEL_NO}
+			</foreach>
+			<if test="LABEL_STATUS != null and LABEL_STATUS !=''">
+			 AND T.LABEL_STATUS = #{LABEL_STATUS}
+			</if>
+			<if test="SOBKZ != null and SOBKZ !=''">
+			 AND T.SOBKZ = #{SOBKZ}
+			</if>	
+	)TMP
+	</select>
+	<update id="updateLabelInfo" parameterType="List">
+	<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		UPDATE WMS_CORE_LABEL T
+		SET T.SOBKZ = #{s.SOBKZ}
+		<if test="s.LGORT != null and s.LGORT !=''">
+			 ,T.LGORT = #{s.LGORT}
+		</if>
+		<if test="s.LIFNR != null and s.LIFNR !=''">
+			 , T.LIFNR = #{s.LIFNR}
+		</if>		
+		WHERE T.LABEL_NO = #{s.LABEL_NO}
+	</foreach>
+	</update>
+	
+	<delete id="deleteLabelCacheInfo" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			DELETE FROM WMS_PDA_SCAN_CACHE C
+			WHERE 
+			WH_NUMBER=#{s.WH_NUMBER}
+			AND C.CREATOR =#{s.USER_NAME}
+			AND C.MENU_KEY=#{s.MENU_KEY}
+			AND C.LABEL_NO in (
+				SELECT T.LABEL_NO
+				FROM WMS_CORE_LABEL T
+				WHERE  T.LABEL_STATUS = #{s.LABEL_STATUS}
+				 AND T.SOBKZ = #{s.SOBKZ}
+				 AND T.WERKS = #{s.WERKS}
+				 AND T.WH_NUMBER = #{s.WH_NUMBER}
+				 AND T.MATNR = #{s.MATNR}
+				 AND T.BATCH = #{s.BATCH}
+				 AND T.LIFNR = #{s.LIFNR}
+			)
+		</foreach>
+	</delete>
+	<insert id="insertBarCodeLog" parameterType="List">
+		insert into WMS_REPORT_BARCODE_LOG (id, werks, wh_number, label_no,
+		 matnr, maktx, qty, business_name, creator, create_date, client)
+		select SEQ_WMS_REPORT_BARCODE_LOG.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.WERKS},#{d.WH_NUMBER},#{d.LABEL},#{d.MATNR},#{d.MAKTX},
+			#{d.QTY},#{d.BUSINESS_NAME},#{d.CREATOR},#{d.CREATE_DATE},'02'
+			from dual
+		</foreach>
+		) m
+	</insert>
+</mapper>

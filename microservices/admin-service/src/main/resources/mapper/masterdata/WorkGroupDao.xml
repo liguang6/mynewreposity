@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.WorkgroupNoDao">
+	
+	<select id="getStandardWorkgroupList" resultType="Map" parameterType="Map">
+		select * from masterdata_standard_workgroup 
+		where 1=1
+		<if test="WORKSHOP != '' and WORKSHOP != null">
+			AND WORKSHOP = #{WORKSHOP}
+		</if>
+		<if test="PARENT_WORKGROUP_NO != '' and PARENT_WORKGROUP_NO != null">
+			AND PARENT_WORKGROUP_NO = #{PARENT_WORKGROUP_NO}
+		</if>
+		<if test="TYPE != '' and TYPE != null">
+			AND TYPE = #{TYPE}
+		</if>
+		
+	</select>
+	
+	<select id="getWorkShopByCode" resultType="Map" parameterType="Map">
+		SELECT c.dept_id, c.tree_names,c.name workshop,p.code werks
+		  FROM SYS_DEPT c
+		 INNER JOIN SYS_DEPT p
+		    ON c.PARENT_ID = p.DEPT_ID
+		   AND p.STATUS = '0'
+		 WHERE c.status = '0'
+		   AND c.dept_type = 'WORKSHOP'
+		   
+		<if test="WORKSHOP != '' and WORKSHOP != null">
+			AND c.CODE = #{WORKSHOP}
+		</if>
+		<if test="WERKS != '' and WERKS != null">
+			AND p.CODE = #{WERKS}
+		</if>
+		
+	</select>
+	
+	<select id="getWorkGroupByCode" resultType="Map" parameterType="Map">
+		
+		SELECT c.*
+		  FROM SYS_DEPT c
+		 INNER JOIN SYS_DEPT p
+		    ON c.PARENT_ID = p.DEPT_ID
+		   AND p.STATUS = '0'
+		   AND (p.CODE = #{WORKGROUP_NO})
+		 INNER JOIN SYS_DEPT p1
+		    ON p.PARENT_ID = p1.DEPT_ID
+		   AND p1.STATUS = '0'
+		   AND (p1.CODE = #{WERKS})
+		 WHERE c.status = '0'
+		   AND c.dept_type = 'WORKGROUP'
+		
+		
+	</select>
+	
+	<select id="getWorkGroupById" resultType="Map" parameterType="Map">
+		SELECT c.*,p.code workgroupcode,p.name workgroupname,p1.code werks,p1.name werksname
+		  FROM SYS_DEPT c
+		 INNER JOIN SYS_DEPT p
+		    ON c.PARENT_ID = p.DEPT_ID
+		   AND p.STATUS = '0'
+		 INNER JOIN SYS_DEPT p1
+		    ON p.PARENT_ID = p1.DEPT_ID
+		   AND p.STATUS = '0'
+		 WHERE c.status = '0'
+		   AND c.dept_type = 'WORKGROUP'
+		   
+		   
+		<if test="ID != '' and ID != null">
+			AND c.DEPT_ID =#{ID}
+		</if>
+		
+	</select>
+	
+	<select id="getWorkTeamById" resultType="Map" parameterType="Map">
+		SELECT c.*,p.code workgroupcode,p1.code workshopcode,p2.code werks
+		  FROM SYS_DEPT c
+		 INNER JOIN SYS_DEPT p
+		    ON c.PARENT_ID = p.DEPT_ID
+		   AND p.STATUS = '0'
+		 INNER JOIN SYS_DEPT p1
+		    ON p.PARENT_ID = p1.DEPT_ID
+		   AND p1.STATUS = '0'
+		 INNER JOIN SYS_DEPT p2
+	        ON p1.PARENT_ID = p2.DEPT_ID
+	       AND p2.STATUS = '0'
+		 WHERE c.status = '0'
+		   AND c.dept_type = 'TEAM'
+		   
+		<if test="ID != '' and ID != null">
+			AND c.DEPT_ID =#{ID}
+		</if>
+		
+	</select>
+	
+	<select id="getDeptWorkTeamById" resultType="Map" parameterType="Map">
+		SELECT c.*,p.code workgroupcode,p.name workgroupname,p1.code shopcode,p1.name shopname,p2.code werks
+		  FROM SYS_DEPT c
+		 INNER JOIN SYS_DEPT p
+		    ON c.PARENT_ID = p.DEPT_ID
+		   AND p.STATUS = '0'
+		 INNER JOIN SYS_DEPT p1
+		    ON p.PARENT_ID = p1.DEPT_ID
+		   AND p1.STATUS = '0'
+		 INNER JOIN SYS_DEPT p2
+		    ON p1.PARENT_ID = p2.DEPT_ID
+        	AND p2.status='0'
+		 WHERE c.status = '0'
+		   AND c.dept_type = 'TEAM'
+		   
+		   
+		<if test="ID != '' and ID != null">
+			AND c.DEPT_ID =#{ID}
+		</if>
+		
+	</select>
+	
+	<select id="getWorkshopWorkgroupByCode" resultType="Map" parameterType="Map">
+	
+		SELECT c.*
+			FROM SYS_DEPT c 
+			INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' AND (p.CODE = #{WORKSHOP} OR p.NAME = #{WORKSHOP})
+			INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' AND (p1.CODE = #{WERKS} OR p1.NAME = #{WERKS} )
+			WHERE c.status = '0' AND (c.CODE = #{WORKGROUP} OR c.NAME = #{WORKGROUP} )
+			AND c.dept_type = 'WORKGROUP'
+		 
+	</select>
+	
+	<select id="getWorkshopWorkgroupWorkTeamByCode" resultType="Map" parameterType="Map">
+	
+		SELECT c.*
+			FROM SYS_DEPT c 
+			INNER JOIN SYS_DEPT p ON c.PARENT_ID = p.DEPT_ID AND p.STATUS = '0' AND (p.CODE = #{WORKGROUP} OR p.NAME = #{WORKGROUP})
+			INNER JOIN SYS_DEPT p1 ON p.PARENT_ID = p1.DEPT_ID AND p1.STATUS = '0' AND (p1.CODE = #{WORKSHOP} OR p1.NAME = #{WORKSHOP} )
+			INNER JOIN SYS_DEPT p2 ON p1.PARENT_ID = p2.DEPT_ID AND p2.STATUS = '0' AND (p2.CODE = #{WERKS} OR p2.NAME = #{WERKS} ) 
+			WHERE c.status = '0' AND (c.CODE = #{WORKTEAM} OR c.NAME = #{WORKTEAM} )
+			AND c.dept_type = 'TEAM'
+		 
+	</select>
+	
+</mapper>

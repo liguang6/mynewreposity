@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCoreStorageSearchDao">
+
+
+
+    <select id="queryStorageSearchList" resultType="java.util.HashMap" parameterType="Map">
+        SELECT * FROM (
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+        select a.id,a.WH_NUMBER as warehouseCode,
+        a.SEARCH_SEQ as storageAreaSearch,
+        a.SEQNO priority ,
+        a.STORAGE_AREA_CODE storageAreaCode,
+--         a.STATUS status,
+--         a.CREATOR creator,
+--         a.CREATE_DATE createDate,
+        a.EDITOR editor,
+        a.EDIT_DATE editDate,
+        a.DEL,(select AREA_NAME  from  WMS_CORE_WH_AREA b
+        where a.WH_NUMBER = b.wh_number and a.STORAGE_AREA_CODE = b.storage_area_code and b.del = '0')as AREANAME
+        from WMS_S_BIN_AREA_SEARCH_SEQ a
+        where 1=1
+        and a.del = '0'
+        <if test="warehouseCode != '' and warehouseCode != null">
+            AND a.WH_NUMBER = #{warehouseCode}
+        </if>
+        <if test="storageAreaCode != '' and storageAreaCode != null">
+            AND a.STORAGE_AREA_CODE  = #{storageAreaCode}
+        </if>
+        <if test="storageAreaSearch != '' and storageAreaSearch != null">
+            AND a.SEARCH_SEQ = #{storageAreaSearch}
+        </if>
+        order by a.id
+        )TMP
+        WHERE ROWNUM  &lt;=#{end})
+        WHERE ROW_ID > #{start}
+    </select>
+
+    <select id="selectStorageSearchById" resultType="com.byd.wms.business.modules.config.entity.WmsCoreStorageSearchEntity" parameterType="Map">
+		select * from WMS_S_BIN_AREA_SEARCH_SEQ a
+		where 1=1
+        AND a.id = #{id}
+	</select>
+
+    <select id="getStorageSearchCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_S_BIN_AREA_SEARCH_SEQ a
+      WHERE a.DEL='0'
+        <if test="warehouseCode != '' and warehouseCode != null">
+            AND a.WH_NUMBER = #{warehouseCode}
+        </if>
+        <if test="storageAreaCode != '' and storageAreaCode != null">
+            AND a.STORAGE_AREA_CODE = #{storageAreaCode}
+        </if>
+        <if test="storageAreaSearch != '' and storageAreaSearch != null">
+            AND a.SEARCH_SEQ = #{storageAreaSearch}
+        </if>
+    </select>
+
+
+    <select id="queryAreaName" parameterType="String" resultType="String">
+      SELECT b.AREA_NAME as AREANAME FROM  WMS_CORE_WH_AREA b
+      WHERE  b.del = '0'
+
+        <if test="warehouseCode != null  and warehouseCode != '' ">
+            AND b.wh_number = #{warehouseCode}
+        </if>
+        <if test="storageAreaCode != null  and storageAreaCode != ''">
+            AND b.storage_area_code = #{storageAreaCode}
+        </if>
+
+    </select>
+
+        <select id="getStorageAreaSearch" parameterType="String" resultType="Map">
+        SELECT * from WMS_S_SEARCH_SEQ  b
+        WHERE  b.del = '0'
+        <if test="warehouseCode != null  and warehouseCode != '' ">
+            AND b.wh_number = #{warehouseCode}
+        </if>
+
+    </select>
+
+    <select id="getStorageAreaCode" parameterType="String" resultType="Map">
+        SELECT * from WMS_CORE_WH_AREA  b
+        WHERE  b.del = '0'
+        <if test="warehouseCode != null  and warehouseCode != '' ">
+            AND b.wh_number = #{warehouseCode}
+        </if>
+
+    </select>
+
+
+
+</mapper>

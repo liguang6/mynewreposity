@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCNoticeMailDao">
+    <select id="queryNoticeMailList" resultType="Map" parameterType="Map">
+        SELECT * FROM (
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+        select a.ID,a.WERKS,a.WH_NUMBER,a.STAFF_NUMBER,a.FULL_NAME,a.EMAIL_ADDR,a.EDITOR,a.EDIT_DATE,S.VALUE NOTICE_TYPE from sys_notice_mail a
+        LEFT JOIN SYS_DICT S ON a.Notice_Type=S.CODE  AND S.TYPE='NOTICE_TYPE'
+        where 1=1
+        <if test="werks != '' and werks != null">
+            AND a.WERKS = #{werks}
+        </if>
+        <if test="whNumber != '' and whNumber != null">
+            AND a.WH_NUMBER  = #{whNumber}
+        </if>
+        <if test="fullName != '' and fullName != null">
+            AND a.FULL_NAME = #{fullName}
+        </if>
+        <if test="noticeType != '' and noticeType != null">
+            AND a.NOTICE_TYPE = #{noticeType}
+        </if>
+        order by a.id
+        )TMP
+        WHERE ROWNUM  &lt;=#{END})
+        WHERE ROW_ID > #{START}
+    </select>
+
+    <select id="getListCount" parameterType="Map" resultType="int">
+        select count(1) from sys_notice_mail a
+        where 1=1
+        <if test="werks != '' and werks != null">
+            AND a.WERKS = #{werks}
+        </if>
+        <if test="whNumber != '' and whNumber != null">
+            AND a.WH_NUMBER  = #{whNumber}
+        </if>
+        <if test="fullName != '' and fullName != null">
+            AND a.FULL_NAME = #{fullName}
+        </if>
+        <if test="noticeType != '' and noticeType != null">
+            AND a.NOTICE_TYPE = #{noticeType}
+        </if>
+
+    </select>
+
+
+    <insert id="insertNoticeMail" parameterType="Map">
+        <selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+            SELECT SEQ_SYS_NOTICE_MAIL.nextval FROM dual
+        </selectKey>
+        insert into sys_notice_mail (ID,WERKS,WH_NUMBER,STAFF_NUMBER,FULL_NAME,NOTICE_TYPE,EMAIL_ADDR,EDITOR,EDIT_DATE)
+        values (#{ID},#{WERKS},#{WH_NUMBER},#{STAFF_NUMBER},#{FULL_NAME},#{NOTICE_TYPE},#{EMAIL_ADDR},#{Editor},#{Edit_Date})
+    </insert>
+
+    <select id="selectById" resultType="Map" parameterType="Long">
+        select a.* from sys_notice_mail a
+        where a.id=#{id}
+    </select>
+
+    <update id="updateById" parameterType="Map">
+        update sys_notice_mail set WERKS=#{WERKS},WH_NUMBER=#{WH_NUMBER},STAFF_NUMBER=#{STAFF_NUMBER},FULL_NAME=#{FULL_NAME},
+        NOTICE_TYPE=#{NOTICE_TYPE},EMAIL_ADDR=#{EMAIL_ADDR},EDITOR=#{Editor},EDIT_DATE=#{Edit_Date}
+        where ID=#{ID}
+    </update>
+
+    <delete id="delById"  parameterType="Long">
+        delete  from sys_notice_mail a
+        where a.id=#{id}
+    </delete>
+</mapper>

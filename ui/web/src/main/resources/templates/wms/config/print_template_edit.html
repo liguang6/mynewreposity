@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>模板配置</title>
+    <#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:620px">
+    <div class="main-content">
+        <div class="box box-main">
+            <div class="box-body">
+
+
+                <form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text" style="display:none" id="ID" name="ID"  class="form-control "/>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group" style="align:center;margin-top:15px">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>业务类型
+                            </label>
+
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <select id="TEMP_TYPE" name="TEMP_TYPE" class="required" style="width:50%">
+                                    <option v-for="t in tempTypeList"  :key="t.CODE" :value="t.CODE" >
+                                        {{t.VALUE}}
+                                    </option>
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>模板尺寸
+                            </label>
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <select id="TEMP_SIZE" name="TEMP_SIZE" class="required" style="width:50%">
+                                    <option v-for="t in tempSizeList"  :key="t.CODE" :value="t.CODE" >
+                                        {{t.VALUE}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>模板文件
+                            </label>
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text" id="TEMP_NAME" name="TEMP_NAME"  class="form-control required" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                模板说明
+                            </label>
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <textarea id="REMARK" rows="3" cols="39"></textarea>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btnSubmit" type="submit" hidden="true"></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/print_template_edit.js?_${.now?long}"></script>
+</body>
+</html>

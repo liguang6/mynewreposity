@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.account.dao.WmsAccountWPODao">
+
+	<select id="getWPOReceiptInfo" parameterType="List" resultType="Map">
+		SELECT 
+			r.RECEIPT_NO,r.RECEIPT_ITEM_NO,r.BUSINESS_NAME,r.BUSINESS_TYPE,r.DEL,r.F_WERKS,r.F_WH_NUMBER,r.F_LGORT,
+			r.F_BATCH,r.WERKS,r.WH_NUMBER,r.LGORT,r.MATNR,r.MAKTX,r.UNIT,r.RECEIPT_QTY,r.BATCH,r.SOBKZ,r.ASNNO,r.ASNITM,r.PO_NO,
+			r.PO_ITEM_NO,r.SAP_OUT_NO,r.SAP_OUT_ITEM_NO,r.SAP_MATDOC_NO,r.SAP_MATDOC_ITEM_NO,r.LIFNR,r.LIKTX,r.FULL_BOX_QTY,
+			r.BOX_COUNT,r.AFNAM,r.BEDNR,r.RECEIPT_DATE,r.RECEIVER,r.GR_AREA,r.RETURNABLE_QTY,r.RETURN_QTY,r.INABLE_QTY,r.IN_QTY,
+			r.TRY_QTY,r.TRY_IN_QTY,r.DESTROY_QTY,r.DESTROY_GZ_QTY,r.IQC_COST_CENTER,r.TEST_FLAG,r.WH_RETURN_QTY,r.CREATOR,r.CREATE_DATE,
+			r.RECEIPT_QTY-NVL(r.RETURN_QTY,0)-NVL(r.WH_RETURN_QTY,0) PATCH_QTY,w.LGORT 
+			FROM WMS_CORE_WMSDOC_ITEM w 
+			LEFT JOIN WMS_IN_RECEIPT r ON r.RECEIPT_NO = w.RECEIPT_NO AND r.RECEIPT_ITEM_NO = w.RECEIPT_ITEM_NO 
+			AND r.WERKS = #{WERKS} AND r.WH_NUMBER=#{WH_NUMBER}
+			AND r.LIFNR = #{LIFNR}
+			<if test="BEDNR !=null and BEDNR !='' ">
+				AND r.BEDNR LIKE CONCAT(CONCAT('%', #{BEDNR}),'%')
+			</if>
+			<if test="CREATE_DATE_S !=null and CREATE_DATE_S !='' ">
+				AND r.RECEIPT_DATE &gt;= CONCAT(#{CREATE_DATE_S},' 00:00:00')
+		   	</if>
+		   	<if test="CREATE_DATE_E !=null and CREATE_DATE_E !='' ">
+				AND r.RECEIPT_DATE &lt;= CONCAT(#{CREATE_DATE_E},' 23:59:59')
+		   	</if>
+			WHERE w.WMS_MOVE_TYPE = '103W' AND nvl(w.DEL,'0')!='X' 
+			AND (nvl(w.QTY_WMS,'0')-nvl(w.QTY_CANCEL,'0')) >0
+			AND nvl(w.PO_NO,' ') =' ' 
+			AND w.WERKS = #{WERKS} AND w.WH_NUMBER=#{WH_NUMBER}
+			AND w.LIFNR = #{LIFNR}
+			<if test="BEDNR !=null and BEDNR !='' ">
+				AND w.BEDNR LIKE CONCAT(CONCAT('%', #{BEDNR}),'%')
+			</if>
+			<if test="CREATE_DATE_S !=null and CREATE_DATE_S !='' ">
+				AND w.CREATE_DATE &gt;= CONCAT(#{CREATE_DATE_S},' 00:00:00')
+		   	</if>
+		   	<if test="CREATE_DATE_E !=null and CREATE_DATE_E !='' ">
+				AND w.CREATE_DATE &lt;= CONCAT(#{CREATE_DATE_E},' 23:59:59')
+		   	</if>
+		   ORDER BY r.RECEIPT_NO,r.RECEIPT_ITEM_NO
+	</select>
+	
+	<select id="getPoItemInfo" parameterType="List" resultType="Map">
+		SELECT i.EBELN,i.EBELP,i.LOEKZ,i.MATNR,i.TXZ01,i.BUKRS,i.WERKS,i.LGORT,i.BEDNR,
+		i.MATKL,i.MENGE,i.MAX_MENGE,i.MEINS,i.LMEIN,i.PSTYP,i.KNTTP,i.SOBKZ,i.LEWED,i.AFNAM,
+		h.LIFNR,(SELECT sum(r.RECEIPT_QTY)-sum(nvl(r.RETURN_QTY,0))-sum(nvl(r.WH_RETURN_QTY,0)) 
+							FROM WMS_IN_RECEIPT r WHERE r.PO_NO = i.EBELN AND r.PO_ITEM_NO= i.EBELP 
+							AND r.PO_NO = #{PO_NO} AND NVL(r.DEL ,'0') = '0' 
+							group by r.PO_NO,r.PO_ITEM_NO ) RECEIPTED_QTY 
+		FROM WMS_SAP_PO_ITEM i 
+		LEFT JOIN WMS_SAP_PO_HEAD h ON i.EBELN = h.EBELN AND nvl(h.FRGRL,'0')!='X'
+		WHERE i.EBELN = #{PO_NO}
+		AND nvl(i.LOEKZ,'0') !='X'
+		AND nvl(i.ELIKZ,'0') !='X'
+		AND nvl(i.RETPO,'0') !='X'
+		ORDER BY i.EBELP
+	</select>
+	
+	<update id="updateReceiptPoInfo" parameterType="List">
+    	update WMS_IN_RECEIPT 
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="PO_NO =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then #{d.PO_NO}
+                </foreach>
+            </trim>
+            <trim prefix="PO_ITEM_NO =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then #{d.PO_ITEM_NO}
+                </foreach>
+            </trim>
+            <trim prefix="BUSINESS_TYPE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then '0502'
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+        </foreach>
+	</update>
+	
+	<update id="updateWmsDocPoInfo" parameterType="List">
+    	update WMS_CORE_WMSDOC_ITEM 
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="PO_NO =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then #{d.PO_NO}
+                </foreach>
+            </trim>
+            <trim prefix="PO_ITEM_NO =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then #{d.PO_ITEM_NO}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} 
+            and (WMS_MOVE_TYPE = '103W' or WMS_MOVE_TYPE = '105W')
+        </foreach>
+	</update>
+	
+	<update id="updateWmsDocBusinessType" parameterType="List">
+    	update WMS_CORE_WMSDOC_ITEM 
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="BUSINESS_TYPE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then '0502'
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} 
+            and  WMS_MOVE_TYPE = '105W'
+        </foreach>
+	</update>
+	
+	<update id="updateInboundItemBusinessType" parameterType="List">
+    	update WMS_IN_INBOUND_ITEM 
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="BUSINESS_TYPE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then '0502'
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} 
+            and  BUSINESS_TYPE = '05' and ITEM_STATUS in ('00','01') and DEL = '0'
+        </foreach>
+	</update>
+	
+	<update id="updateWmsDocSapMoveType" parameterType="List">
+    	update WMS_CORE_WMSDOC_ITEM 
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="QTY_SAP =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO} then #{d.QTY_SAP}
+                </foreach>
+            </trim>
+            <trim prefix="SAP_MOVE_TYPE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO} then #{d.SAP_MOVE_TYPE}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO}
+        </foreach>
+	</update>
+	
+	<select id="getWpoWmsDocInfo" parameterType="List" resultType="Map">
+		SELECT i.* 
+		FROM WMS_CORE_WMSDOC_ITEM i
+		WHERE i.WMS_MOVE_TYPE = '105W' AND nvl(i.DEL,'0')!='X'
+		AND (nvl(i.QTY_WMS,'0')-nvl(i.QTY_CANCEL,'0')) >0 
+		<foreach collection="list" index="index" item="d" separator="or" open="AND (" close=")">
+            i.RECEIPT_NO=#{d.RECEIPT_NO} and i.RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} 
+        </foreach>
+        ORDER BY i.RECEIPT_ITEM_NO ASC
+	</select>
+	
+	
+</mapper>

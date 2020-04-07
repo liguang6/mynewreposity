@@ -1,0 +1,154 @@
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+                border:1px solid #6FACEF;
+            }
+           
+            .btn{
+                border:1px solid #1271EF;background:transparent url(${request.contextPath}/statics/ins/btn_bg.jpg) repeat-x;/**/
+                padding:0 8px;line-height:22px;color: #fff; font-weight:bold;
+            }
+            
+            body{text-align:center}
+        </style>
+        <script type="text/javascript">
+        	$(function () {
+		        var now = new Date(); //当前日期
+		    	var pzDate=new Date(now.getTime());
+		    	$("#docDate").val(pzDate.Format("yyyy-MM-dd"));
+		    	$("#debitDate").val(pzDate.Format("yyyy-MM-dd"));
+        	});
+        	
+            function scanPre(){
+                alert($("#barcode").val());
+                $.ajax({
+		        	  url: baseUrl + "in/receipt",
+		        	  dataType : "json",
+		        	  type : "post",
+		        	  data : {"barcode":$("#barcode").val()},
+		        	  success:function(resp){
+		        		
+		        	  }
+		          })
+            }
+
+            document.onkeydown = function(){
+            	
+                if(window.event.keyCode == 13 && document.activeElement.id == 'barcode'){
+                	scanPre();
+                }
+                if(window.event.keyCode == 118){
+                	history.back(-1);
+                }
+            }
+        </script>
+        <title>收料</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <div id="global_content_smq">
+            <div class="smq_test" >
+                <h2>批次合并收货</h2>
+                <div id="divSysInfo"></div>
+                <div id="divSysError" style="color:red ;text-align:center;"></div>
+                <div id="div1">
+
+                    <div class="box">
+                        <label id="barcodeLabel" >操作单号</label>
+                        <div >
+                            <input id="barcode" name="barcode"  type="text"/>
+
+                            <button id="scan" onclick="scanPre();" >扫描</button>
+                        </div>
+                    </div>
+                    <div class="box">
+                    	<label id="werkstxt" >工厂</label>
+                    	<div  style="text-align:left;">&nbsp;
+						<select name="werks" id="werks"> 
+							<#list tag.getUserAuthWerks("A70") as factory> 
+								<option value="${factory.code}">${factory.code}</option> 
+							</#list>
+						</select>
+						</div>
+					</div>
+                    <div class="box">
+                        <label >行项目数</label>
+                        <input id="itemCount" name="itemCount" class="input_readonly" type="text" readonly />
+                    </div>
+                    <div class="box">
+                        <label >凭证日期</label>
+                        <input id="docDate" name="docDate"  type="text" />
+                    </div>
+                    <div class="box">
+                        <label >记账日期</label>
+                        <input id="debitDate" name="debitDate"  type="text" />
+                    </div>
+                    <div class="box">
+                        <label >交货单</label>
+                        <input id="deliveryNo" name="deliveryNo" type="text" />
+                    </div>
+                    <div class="box">
+                        <label >提货单</label>
+                        <input id="billOfLading" name="billOfLading" type="text" />
+                    </div>
+                    <div class="box">
+                        <label >供应商</label>
+                        <input id="vendorCode" name="vendorCode" class="dobleinput_c input_readonly" type="text" readonly/>
+
+                        <input id="vendorName" name="vendorName" class="dobleinput_d input_readonly" type="text" readonly/>
+
+                    </div>
+                    <input type="hidden" id="lineNo" name="lineNo" value="-1" />
+                    <input type="hidden" id="itemarrays" name="itemarrays" />
+                </div>
+
+                <div id="div2" style="display:none;">
+
+                    <div class="box">
+                        <label id="barcodeLabel" >实际数量</label>
+                        <input id="factQuantity" name="factQuantity"  type="text"/>
+
+                    </div>
+                    <div class="box">
+                        <label >单据数量</label>
+                        <input id="quantity" name="quantity" class="dobleinput_a input_readonly" type="text" readonly/>
+                        <input id="unit" name="unit" class="dobleinput_b input_readonly" type="text" readonly/>
+                    </div>
+                    <div class="box">
+                        <label id="barcodeLabel" >操作单号</label>
+                        <input id="asnNo" name="asnNo" class="dobleinput_a input_readonly" type="text" readonly/>
+                        <input id="itemNo" name="itemNo" class="dobleinput_b input_readonly" type="text" readonly/>
+                    </div>
+                    <div class="box">
+                        <label >料号</label>
+                        <input id="materialNo" name="materialNo" class="dobleinput_a input_readonly" type="text" readonly/>
+                        <input id="boxCount" name="boxCount" class="dobleinput_b input_readonly" type="text" readonly/>
+                        <textarea id="materialDesc" name="materialDesc" readonly cols="1"></textarea>
+                    </div>
+                    <div class="box">
+                        <label >采购订单</label>
+
+                        <input id="poNo" name="poNo" class="dobleinput_a input_readonly" type="text" readonly/>
+                        <input id="poItemNo" name="poItemNo" class="dobleinput_b input_readonly" type="text" readonly/>
+
+                    </div>
+                </div>
+                <div id="div3" class="shortcuts">
+                    <div id="shortCutsDiv" class="details"></div>
+
+                </div>
+                
+                <div style="text-align:center;">
+					<button type="submit" class="btn"> 保存</button>
+					<button type="reset" class="btn" onClick="javascript:history.back(-1);"> 取消</button>
+				</div>
+				<!-- <div>&nbsp;</div> -->
+            </div>
+        </div>
+
+    </body>
+</html>

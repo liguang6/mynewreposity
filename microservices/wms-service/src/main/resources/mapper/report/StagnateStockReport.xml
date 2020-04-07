@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.report.dao.StagnateStockReportDao">
+
+	<select id="getStagnateStockInfoList" parameterType="Map" resultType="Map">
+	SELECT * FROM ( 
+        SELECT TMP.*, ROWNUM ROW_ID FROM (			
+				select c.ID,c.WERKS,c.WH_NUMBER,c.MATNR matnr,c.MAKTX,c.BATCH,c.LGORT,c.BIN_CODE,c.sobkz,
+					(nvl(c.stock_qty,0)+nvl(c.virtual_qty,0)+nvl(c.lock_qty,0)+nvl(c.virtual_lock_qty,0)
+                      +nvl(c.freeze_qty,0)+nvl(c.xj_qty,0)+nvl(c.rsb_qty,0)) QTY,
+					c.MEINS,t.last_inbound_date,t.last_outbound_date,
+					round(to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00','yyyy-mm-dd hh24:mi:ss') 
+					       -      
+					       to_date(decode(t.last_outbound_date,
+					                      '',
+					                      decode(t.last_inbound_date,'',t.first_inbound_date,t.last_inbound_date),
+					               t.last_outbound_date), 'yyyy-mm-dd hh24:mi:ss'),0) DAYS
+				from WMS_CORE_STOCK c
+				join WMS_CORE_MAT_BATCH t
+				    on t.batch = c.batch
+				   and t.matnr = c.matnr
+				   and t.werks = c.werks
+				where to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00','yyyy-mm-dd hh24:mi:ss') 
+				       -      
+				       to_date(decode(t.last_outbound_date,
+				                      '',
+				                      decode(t.last_inbound_date,'',t.first_inbound_date,t.last_inbound_date),
+				               t.last_outbound_date), 'yyyy-mm-dd hh24:mi:ss') >#{DAYS} 
+				       and c.WERKS=#{WERKS} 
+				       <if test="matnr !=null and matnr !='' ">
+		                   and INSTR(','||#{MATNR}||',',','||s.matnr||',')>0
+				       </if>
+		)TMP 
+		WHERE ROWNUM  &lt;=#{end})  
+	WHERE ROW_ID > #{start} 
+			
+	</select>
+	<select id="getStagnateStockInfoCount" parameterType="Map" resultType="int">
+	SELECT count(*) from(		
+		select c.ID,c.WERKS,c.WH_NUMBER,c.MATNR matnr,c.MAKTX,c.BATCH,c.LGORT,c.BIN_CODE,c.sobkz,
+			(nvl(c.stock_qty,0)+nvl(c.virtual_qty,0)+nvl(c.lock_qty,0)+nvl(c.virtual_lock_qty,0)
+                    +nvl(c.freeze_qty,0)+nvl(c.xj_qty,0)+nvl(c.rsb_qty,0)) QTY,
+			c.MEINS,t.last_inbound_date,t.last_outbound_date,
+			round(to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00','yyyy-mm-dd hh24:mi:ss') 
+			       -      
+			       to_date(decode(t.last_outbound_date,
+			                      '',
+			                      decode(t.last_inbound_date,'',t.first_inbound_date,t.last_inbound_date),
+			               t.last_outbound_date), 'yyyy-mm-dd hh24:mi:ss'),0) DAYS
+		from WMS_CORE_STOCK c
+		join WMS_CORE_MAT_BATCH t
+		    on t.batch = c.batch
+		   and t.matnr = c.matnr
+		   and t.werks = c.werks
+		where to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00','yyyy-mm-dd hh24:mi:ss') 
+		       -      
+		       to_date(decode(t.last_outbound_date,
+		                      '',
+		                      decode(t.last_inbound_date,'',t.first_inbound_date,t.last_inbound_date),
+		               t.last_outbound_date), 'yyyy-mm-dd hh24:mi:ss') >#{DAYS} 
+		       and c.WERKS=#{WERKS} 
+		       <if test="matnr !=null and matnr !='' ">
+                   and INSTR(','||#{MATNR}||',',','||s.matnr||',')>0
+		       </if>
+	)	
+	</select>
+</mapper>

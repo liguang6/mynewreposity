@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCMatLtSampleDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.wms.business.modules.config.entity.WmsCMatLtSampleEntity" id="wmsCMatLtSampleMap">
+        <result property="id" column="ID"/>
+        <result property="werks" column="WERKS"/>
+        <result property="matnr" column="MATNR"/>
+        <result property="maktx" column="MAKTX"/>
+        <result property="fullBoxQty" column="FULL_BOX_QTY"/>
+        <result property="ltWare" column="LT_WARE"/>
+        <result property="carType" column="CAR_TYPE"/>
+        <result property="proStation" column="PRO_STATION"/>
+        <result property="disStation" column="DIS_STATION"/>
+        <result property="disAddrss" column="DIS_ADDRSS"/>
+        <result property="del" column="DEL"/>
+        <result property="creator" column="CREATOR"/>
+        <result property="createDate" column="CREATE_DATE"/>
+        <result property="editor" column="EDITOR"/>
+        <result property="editDate" column="EDIT_DATE"/>
+        <result property="mouldNo" column="MOULD_NO"/>
+    </resultMap>
+     <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,WERKS || '-' ||  MATNR  AS UNIQUE_STR  FROM WMS_C_MAT_LT_SAMPLE
+	        WHERE WERKS || '-' ||  MATNR IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+			AND DEL='0'
+	 </select>
+<!-- 更新or插入 -->
+	<update id="merge" parameterType="List">
+		merge into WMS_C_MAT_LT_SAMPLE s using(
+		select m.WERKS,m.MATNR,m.MAKTX,m.FULL_BOX_QTY,m.LT_WARE,m.CAR_TYPE,m.PRO_STATION,
+		m.DIS_STATION,m.DIS_ADDRSS,m.MOULD_NO,m.DEL,m.CREATOR,m.CREATE_DATE,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.werks} WERKS,#{d.matnr} MATNR,#{d.maktx} MAKTX, 
+			#{d.fullBoxQty} FULL_BOX_QTY,#{d.ltWare} LT_WARE,
+			#{d.carType} CAR_TYPE,#{d.proStation} PRO_STATION,#{d.disStation} DIS_STATION,
+			#{d.disAddrss} DIS_ADDRSS,#{d.mouldNo} MOULD_NO,
+			#{d.del} DEL,#{d.creator} CREATOR,#{d.createDate} CREATE_DATE,#{d.editor} EDITOR,#{d.editDate} EDIT_DATE
+			from dual
+		</foreach>
+		) m ) tmp
+		on (tmp.WERKS=s.WERKS and tmp.MATNR=s.MATNR AND s.DEL='0' )
+		when matched then
+		update  set s.MAKTX=tmp.MAKTX,s.FULL_BOX_QTY=tmp.FULL_BOX_QTY,
+		s.LT_WARE=tmp.LT_WARE,s.CAR_TYPE=tmp.CAR_TYPE,s.PRO_STATION=tmp.PRO_STATION,
+		s.DIS_STATION=tmp.DIS_STATION,s.DIS_ADDRSS=tmp.DIS_ADDRSS,
+		s.MOULD_NO=tmp.MOULD_NO,s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then
+		insert (ID,WERKS,MATNR,MAKTX,FULL_BOX_QTY,LT_WARE,CAR_TYPE,PRO_STATION,
+		DIS_STATION,DIS_ADDRSS,MOULD_NO,DEL,CREATOR,CREATE_DATE,EDITOR,EDIT_DATE)
+		VALUES (SEQ_WMS_C_MAT_LT_SAMPLE.nextval,tmp.WERKS,tmp.MATNR,tmp.MAKTX,
+		tmp.FULL_BOX_QTY,tmp.LT_WARE,tmp.CAR_TYPE,tmp.PRO_STATION,tmp.DIS_STATION,
+		tmp.DIS_ADDRSS,tmp.MOULD_NO,'0',tmp.CREATOR,tmp.CREATE_DATE,tmp.EDITOR,tmp.EDIT_DATE
+		)
+	</update>
+</mapper>

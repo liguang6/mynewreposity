@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCKeyPartsDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.wms.business.modules.config.entity.WmsCKeyPartsEntity" id="wmsCKeyPartsMap">
+        <result property="id" column="ID"/>
+        <result property="werks" column="WERKS"/>
+        <result property="keyPartsNo" column="KEY_PARTS_NO"/>
+        <result property="keyPartsName" column="KEY_PARTS_NAME"/>
+        <result property="matnr" column="MATNR"/>
+        <result property="maktx" column="MAKTX"/>
+        <result property="del" column="DEL"/>
+        <result property="creator" column="CREATOR"/>
+        <result property="createDate" column="CREATE_DATE"/>
+        <result property="editor" column="EDITOR"/>
+        <result property="editDate" column="EDIT_DATE"/>
+    </resultMap>
+
+   <!-- 更新，插入关键零部件 -->
+	<update id="merge" parameterType="List">
+		MERGE INTO WMS_C_KEY_PARTS s USING(
+		select m.WERKS,m.KEY_PARTS_NO,m.KEY_PARTS_NAME,m.MATNR,m.MAKTX,
+		m.DEL,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		SELECT 
+		#{d.werks} WERKS,#{d.keyPartsNo}  KEY_PARTS_NO,#{d.keyPartsName} KEY_PARTS_NAME, #{d.matnr} MATNR,#{d.maktx} MAKTX,
+		'0' DEL,#{d.editor} EDITOR,#{d.editDate} EDIT_DATE
+		from dual
+		</foreach>
+		) m  ) tmp 
+		on (tmp.WERKS=s.WERKS and tmp.MATNR=s.MATNR  )
+		when matched then 
+			UPDATE  SET s.KEY_PARTS_NO=tmp.KEY_PARTS_NO,s.KEY_PARTS_NAME=tmp.KEY_PARTS_NAME,
+			s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then 
+			insert (ID,WERKS,KEY_PARTS_NO,KEY_PARTS_NAME,MATNR,MAKTX,DEL,CREATOR,CREATE_DATE) 
+		    VALUES (SEQ_WMS_C_KEY_PARTS.nextval,tmp.WERKS,tmp.KEY_PARTS_NO,
+		    tmp.KEY_PARTS_NAME,tmp.MATNR,tmp.MAKTX,tmp.DEL,tmp.EDITOR,tmp.EDIT_DATE)
+	</update>
+</mapper>

@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.produce.dao.MachinePlanDao">
+   <select id="getMachinePlanList" resultType="Map" parameterType="Map">
+		select i.id,i.machine_plan_head_id,i.zzj_pmd_items_id,i.no,i.zzj_no,i.plan_process,i.plan_quantity,i.prod_quantity, i.machine,i.plan_date, i.status,
+		    i.creator,i.create_date,i.product_order,p.quantity,pi.process,pi.process_name,pi.process_flow,pi.assembly_position,pi.zzj_name,pi.id pmd_item_id,
+		    pi.use_workshop,pi.filling_size,pi.aperture,pi.quantity single_qty,h.zzj_plan_batch,h.werks,h.workshop,h.line,h.order_no,pi.accuracy_demand,
+			pi.specification,pi.subcontracting_type, concat(o.order_no,' ',order_name,' ',bus_type_code,' ',order_qty,'台') order_desc
+		from ZZJ_MACHINE_PLAN_HEAD h
+		left join ZZJ_MACHINE_PLAN_ITEMS i on i.machine_plan_head_id = h.id
+		left join ZZJ_PMD_ITEMS pi on i.zzj_pmd_items_id = pi.id
+		left join ZZJ_PLAN p on h.zzj_plan_batch = p.batch and h.werks=p.werks and h.workshop=p.workshop and
+		    p.line=h.line and p.order_no=h.order_no
+		left join ZZJ_WERKS_ORDER o on  o.order_no=h.order_no
+		where 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and h.zzj_plan_batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and h.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and h.workshop = #{workshop}
+		</if>
+		<if test="line != null and line !=''">
+			and h.line = #{line}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and h.order_no = #{order_no}
+		</if>
+		<if test="process != null and process != ''">
+			and (pi.process like concat('%', #{process},'%') or pi.process_name like concat('%', #{process},'%'))
+		</if>
+		<if test="specification != null and specification != ''">
+			and pi.specification like concat('%', #{specification},'%')
+		</if>
+		<if test="accuracy_demand != null and accuracy_demand != ''">
+			and pi.accuracy_demand like concat('%', #{accuracy_demand},'%')
+		</if>
+		<if test="subcontracting_type !=null and subcontracting_type !='' ">
+			and LOCATE(pi.subcontracting_type , #{subcontracting_type} )>0
+		</if>	
+		<if test="process_sequence != null and process_sequence != ''">
+			and pi.process_sequence= #{process_sequence}
+		</if>
+		<if test="assembly_position != null and assembly_position != ''">
+			and pi.assembly_position like concat('%', #{assembly_position},'%')
+		</if>
+		<if test="plan_process != null and plan_process != ''">
+			and i.plan_process like concat('%', #{plan_process},'%')
+		</if>
+		<if test="product_order != null and product_order != ''">
+			and i.product_order like concat('%', #{product_order},'%')
+		</if>
+		<if test="process_flow != null and process_flow != ''">
+			and pi.process_flow like concat('%', #{process_flow},'%')
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+		  <if test="zzj_no.indexOf(',')==-1">
+               and (i.zzj_no like concat('%',#{zzj_no},'%') or pi.zzj_name like concat('%',#{zzj_no},'%'))	  
+          </if>
+          <if test="zzj_no.indexOf(',')!=-1">
+               and find_in_set(i.zzj_no,#{zzj_no})	  
+          </if>
+		</if>
+		<if test="machine != null and machine !=''">
+			and i.machine like CONCAT('%',#{machine},'%')
+		</if>
+		<if test="start_date != null and start_date != ''">
+			and i.plan_date &gt;= #{start_date}
+		</if>
+		<if test="end_date != null and end_date !=''">
+			and i.plan_date &lt;= #{end_date}
+		</if>
+		<if test="status != null and status != ''">
+			and i.status = #{status}
+		</if>
+		<if test="plan_date != null and plan_date !=''">
+			and i.plan_date = #{plan_date}
+		</if>
+		<if test="limit != null and limit !=''">
+		   LIMIT #{start},#{limit}
+		</if>
+	</select>
+	 <select id="getMachinePlanListCount" resultType="int" parameterType="Map">
+	 select  count(1) from (
+		select i.id,i.machine_plan_head_id,i.zzj_pmd_items_id,i.no,i.zzj_no,pi.zzj_name,pi.assembly_position,
+		   pi.process,pi.process_flow,i.plan_process,i.plan_quantity,i.prod_quantity, i.machine,i.plan_date, i.status,
+		  i.creator,i.create_date,i.product_order,p.quantity,h.zzj_plan_batch
+		from ZZJ_MACHINE_PLAN_HEAD h
+		left join ZZJ_MACHINE_PLAN_ITEMS i on i.machine_plan_head_id = h.id
+		left join ZZJ_PMD_ITEMS pi on i.zzj_pmd_items_id = pi.id
+		left join ZZJ_PLAN p on h.zzj_plan_batch = p.batch and h.werks=p.werks and h.workshop=p.workshop and
+		    p.line=h.line and p.order_no=h.order_no
+		where 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and h.zzj_plan_batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and h.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and h.workshop = #{workshop}
+		</if>
+		<if test="line != null and line !=''">
+			and h.line = #{line}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and h.order_no = #{order_no}
+		</if>
+		<if test="process != null and process != ''">
+			and (pi.process like concat('%', #{process},'%') or pi.process_name like concat('%', #{process},'%'))
+		</if>
+		<if test="specification != null and specification != ''">
+			and pi.specification like concat('%', #{specification},'%')
+		</if>
+		<if test="accuracy_demand != null and accuracy_demand != ''">
+			and pi.accuracy_demand like concat('%', #{accuracy_demand},'%')
+		</if>
+		<if test="subcontracting_type !=null and subcontracting_type !='' ">
+			and LOCATE(pi.subcontracting_type , #{subcontracting_type} )>0
+		</if>	
+		<if test="process_sequence != null and process_sequence != ''">
+			and pi.process_sequence= #{process_sequence}
+		</if>
+		<if test="assembly_position != null and assembly_position != ''">
+			and pi.assembly_position like concat('%', #{assembly_position},'%')
+		</if>
+		<if test="process_flow != null and process_flow != ''">
+			and pi.process_flow like concat('%', #{process_flow},'%')
+		</if>
+		<if test="plan_process != null and plan_process != ''">
+			and i.plan_process like concat('%', #{plan_process},'%')
+		</if>
+		<if test="product_order != null and product_order != ''">
+			and i.product_order like concat('%', #{product_order},'%')
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+		  <if test="zzj_no.indexOf(',')==-1">
+               and (i.zzj_no like concat('%',#{zzj_no},'%') or pi.zzj_name like concat('%',#{zzj_no},'%'))		  
+          </if>
+          <if test="zzj_no.indexOf(',')!=-1">
+               and find_in_set(i.zzj_no,#{zzj_no})	  
+          </if>
+		</if>
+		<if test="machine != null and machine !=''">
+			and i.machine like CONCAT('%',#{machine},'%')
+		</if>
+		<if test="start_date != null and start_date != ''">
+			and i.plan_date &gt;= #{start_date}
+		</if>
+		<if test="end_date != null and end_date !=''">
+			and i.plan_date &lt;= #{end_date}
+		</if>
+		<if test="status != null and status != ''">
+			and i.status = #{status}
+		</if>
+		<if test="plan_date != null and plan_date !=''">
+			and i.plan_date = #{plan_date}
+		</if>
+		) t
+	</select>
+	<select id="getHeadByMap" resultType="Map" parameterType="Map">
+		select h.* from ZZJ_MACHINE_PLAN_HEAD h WHERE 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and h.zzj_plan_batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and h.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and h.workshop = #{workshop}
+		</if>
+		<if test="line != null and line !=''">
+			and h.line = #{line}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and h.order_no = #{order_no}
+		</if>
+	</select>
+	<insert id="saveHead" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+	   <selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into  ZZJ_MACHINE_PLAN_HEAD (
+		      order_no,werks,werks_name,workshop,workshop_name,line,line_name,zzj_plan_batch,creator,create_date
+		   ) values (
+			  #{order_no},#{werks},#{werks_name},#{workshop},#{workshop_name},#{line},#{line_name},
+			  #{zzj_plan_batch},#{username},#{cur_date}
+			)
+	</insert>
+	<insert id="saveItems" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+	    <selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_MACHINE_PLAN_ITEMS (machine_plan_head_id,zzj_pmd_items_id,no,zzj_no, plan_process,
+		   plan_quantity,machine,plan_date,status,product_order,creator,create_date) values
+			<foreach collection="add_list" item="d" index="index" separator=",">
+				( #{machine_plan_head_id},#{d.zzj_pmd_items_id},#{d.no},#{d.zzj_no} ,#{d.plan_process},#{d.plan_quantity},
+				  #{d.machine},#{d.plan_date},'1',#{d.product_order}, #{username},#{cur_date} )
+			</foreach>
+	</insert>
+	<insert id="saveItemsHistory" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_MACHINE_PLAN_ITEMS_H (operate_type,machine_plan_head_id,zzj_pmd_items_id,
+		    no,zzj_no,plan_process,plan_quantity,
+		    prod_quantity,machine,plan_date,status,product_order,creator,create_date) values
+			<foreach collection="history_list" item="d" index="index" separator=",">
+				( #{d.operate_type},#{machine_plan_head_id},#{d.zzj_pmd_items_id},#{d.no},#{d.zzj_no},#{d.plan_process},#{d.plan_quantity},
+				     #{d.prod_quantity},#{d.machine},#{d.plan_date},'1',#{d.product_order},#{username},#{cur_date}
+	 		     )
+			</foreach>
+	</insert>
+    <update id="updateItems" parameterType="Map">
+		<foreach collection="modify_list" item = "item" separator=";">
+			update ZZJ_MACHINE_PLAN_ITEMS 
+			<set>
+			<if test="item.plan_quantity != null and item.plan_quantity !=''">
+				 plan_quantity = #{item.plan_quantity},
+				status= if(prod_quantity= #{item.plan_quantity},'3',status),
+			</if>
+			<if test="item.machine != null and item.machine !=''">
+				 machine = #{item.machine},
+			</if>
+			<if test="item.plan_date != null and item.plan_date != ''">
+				 plan_date = #{item.plan_date},
+			</if>
+			<if test="item.plan_process != null and item.plan_process != ''">
+				 plan_process = #{item.plan_process}
+			</if>
+<!-- 			<if test="item.product_order != null and item.product_order != ''"> -->
+<!-- 				 product_order = #{item.product_order} -->
+<!-- 			</if> -->
+			</set>
+			where id = #{item.id}
+		</foreach>
+	</update>
+	
+	<delete id="deleteItems" parameterType="List">
+			delete from ZZJ_MACHINE_PLAN_ITEMS where id in 
+			<foreach collection="delete_list" item ="item" separator="," open="(" close=")">
+				#{item.id}
+			</foreach>
+	</delete>
+	<select id="getPlanByMap" parameterType="Map" resultType="Map">
+		select p.*,
+		(SELECT SUM(f.order_qty) FROM ZZJ_WERKS_ORDER f WHERE f.order_no = p.order_no AND f.werks= p.werks) as production_qty
+		from ZZJ_PLAN p 
+		where 1=1 
+		<if test="werks !=null and werks !=''">
+			and p.werks=#{werks}
+		</if>
+		<if test="workshop !=null and workshop !=''">
+			and p.workshop=#{workshop}   
+		</if>
+		<if test="line !=null and line !=''">
+			and p.line=#{line}   
+		</if>
+			and p.batch=#{zzj_plan_batch}   and p.order_no=#{order_no} 
+	</select>
+	<select id="getZzjPlanBatchQuantity" parameterType="Map"  resultType="java.lang.Integer">
+	  SELECT ifnull(sum(quantity),0) FROM ZZJ_PLAN where order_no = #{order_no} and start_date &lt; #{start_date}
+	</select>
+	<select id="getExistPmdList" parameterType="Map" resultType="Map">
+	 select i.id,i.zzj_no,i.zzj_name,i.process_flow,i.quantity,i.process,i.assembly_position,i.zzj_name,i.ecn_quantity,i.section,i.change_from
+		from ZZJ_PMD_HEAD h
+		left join ZZJ_PMD_ITEMS i on h.id=i.pmd_head_id
+		where 1=1
+	<foreach collection="pmd_list" item="d" open=" and (" close=")"  separator=" or ">
+	    (i.zzj_no=#{d.zzj_no}  and i.process=#{d.process} and i.assembly_position=#{d.assembly_position} and i.process_flow=#{d.process_flow})
+	</foreach>
+	and h.order_no=#{order_no} and h.werks=#{werks} and h.workshop=#{workshop} and h.line=#{line} 
+	</select>
+		<!-- 取机台下料计划数量列表 判断数量是否超出  -->
+	<select id="checkMachinePlanList" resultType="Map" parameterType="Map">
+        select h.id as head_id,i.id as item_id,i.zzj_pmd_items_id,h.werks,h.werks_name ,h.workshop,h.workshop_name,h.line,
+           h.line_name,h.zzj_plan_batch as batch, i.zzj_no,i.plan_quantity,i.plan_process,i.machine,i.plan_date
+        from ZZJ_MACHINE_PLAN_HEAD h
+        left join ZZJ_MACHINE_PLAN_ITEMS i on i.machine_plan_head_id = h.id
+        where 1=1 
+        <foreach collection="pmd_list" item ="d" separator=" or " open="and (" close=")">
+        (
+           i.plan_process = #{d.plan_process}  and i.zzj_no=#{d.zzj_no}
+        <if test="check_flag!='01' and d.machine != null and d.machine !=''">
+           and i.machine =#{d.machine}
+        </if>
+        <if test="check_flag!='01' and d.plan_date != null and d.plan_date !=''">
+           and i.plan_date = #{d.plan_date}
+        </if>
+        <if test="d.zzj_pmd_items_id != null and d.zzj_pmd_items_id !='' and d.zzj_pmd_items_id !='undefined'">
+           and i.zzj_pmd_items_id = #{d.zzj_pmd_items_id}
+        </if>
+         <if test="d.id != null and d.id !=''">
+           and i.id != #{d.id}
+        </if>
+        )
+      </foreach>
+      and h.werks=#{werks} and h.workshop=#{workshop} and line=#{line} 
+      and h.zzj_plan_batch=#{zzj_plan_batch} and h.order_no=#{order_no}
+   </select>
+	<select id="checkMachine" resultType="String" >
+	select concat(machine_code,'#',process_name) from ZZJ_MACHINE_ASSIGN where del='0' and werks=#{werks}  and workshop=#{workshop}
+	and line=#{line} and status='00'
+	    <if test="machine_code != null and machine_code != ''">
+			and machine_code = #{machine_code}
+		</if>
+    </select>
+	
+	<select id="checkExsist" resultType="Map" parameterType="Map">
+		select i.id,i.machine_plan_head_id,i.zzj_pmd_items_id,i.no,i.zzj_no,pi.zzj_name,pi.assembly_position,
+		   pi.process,pi.process_flow,i.plan_process,i.plan_quantity,i.prod_quantity, i.machine,i.plan_date, i.status,
+		  i.creator,i.create_date,i.product_order,p.quantity,h.zzj_plan_batch,pi.zzj_name
+		from ZZJ_MACHINE_PLAN_HEAD h
+		left join ZZJ_MACHINE_PLAN_ITEMS i on i.machine_plan_head_id = h.id
+		left join ZZJ_PMD_ITEMS pi on i.zzj_pmd_items_id = pi.id
+		left join ZZJ_PLAN p on h.zzj_plan_batch = p.batch and h.werks=p.werks and h.workshop=p.workshop and
+		    p.line=h.line and p.order_no=h.order_no
+		 where 1=1
+		 <foreach collection="pmd_list" item="d" open=" and (" close=")"  separator=" or ">
+		    (i.zzj_no=#{d.zzj_no}  and i.process=#{d.process} and i.assembly_position=#{d.assembly_position} and i.process_flow=#{d.process_flow})
+		</foreach>
+			and h.zzj_plan_batch = #{zzj_plan_batch}
+			and h.werks = #{werks}
+			and h.workshop = #{workshop}
+			and h.line = #{line}
+			and h.order_no = #{order_no}
+
+		<if test="plan_process != null and plan_process != ''">
+			and i.plan_process = #{plan_process}
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+			and i.zzj_no like concat('%',#{zzj_no},'%')
+		</if>
+		<if test="machine != null and machine !=''">
+			and i.machine like CONCAT('%',#{machine},'%')
+		</if>
+		<if test="start_date != null and start_date != ''">
+			and i.plan_date &gt;= #{start_date}
+		</if>
+		<if test="end_date != null and end_date !=''">
+			and i.plan_date &lt;= #{end_date}
+		</if>
+		<if test="status != null and status != ''">
+			and i.status = #{status}
+		</if>
+		<if test="plan_date != null and plan_date !=''">
+			and i.plan_date = #{plan_date}
+		</if>
+		<if test="id != null and id != ''">
+			and i.id = #{id}
+		</if>
+	</select>
+	<select id="getOutputRecords" parameterType="Map" resultType="Map">
+	 SELECT pi.zzj_pmd_items_id,pi.id machine_plan_items_id,pi.plan_process process,h.order_no,h.werks,h.werks_name,
+		h.workshop,h.workshop_name,h.line,h.line_name,pi.zzj_no,pi.plan_process,a.workgroup_name,a.team_name,pi.machine machine_code,'${zzj_plan_batch}' zzj_plan_batch,
+		pi.plan_quantity,pi.prod_quantity,'${zzj_name}' zzj_name,curdate() product_date
+		FROM ZZJ_MACHINE_PLAN_ITEMS pi
+		LEFT JOIN ZZJ_MACHINE_PLAN_HEAD h on pi.machine_plan_head_id=h.id
+		LEFT JOIN ZZJ_PMD_ITEMS i on pi.zzj_pmd_items_id=i.id
+		LEFT JOIN ZZJ_MACHINE_ASSIGN a on a.machine_code=pi.machine
+		WHERE pi.id=#{machine_plan_items_id} 
+	</select>
+	<select id="getTemplateData" parameterType="Map" resultType="Map">
+	 SELECT i.zzj_no,i.process,i.process_flow,i.assembly_position,i.zzj_name
+	 <if test="process == '首工序'">
+	  ,substring_index(ifnull(i.process_flow,''),'-', 1) plan_process
+	 </if>
+	 <if test="process != '首工序'">
+	  ,'${process}' plan_process
+	 </if>
+	    FROM ZZJ_PMD_HEAD h
+		LEFT JOIN ZZJ_PMD_ITEMS i on i.pmd_head_id=h.id
+		WHERE h.werks=#{werks} and h.workshop=#{workshop} and line=#{line} and h.order_no=#{order_no}
+		<if test="process != '首工序'">
+		    and find_in_set(#{process},replace(i.process_flow,'-',','))&gt;0
+		</if>
+		<if test="process == ''">
+            and 1=2
+		</if>
+	</select>
+</mapper>

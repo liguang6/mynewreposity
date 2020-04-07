@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>新增工序</title> <#include "/header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="processNewForm">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label">工厂</label>
+									<div class="col-xs-8">
+										<select style="width: 150px;height: 28px;" name="werks" id="werks" v-model="werks">
+										   <#list tag.getUserAuthWerks("MASTERDATA_PROCESS") as factory>
+										      <option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+										   </#list>
+										</select>
+										<input style="display: none;" name="werksName" id="werksName" />
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">车间
+									</div>
+									<div class="col-sm-8">
+										<select style="width: 180px;height: 28px;" name="workshop" id="workshop" v-model="workshop">
+											<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+										<input style="display: none;" name="workshopName" id="workshopName" />
+									</div>
+								</div>
+								
+							</div>
+
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required">*</span>工序编号
+									</div>
+									<div class="col-sm-8">
+										<input type="text" class="form-control required" name="processCode" id="processCode"
+											placeholder="工序代码" />
+									</div>
+								</div>
+
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required">*</span>工序名称
+									</div>
+									<div class="col-sm-8">
+										<input type="text" name="processName" class="form-control required" id="processName"
+											placeholder="工序名称" />
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+							
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										所属工段
+									</div>
+									<div class="col-sm-8">
+										<select name="sectionCode" class="form-control"> 
+											<option value="">请选择</option>
+											<#list tag.masterdataDictList('SECTION') as dict>
+												<option value="${dict.code}">${dict.value}</option> 
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-sm-4 control-label">计划节点</label>
+									<div class="col-sm-8">
+
+										<select name="planNodeCode" class="form-control"> 
+										<option value="">请选择</option>
+											<#list tag.masterdataDictList('PLAN_NODE') as dict>
+												<option value="${dict.code}">${dict.value}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+
+						<div class="row">
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4"></div>
+									<label class="col-sm-8"> <input type="checkbox"
+										name="monitoryPointFlag" /> 生产监控点
+									</label>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-sm-4 control-label">工序类别</label>
+									<div class="col-sm-8">
+									<select  id="processType" name="processType"> 
+										   <option value='00'>自制工序</option>
+										   <option value='01'>委外工序</option>
+										   <option value='02'>计划外工序</option>
+									</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="form-group">
+									<label class="col-sm-2 control-label">备注</label>
+									<div class="col-sm-10">
+										<textarea rows="3" class="form-control" name="memo" id="memo"
+											placeholder="备注"></textarea>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+
+							<div class="col-sm-offset-2 col-sm-10">
+							    <button class="btn btn-sm btn-primary" id="btnSaveAndAdd"
+									type="button">
+									<i class="fa fa-check"></i> 保存并新增
+								</button>
+								<button class="btn btn-sm btn-primary" id="btnSave"
+									type="button">
+									<i class="fa fa-check"></i> 保 存
+								</button>
+                         
+								<button type="button" class="btn btn-sm btn-default"
+									id="btnCancel" type="reset" >
+									<i class="fa fa-reply-all"></i> 关 闭
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+
+	<script type="text/javascript">
+
+	var vm = new Vue({
+		el:'#rrapp',
+		data:{
+			showList: true,
+			title: null,
+			settingProcess: {},
+			werks: '',
+			workshoplist: [],
+			workshop: '',
+		},
+		watch:{
+			werks:{
+				handler:function(newVal,oldVal){
+					 $.ajax({
+			        	  url:baseUrl + "masterdata/getUserWorkshopByWerks",
+			        	  data:{
+			        		  "WERKS":newVal,
+			        		  "MENU_KEY":"MASTERDATA_PROCESS",
+			        	  },
+			        	  success:function(resp){
+			        		 vm.workshoplist = resp.data;
+			        		 if(resp.data.length>0){
+			        			 vm.workshop=resp.data[0].CODE;
+			        		 }
+			        		 
+			        	  }
+			          })
+				}
+			}
+			
+		},
+		created:function(){
+			this.WERKS=$("#werks").find("option").first().val();
+		}
+	});
+	
+		function close() {
+			var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+			parent.layer.close(index); //再执行关闭 
+		}
+
+		$(document).ready(
+				function() {
+
+					$("#processCode").change(function(){
+						$("#processCode").val($(this).val().toUpperCase())
+					})
+					
+                    $("#btnSaveAndAdd").click(function(){
+                    	
+                     	if(vm.werks==''){
+                     		js.showErrorMessage('工厂不能为空');
+                    		return false;
+                    	}
+                       	if(vm.workshop==''){
+                       		js.showErrorMessage('车间不能为空');
+                    		return false;
+                    	}
+                    	$('#werksName').val($('#werks').find("option:selected").data("name"));
+                    	$('#workshopName').val($('#workshop').find("option:selected").text());
+                    	 if(validform().form()) {
+	                    	$.ajax({
+								url : baseURL + "masterdata/process/save",
+								type : "POST",
+								contentType : "application/json",
+								data : JSON.stringify($("#processNewForm")
+										.serializeObject()),
+								success : function(rep) {
+									if (rep.code === 0) {
+										js.showMessage('保存成功');
+										$("#processCode").val("");
+										$("#processName").val("");
+										$("#memo").val("");
+									} else {
+										js.showMessage(rep.msg);
+									}
+								}
+							});
+                    	 }
+                    });
+                    $("#btnSave").click(function(){
+                     	if(vm.werks==''){
+                     		js.showErrorMessage('工厂不能为空');
+                    		return false;
+                    	}
+                       	if(vm.workshop==''){
+                       		js.showErrorMessage('车间不能为空');
+                    		return false;
+                    	}
+                    	$('#werksName').val($('#werks').find("option:selected").data("name"));
+                    	$('#workshopName').val($('#workshop').find("option:selected").text());
+                   	 if(validform().form()) {
+                   		$.ajax({
+							url : baseURL + "masterdata/process/save",
+							type : "POST",
+							contentType : "application/json",
+							data : JSON.stringify($("#processNewForm")
+									.serializeObject()),
+							success : function(rep) {
+								if (rep.code === 0) {
+									js.showMessage('保存成功');
+									close();
+								} else {
+									js.showErrorMessage(rep.msg);
+								}
+							}
+						})
+                   	 }
+                   });
+                    function validform(){
+                   	  /*关键在此增加了一个return，返回的是一个validate对象，这个对象有一个form方法，返回的是是否通过验证*/
+                   	  return $("#processNewForm").validate({
+                   	  });
+                   	}
+                   	//注册表单验证
+                   	$(validform());
+					
+					$("#btnCancel").click(function(){close();})
+
+				});
+		
+	</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysUserDao">
+	
+	<!-- 查询用户的所有权限 -->
+	<select id="queryAllPerms" resultType="string">
+		select m.perms from sys_user_role ur 
+			LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+			LEFT JOIN sys_menu m on rm.menu_id = m.menu_id 
+		where ur.user_id = #{userId}
+	</select>
+	
+	<!-- 查询用户的所有菜单ID --> 
+	<select id="queryAllMenuId" resultType="long">
+		select distinct rm.menu_id from sys_user_role ur 
+			LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+		where ur.user_id = #{userId}
+	</select>
+	
+	<select id="getUserByUserName" resultType="Map">
+		select * from sys_user where username=#{username}
+	</select>
+	
+	<select id="getUserMap" resultType="Map" parameterType="list">
+		<foreach collection="list" item="d"  separator="union all" >
+			select * from sys_user where username=#{d} or staff_number=#{d} or full_name =#{d}
+		</foreach>
+	</select>
+	<select id="getUserMapN" resultType="Map" parameterType="list">
+		<foreach collection="list" item="d"  separator="union all" >
+			select * from sys_user where username=#{d} or staff_number=#{d} or full_name like '%'||#{d}||'%'
+		</foreach>
+	</select>
+	
+	<select id="getUserKanban" parameterType="Map" resultType="Map">
+		SELECT k.*
+			FROM SYS_KANBAN k
+			LEFT JOIN 
+			(
+								SELECT e.MENU_KEY
+									FROM SYS_MENU e 
+									INNER JOIN SYS_ROLE_MENU m ON m.MENU_ID = e.MENU_ID
+									INNER JOIN SYS_USER_ROLE r ON r.ROLE_ID = m.ROLE_ID 
+									INNER JOIN SYS_USER u ON u.USER_ID =  r.USER_ID
+									WHERE 1=1
+									AND u.USERNAME = #{USERNAME} 
+									GROUP BY e.MENU_KEY 
+			) n on k.MENU_KEY = n.MENU_KEY
+			WHERE (k.SYS_DEFAULT = 'X' OR n.MENU_KEY IS NOT NULL) 
+			ORDER BY k.KANBAN_SORT 	
+	</select>
+	
+	<select id="getUserList" parameterType="string" resultType="Map">
+		select user_id as userId,username as userName from sys_user
+        where status = '1'
+        and full_name  LIKE '%' ||  (#{arg0}) || '%'
+
+	</select>
+
+	<select id="getUserListByRoleId" resultType="com.byd.admin.modules.sys.entity.SysUserEntity">
+		select sysuser.user_id as userId,sysuser.username as userName,sysuser.STAFF_NUMBER as staffNumber from sys_user sysuser
+		inner join (select urole1.* from SYS_USER_ROLE urole1 where urole1.ROLE_ID=#{roleId}) urole on sysuser.USER_ID = urole.USER_ID
+
+	</select>
+
+	<select id="getUserListByRoleIdUids" resultType="com.byd.admin.modules.sys.entity.SysUserEntity">
+		select sysuser.user_id as userId,sysuser.username as userName,sysuser.STAFF_NUMBER as staffNumber from sys_user sysuser
+		inner join (select urole1.* from SYS_USER_ROLE urole1 where urole1.ROLE_ID=#{roleId}) urole on sysuser.USER_ID = urole.USER_ID
+		<if test="userIds != null and userIds.size() > 0">
+			where sysuser.USER_ID not in
+			<foreach collection="userIds" item="item" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+		</if>
+	</select>
+
+	<select id="getRoleList" parameterType="string" resultType="Map">
+		select role_id as roleId,role_name as roleName from sys_role
+        where status = '0'
+        and role_name LIKE '%' ||  (#{arg0}) || '%'
+
+	</select>
+
+
+	<select id="getMenuList" parameterType="string" resultType="Map">
+		select a.menu_id as menuId,a.name as menuName from sys_menu a
+        where a.status = '0'
+		and a.name LIKE '%' ||  (#{arg0}) || '%'
+
+	</select>	
+	
+	<select id="getUserInfo" parameterType="Map" resultType="Map">
+		SELECT u.FULL_NAME USERNAME,u.STAFF_NUMBER,d.NAME DEPT
+		FROM SYS_USER u
+		LEFT JOIN SYS_DEPT d ON u.DEPT_ID=d.DEPT_ID 
+		WHERE 1=1 
+		<if test="staffNumber !=null and staffNumber !='' ">
+			and u.STAFF_NUMBER=#{staffNumber}
+		</if>
+		<if test="cardHd !=null and cardHd !='' ">
+			and u.CARD_HD=#{cardHd}
+		</if>
+	</select>
+	
+</mapper>

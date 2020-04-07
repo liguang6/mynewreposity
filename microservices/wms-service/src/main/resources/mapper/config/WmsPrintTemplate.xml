@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.PrintTemplateDao">
+
+    <select id="queryTemplate"  resultType="java.util.HashMap" parameterType="Map">
+        SELECT * FROM (
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+        SELECT ID, TEMP_TYPE,
+        (SELECT S.VALUE FROM SYS_DICT S
+        WHERE S.TYPE = 'PRINT_TEMPLATE_TPYE'
+        AND S.CODE = TEMP_TYPE) AS TEMP_TYPE_STR,
+        TEMP_SIZE ,TEMP_NAME FROM WMS_C_PRINT_TEMPLATE T
+        WHERE 1=1
+        <if test="TEMPLATE != '' and TEMPLATE != null">
+            AND (T.TEMP_TYPE like '%'||#{TEMPLATE}||'%' OR T.TEMP_NAME like '%'||#{TEMPLATE}||'%')
+        </if>
+        )TMP
+        WHERE ROWNUM  &lt;=#{end})
+        WHERE ROW_ID > #{start}
+
+	</select>
+
+    <select id="queryTemplateCount" parameterType="Map" resultType="int">
+        SELECT COUNT(1)  FROM WMS_C_PRINT_TEMPLATE T
+        where 1=1
+        <if test="TEMPLATE != '' and TEMPLATE != null">
+            AND (T.TEMP_TYPE like '%'||#{TEMPLATE}||'%' OR T.TEMP_NAME like '%'||#{TEMPLATE}||'%')
+        </if>
+    </select>
+
+    <select id="queryTempConfig" resultType="java.util.HashMap" parameterType="Map">
+        SELECT * FROM (
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+        SELECT ID,
+        TEMPLATE_ID,
+        WERKS,
+        KUNNR,
+        HIDDEN_FIELD,
+        decode(BARCODE,'Y','是','否') AS BARCODE,
+        decode(QRCODE,'Y','是','否') AS QRCODE
+        FROM WMS_C_PRINT_CONFIG T
+        where 1=1
+        <if test="TEMPLATE_ID != '' and TEMPLATE_ID != null">
+            AND T.TEMPLATE_ID = #{TEMPLATE_ID}
+        </if>
+        )TMP
+        WHERE ROWNUM  &lt;=#{end})
+        WHERE ROW_ID > #{start}
+
+    </select>
+
+    <select id="queryTempConfigCount" parameterType="Map" resultType="int">
+        SELECT COUNT(1)  FROM WMS_C_PRINT_CONFIG T
+        where 1=1
+        <if test="ID != '' and ID != null">
+            AND T.TEMPLATE_ID = #{TEMPLATE_ID}
+        </if>
+    </select>
+
+    <select id="getPrintTemplateBySysDict" resultType="java.util.HashMap" parameterType="String">
+        SELECT T.CODE, T.VALUE  FROM SYS_DICT T  where T.TYPE = #{type} AND T.DEL_FLAG='0'
+    </select>
+
+    <select id="getPrintTemplate" parameterType="java.util.HashMap" resultType="Map">
+        SELECT T.TEMP_NAME, C.HIDDEN_FIELD,C.BARCODE,C.QRCODE
+        FROM WMS_C_PRINT_TEMPLATE T, WMS_C_PRINT_CONFIG C
+        WHERE T.ID = C.TEMPLATE_ID
+        <if test="TEMP_TYPE != '' and TEMP_TYPE != null">
+            AND T.TEMP_TYPE = #{TEMP_TYPE}
+        </if>
+        <if test="TEMP_SIZE != '' and TEMP_SIZE != null">
+            AND T.TEMP_SIZE = #{TEMP_SIZE}
+        </if>
+        <if test="WERKS != '' and WERKS != null">
+            AND C.WERKS LIKE '%' || #{WERKS} || '%'
+        </if>
+        <if test="KUNNR != '' and KUNNR != null">
+            AND C.KUNNR = #{KUNNR}
+        </if>
+    </select>
+
+    <delete id="deleteConfig">
+		DELETE FROM WMS_C_PRINT_CONFIG T
+		WHERE T.ID= #{ID}
+	</delete>
+
+    <delete id="deleteTemplate">
+		DELETE FROM WMS_C_PRINT_TEMPLATE T
+		WHERE T.ID= #{ID} AND NOT EXISTS (SELECT ID FROM WMS_C_PRINT_CONFIG WHERE TEMPLATE_ID = #{ID})
+	</delete>
+
+    <insert id="saveConfig" parameterType="Map">
+        insert into WMS_C_PRINT_CONFIG
+        (ID, TEMPLATE_ID, WERKS, KUNNR,HIDDEN_FIELD,QRCODE,BARCODE) values
+        (SEQ_WMS_TEMPLATE_CONFIG.nextval,#{TEMPLATE_ID},#{WERKS},#{KUNNR},#{HIDDEN_FIELD},#{QRCODE},#{BARCODE})
+    </insert>
+
+    <insert id="saveTemplate" parameterType="Map">
+        insert into WMS_C_PRINT_TEMPLATE
+        (ID, TEMP_SIZE, TEMP_TYPE, TEMP_NAME) values
+        (SEQ_WMS_TEMPLATE.nextval,#{TEMP_SIZE},#{TEMP_TYPE},#{TEMP_NAME})
+    </insert>
+
+    <update id="updateConfig" parameterType="Map">
+		update WMS_C_PRINT_CONFIG set
+		  WERKS=#{WERKS},  KUNNR=#{KUNNR}, HIDDEN_FIELD=#{HIDDEN_FIELD},QRCODE=#{QRCODE},BARCODE=#{BARCODE}
+		WHERE ID=#{ID}
+	</update>
+
+    <update id="updateTemplate" parameterType="Map">
+		update WMS_C_PRINT_TEMPLATE set
+		TEMP_SIZE=#{TEMP_SIZE}, TEMP_TYPE=#{TEMP_TYPE},TEMP_NAME=#{TEMP_NAME}
+		WHERE ID=#{ID}
+	</update>
+
+</mapper>

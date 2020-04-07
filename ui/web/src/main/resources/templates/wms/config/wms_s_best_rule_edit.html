@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>最优出入库规则配置</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+				
+					<div class="form-group" style="align:center;margin-top:15px">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								     <font style="color:red;font-weight:bold">*</font>${tag.getLocale("WH_NUMBER","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+							      <input type="text" name="whNumber"  class="form-control required" v-model="ruleConfig.whNumber"  id="whNumber"  @click="getWhNoFuzzy()"  placeholder='${tag.getLocale("WH_NUMBER","M")}'/>
+							    </div>
+						</div>
+					</div>
+					<!-- <div class="form-group" style="align:center;margin-top:15px">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								     <font style="color:red;font-weight:bold">*</font>${tag.getLocale("PLANT","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+							      <input type="text" name="werks"  class="form-control required" v-model="ruleConfig.werks"  id="werks"  @click="getPlantNoFuzzy()"  placeholder='${tag.getLocale("PLANT","M")}'/>
+							    </div>
+						</div>
+					</div> -->
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								     <font style="color:red;font-weight:bold">*</font>${tag.getLocale("TYPE","M")}：
+								</label>
+								<div style="float:left;width:50%" class="col-sm-8">
+								   	<select id="ruleType" name="ruleType" class="required"
+										style="width:100%"  v-model="ruleConfig.ruleType"> 
+										<#list tag.wmsDictList('RULE_TYPE') as d>
+											<option value="${d.code}">${d.value}</option> 	  
+										</#list>
+									</select>
+								</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+							     	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("PRIORITY","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="seqno" name="seqno" class="form-control required number" 
+					                 v-model="ruleConfig.seqno" placeholder='${tag.getLocale("PRIORITY","M")}' />
+							    </div>
+						</div>
+					</div>
+					
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+							     	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("CONTROL_FLAG","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <select id="controlFlag" name="controlFlag" class="required"
+										style="width:100%"  v-model="ruleConfig.controlFlag"> 
+										<option value='Y'>Y</option>
+										<option value='N'>N</option>
+									</select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+							     	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("WH_BUSINESS_TYPE","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <select id="businessTypeFlag" name="businessTypeFlag" class="required"
+										style="width:100%"  v-model="ruleConfig.businessTypeFlag"> 
+										<option value='Y'>Y</option>
+										<option value='N'>N</option>
+									</select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+							     	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("LGORT","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <select id="lgortFlag" name="lgortFlag" class="required"
+										style="width:100%"  v-model="ruleConfig.lgortFlag"> 
+										<option value='Y'>Y</option>
+										<option value='N'>N</option>
+									</select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+							     	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("STOCK_TYPE","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <select id="stockTypeFlag" name="stockTypeFlag" class="required"
+										style="width:100%"  v-model="ruleConfig.stockTypeFlag"> 
+										<option value='Y'>Y</option>
+										<option value='N'>N</option>
+									</select>
+							    </div>
+						</div>
+					</div>
+					<!-- <div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+							     	${tag.getLocale("STATUS","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <select id="status" name="status"
+										style="width:100%"  v-model="ruleConfig.status"> 
+										<#list tag.wmsDictList('AVAILABLE_STATUS') as d>
+											<option value="${d.code}">${d.value}</option> 	  
+										</#list>
+									</select>
+							    </div>
+						</div>
+					</div> -->
+					
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_s_best_rule_edit.js?_${.now?long}"></script>
+</body>
+</html>

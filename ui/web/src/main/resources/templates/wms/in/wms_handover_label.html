@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>扫描标签进仓</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+.row {
+	margin-left: 0px;
+}
+
+.control-label {
+	width: 75px;
+}
+
+.form-control {
+	width: 100px;
+}
+
+.urgent-select {
+	color:#f44444;
+}
+</style>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+                   <form id="searchForm" class="form-inline"action="#">
+						<!-- 查询条件 -->
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" >工厂：</label>
+								<div class="control-inline" >
+									<select class="form-control" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("HANDOVER_LABEL_INBOUND") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 90px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;仓库号：</label>
+								<div class="control-inline" >
+									<select class="input-medium" v-model="whNumber" name="whNumber" id="whNumber" >
+									 <option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label">标签号：</label>
+								<span class="input-icon input-icon-right" style="width: 160px;">
+								<input type="text" id="labelNo" name="labelNo" value="" class="form-control" style="width: 160px;"/>
+								<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('labelNo')"> </i>
+								</span>
+							</div>
+							<div class="form-group">
+								<label class="control-label">凭证日期：</label>
+								<div class="control-inline">
+									<input type="text" id="pzddt" name="pzddt" v-model="PZDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">记账日期：</label>
+								<div class="control-inline">
+									<input type="text" id="jzddt" name="jzddt" v-model="JZDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+								</div>
+							</div>
+							<input type="text" id="dhhidden" name="dhhidden"   style="width: 80px;display:none"/>
+							<div class="form-group">
+							    <input type="button" id="btnqueryhandoverlabel" class="btn btn-primary btn-sm " value="查询"/>
+							    <input type="button" id="btnsavehandoverlabel" @click="save" class="btn btn-primary btn-sm " value="交接确认"/>
+								<button type="button" id="btnReset" class="btn btn-default btn-sm ">重置</button>
+							</div>
+						
+						</div>
+				   </form>
+					
+					<table id="dataGrid"></table>
+					<!-- 交接页面 -->	
+					<div id="handoverConfirmLayer" style="display: none; padding: 10px;">
+					<div class="modal-body">
+                        <form id="newform" class="form-horizontal" action="">
+                            <center><table>
+                                    <tr style="height:40px">
+                                    <td>&nbsp;确认模式：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    <td><label class="radio"><input type="radio" id="radio1"  name="group1" >扫描模式&nbsp;&nbsp;</label></td>
+                                    <td><label class="radio"><input type="radio" id="radio2" checked name="group1">刷卡模式</label></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;工号：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise" placeholder="工号..." id="c_userNo" name="c_userNo" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;姓名：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise" placeholder="姓名..." id="c_name" name="c_name" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;部门：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise" placeholder="部门..." id="c_department" name="c_department" /></td>
+                                </tr>
+                                </table></center>
+                            
+                        </form>
+                    </div>
+                    
+					
+				</div>
+                
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/in/wms_handover_label.js?_${.now?long}"></script>
+</body>
+</html>

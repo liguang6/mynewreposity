@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>明细</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/out/dispatchingBillPicking/listJISDetail">
+							<input type="text" v-model="dispatching_no" id="DISPATCHING_NO" name="DISPATCHING_NO" style="width: 100px;display:none;" class="form-control width-300" />
+							
+						</form>
+						<table id="dataGrid"></table>
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/cswlms/dispatchingJISDetail.js?_${.now?long}"></script>
+</body>
+</html>

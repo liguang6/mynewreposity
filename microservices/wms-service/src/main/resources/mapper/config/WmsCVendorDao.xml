@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCVendorDao">
+	 <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,CONCAT(WERKS,'-') || LIFNR  AS WERKS_LIFNR  FROM WMS_C_VENDOR 
+	        WHERE CONCAT(WERKS,'-') || LIFNR IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+	 </select>
+</mapper>

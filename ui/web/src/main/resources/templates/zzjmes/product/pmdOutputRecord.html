@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>产量录入查询</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/zzjmes/jtOperation/queryOutputRecords">
+						<div class="row">
+							<div class="form-group">
+                                <label class="control-label" style="width:48px">工厂：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									<select  name="werks" id="werks" v-model="werks" style="width:100%;height:25px">
+									   <#list tag.getUserAuthWerks("ZZJMES_PMD_OUTPUT_QUERY") as factory>
+											<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+										</#list>
+										<#if checkAuthTag.hasPermission("ZZJMES_PMD_OUTPUT_SCRAPE")>
+											<input type="hidden" id="scrape_auth" value="Y">
+											<#else>
+											<input type="hidden" id="scrape_auth" value="N">
+										</#if>
+									</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:48px">车间：</label>
+								<div class="control-inline" style="width:80px">
+                                       <select  name="workshop" id="workshop" v-model="workshop" style="width:100%;height:25px">
+										  <option v-for="w in workshop_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:48px">线别：</label>
+								<div class="control-inline" style="width:70px">
+                                       <select  name="line" id="line" v-model="line" style="width:100%;height:25px">
+										  <option v-for="w in line_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 100px">
+										<input type="text" name="order_no" id="search_order" v-model="order_no" class="form-control" @click="getOrderNoFuzzy()">
+									</div>
+								</div>
+							</div>						
+							<div class="form-group" >
+                                <label class="control-label"  style="width:48px">批次：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									  <select  name="zzj_plan_batch" id="zzj_plan_batch" v-model="zzj_plan_batch" style="width:100%;height:25px" >
+					                  
+									  </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" style="width:48px">机台：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:120px">
+									  		<input type="text" name="machine" id="machine"  class="form-control"  v-model="machine">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">生产日期：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:170px">
+									<div class="control-inline">
+										<div class="input-group" style="width:80px">
+		                                    <input type="text" id="start_date" name="start_date" 
+											class="form-control" style="width: 80px;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(){}});" />						    
+										 </div>
+										<div class="input-group" style="width:80px">
+										    <input type="text" id="end_date" name="end_date" 
+											class="form-control" style="width: 80px;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(){}});" />						
+										 </div>
+									</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width:48px">班组：</label>
+								<div class="control-inline" style="width:70px">
+                                       <select  name="workgroup" id="workgroup" v-model="workgroup" style="width:100%;height:25px">
+                                       	  <option value="">全部</option>
+										  <option v-for="w in workgroup_list" :value="w.NAME" >{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+						    <div class="form-group">
+								<label class="control-label" style="width:48px">小班组：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									  	<select  name="team" id="team" v-model="team" style="width:100%;height:25px">
+									  	  <option value="">全部</option>
+										  <option v-for="w in team_list" :value="w.NAME" >{{ w.NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"  style="width: 48px">工序：</label>
+								<div class="control-inline">
+									<div class="control-inline" style="width:70px">
+                                       <select  name="process" id="process" v-model="process" style="width:100%;height:25px">
+                                        	<option value="">全部</option>
+										  	<option v-for="w in process_list" :value="w.PROCESS_NAME" >{{ w.PROCESS_NAME}}</option>
+										</select>
+								</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px">生产工单：</label>
+								<div class="control-inline" style="width:100px">
+                                      	<input type="text" name="product_order" id="product_order"  class="form-control"style="width: 100%;" >
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 48px">加工人：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 70px">
+										<input type="text" name="productor" id="productor"  class="form-control" >
+									</div>
+								</div>
+							</div>							
+							<div class="form-group">
+								<label class="control-label" style="width: 48px">零部件：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 120px">
+										<span class="input-icon input-icon-right" style="width: 100%;">
+	                                     	<input type="text"  name="zzj_no" id="zzj_no" v-on:keyup.enter="enter()" style="width: 100%;"  class="form-control"/>	
+	                                     	<i class="ace-icon fa fa-barcode black btn_scan" style="cursor: pointer;" onclick="doScan('zzj_no')"> </i>
+	                                  	 </span>	                             
+									</div>
+								</div>
+							</div>					
+							
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" id="btnQuery"@click="query">查询</button>
+								<button type="button" class="btn btn-success btn-sm" id="btnExport" @click="exp">导出</button>
+								<!-- <button type="button" class="btn btn-danger btn-sm" id="btnScrape">报废</button> -->
+							</div>
+						</div>
+						
+				
+						</form>
+						
+						
+						
+						<div id="divDataGrid" style="width:100%;overflow:auto;" >
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>                       
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/pmdOutputRecord.js?_${.now?long}"></script>
+</body>
+</html>

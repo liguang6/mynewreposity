@@ -1,0 +1,50 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>人料关系</title>
+<#include "/web_header.html">
+<head>
+<style>
+ .msg-font{color:red}
+</style>
+</head>
+<body >
+<div id="rrapp" v-cloak>
+<div class="main-content">
+<!-- <div class="wrapper container" id="vue"  style="padding:10px"> -->
+	<div class="box box-main">
+		<div class="box-body">
+		<div  class="form-inline" >
+			  <!--校验权限用途-->
+			   <div class="form-group" style="width:180px">
+					<label class="control-label">导入工厂：</label>
+					<div class="control-inline"  style="width:100px">
+					   <select v-model="WERKS" id="werks" name="werks" class="" style="width:100%;height:26px">
+                                    <#list tag.getUserAuthWerks("WMS_C_MAT_MANAGER") as factory> 
+                                        <option value="${factory.code}">${factory.code}</option>
+                                    </#list>
+                                 </select>
+					</div>
+				</div>
+				<div class="form-group" style="align:center">
+							<label  class="control-label" >导入仓库：</label>
+                                  <div class="control-inline"  style="width:90px">
+				                   <select v-model="WH_NUMBER" name="whNumber" id="whNumber"  class="" style="width:100%;height:26px" >
+										<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+									</select>
+						    </div>
+					</div>
+				<div class="form-group"> 
+<!-- 						<button @click="vm.clear()" class="btn btn-primary btn-sm">清空</button> -->
+				        <a href="${request.contextPath}/statics/excel/import-wms-c-mat-manager.xlsx">下载粘贴模板</a>
+					</div>
+				</div>
+
+                <a class="btn btn-default" href='#' id="saveUpload" onclick="saveUpload()" style="display:none">保存导入</a>
+			    <table id="dataGrid" ></table>  
+<!-- 			</div> -->
+		</div>
+	</div>
+<!-- 	</div> -->
+</div>
+</div>
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_mat_manager_upload.js?_${.now?long}"></script>
+</body>

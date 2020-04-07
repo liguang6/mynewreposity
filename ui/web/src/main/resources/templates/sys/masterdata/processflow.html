@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>工艺流程表-基础数据</title>
+	<#include "/header.html">
+	<style>
+	  .op {
+	    padding:0 4px;
+	  }
+	</style>
+</head>
+<body>
+<div id="rrapp" v-cloak>
+    <div v-show="showList">
+        <div class="wrapper">
+				<div class="main-content">
+					<div class="box box-main">
+						<div class="box-header">
+							<div class="box-title">
+								<i class="fa icon-trophy"></i> 车型工序
+							</div>
+							<div class="box-tools pull-right">
+								<a  class="btn btn-default" id="btnSearch" title="查询"><i
+									class="fa fa-filter"></i> 查询</a> 	
+								<#if shiro.hasPermission("setting:settingprocessflow:save")>
+									<a @click="openNew"  class="btn btn-default btnList"><i class="fa fa-plus"></i> 新增</a>
+								</#if>
+							</div>
+							
+						</div>
+						<div class="box-body">
+							<form id="searchForm" 
+								class="form-inline" data-page-no=""
+								data-page-size="" data-order-by="" action="${request.contextPath}/setting/settingprocessflow/listUnique">
+								
+								<div class="form-group">
+									<label class="control-label">生产线：</label>
+									<div class="control-inline">
+										<input type="text" id="deptSel"  value="" readonly="readonly"
+											    @click="showDeptMenu"   maxlength="64" class="form-control width-160" style="background-color: white;"/>
+									    <input style="display: none;" name="deptIds" id="deptIds" />
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label class="control-label">车型：</label>
+									<div class="control-inline" style="width:100px">
+										<select name="busTypeCode" class="form-control">
+										     <option value="">请选择</option>
+										     <#list tag.busTypeList() as busType>
+										       <option value="${busType.busTypeCode}">${busType.internalName}</option>
+										     </#list>
+									    </select>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label class="control-label">车辆类型：</label>
+									<div class="control-inline" style="width:100px">
+										<select name="vehicleType" class="form-control">
+										<option value="">请选择</option>
+										<option v-for="vehicleType in vehicleTypes"
+											:value="vehicleType.value">{{vehicleType.value}}</option>
+									</select>
+									</div>
+								</div>
+								
+		
+
+								<div class="form-group">
+									<button type="submit" @click.prevent="query" class="btn btn-primary btn-sm">查询</button>
+									<button type="reset" class="btn btn-default btn-sm">重置</button>
+								</div>
+							</form>
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+    </div>
+    
+    
+    <div id="menuContent" class="menuContent" style="display:none; position: absolute;z-index=999;background-color: #eee;border: 1px solid;">
+	       <ul id="treeDemo" class="ztree" style="margin-top:0; width:220px;"></ul>
+    </div>
+</div>
+<script type="text/javascript">
+	var baseUrl = "${request.contextPath}/";
+	var hasUpdatePermission = false;
+	<#if shiro.hasPermission("setting:settingprocessflow:update")>
+		//<a class="btn btn-default" @click="update"><i class="fa fa-pencil-square-o"></i>&nbsp;修改</a>
+		hasUpdatePermission = true;
+	</#if>
+	var hasDeletePermission = false;
+	<#if shiro.hasPermission("setting:settingprocessflow:delete")>
+		//<a class="btn btn-default" @click="del"><i class="fa fa-trash-o"></i>&nbsp;删除</a>
+		hasDeletePermission = true;
+	</#if>
+</script>
+<script src="${request.contextPath}/statics/js/modules/setting/settingprocessflow.js?_${.now?long}"></script>
+</body>
+</html>

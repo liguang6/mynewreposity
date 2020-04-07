@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.report.dao.InAndOutStockQtyByDayDao">
+
+
+
+
+	<insert id="insertWmsReportInoutStock">
+		insert into WMS_REPORT_INOUTSTOCK
+			(
+			  ID,
+			  YQTY       ,
+			  JCQTY      ,
+			  CCQTY      ,
+			  TQTY       ,
+			  WERKS      ,
+			  WH_NUMBER  ,
+			  MATNR      ,
+			  MAKTX      ,
+			  LGORT      ,
+			  LIFNR      ,
+			  LIKTX      ,
+			  MEINS      ,
+			  CAR_TYPE   ,
+			  CAR_QTY    ,
+			  CREATOR    ,
+			  CREATEDATE
+			)
+		select SEQ_WMS_REPORT_INOUTSTOCK.nextval,m.* from(
+		<!--<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.YQTY} YQTY,#{d.JCQTY} JCQTY,#{d.CCQTY} CCQTY,#{d.TQTY} TQTY,
+			#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.MATNR} MATNR,#{d.MAKTX} MAKTX,#{d.LGORT} LGORT,
+			#{d.LIFNR} LIFNR,#{d.LIKTX} LIKTX,#{d.MEINS} MEINS,#{d.CAR_TYPE} CAR_TYPE,
+			#{d.CAR_QTY} CAR_QTY,#{d.CREATOR} CREATOR,#{d.CREATEDATE} CREATEDATE
+			from dual
+		</foreach>-->
+		select NVL(a.YQTY,0)AS YQTY,nvl(b.JCQty,0) AS JCQty,nvl(c.CCQty,0)AS CCQty,(NVL(YQTY,0)+NVL(JCQty,0)-NVL(CCQty,0))AS TQTY,
+		a.werks,a.wh_number,a.matnr,a.MAKTX,a.lgort,a.lifnr,a.LIKTX,a.meins,a.CAR_TYPE,a.CAR_QTY,a.CREATOR,a.CREATEDATE
+		from
+		(select sum(nvl(STOCK_QTY,0)+nvl(FREEZE_QTY,0)+nvl(XJ_QTY,0)+nvl(RSB_QTY,0)) as yQty,
+		t.werks,t.wh_number,t.matnr,t.lgort,t.lifnr,
+		(select MAKTX from wms_sap_material M where M.MATNR = t.matnr and M.Werks = t.werks)as MAKTX,
+		(select v.name1 from WMS_SAP_VENDOR v where v.LIFNR = t.lifnr ) as LIKTX,t.meins,
+		(select CAR_TYPE from WMS_C_MAT_LT_SAMPLE ms where ms.werks = t.werks and ms.matnr = t.matnr and ms.del='0') as CAR_TYPE,
+		(select CAR_QTY from WMS_C_MAT_LT_SAMPLE ms where ms.werks = t.werks and ms.matnr = t.matnr and ms.del='0') as CAR_QTY,
+		(case (select max(MAT_MANAGER_TYPE) from WMS_C_MAT_MANAGER_TYPE mmt where mmt.werks = t.werks and mmt.wh_number = t.wh_number)
+		when'00'
+		then (select cmt.MANAGER_STAFF from wms_c_mat_manager cm left join WMS_C_MAT_MANAGER_TYPE cmt on cm.AUTHORIZE_CODE = cmt.AUTHORIZE_CODE where cmt.MANAGER_TYPE='01' and cm.werks=t.werks and cm.wh_number=t.wh_number AND cm.matnr=t.matnr )
+		when '20' then (select cmt.MANAGER_STAFF from WMS_C_MAT_MANAGER_TYPE cmt where cmt.MANAGER_TYPE='01' and cmt.werks=t.werks and cmt.wh_number=t.wh_number and cmt.authorize_code = t.lgort)
+		else '' end) as CREATOR,
+		to_char(sysdate,'yyyy-MM-dd') as CREATEDATE
+		from wms_core_stock t
+		group by werks,wh_number,matnr,lgort,lifnr,t.meins
+		)a
+
+		left join
+
+		(select sum(nvl(s.STOCK_QTY,0)+nvl(s.FREEZE_QTY,0)+nvl(s.XJ_QTY,0)+nvl(s.RSB_QTY,0)) as JCQty,
+		s.werks,s.wh_number,s.matnr,s.lgort,s.lifnr
+		from wms_core_stock s
+		left join wms_core_wmsdoc_item item
+		on s.werks=item.werks and s.wh_number=item.wh_number and s.matnr=item.matnr and s.lgort=item.lgort and s.lifnr = item.lifnr
+		where item.business_class in( '02','03','06') or (item.business_class='10'  and item.business_name='65')
+		group by s.werks,s.wh_number,s.matnr,s.lgort,s.lifnr)b
+
+		on a.werks=b.werks and a.wh_number = b.wh_number and a.matnr = b.matnr
+		and a.lgort = b.lgort and a.lifnr = b.lifnr
+
+
+		left join
+		(
+		select sum(nvl(s.STOCK_QTY,0)+nvl(s.FREEZE_QTY,0)+nvl(s.XJ_QTY,0)+nvl(s.RSB_QTY,0)) as CCQty,s.werks,s.wh_number,s.matnr,s.lgort,s.lifnr
+		from wms_core_stock s
+		left join wms_core_wmsdoc_item item
+		on s.werks=item.werks and s.wh_number=item.wh_number and s.matnr=item.matnr and s.lgort=item.lgort and s.lifnr = item.lifnr
+		where item.business_class in( '05','07') or (item.business_class='10'  and item.business_name='66')
+		group by s.werks,s.wh_number,s.matnr,s.lgort,s.lifnr
+		)c
+
+		on a.werks=c.werks and a.wh_number = c.wh_number and a.matnr = c.matnr
+		and a.lgort = c.lgort and a.lifnr = c.lifnr
+
+		)m
+
+	</insert>
+
+
+	<select id="selectInOutStockQtyList" parameterType="Map" resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+
+		select * from WMS_REPORT_INOUTSTOCK a
+		where 1=1
+		<if test="WERKS !=null and WERKS !='' ">
+			and a.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			and a.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and a.MATNR=#{MATNR}
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and a.LIFNR=#{LIFNR}
+		</if>
+		<if test="LGORT !=null and LGORT !='' ">
+			and INSTR(','||#{LGORT}||',',','||a.LGORT||',')>0
+		</if>
+		<if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND a.createDate&gt;=#{CREATE_DATE_START}
+		</if>
+		<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND a.createDate&lt;=#{CREATE_DATE_END}
+		</if>
+
+		)TMP
+		<if test="END !=null ">
+			WHERE ROWNUM  &lt;=#{END}
+		</if>
+		)
+		<if test="START !=null ">
+			WHERE ROW_ID > #{START}
+		</if>
+	</select>
+
+	<select id="selectInOutStockQtyCount" parameterType="Map" resultType="int">
+		SELECT count(*)
+		FROM (
+		select * from WMS_REPORT_INOUTSTOCK a
+		where 1=1
+		<if test="WERKS !=null and WERKS !='' ">
+			and a.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			and a.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and a.MATNR=#{MATNR}
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and a.LIFNR=#{LIFNR}
+		</if>
+		<if test="LGORT !=null and LGORT !='' ">
+			and INSTR(','||#{LGORT}||',',','||a.LGORT||',')>0
+		</if>
+		<if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND a.createDate&gt;=#{CREATE_DATE_START}
+		</if>
+		<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND a.createDate&lt;=#{CREATE_DATE_END}
+		</if>
+
+
+		)
+	</select>
+
+
+</mapper>

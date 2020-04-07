@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>新增工厂</title> <#include "/web_header.html">
+</head>
+<body>
+
+	<div id="processInfo" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="newForm">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label"> <span class="required"> * </span> 工厂代码</label>
+									<div class="col-xs-8">
+										<input  id="werks" name="werks" class="form-control required" placeholder="工厂代码"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+
+								
+								<div class="form-group">
+									<div class="col-sm-4 control-label"> <span class="required"> * </span> 工厂名称
+									</div>
+									<div class="col-sm-8">
+										<input id="werksName"  name="werksName" class="form-control required" placeholder="工厂名称"/>
+									</div>
+								</div>
+								
+							</div>
+
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span>  简称
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="shortName" class="form-control required"
+											name="shortName" placeholder="工厂简称"/> 
+											
+									</div>
+								</div>
+
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span>  公司代码
+									</div>
+									<div class="col-sm-8">
+										<input type="text" name="bukrs" class="form-control required" placeholder="公司代码"/>
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 公司名称
+									</div>
+									<div class="col-sm-8">
+										<input type="text" class="form-control required" name="bukrsName"
+											placeholder="公司名称" />
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-sm-4 control-label"><span class="required"> * </span>  公司简称</label>
+									<div class="col-sm-8">
+                                            <input type="text" class="form-control required" name="bukrsShortName"
+											placeholder="公司简称" />
+										
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+
+
+	
+	<script type="text/javascript">	
+	$(function(){
+		$("#btnCancel").click(function(){close();})
+		
+		$("#newForm").validate({
+			submitHandler:function(e) {
+				//e.preventDefault();
+				$.ajax({
+					url : baseUrl + "config/sapPlant/add",
+					type : "POST",
+					contentType : "application/json",
+					data : JSON.stringify($("#newForm").serializeObject()),
+					success : function(rep) {
+						if (rep.code === 0) {
+							close();
+						} else {
+							alert("新增失败，"+rep.msg);
+						}
+					}
+				})
+
+			}
+		});
+	})
+	
+	function submit(){
+		$("#newForm").trigger("submit");//提交表单
+	}
+	
+	</script>
+</body>
+</html>

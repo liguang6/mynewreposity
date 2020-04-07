@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.config.dao.QmsDictDao">
+	 
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+      SELECT D.ID id,NAME name,TYPE type,CODE code,VALUE value,REMARK remark,
+          D.CREATOR creator ,D.CREATE_DATE createDate
+		       FROM QMS_C_DICT D  WHERE 1=1
+		         <if test="name != null and name !=''">
+			        AND D.NAME=#{name} 
+			      </if>
+	              <if test="type != null and type !=''">
+			        AND D.TYPE = #{type}
+			      </if>
+			       ORDER BY D.CREATE_DATE DESC
+         LIMIT #{start},#{limit}
+                
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM QMS_C_DICT D  WHERE 1=1
+		         <if test="name != null and name !=''">
+			        AND D.NAME=#{name} 
+			      </if>
+	              <if test="type != null and type !=''">
+			        AND D.TYPE = #{type}
+			      </if>
+    </select>
+    <select id="getById" parameterType="Long" resultType="Map">
+      SELECT D.ID id,NAME name,TYPE type,CODE code,VALUE value,REMARK remark,
+          D.CREATOR creator ,D.CREATE_DATE createDate
+		       FROM QMS_C_DICT D  WHERE ID=#{id}
+    </select>
+    <select id="getList" parameterType="Map" resultType="Map">
+      SELECT D.ID id,NAME name,TYPE type,CODE code,VALUE value,REMARK remark,
+          D.CREATOR creator ,D.CREATE_DATE createDate
+		       FROM QMS_C_DICT D  WHERE 1=1
+		          <if test="name != null and name !=''">
+			        AND D.NAME=#{name} 
+			      </if>
+	              <if test="type != null and type !=''">
+			        AND D.TYPE = #{type}
+			      </if>
+    </select>
+    <insert id="save" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_C_DICT
+		(NAME,TYPE,CODE,VALUE,ORDER_NUM,REMARK,CREATOR,CREATE_DATE) values
+			(#{name},#{type},#{code},#{value},#{orderNum},#{remark},#{user},#{createDate})
+	</insert>
+	<update id="update" parameterType="Map">
+			update QMS_C_DICT set name=#{name},type=#{type},
+			code= #{code},value=#{value},remark=#{remark} where id=#{id}
+	</update>
+	<update id="delete" parameterType="Long">
+			delete from QMS_C_DICT  where id=#{id}
+	</update>
+</mapper>

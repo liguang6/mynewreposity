@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>交接</title>
+<script src="${request.contextPath}/statics/libs/jquery-1.12.4.min.js"></script>
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<script type="text/javascript">
+var cardHd="";
+var staffNumber="";
+$(function(){
+	
+	$("#c_userNo").focus().val("");
+	$(document).on("input","#c_userNo",function(e){
+		var handover_type=$("input[name='group1']:checked").val()
+		if(handover_type !='03'){
+			scanInput(e.target)
+		}
+		
+	})
+	$(document).on("keydown","#c_userNo",function(e){
+		cardHd="";
+		staffNumber="";
+		console.info($("[name='group1']:checked").val())
+		if(e.keyCode == "13"){	//	按下回车获取用户信息
+			if($("input[name='group1']:checked").val()=="02"){//扫描
+				staffNumber=$(e.target).val()
+			}
+			if($("input[name='group1']:checked").val()=="01"){//刷厂牌
+				cardHd=$(e.target).val()
+			}
+			if($("input[name='group1']:checked").val()=="03"){//输入用户名密码
+				staffNumber=$(e.target).val()
+			}
+			
+			var info=getUserInfo();
+			if(info==null){
+				alert("未找到对应的用户信息!")
+				$("#c_userNo").val("")
+				return false;
+			}
+			
+			$("#c_userNo").val(info.STAFF_NUMBER)
+			$("#c_name").val(info.USERNAME)
+			$("#c_department").val(info.DEPT)
+		}
+	})
+	
+	$(document).on("change","#c_userNo",function(e){
+		if($("input[name='group1']:checked").val()=="03"){//输入用户名密码
+			staffNumber=$(e.target).val()
+			var info=getUserInfo();
+			if(info==null){
+				alert("未找到对应的用户信息!")
+				$("#c_userNo").val("")
+				return false;
+			}
+			
+			$("#c_userNo").val(info.STAFF_NUMBER)
+			$("#c_name").val(info.USERNAME)
+			$("#c_department").val(info.DEPT)
+		}
+	})
+	
+	$(document).on("change","[name='group1']",function(e){
+		console.info($(e.target).val())
+		$("#c_userNo").focus().val("");
+		$("#c_name").val("")
+		$("#c_department").val("")
+	})
+
+	function getUserInfo(){
+		if($("input[name='group1']:checked").val()=="03"){
+			if(staffNumber==undefined || staffNumber.trim().length==0 ){
+				return false;
+			}
+		}
+		
+		var info={};
+		$.ajax({
+			url:'/web/sys/user/getUserInfo',
+			type:'post',
+			async:false,
+			dataType:'json',
+			data:{
+				"staffNumber": staffNumber,
+				"cardHd":cardHd.toUpperCase()
+			},
+			success:function(resp){
+				info=resp.data;
+			}		
+		})
+		return info;
+	}
+	
+})
+
+
+</script>
+</head>
+<body>
+	<div id="handoverConfirmLayer" style=" padding: 10px;">
+		<div class="modal-body">
+			<form id="newform" class="form-horizontal" action="">
+					<table>
+						<tr style="height: 40px;">
+							<td style="text-align: right;">&nbsp;确认模式：</td>
+							<td><label class="radio"><input type="radio" disabled
+									id="radio1" name="group1" value='02'>扫描模式</label></td>
+							<td><label class="radio"><input type="radio" disabled
+									id="radio2"  name="group1" value='01'>刷卡模式</label></td>
+							<td><label class="radio"><input type="radio" disabled
+									id="radio3"  name="group1" value='03'>密码模式</label></td>
+							<td></td>
+						</tr>
+						<tr style="height: 40px">
+							<td style="text-align: right;">&nbsp;工号：</td>
+							<td colspan="3"><input style="height: 30px; width: 100%"
+								type="text" class="input-medium revise" placeholder="工号..."  autocomplete =false
+								id="c_userNo" name="c_userNo" /></td>
+						</tr>
+						<tr style="height: 40px;display:none" id="tr_password" >
+							<td style="text-align: right;">&nbsp;密码：</td>
+							<td colspan="3"><input style="height: 30px; width: 100%"
+								type="password" class="input-medium revise" placeholder="密码..."   autocomplete =false
+								id="c_password" name="c_password" /></td>
+						</tr>
+						<tr style="height: 40px">
+							<td style="text-align: right;">&nbsp;姓名：</td>
+							<td colspan="3"><input style="height: 30px; width: 100%"
+								type="text" class="input-medium revise" placeholder="姓名..." readonly
+								id="c_name" name="c_name" /></td>
+						</tr>
+						<tr style="height: 40px">
+							<td style="text-align: right;">&nbsp;部门：</td>
+							<td colspan="3"><input style="height: 30px; width: 100%"
+								type="text" class="input-medium revise" placeholder="部门..." readonly
+								id="c_department" name="c_department" /></td>
+						</tr>
+					</table>
+			</form>
+		</div>
+
+	</div>
+</body>
+</html>

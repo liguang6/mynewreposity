@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>关键零部件明细</title> 
+<#include "/header.html">
+</head>
+<body>
+
+	<div class="wrapper" id="app-vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" method="post" action="${request.contextPath}/qms/keyParts/queryDetail">
+					  <input type="text" id="testType"  name="testType" style="display:none" />
+					  <div class="row" v-show="!showList">	
+							<input type="text" id="key_components_template_id"  name="key_components_template_id" style="display:none" />
+							<div class="form-group">
+								<label class="control-label" style="width:60px">订单：</label>
+								<div class="control-inline">
+									<input type="text" id="bmsorder" readonly="readonly" 
+										  style="width:180px" class="form-control" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">工厂：</label>
+								<div class="control-inline">
+									<input type="text" id="bmsFactoryName" readonly="readonly"  
+										 class="form-control" style="width:90px" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">车间：</label>
+								<div class="control-inline">
+									<input type="text" id="workshop" readonly="readonly"  name="workshop" 
+										  style="width:90px" class="form-control" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">配置：</label>
+								<div class="control-inline">
+									<input type="text" id="bmsOrderConfigName" readonly="readonly"  
+										  style="width:100px" class="form-control" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">车号：</label>
+								<div class="control-inline">
+									<input type="text" id="busNumber" readonly="readonly"  name="bus_number"
+										 style="width:160px" class="form-control" />
+								</div>
+							</div>
+						</div>
+						<div class="row" v-show="showList">	
+							<input type="text" id="tplDetailId"  name="tplDetailId" style="display:none" />
+							<div class="form-group">
+								<label class="control-label" style="width:60px">订单：</label>
+								<div class="control-inline">
+									<input type="text" id="vmesorder" readonly="readonly" 
+										  style="width:180px" class="form-control" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">工厂：</label>
+								<div class="control-inline">
+									<input type="text" id="vmesFactoryName" readonly="readonly"  
+										 class="form-control" style="width:90px" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">线别：</label>
+								<div class="control-inline">
+									<input type="text" id="lineName" readonly="readonly"  name="lineName" 
+										  style="width:90px" class="form-control" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">配置：</label>
+								<div class="control-inline">
+									<input type="text" id="vmesOrderConfigName" readonly="readonly"  
+										  style="width:100px" class="form-control" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">VIN/物料编码：</label>
+								<div class="control-inline">
+									<input type="text" id="vin" readonly="readonly"  name="vin"
+										 style="width:160px" class="form-control" />
+								</div>
+							</div>
+						</div>
+						<table  id="dataGrid" ></table>
+					</form>
+				</div>
+			</div>
+		</div>
+</body>
+<script
+	src="${request.contextPath}/statics/js/qms/processQuality/qms_key_parts_detail.js?_${.now?long}"></script>
+</html>

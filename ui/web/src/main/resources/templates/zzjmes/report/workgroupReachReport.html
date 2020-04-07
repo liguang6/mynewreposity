@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>班组计划达成</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<div class="row">
+						<div class="tabbable col-md-12" >			
+							<form id="searchForm" method="post" class="form-inline" action="#">
+								<div class="form-group">
+									<label class="control-label" style="width: 100px;"><span style="color:red">*</span>工厂/车间/线别：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+											<select v-model="werks" name="werks" id="werks" style="width: 60px;height: 28px;">
+												<!-- <option value="0">全部</option> -->
+												<#list tag.getUserAuthWerks("ZZJMES_WORKGROUP_REACH_REPORT") as factory>
+													<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+												</#list>
+											</select>
+										</div>
+										<div class="input-group treeselect" style="width: 70px" id="parentDiv">
+											<select v-model="workshop" name="workshop" id="workshop" style="width: 70px;height: 28px;">
+												<option v-for="w in workshop_list" :value="w.CODE">{{ w.NAME }}</option>
+											</select>
+										</div>
+										<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+											<select v-model="line" name="line" id="line" style="width: 60px;height: 28px;">
+												<option v-for="w in line_list" :value="w.CODE">{{ w.NAME }}</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">订单：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+											<input v-model="order_no" type="text" name="order_no" id="order_no" class="form-control" @click="getOrderNoFuzzy()" @keyup.enter="query" placeholder="订单编号">
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">计划日期：</label>
+									<div class="control-inline">
+											<input type="text" id="start_date" name="start_date" value=""
+											class="form-control width-400" style="width: 85px;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />
+									</div>
+									-
+									<div class="control-inline">
+											<input type="text" id="end_date" name="end_date" value=""
+											class="form-control width-500" style="width: 85px;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">班组：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 180px" id="parentDiv">
+											<select class="required" style="width:180px;height:28px" name="workgroup" id="workgroup" v-model="workgroup">
+												<option value="">全部</option>
+												<option v-for="w in workgrouplist" :value="w.CODE">{{ w.NAME }}</option>
+											</select>
+										</div>
+									</div>
+								</div>							
+								<div class="form-group">
+									<input type="button" id="btnQuery" @click="query" class="btn btn-info btn-sm" value="查询" /> 
+								</div>
+							</form>
+						</div>
+						
+					</div>
+					
+					<div id="div_1" class="tab-pane fade in active" >
+						<table id="dataGrid" ></table>
+					</div>				
+					
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/zzjmes/report/workgroupReachReport.js?_${.now?long}"></script>
+</body>
+</html>

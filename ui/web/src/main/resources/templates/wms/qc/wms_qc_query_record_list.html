@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>检验记录查询</title> <#include "/web_header.html">
+</head>
+
+<body>
+	<div class="wrapper">
+		<div class="main-content" id="vue-app">
+			<div class="box box-main">
+
+				<div class="box-body">
+				   <form id="searchForm" class="form-inline"
+						action="${request.contextPath}/qcQuery/recordList">
+						<div class="row" style="padding-left:15px;">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">工厂：</label>
+								<div class="control-inline" style="width: 100px;">
+									<select class="form-control" name="werks" id="werks"> 
+										<#list tag.getUserAuthWerks("QUERY_QC_RECORD") as factory> 
+										 <#if params?? && params.werks?? && params.werks == factory.code>
+										   <option value="${factory.code}" selected="selected">${factory.code}</option>
+										   <#else>
+										   <option value="${factory.code}">${factory.code}</option>
+										 </#if> 
+										</#list>
+									</select>
+								</div>
+							</div>
+
+						<div class="form-group">
+							<label class="control-label" style="width: 50px">供应商：</label>
+							<div class="control-inline" style="width: 100px;">
+								<input class="form-control" name="lifnr" style="width: 100px;" />
+							</div>
+						</div>
+						
+						
+						
+						
+					
+							
+							
+						<div class="form-group">
+							<label class="control-label" style="width: 50px">批次：</label>
+							<div class="control-inline" style="width: 100px;">
+								<input class="form-control" name="batch" style="width: 100px;" />
+							</div>
+						</div>
+						
+						
+						<div class="form-group">
+							<label class="control-label" style="width: 50px">料号：</label>
+							<div class="control-inline" style="width: 100px;">
+								<input class="form-control" name="matnr" style="width: 100px;" />
+							</div>
+						</div>
+						
+						
+						  <div class="form-group">
+							<label class="control-label" style="width: 100px">质检条件查询：</label>
+							<div class="control-inline" style="width: 100px;">
+								<select name="queryHistory" class="form-control">
+									<option value="1" >历史记录</option>
+									<option value="0">最后一次结果</option>
+								</select>
+							</div>
+							
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label" style="width: 50px">储位：</label>
+							<div class="control-inline" style="width: 100px;">
+								<input class="form-control" name="binCode" style="width: 100px;" />
+							</div>
+						</div>
+						
+						
+						<div class="form-group">
+							<label class="control-label" style="width: 80px">需求跟踪号：</label>
+							<div class="control-inline" style="width: 100px;">
+								<input class="form-control" name="BEDNR" style="width: 100px;" />
+							</div>
+						</div>
+						
+						
+						 <div class="form-group">
+							<label class="control-label" style="width: 60px">标签状态：</label>
+							<div class="control-inline" style="width: 100px;">
+								<select name="labelStatus" class="form-control">
+								    <option value="" selected="selected">全部</option>
+									<option value="03">待进仓(已质检)</option>
+									<option value="04">待退货(已质检)</option>
+									<option value="05">收料房退货</option>
+									<option value="06">库房退货</option>
+									<option value="07">已进仓</option>
+									<option value="08">已上架</option>
+									<option value="09">已下架</option>
+									<option value="10">已出库</option>
+									<option value="11">已冻结</option>
+									<option value="12">已锁定</option>
+									<option value="20">关闭</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width: 70px">送检单：</label>
+							<div class="control-inline" style="width: 120px;">
+								<input class="form-control" name="INSPECTION_NO" style="width: 100px;" />
+							</div>
+						</div>						
+						
+						
+						<div class="form-group" style='padding-left:12px;'>
+							<div class="control-inline" >
+								<button type="submit" class="btn btn-primary">查询</button>
+							</div>
+							
+							<div class="control-inline" >
+								<button type="reset" class="btn btn-default">重置</button>
+							</div>
+						</div>
+						
+						<div class="form-group">
+								<div class="control-inline" >
+									<!-- 表格列动态显示控件 -->
+									<select id="example-getting-started" multiple="multiple" style="display: none;">
+										<option value="BATCH">批次</option>
+										<option value="QC_RECORD_TYPE">质检记录类型</option>
+										<option value="WERKS">工厂</option>
+										<option value="WH_NUMBER">仓库号</option>
+										<option value="LGORT">库位</option>
+										<option value="LIFNR">供应商代码</option>
+										<option value="LIKTX">供应商名称</option>
+										<option value="MATNR">料号</option>
+										<option value="MAKTX">物料描述</option>
+										<option value="RECEIPT_NO">收货单号</option>
+										<option value="RECEIPT_DATE">收货/创建日期</option>
+										<option value="INSPECTION_QTY">送检数量</option>
+										<option value="INSPECTION_NO">送检单号</option>
+										<option value="INSPECTION_ITEM_NO">送检单行号</option>
+										<option value="QC_DATE">质检日期</option>
+										<option value="QC_RESULT_CODE">检验结果</option>
+										<option value="QC_RESULT">不良原因</option>
+										<option value="QC_PEOPLE">质检员</option>
+										<option value="RECORD_QTY">质检数量</option>
+										<option value="LABEL_NO">标签号</option>
+									</select>
+								</div>
+							</div>
+						
+					</div>
+					</form>
+					
+				   <table id="dataGrid"></table>
+				   <div id="dataGridPage"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="${request.contextPath}/statics/js/wms/qc/wms_qc_query_record_list.js?_${.now?long}"></script>
+<script src="${request.contextPath}/statics/js/dynamicColum.js?_${.now?long}"></script>
+<script src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js?_${.now?long}"></script>
+<script src="${request.contextPath}/statics/js/wms/qc/wms_qc_query_result_list.js?_${.now?long}"></script>
+
+</html>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byd.wms.business.modules.returnpda.dao.WmsReMaterialWarehouseDao">
+
+	<select id="valiateBinCode" parameterType="Map" resultType="Map">
+		select *
+		from WMS_CORE_WH_BIN ca
+	where ca.BIN_STATUS='01' and ca.WH_NUMBER=#{WH_NUMBER} and ca.DEL!='X' and ca.BIN_CODE=#{BIN_CODE}
+	</select>
+	<select id="getPorecCache" parameterType="Map" resultType="Map">
+		select *
+		from WMS_PDA_SCAN_CACHE ca
+		where ca.BUSINESS_CODE=#{BUSINESS_CODE} and ca.CREATOR=#{CREATOR} and ca.WERKS=#{WERKS} and ca.WH_NUMBER=#{WH_NUMBER} and ca.MENU_KEY=#{MENU_KEY}
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			and ca.LABEL_NO=#{LABEL_NO}
+		</if>
+		order by ca.CREATE_DATE desc
+	</select>
+
+	<delete id="delPorecCache"  parameterType="Map">
+        delete from WMS_PDA_SCAN_CACHE ca
+        where ca.BUSINESS_CODE=#{BUSINESS_CODE} and ca.CREATOR=#{CREATOR} and ca.WERKS=#{WERKS} and ca.WH_NUMBER=#{WH_NUMBER} and ca.MENU_KEY=#{MENU_KEY}
+    </delete>
+
+	<delete id="delPorecBarInfos"  parameterType="Map">
+        delete from WMS_PDA_SCAN_CACHE ca
+        where ca.BUSINESS_CODE=#{BUSINESS_CODE} and ca.CREATOR=#{CREATOR} and ca.WERKS=#{WERKS} and ca.WH_NUMBER=#{WH_NUMBER} and ca.MENU_KEY=#{MENU_KEY}
+        and ca.LABEL_NO in
+		<foreach collection="labelList" index="index" item="item" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+    </delete>
+
+	<select id="getPoLabelList" parameterType="Map" resultType="Map">
+		select l.ID LABEL_ID,l.LABEL_NO,l.F_LABEL_NO,l.RECEIPT_NO,l.RECEIPT_ITEM_NO,l.INBOUND_NO,l.INBOUND_ITEM_NO,l.WMS_NO,l.WMS_ITEM_NO,
+		l.LABEL_STATUS,l.BOX_SN,l.FULL_BOX_QTY,l.BOX_QTY,l.END_FLAG,l.DEL,l.WERKS,l.WH_NUMBER,l.LGORT,l.MATNR,l.MAKTX,l.BIN_CODE,l.F_UNIT,l.UNIT,
+		l.SOBKZ,l.F_BATCH,l.BATCH,l.LIFNR,l.LIKTX,l.PRODUCT_DATE,l.EFFECT_DATE,l.PO_NO,l.PO_ITEM_NO,wh.PRFRQFLAG
+		FROM WMS_CORE_LABEL l
+		left join WMS_C_WH wh on l.WERKS=wh.WERKS
+		WHERE 1=1
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND l.LABEL_NO=#{LABEL_NO}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+			AND l.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND l.WH_NUMBER=#{WH_NUMBER} AND wh.WH_NUMBER=#{WH_NUMBER}
+		</if>
+	</select>
+
+	<select id="getGridPoreDataCount"  parameterType="Map" resultType="int">
+	SELECT count(*) cnt FROM (select poi.MATNR,poi.MOVE_STLOC,poi.LGORT,poi.SOBKZ,poi.LIFNR,poi.BATCH,poi.CREATE_DATE,poi.MAKTX,poi.UNIT,sum(poi.BOX_QTY) as RECEIPT_QTY,count(*) as ALLBOX_QTY from
+		(select  l.MATNR,l.SOBKZ,l.LIFNR,l.BATCH,l.MAKTX,l.UNIT,ca.CREATE_DATE,l.BOX_QTY,wm.MOVE_STLOC,wm.LGORT
+		from WMS_PDA_SCAN_CACHE ca
+		left join WMS_CORE_WMSDOC_ITEM wm on wm.LABEL_NO like '%'||ca.LABEL_NO||'%' and wm.SAP_MOVE_TYPE=#{SAP_MOVE_TYPE}
+		inner join WMS_CORE_LABEL l on ca.LABEL_NO =l.LABEL_NO
+        where ca.BUSINESS_CODE=#{BUSINESS_CODE} and ca.CREATOR=#{CREATOR} and ca.WERKS=#{WERKS} and ca.WH_NUMBER=#{WH_NUMBER} and ca.MENU_KEY=#{MENU_KEY}
+		) poi
+		group by poi.MATNR,poi.MOVE_STLOC,poi.LGORT,poi.SOBKZ,poi.LIFNR,poi.BATCH,poi.CREATE_DATE,poi.MAKTX,poi.UNIT
+		)
+
+	</select>
+
+	<select id="getGridPoreData" parameterType="map" resultType="map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (select poi.MATNR,poi.MOVE_STLOC,poi.LGORT,poi.TPNUM,poi.SOBKZ,poi.LIFNR,poi.BATCH,poi.CREATE_DATE,poi.MAKTX,poi.UNIT,sum(poi.BOX_QTY) as RECEIPT_QTY,count(*) as ALLBOX_QTY from
+		(select  l.MATNR,l.SOBKZ,l.LIFNR,l.BATCH,l.MAKTX,l.UNIT,ca.CREATE_DATE,l.BOX_QTY,wm.MOVE_STLOC,wm.LGORT,ca.label_no,ca.TPNUM
+		from WMS_PDA_SCAN_CACHE ca
+		left join WMS_CORE_WMSDOC_ITEM wm on wm.LABEL_NO like '%'||ca.LABEL_NO||'%' and wm.SAP_MOVE_TYPE=#{SAP_MOVE_TYPE}
+		inner join WMS_CORE_LABEL l on ca.LABEL_NO =l.LABEL_NO
+        where ca.BUSINESS_CODE=#{BUSINESS_CODE} and ca.CREATOR=#{CREATOR} and ca.WERKS=#{WERKS} and ca.WH_NUMBER=#{WH_NUMBER}
+         and ca.BUSINESS_NAME=#{BUSINESS_NAME} and
+         ca.BUSINESS_TYPE=#{BUSINESS_TYPE} and ca.MENU_KEY=#{MENU_KEY}
+		) poi
+		group by poi.MATNR,poi.MOVE_STLOC,poi.LGORT,poi.SOBKZ,poi.LIFNR,poi.BATCH,poi.CREATE_DATE,poi.MAKTX,poi.UNIT,poi.TPNUM
+		) TMP
+		<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+	</select>
+
+	<select id="getBarGridPoreDataCount"  parameterType="Map" resultType="int">
+		select count(*) cnt from (select sc.LABEL_NO,l.BATCH,l.BOX_QTY,sc.CREATE_DATE
+		from WMS_PDA_SCAN_CACHE sc
+		inner join wms_core_label l on sc.label_no = l.label_no
+		where sc.BUSINESS_NAME=#{BUSINESS_NAME} and sc.BUSINESS_TYPE=#{BUSINESS_TYPE} and sc.CREATOR=#{CREATOR}
+		and sc.MENU_KEY=#{MENU_KEY}
+		<if test="MATNR!=null and MATNR!=''">
+			and l.MATNR =#{MATNR}
+		</if>
+		<if test="SOBKZ!=null and SOBKZ!=''">
+			and l.SOBKZ=#{SOBKZ}
+		</if>
+		<if test="BATCH!=null and BATCH!=''">
+			and l.BATCH=#{BATCH}
+		</if>
+		ORDER BY sc.CREATE_DATE ASC
+		)
+
+	</select>
+
+	<select id="getBarGridPoreData" parameterType="map" resultType="map">
+
+	</select>
+
+	<select id="getPoDetailListByBarcode" parameterType="Map" resultType="Map">
+		select SOBKZ,LIFNR,BOX_QTY,MATNR,UNIT,MAKTX,BATCH,ID LABEL_ID
+		from WMS_CORE_LABEL
+		WHERE 1=1
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND to_char(LABEL_NO) = #{LABEL_NO}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+		</if>
+	</select>
+
+	<select id="getPoDetailListByItems" parameterType="Map" resultType="Map">
+		select pi.*,l.ID LABEL_ID,l.LABEL_NO,l.F_LABEL_NO,l.RECEIPT_NO,l.RECEIPT_ITEM_NO,l.INBOUND_NO,l.INBOUND_ITEM_NO,l.WMS_NO,l.WMS_ITEM_NO,
+		l.LABEL_STATUS,l.BOX_SN,l.FULL_BOX_QTY,l.BOX_QTY,l.END_FLAG,l.DEL,l.WERKS,l.WH_NUMBER,l.LGORT,l.MATNR,l.MAKTX,l.BIN_CODE,l.F_UNIT,l.UNIT,
+		l.SOBKZ,l.F_BATCH,l.BATCH,l.LIFNR,l.LIKTX,l.PRODUCT_DATE,l.EFFECT_DATE,l.PO_NO,l.PO_ITEM_NO
+		FROM WMS_SAP_PO_ITEM pi
+		inner join WMS_CORE_LABEL l on pi.EBELN=l.PO_NO and pi.EBELP=l.PO_ITEM_NO
+		WHERE 1=1
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND l.LABEL_NO=#{LABEL_NO}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+			AND l.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND l.WH_NUMBER=#{WH_NUMBER}
+		</if>
+	</select>
+	<insert id="insertPoReceiptPdaCache" parameterType="Map">
+		insert into WMS_PDA_SCAN_CACHE (id, wh_number, werks, business_name, label_no,
+		matnr, maktx, qty, unit, creator, create_date,batch, business_code, menu_key,BUSINESS_TYPE,TPNUM)
+			select WMS_PDA_SCAN_CACHE_SEQ.NEXTVAL,m.WH_NUMBER,m.WERKS,#{BUSINESS_NAME},m.LABEL_NO,
+       		m.MATNR,m.MAKTX,m.BOX_QTY,m.UNIT,#{CREATOR},#{CREATE_DATE},m.BATCH,#{BUSINESS_CODE},#{MENU_KEY},#{BUSINESS_TYPE},#{TPNUM}
+       		from(select l.* from WMS_CORE_LABEL l where l.LABEL_NO=#{LABEL_NO})m
+	</insert>
+
+	<select id="getAllLabelInfos" parameterType="Map" resultType="Map">
+		select ca.CREATE_DATE,l.ID LABEL_ID,l.LABEL_NO,l.F_LABEL_NO,l.RECEIPT_NO,l.RECEIPT_ITEM_NO,l.INBOUND_NO,l.INBOUND_ITEM_NO,l.WMS_NO,l.WMS_ITEM_NO,
+		l.LABEL_STATUS,l.BOX_SN,l.FULL_BOX_QTY,l.BOX_QTY,l.END_FLAG,l.DEL,l.WERKS,l.WH_NUMBER,l.LGORT,l.MATNR,l.MAKTX,l.BIN_CODE,l.F_UNIT,l.UNIT,
+		l.SOBKZ,l.F_BATCH,l.BATCH,l.LIFNR,l.LIKTX,l.PRODUCT_DATE,l.EFFECT_DATE,l.PO_NO,l.PO_ITEM_NO,pi.*
+		from WMS_PDA_SCAN_CACHE ca
+		inner join WMS_CORE_LABEL l on ca.LABEL_NO=l.LABEL_NO
+		inner join WMS_SAP_PO_ITEM pi on pi.EBELN=l.PO_NO and pi.EBELP=l.PO_ITEM_NO
+		where ca.BUSINESS_CODE=#{BUSINESS_CODE} and ca.CREATOR=#{CREATOR} and ca.WERKS=#{WERKS} and ca.WH_NUMBER=#{WH_NUMBER} and ca.MENU_KEY=#{MENU_KEY}
+		order by ca.CREATE_DATE asc
+	</select>
+
+	<update id="updateLabelStatus" parameterType="Map">
+		<foreach item="detail" index="index" collection="skList" open="begin" close=";end;" separator=";">
+			update WMS_CORE_LABEL set LABEL_STATUS='01' where LABEL_NO=#{detail.LABEL_NO}
+		</foreach>
+	</update>
+
+	<insert id="saveOrUpdateCoreLabel" parameterType="List">
+
+		<!-- 优化为存在相同数据就更新 唯一字段 LABEL_NO WERKS -->
+		merge into WMS_CORE_LABEL s using(
+		select m.LABEL_NO,m.RECEIPT_NO,m.RECEIPT_ITEM_NO,m.LABEL_STATUS,m.QC_RESULT_CODE,m.BOX_SN,
+		m.FULL_BOX_QTY,m.BOX_QTY,m.END_FLAG,m.WERKS,m.MATNR,m.MAKTX,m.F_UNIT,m.F_BATCH,
+		m.BATCH,m.SOBKZ,m.DEL,m.CREATOR,m.CREATE_DATE,m.WH_NUMBER,m.LGORT,m.BIN_CODE,m.UNIT,m.INBOUND_NO,m.INBOUND_ITEM_NO,
+		m.PRODUCT_DATE,m.LIFNR,m.LIKTX,m.EFFECT_DATE,m.PRODUCT_CODE,m.STATION,m.ON_LINE_TYPE,m.ON_LINE_MOUTH,m.CAR_TYPE,
+		m.DOSAGE,m.CONFIGURATION,m.WMS_NO,m.WMS_ITEM_NO
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.LABEL_NO} LABEL_NO,#{d.RECEIPT_NO} RECEIPT_NO,#{d.RECEIPT_ITEM_NO} RECEIPT_ITEM_NO,
+			#{d.LABEL_STATUS} LABEL_STATUS,#{d.QC_RESULT_CODE} QC_RESULT_CODE,#{d.BOX_SN} BOX_SN,
+			cast(nvl(#{d.FULL_BOX_QTY},0) as number) FULL_BOX_QTY,cast(nvl(#{d.BOX_QTY},0) as number) BOX_QTY,
+			#{d.END_FLAG} END_FLAG,#{d.WERKS} WERKS,#{d.MATNR} MATNR,#{d.MAKTX} MAKTX,#{d.F_UNIT} F_UNIT,
+			#{d.F_BATCH} F_BATCH,#{d.BATCH} BATCH,#{d.SOBKZ} SOBKZ,'0' DEL,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE,
+			#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT,#{d.BIN_CODE} BIN_CODE,#{d.UNIT} UNIT,#{d.INBOUND_NO} INBOUND_NO,
+			#{d.INBOUND_ITEM_NO} INBOUND_ITEM_NO,#{d.PRODUCT_DATE} PRODUCT_DATE,#{d.LIFNR} LIFNR,#{d.LIKTX} LIKTX,
+			#{d.EFFECT_DATE} EFFECT_DATE,#{d.PRODUCT_CODE} PRODUCT_CODE,#{d.STATION} STATION,#{d.ON_LINE_TYPE} ON_LINE_TYPE,
+			#{d.ON_LINE_MOUTH} ON_LINE_MOUTH,#{d.CAR_TYPE} CAR_TYPE,#{d.DOSAGE} DOSAGE,
+			#{d.CONFIGURATION} CONFIGURATION,#{d.WMS_NO} WMS_NO,#{d.WMS_ITEM_NO} WMS_ITEM_NO
+			from dual
+		</foreach>
+		) m
+		group by m.LABEL_NO,m.RECEIPT_NO,m.RECEIPT_ITEM_NO,m.LABEL_STATUS,m.QC_RESULT_CODE,m.BOX_SN,
+		m.FULL_BOX_QTY,m.BOX_QTY,m.END_FLAG,m.WERKS,m.MATNR,m.MAKTX,m.F_UNIT,m.F_BATCH,
+		m.BATCH,m.SOBKZ,m.DEL,m.CREATOR,m.CREATE_DATE,m.WH_NUMBER,m.LGORT,m.BIN_CODE,m.UNIT,m.INBOUND_NO,m.INBOUND_ITEM_NO,
+		m.PRODUCT_DATE,m.LIFNR,m.LIKTX,m.EFFECT_DATE,m.PRODUCT_CODE,m.STATION,m.ON_LINE_TYPE,m.ON_LINE_MOUTH,m.CAR_TYPE,
+		m.DOSAGE,m.CONFIGURATION,m.WMS_NO,m.WMS_ITEM_NO
+		) tmp
+		on (tmp.WERKS=s.WERKS and tmp.LABEL_NO=s.LABEL_NO  )
+		when matched then
+		update  set
+		s.CREATOR = tmp.CREATOR,s.CREATE_DATE = tmp.CREATE_DATE,s.LABEL_STATUS = tmp.LABEL_STATUS
+		when not matched then
+		insert (ID,LABEL_NO,RECEIPT_NO,RECEIPT_ITEM_NO,LABEL_STATUS,QC_RESULT_CODE,BOX_SN,
+		FULL_BOX_QTY,BOX_QTY,END_FLAG,WERKS,MATNR,MAKTX,F_UNIT,F_BATCH,
+		BATCH,SOBKZ,DEL,CREATOR,CREATE_DATE,WH_NUMBER,LGORT,BIN_CODE,UNIT,INBOUND_NO,INBOUND_ITEM_NO,
+		PRODUCT_DATE,LIFNR,LIKTX,EFFECT_DATE,PRODUCT_CODE,STATION,ON_LINE_TYPE,ON_LINE_MOUTH,CAR_TYPE,
+		DOSAGE,CONFIGURATION,WMS_NO,WMS_ITEM_NO
+		)
+		VALUES (SEQ_WMS_CORE_LABEL.nextval,tmp.LABEL_NO,tmp.RECEIPT_NO,tmp.RECEIPT_ITEM_NO,tmp.LABEL_STATUS,tmp.QC_RESULT_CODE,tmp.BOX_SN,
+		tmp.FULL_BOX_QTY,tmp.BOX_QTY,tmp.END_FLAG,tmp.WERKS,tmp.MATNR,tmp.MAKTX,tmp.F_UNIT,tmp.F_BATCH,
+		tmp.BATCH,tmp.SOBKZ,tmp.DEL,tmp.CREATOR,tmp.CREATE_DATE,tmp.WH_NUMBER,tmp.LGORT,tmp.BIN_CODE,tmp.UNIT,
+		tmp.INBOUND_NO,tmp.INBOUND_ITEM_NO,tmp.PRODUCT_DATE,tmp.LIFNR,tmp.LIKTX,tmp.EFFECT_DATE,tmp.PRODUCT_CODE,
+		tmp.STATION,tmp.ON_LINE_TYPE,tmp.ON_LINE_MOUTH,tmp.CAR_TYPE,tmp.DOSAGE,tmp.CONFIGURATION,tmp.WMS_NO,tmp.WMS_ITEM_NO
+		)
+	</insert>
+
+	<insert id="insertWmsBarCodeLog" parameterType="List">
+		insert into WMS_REPORT_BARCODE_LOG (id, werks, wh_number, label_no, package_level,asnno, asnitm,
+		 matnr, maktx, qty, business_name, creator, create_date, client)
+		select SEQ_WMS_REPORT_BARCODE_LOG.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.WERKS},#{d.WH_NUMBER},#{d.CA_LABEL_NO},'',#{d.PO_NO},#{d.PO_ITEM_NO}
+			,#{d.MATNR},#{d.MAKTX},#{d.RECEIPT_QTY},#{d.BUSINESS_NAME},#{d.CREATOR},#{d.CREATE_DATE},'02'
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+
+
+
+
+
+
+</mapper>

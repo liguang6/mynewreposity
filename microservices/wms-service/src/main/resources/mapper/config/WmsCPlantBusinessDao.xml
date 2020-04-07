@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCPlantBusinessDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.wms.business.modules.config.entity.WmsCPlantBusinessEntity" id="wmsCPlantBusinessMap">
+        <result property="id" column="ID"/>
+        <result property="werks" column="WERKS"/>
+        <result property="businessCode" column="BUSINESS_CODE"/>
+        <result property="synFlag" column="SYN_FLAG"/>
+        <result property="sortNo" column="SORT_NO"/>
+        <result property="updater" column="UPDATER"/>
+        <result property="updatDate" column="UPDAT_DATE"/>
+    </resultMap>
+    <select id="getListByPage"  parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+		     SELECT b.ID,b.WERKS AS werks,b.BUSINESS_CODE AS businessCode,b.SYN_FLAG synFlag,DECODE(b.SYN_FLAG,'0','同步','X','异步')  AS synFlagDesc,
+		     b.CREATOR AS creator,B.CREATE_DATE AS createDate,wb.SOBKZ AS sobkz,b.SORT_NO AS sortNo,
+		     d1.VALUE AS businessClass,d2.VALUE AS businessType,d3.VALUE AS businessName,b.LGORT lgort,
+		     b.APPROVAL_FLAG approvalFlag,DECODE(b.APPROVAL_FLAG,'0','否','X','是')  AS approvalFlagDesc,
+		     b.OVERSTEP_REQ_FLAG overstepReqFlag,DECODE(b.OVERSTEP_REQ_FLAG,'0','否','X','是')  AS overstepReqFlagDesc,
+		     b.OVERSTEP_HX_FLAG overstepHxFlag,DECODE(b.OVERSTEP_HX_FLAG,'0','否','X','是')  AS overstepHxFlagDesc,b.PUBLICWERKS publicwerks, ROWNUM
+		     FROM WMS_C_PLANT_BUSINESS b
+		     LEFT JOIN WMS_C_WMS_BUSINESS wb ON b.BUSINESS_CODE=wb.BUSINESS_CODE
+		     LEFT JOIN SYS_DICT d1 ON d1.CODE=wb.BUSINESS_CLASS AND d1.TYPE='BUSINESS_CLASS'
+	         LEFT JOIN SYS_DICT d2 ON d2.CODE=wb.BUSINESS_TYPE  AND d2.TYPE='BUSINESS_TYPE'
+	         LEFT JOIN SYS_DICT d3 ON d3.CODE=wb.BUSINESS_NAME  AND d3.TYPE='BUSINESS_NAME'
+	         WHERE 1=1
+	         <if test="werks !=null and werks !='' ">
+				AND b.WERKS=#{werks}
+			 </if>
+			 <if test="businessClass !=null and businessClass !='' ">
+				AND wb.BUSINESS_CLASS=#{businessClass}
+			 </if>
+			 <if test="businessType !=null and businessType !='' ">
+				AND wb.BUSINESS_TYPE=#{businessType}
+			 </if>
+			 ) TMP 
+		 WHERE ROWNUM  &lt;=#{end})  
+	  WHERE ROW_ID > #{start} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		order by ${orderBy}
+	  </if>
+	  </select>
+	  <select id="getListCount"  parameterType="Map" resultType="int">
+	     SELECT  COUNT(1) FROM WMS_C_PLANT_BUSINESS b 
+	      LEFT JOIN WMS_C_WMS_BUSINESS wb ON b.BUSINESS_CODE=wb.BUSINESS_CODE
+	      WHERE 1=1
+	      <if test="werks !=null and werks !='' ">
+				AND b.WERKS=#{werks}
+			 </if>
+			 <if test="businessClass !=null and businessClass !='' ">
+				AND wb.BUSINESS_CLASS=#{businessClass}
+			 </if>
+			 <if test="businessType !=null and businessType !='' ">
+				AND wb.BUSINESS_TYPE=#{businessType}
+			 </if>
+	 </select>
+	 <select id="getById"  parameterType="long" resultType="Map">
+		     SELECT b.ID,b.WERKS AS werks,b.BUSINESS_CODE AS businessCode,b.SYN_FLAG  AS synFlag,
+		     b.CREATOR AS creator,b.CREATE_DATE AS createDate,wb.SOBKZ AS sobkz,b.SORT_NO AS sortNo,
+		     d1.CODE AS businessClass,d2.CODE AS businessType,d3.CODE AS businessName,b.LGORT lgort,b.PUBLICWERKS publicwerks,
+		     b.APPROVAL_FLAG approvalFlag,b.OVERSTEP_REQ_FLAG overstepReqFlag,b.OVERSTEP_HX_FLAG overstepHxFlag
+		     FROM WMS_C_PLANT_BUSINESS b
+		     LEFT JOIN WMS_C_WMS_BUSINESS wb ON b.BUSINESS_CODE=wb.BUSINESS_CODE
+		     LEFT JOIN SYS_DICT d1 ON d1.CODE=wb.BUSINESS_CLASS AND d1.TYPE='BUSINESS_CLASS'
+	         LEFT JOIN SYS_DICT d2 ON d2.CODE=wb.BUSINESS_TYPE  AND d2.TYPE='BUSINESS_TYPE'
+	         LEFT JOIN SYS_DICT d3 ON d3.CODE=wb.BUSINESS_NAME  AND d3.TYPE='BUSINESS_NAME'
+	         WHERE 1=1 AND b.ID=#{id}
+	  </select>
+    <select id="getMaxSortNo"  parameterType="String" resultType="long">
+	     SELECT NVL(MAX(SORT_NO),0) SORT_NO FROM WMS_C_PLANT_BUSINESS WHERE WERKS=#{werks}
+	 </select>
+	  <select id="getWmsBusinessCode"  parameterType="String" resultType="String">
+	     SELECT BUSINESS_CODE AS businessCode FROM WMS_C_WMS_BUSINESS WHERE BUSINESS_CODE=#{businessCode}
+	 </select>
+	 <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,CONCAT(WERKS,CONCAT('-',BUSINESS_CODE)) AS uniqueStr  FROM WMS_C_PLANT_BUSINESS 
+	        WHERE CONCAT(WERKS,CONCAT('-',BUSINESS_CODE)) IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+	 </select>
+	 <select id="getWmsBusinessCodeList"  parameterType="Map" resultType="Map">
+	     SELECT BUSINESS_CODE FROM WMS_C_WMS_BUSINESS WHERE BUSINESS_CLASS=#{businessClass}
+	     AND BUSINESS_TYPE=#{businessType} AND BUSINESS_NAME=#{businessName} 
+	     AND SOBKZ=#{sobkz}
+	 </select>
+	 <insert id="saveCopyData" parameterType="List" >
+		INSERT INTO WMS_C_PLANT_BUSINESS
+		(ID,WERKS,BUSINESS_CODE,SYN_FLAG,SORT_NO,APPROVAL_FLAG,OVERSTEP_REQ_FLAG,
+		OVERSTEP_HX_FLAG,CREATOR,CREATE_DATE) 
+		SELECT SEQ_WMS_C_PLANT_BUSINESS.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="detail" index="index" separator="union all">
+		SELECT 
+		    #{detail.WERKS},#{detail.BUSINESSCODE},#{detail.SYNFLAG},#{detail.SORTNO},#{detail.APPROVALFLAG},
+		    #{detail.OVERSTEPREQFLAG},#{detail.OVERSTEPHXFLAG},#{detail.CREATOR},#{detail.CREATEDATE}
+		FROM DUAL
+		</foreach>
+		) m
+	</insert>
+	<update id="updateCopyData" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_C_PLANT_BUSINESS SET 
+			  SYN_FLAG=#{detail.SYNFLAG},APPROVAL_FLAG=#{detail.APPROVALFLAG},
+		      OVERSTEP_REQ_FLAG=#{detail.OVERSTEPREQFLAG},OVERSTEP_HX_FLAG=#{detail.OVERSTEPHXFLAG},
+		      UPDATER=#{detail.EDITOR},UPDAT_DATE=#{detail.EDITDATE}
+			WHERE ID=#{detail.ID}
+		</foreach>
+	</update>
+</mapper>

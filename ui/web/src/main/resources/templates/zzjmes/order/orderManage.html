@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>订单管理</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" method="post" class="form-inline" action="${request.contextPath}/zzjmes/order/getOrderList">
+						<table>
+							<tr>
+								<td id="searchForm">
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">工厂：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_werks" id="search_werks" style="width: 80px;" class="form-control">
+													<!-- <option value="0">全部</option> -->
+													<#list tag.getUserAuthWerks("ZZJMES_ORDER_MANAGE") as factory>
+													<option value="${factory.code}">${factory.code}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">订单：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 140px" id="parentDiv">
+												<input type="text" name="search_order" id="search_order" class="form-control" @click="getOrderNoFuzzy()" @keyup.enter="query" placeholder="订单名称">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">订单类型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_order_type_code" id="search_order_type_code" style="width: 80px;" class="form-control">
+													<option value="">全部</option>
+													<#list tag.masterdataDictList('ORDER_TYPE') as dict>
+													<option value="${dict.code}">${dict.value}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">车型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_bus_type_code" id="search_bus_type_code" style="width: 80px;" class="form-control">
+													<option value="">全部</option>
+													<#list tag.busTypeList('') as dict>
+													<option value="${dict.BUS_TYPE_CODE}">${dict.BUS_TYPE_CODE}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">销售部：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 140px" id="parentDiv">
+												<select name="search_sale_dept_code" id="search_sale_dept_code" style="width: 140px;" class="form-control">
+													<option value="">全部</option>
+													<#list tag.masterdataDictList('SALE_DEPT') as dict>
+													<option value="${dict.value}">${dict.value}</option>
+													</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">状态：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+												<select name="search_status" id="search_status" style="width: 140px;" class="form-control">
+													<option value="">全部</option>
+													<option value="00">未开始</option>
+													<option value="01">生产中</option>
+													<option value="02">已完成</option>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">年份：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 140px" id="parentDiv">
+												<input type="text" name="search_year" id="search_year" onclick="WdatePicker({dateFmt:'yyyy',isShowClear:false});" class="form-control" value="全部">
+											</div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm" width="180px">
+									<div class="form-group">
+										<input type="submit" id="btnSearchData" class="btn btn-info btn-sm" value="查询" /> 
+										<input type="button" id="btnAdd" class="btn btn-success btn-sm" value="新增" />
+										<input type="button" id="btnExport" @click="exportExcel()" class="btn btn-warning btn-sm" value="导出" />
+									</div>
+								</td>
+							</tr>
+						</table>
+					</form>
+					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>
+					<table id="tb_excel" style="display: none"></table>
+				</div>
+			</div>
+		</div>
+		<div id="addLayer" class="box-body" style="display: none; padding: 10px;">
+			<form id="addOrderForm" class="form-inline" action="#">
+				<table>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 工厂：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select id="werks" style="width: 100%; height: 30px; border: 1px solid #ccc; background-color: #fff;" class=" required" v-model="orOrder.werks">
+											<option value="">请选择</option>
+											<#list tag.getUserAuthWerks("ZZJMES_ORDER_MANAGE") as factory>
+											<option value="${factory.NAME}">${factory.code}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 销售部：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select id="sale_dept" style="width: 100%; height: 30px; border: 1px solid #ccc; background-color: #fff;" class=" required" v-model="orOrder.sale_dept_code">
+											<option value="">请选择</option>
+											<#list tag.masterdataDictList('SALE_DEPT') as dict>
+											<option value="${dict.value}">${dict.value}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 订单名称：<i class="fa icon-question hide"></i></label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px; height: 30px;" id="parentDiv">
+										<input type="text" name="order_name" style="height: 30px;" class="form-control  required" v-model="orOrder.order_name" placeholder="订单名称" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">订单编号：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px; height: 30px;" id="parentDiv">
+										<input type="text" id="order_no" class="form-control" style="height: 30px;" readonly="readonly" disabled="disabled" v-model="orOrder.order_no" placeholder="系统后台生成" />
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 订单类型：<i class="fa icon-question hide"></i></label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select id="order_type" class="required" style="width: 100%; height: 30px; border: 1px solid #ccc; background-color: #fff;" v-model="orOrder.order_type_code">
+											<option value="">请选择</option>
+											<#list tag.masterdataDictList('ORDER_TYPE') as dict>
+											<option value="${dict.code}">${dict.value}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 车型：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select id="bus_type" class="required" style="width: 100%; height: 30px; border: 1px solid #ccc; background-color: #fff;" v-model="orOrder.bus_type_code">
+											<option value="">请选择</option>
+											<#list tag.busTypeList('') as dict>
+											<option value="${dict.BUS_TYPE_CODE}">${dict.BUS_TYPE_CODE}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 订单数量：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px; height: 30px;" id="parentDiv">
+										<input type="text" class="form-control" style="height: 30px;" v-model="orOrder.order_qty" placeholder="订单数量" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 订单区域：<i class="fa icon-question hide"></i></label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px; height: 30px;" id="parentDiv">
+										<select id="order_area" class="required" style="width: 100%; height: 30px; border: 1px solid #ccc; background-color: #fff;" v-model="orOrder.order_area_code">
+											<option value="">请选择</option>
+											<#list tag.masterdataDictList('ORDER_AREA') as dict>
+											<option value="${dict.code}">${dict.value}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 生产年份：<i class="fa icon-question hide"></i></label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px; height: 30px;" id="parentDiv">
+										<input type="text" id="productive_year" style="height: 30px;" class="form-control" onclick="WdatePicker({dateFmt:'yyyy',isShowClear:false});" placeholder="生产年份" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 订单交期：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px; height: 30px;" id="parentDiv">
+										<input type="text" id="delivery_date" class="form-control" style="height: 30px;" onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});" placeholder="订单交期" />
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 订单状态：<i class="fa icon-question hide"></i></label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px; height: 30px;" id="parentDiv">
+										<select id="status" class="required" style="width: 100%; height: 30px; border: 1px solid #ccc; background-color: #fff;" v-model="orOrder.status">
+											<option value="00">未开始</option>
+											<option value="01">生产中</option>
+											<option value="02">已完成</option>
+										</select>
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px"><span class="required">*</span> 订单描述：<i class="fa icon-question hide"></i></label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 400px; height: 30px;" id="parentDiv">
+										<input type="text" name="order_desc" readonly="readonly" style="width: 394px; height: 30px;" class="form-control" v-model="orOrder.order_desc" placeholder="订单描述" />
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">关联订单：<i class="fa icon-question hide"></i></label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 400px; height: 30px;" id="parentDiv">
+										<input type="text" name="relate_order" style="width: 394px; height: 30px;" class="form-control" v-model="orOrder.relate_order" placeholder="关联订单" />
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td id="searchForm">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">备注：<i class="fa icon-question hide"></i></label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 400px; height: 30px;" id="parentDiv">
+										<input type="text" name="memo" style="width: 394px; height: 30px;" class="form-control" v-model="orOrder.memo" placeholder="备注" />
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+	<form id="exportForm" method="post" action="${request.contextPath}/zzjmes/order/exportOrder" style="display:none">
+		<input name="search_werks" id="export_werks" type="text"  hidden="hidden">
+		<input name="search_order" id="export_order" type="text"  hidden="hidden">
+		<input name="search_order_type_code" id="export_order_type_code" type="text"  hidden="hidden">
+		<input name="search_bus_type_code" id="export_bus_type_code" type="text"  hidden="hidden">
+		<input name="search_sale_dept_code" id="export_sale_dept_code" type="text"  hidden="hidden">
+		<input name="search_status" id="export_status" type="text"  hidden="hidden">
+		<input name="search_year" id="export_year" type="text"  hidden="hidden">
+		<input name="pageNo" id="pageNo" type="text" value='1' hidden="hidden">
+		<input name="pageSize" id="pageSize" value='5000' type="text" hidden="hidden">
+	</form>
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/zzjmes/order/orderManage.js?_${.now?long}"></script>
+</body>
+</html>

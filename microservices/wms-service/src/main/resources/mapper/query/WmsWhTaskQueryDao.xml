@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.query.dao.WmsWhTaskQueryDao">
+	<select id="getTaskList" parameterType="Map" resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT s.*
+		FROM WMS_CORE_WH_TASK s
+		WHERE s.WH_NUMBER=#{WH_NUMBER}
+		<if
+			test="REFERENCE_DELIVERY_NO !=null and REFERENCE_DELIVERY_NO !='' ">
+			and s.REFERENCE_DELIVERY_NO=#{REFERENCE_DELIVERY_NO}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and s.MATNR=#{MATNR}
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and s.LIFNR=#{LIFNR}
+		</if>
+		<if test="TASK_NUM !=null and TASK_NUM !='' ">
+			and s.TASK_NUM=#{TASK_NUM}
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS}
+			and WH_NUMBER=#{WH_NUMBER}
+			and INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+		</if>
+		<if test="BATCH !=null and BATCH !='' ">
+			and s.BATCH=#{BATCH}
+		</if>
+		<if test="PROCESS_TYPE !=null and PROCESS_TYPE !='' ">
+			and s.PROCESS_TYPE=#{PROCESS_TYPE}
+		</if>
+		<if test="WT_STATUS !=null and WT_STATUS !='' ">
+			and s.WT_STATUS=#{WT_STATUS}
+		</if>
+		<if test="createDateStart !=null and createDateStart !='' ">
+			and to_date(s.CREATE_DATE, 'yyyy-mm-dd hh24:mi:ss')  &gt;= to_date(#{createDateStart}||' 00:00:00', 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test="createtDateEnd !=null and createtDateEnd !='' ">
+			and to_date(s.CREATE_DATE, 'yyyy-mm-dd hh24:mi:ss')  &lt;= to_date(#{createtDateEnd}||' 23:59:59', 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		)TMP)
+		<if test="END !=null ">
+			WHERE ROWNUM &lt;=#{END}
+		</if>
+		<if test="START !=null ">
+			and ROW_ID > #{START}
+		</if>
+	</select>
+
+	<select id="getTaskCount" parameterType="Map" resultType="int">
+		SELECT count(s.ID)
+		FROM WMS_CORE_WH_TASK s
+		WHERE s.WH_NUMBER=#{WH_NUMBER}
+		<if
+			test="REFERENCE_DELIVERY_NO !=null and REFERENCE_DELIVERY_NO !='' ">
+			and s.REFERENCE_DELIVERY_NO=#{REFERENCE_DELIVERY_NO}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and s.MATNR=#{MATNR}
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			and s.LIFNR=#{LIFNR}
+		</if>
+		<if test="TASK_NUM !=null and TASK_NUM !='' ">
+			and s.TASK_NUM=#{TASK_NUM}
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS}
+			and WH_NUMBER=#{WH_NUMBER}
+			and INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+		</if>
+		<if test="BATCH !=null and BATCH !='' ">
+			and s.BATCH=#{BATCH}
+		</if>
+		<if test="PROCESS_TYPE !=null and PROCESS_TYPE !='' ">
+			and s.PROCESS_TYPE=#{PROCESS_TYPE}
+		</if>
+		<if test="WT_STATUS !=null and WT_STATUS !='' ">
+			and s.WT_STATUS=#{WT_STATUS}
+		</if>
+		<if test="createDateStart !=null and createDateStart !='' ">
+			and to_date(s.CREATE_DATE, 'yyyy-mm-dd hh24:mi:ss')  &gt;= to_date(#{createDateStart}||' 00:00:00', 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test="createtDateEnd !=null and createtDateEnd !='' ">
+			and to_date(s.CREATE_DATE, 'yyyy-mm-dd hh24:mi:ss')  &lt;= to_date(#{createtDateEnd}||' 23:59:59', 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+	</select>
+</mapper>

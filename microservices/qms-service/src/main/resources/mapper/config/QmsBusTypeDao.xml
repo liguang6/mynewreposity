@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.config.dao.QmsBusTypeDao">
+	 
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+      SELECT D.ID id,D.BUS_TYPE_CODE busTypeCode,TEST_TYPE testType,
+		      D.EDITOR editor,D.EDIT_DATE editDate,D.CREATOR creator,D.CREATE_DATE createDate
+		       FROM QMS_C_BUS_TYPE_TEST_TYPE D  WHERE 1=1
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+			       ORDER BY D.CREATE_DATE DESC
+         LIMIT #{start},#{limit}
+                
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM QMS_C_BUS_TYPE_TEST_TYPE D WHERE  1=1
+		         <if test="testNode != null and testNode !=''">
+			        AND D.TEST_NODE=#{testNode} 
+			      </if>
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+			      <if test="customNoFlag != null and customNoFlag !=''">
+			        AND D.CUSTOM_NO_FLAG =#{customNoFlag}
+			      </if>
+    </select>
+    <select id="getById" parameterType="Long" resultType="Map">
+      SELECT D.ID id, D.TEST_TYPE testType, D.TEST_NODE testNode,
+         D.VIN_FLAG vinFlag, D.CUSTOM_NO_FLAG customNoFlag
+		       FROM QMS_C_BUS_TYPE_TEST_TYPE D  WHERE ID=#{id}
+    </select>
+    <select id="getList" parameterType="Map" resultType="Map">
+      SELECT D.ID id,D.BUS_TYPE_CODE busTypeCode,TEST_TYPE testType,
+		      D.EDITOR editor,D.EDIT_DATE editDate,D.CREATOR creator,D.CREATE_DATE createDate
+		       FROM QMS_C_BUS_TYPE_TEST_TYPE D  WHERE 1=1
+		          <if test="testNode != null and testNode !=''">
+			        AND D.TEST_NODE=#{testNode} 
+			      </if>
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+    </select>
+    <insert id="save" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_C_BUS_TYPE_TEST_TYPE
+		(TEST_TYPE,BUS_TYPE_CODE,DEL,CREATOR,CREATE_DATE) values
+			(#{testType},#{busTypeCode},'0',#{user},#{createDate})
+	</insert>
+	<update id="update" parameterType="Map">
+			update QMS_C_BUS_TYPE_TEST_TYPE set TEST_TYPE=#{testType},BUS_TYPE_CODE=#{busTypeCode},
+               editor=#{user},edit_date=#{editDate} where id=#{id}
+	</update>
+	<update id="delete" parameterType="Long">
+			UPDATE QMS_C_BUS_TYPE_TEST_TYPE SET DEL='1'  where id=#{id}
+	</update>
+</mapper>

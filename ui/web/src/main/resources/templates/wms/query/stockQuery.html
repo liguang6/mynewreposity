@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库存查询</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<script type="text/javascript" src="${request.contextPath}/statics/js/dynamicColum.js"></script>
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/stockQuery/list" >
+						<div class="row">					
+							<div class="form-group">
+								<label class="control-label" style="width: 45px">工厂：</label>
+								<div class="control-inline" style="width: 65px;">
+									<select name="WERKS" id="werks" v-model="werks" class="input-medium" style="width:100%;height:28px">
+									   <#list tag.getUserAuthWerks("QUERY_STOCK") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;">仓库号：</label>
+								<div class="control-inline" style="width: 65px;">
+									<select v-model="whNumber" name="WH_NUMBER" id="whNumber" style="height: 28px;width: 60px;">
+										 <option v-for="w in wh_list" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+										</select>
+								</div>
+							</div>
+							
+						    <div class="form-group">
+								<label class="control-label" >库位：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									<select id="lgort"  class="input-medium"  multiple="multiple"  style="height: 30px;width:100%">
+										<option v-for="t in lgortList"  :key="t.LGORT" :value="t.LGORT">
+											{{t.LGORT}}
+										</option>
+									</select>
+									<input type="hidden" name="LGORT" >
+									</div>
+								</div>
+							</div>
+							
+							
+							<div class="form-group">
+								<label class="control-label" style="width:50px">料号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<span class="input-icon input-icon-right" style="width: 120px;">
+											<input type="text" id="matnr" name="MATNR" style="width: 120px;" class="form-control" />
+											<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('matnr')"> </i>
+										</span>
+									</div>
+									<div class="input-group">
+										<input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#matnr'))" style="width: 15px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">供应商：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   <input type="text" id="LIFNR" name="LIFNR" style="width: 80px;" class="form-control" />
+									   <input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#LIFNR'))" style="width: 15px;"/>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+	                           <label class="control-label">物料描述：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									   	<input type="text" id="mat_desc" name="MAKTX" style="width: 130px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+							 <label class="control-label">数据类别：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   <select id="stock_type"  name="STOCK_TYPE" v-model="STOCK_TYPE">
+											<option value="仓库库存">仓库库存</option>
+											<option value="收料房库存">收料房库存</option>
+											<option value="危化品库存">危化品库存</option>
+										</select> 
+									</div>
+								</div>
+							</div>
+							
+					</div>
+					<div class="row">
+						<div class="form-group">
+	                           <label class="control-label" style="width:45px">批次：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									   	<input type="text" id="batch" name="BATCH" style="width: 90px;" class="form-control" />
+									   	<input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#batch'))" style="width: 15px;"/>
+									</div>
+								</div>
+							</div>
+						<div class="form-group">
+							<label class="control-label" style="margin-left:-3px">仓管员：</label>
+							<div class="control-inline" style="width: 70px;">
+								<select class="input-medium" name="AUTHORIZE_CODE" id="whManager" style="width: 70px;height:25px;">
+								 <option value="" >全部</option>
+								 <option v-for="w in relatedareaname" :value="w.AUTHORIZE_CODE" :key="w.AUTHORIZE_CODE">{{ w.MANAGER }}</option>
+								</select>
+							</div>
+						</div> 	
+						<div class="form-group">
+	                           <label class="control-label" style="width:36px">储位：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									<span class="input-icon input-icon-right" style="width: 100px;">
+									   	<input type="text" id="bin_code" name="BIN_CODE" style="width: 100px;" class="form-control" />
+									   	<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('bin_code')"> </i>
+									</span>  	
+									   	<input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#bin_code'))" style="width: 15px;"/>
+									</div>
+								</div>
+							</div>
+					    <div class="form-group">
+							<label class="control-label"  style="width: 60px">库存类型：</label>
+							<div class="control-inline">
+								<div class="input-group" >
+								   <select id="sobkz" name="SOBKZ" style="width:50px;height:25px">
+								   		<option value="">全部</option>
+								   		<option v-for="s in sobkzList" :value="s.CODE" :key="s.CODE">{{s.CODE}}</option>
+								   </select>								   
+								</div>
+							</div>
+						</div>
+							
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" onclick="query()">查询</button>
+								<button type="button" class="btn btn-primary btn-sm" @click="exp">导出</button>
+								<button type="reset" class="btn btn-primary btn-sm">重置</button>
+							</div>
+							<div class="form-group">
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   <select id="example-getting-started" multiple="multiple" style="display: none;">
+											<option value="MAKTX">物料描述</option>
+											<option value="MEINS">单位</option>
+											<option value="LIFNR">供应商代码</option>
+											<option value="LIKTX">供应商名称</option>
+											<option value="SOBKZ">库存类型</option>
+											<option value="STOCK_QTY">非限制</option>
+											<option value="FREEZE_QTY">冻结</option>
+											<option value="VIRTUAL_QTY">虚拟</option>
+											<option value="VIRTUAL_LOCK_QTY">虚拟锁定</option>
+											<option value="LOCK_QTY">锁定</option>
+											<option value="RSB_QTY">预留数量</option>
+											<option value="XJ_QTY">下架</option>
+											<option value="XJ_BIN_CODE">下架储位</option>
+											<option value="BATCH">批次</option>
+											<option value="F_BATCH">源批次</option>
+											<option value="SO_NO">销售订单</option>
+											<option value="SO_ITEM_NO">行项目</option>
+											
+										</select> 
+									</div>
+								</div>
+							</div>
+						</div>
+					</form>
+						<div id="divDataGrid" style="width:100%;overflow:auto;">
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>	
+						<table id="tb_excel" style="display:none"></table>
+					</div>
+				</div>
+					
+				<div id="layer_more" style="display:none;height:300px">
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#' class='btn'  style="width:63px;margin-left:-3px;"><input type='checkbox'  id='checkall' style="margin:0px;"></input> 全选</a> 
+							<a href='#' class='btn' id='newOperation' onclick="addMore()"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a> 
+							<a href='#' class='btn' id='btn_refresh' onclick="refreshMore()"><i class='fa fa-refresh' aria-hidden='true'></i> 清空</a> 
+							<a href='#' class='btn' id='btn_delete' onclick="delMore()"><i class='fa fa-trash' aria-hidden='true'></i> 删除</a> 
+						</div>
+						<table id="moreGrid" class="table table-bordered"  style="text-align:center"> </table>
+					</div>
+				</div>
+					
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/stockQuery.js?_${.now?long}"></script>
+</body>
+</html>

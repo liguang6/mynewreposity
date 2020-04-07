@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCQcMatSampleDao">
+	 <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,WERKS || '-' || LIFNR || '-' || MATNR  AS WERKS_MATNR  FROM WMS_C_QC_MAT_SAMPLE 
+	        WHERE WERKS || '-' || LIFNR || '-' || MATNR IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+			AND DEL='0'
+	 </select>
+	 <!-- 更新，插入 -->
+	<update id="merge" parameterType="List">
+		MERGE INTO WMS_C_QC_MAT_SAMPLE S USING(
+		select M.WERKS,M.MATNR,M.MAKTX,M.LIFNR,M.LIKTX,M.SAMPLING,M.MIN_SAMPLE,M.MAX_SAMPLE,
+		M.UNPACKING,M.MIN_UNPACKING,M.MAX_UNPACKING,M.DEL,M.CREATOR,M.CREATE_DATE,M.EDITOR,M.EDIT_DATE
+		from (
+		<foreach collection="list" item="D" index="index" separator="UNION  ALL">
+		SELECT 
+		#{D.werks} WERKS,#{D.matnr} MATNR, #{D.maktx} MAKTX,#{D.lifnr} LIFNR,#{D.liktx} LIKTX,#{D.sampling} SAMPLING,
+		#{D.minSample} MIN_SAMPLE,#{D.maxSample} MAX_SAMPLE,#{D.unpacking} UNPACKING,#{D.minUnpacking} MIN_UNPACKING,
+		#{D.maxUnpacking} MAX_UNPACKING,#{D.memo} MEMO,'0' DEL,#{D.creator} CREATOR,#{D.createDate} CREATE_DATE,#{D.editor} EDITOR,#{D.editDate} EDIT_DATE
+		from dual
+		</foreach>
+		) M  ) TMP 
+		on (TMP.WERKS=S.WERKS and TMP.MATNR=S.MATNR AND TMP.LIFNR=S.LIFNR AND S.DEL='0') 
+		when matched then 
+			UPDATE  SET S.LIFNR=TMP.LIFNR,S.LIKTX=TMP.LIKTX,
+			S.SAMPLING=TMP.SAMPLING,S.SAMPLING=TMP.SAMPLING,
+			S.MIN_SAMPLE=TMP.MIN_SAMPLE,S.MAX_SAMPLE=TMP.MAX_SAMPLE,
+			S.UNPACKING=TMP.UNPACKING,S.MIN_UNPACKING=TMP.MIN_UNPACKING,
+			S.MAX_UNPACKING=TMP.MAX_UNPACKING,S.MEMO=TMP.MEMO,
+			S.EDITOR=TMP.EDITOR,S.EDIT_DATE=TMP.EDIT_DATE
+		when not matched then 
+			insert (ID,WERKS,MATNR,MAKTX,LIFNR,LIKTX,SAMPLING,MIN_SAMPLE,MAX_SAMPLE,
+		     UNPACKING,MIN_UNPACKING,MAX_UNPACKING,MEMO,DEL,CREATOR,CREATE_DATE) 
+		    VALUES (SEQ_WMS_C_QC_MAT_SAMPLE.nextval,TMP.WERKS,TMP.MATNR,TMP.MAKTX,
+		    TMP.LIFNR,TMP.LIKTX,TMP.SAMPLING,TMP.MIN_SAMPLE,TMP.MAX_SAMPLE,
+	    	TMP.UNPACKING,TMP.MIN_UNPACKING,TMP.MAX_UNPACKING,TMP.MEMO,TMP.DEL,TMP.EDITOR,TMP.EDIT_DATE)
+	</update>
+</mapper>

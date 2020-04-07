@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>创建进仓单</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+[v-cloak]{ display: none !important; }
+</style>
+</head>
+
+<body class="hold-transition " style="overflow:scroll">
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body" >
+					<form id="searchForm" class="form-inline" >
+						<div class="form-group">
+							<label class="control-label"><span class="required"> *</span>工厂：</label>
+							<div class="control-inline" style="width: 60px;">
+								<select v-model="werks" style="width: 60px;height: 28px;" name="werks" id="werks">
+								   <#list tag.getUserAuthWerks("INTERNAL_INBOUND") as factory>
+								      <option value="${factory.code}">${factory.code}</option>
+								   </#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label"><span class="required"> *</span>仓库号：</label>
+							<div class="control-inline" style="width: 60px;">
+								<select  style="width: 60px;height: 28px;" name="whNumber" id="whNumber">
+									<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+						<label class="control-label">库位：</label>
+								<div class="control-inline" style="width: 60px;">
+									<select v-model="lgort" style="height: 28px;width:100%;" name="lgort"  id="lgort" > 
+										<option v-for="w in lgortlist" :value="w.LGORT" :key="w.LGORT" :logrt_name="w.LGORT_NAME">{{ w.LGORT }}</option>
+									</select>
+								</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label"><span class="required"> *</span>进仓单类型：</label>
+							<div class="control-inline" style="width: 230px;">
+								<select id="inboundType" v-model="inbound_type" style="width:100%;height: 28px;">
+									<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE" >
+										{{t.BUSINESS_NAME}}
+									</option>
+								</select>
+							</div>
+						</div>
+						<!-- 半成品生产订单101 -->
+						<div class="form-group" v-show="inbound_type =='11'" v-cloak>
+								
+								<label class="control-label">生产订单：</label>
+								<div class="control-inline" style="width: 150px;">
+									<input type="text" id="AUFNR_101" name="AUFNR_101" value="" placeholder="多个订单用;隔开" class="form-control" style="width: 150px;"/>
+								</div>
+								<input type="button" id="productNoQuery" class="btn btn-default btn-sm" value="..."/>
+								<label class="control-label">需求跟踪号：</label>
+								<div class="control-inline" style="width: 120px;">
+									<input type="text" id="xqgzh_101" name="xqgzh_101" value="" @blur="onXqggzChange101()" class="form-control" style="width: 120px;"/>
+								</div>
+								<label class="control-label" >供应商代码：</label>
+								<div class="control-inline" >
+									<input type="text" id="vendor_101" name="vendor_101"  class="form-control" style="width: 100px;" @click="getVendorNoFuzzy101()" @blur="getVerdorName101()"/>
+								</div>
+								<div class="control-inline" >
+									<input type="text" style="width: 180px;" id="vendorName_101" name="vendorName_101"  class="form-control" readOnly="true"/>
+								</div>
+								<input type="button" id="btnqueryinteralbound101" @click="queryinteralbound101()" class="btn btn-primary btn-sm " value="查询"/>
+								<input type="button" id="btnsaveinteralbound101" @click="save101" class="btn btn-primary btn-sm " value="创建进仓单"/>
+								<!-- <button type="reset" class="btn btn-default btn-sm ">重置</button> -->
+						</div>
+						
+						<!-- 半成品生产订单531 -->
+						<div class="form-group" v-show="inbound_type =='13' " v-cloak>
+								<!-- 
+								<label class="control-label">生产订单：</label>
+								<div class="control-inline" style="width: 200px;">
+									<input type="text" id="AUFNR_531" name="AUFNR_531" value="" placeholder="多个订单用;隔开" class="form-control" style="width: 150px;"/>
+									<input type="button" id="productNoQuery531" class="btn btn-default btn-sm" value="..."/>
+								</div> -->
+								<label class="control-label">需求跟踪号：</label>
+								<div class="control-inline" style="width: 120px;">
+									<input type="text" id="xqgzh_531" name="xqgzh_531" value="" @blur="onXqggzChange531()" class="form-control" style="width: 120px;"/>
+								</div>
+								<!--  <input type="button" id="btnqueryinteralbound101" @click="queryinteralbound531()" class="btn btn-primary btn-sm " value="查询"/>-->
+								<input type="button" id="btnsaveinteralbound531" @click="save531" class="btn btn-primary btn-sm " value="创建进仓单"/>
+								<!-- <button type="reset" class="btn btn-default btn-sm ">重置</button> -->
+						</div>
+						<!-- 半成品生产订单521 -->
+						<div class="form-group" v-show="inbound_type =='12' " v-cloak>
+								
+								<label class="control-label">需求跟踪号：</label>
+								<div class="control-inline" style="width: 120px;">
+									<input type="text" id="xqgzh_521" name="xqgzh_521" value="" @blur="onXqggzChange521()" class="form-control" style="width: 120px;"/>
+								</div>
+								<input type="button" id="btnsaveinteralbound521" @click="save521" class="btn btn-primary btn-sm " value="创建进仓单"/>
+								<!-- <button type="reset" class="btn btn-default btn-sm ">重置</button> -->
+						</div>
+						<!-- CO订单101 -->
+						<div class="form-group" v-show="inbound_type =='14' " v-cloak>
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>CO订单：</label>
+								<div class="control-inline" >
+									<input type="text" id="co_no101" name="co_no101"  class="form-control" style="width: 100px;"  @blur="queryCODescByCoNo101()"/>
+								</div>
+								<div class="control-inline" >
+									<input type="text" style="width: 180px;" id="co_desc" name="co_desc"  class="form-control" readOnly="true"/>
+								</div>
+								
+								<label class="control-label">需求跟踪号：</label>
+								<div class="control-inline" >
+									<input type="text" id="xqgzh_co101" name="xqgzh_co101" value="" @blur="onXqggzChangeCo101()" class="form-control" style="width: 100px;"/>
+								</div>
+								<input type="hidden" id="is_co101" name="is_co101" value="1" style="width: 120px;"/>
+								
+								<input type="button" id="btnsaveinteralboundco101" @click="saveCo101()" class="btn btn-primary btn-sm " value="创建进仓单"/>
+						</div>	
+						<!-- 研发内部订单262 -->
+						<div class="form-group" v-show="inbound_type =='15' " v-cloak>
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>研发订单：</label>
+								<div class="control-inline" >
+									<input type="text" id="yf_262" name="yf_262"  class="form-control" style="width: 100px;"  @blur="queryYF262()"/>
+								</div>
+								<div class="control-inline" >
+									<input type="text" style="width: 180px;" id="yf_desc" name="yf_desc"  class="form-control" readOnly="true"/>
+								</div>
+								<label class="control-label">需求跟踪号：</label>
+								<div class="control-inline" >
+									<input type="text" id="xqgzh_262" name="xqgzh_262" value="" @blur="onXqggzChange262()" class="form-control" style="width: 100px;"/>
+								</div>
+								<input type="hidden" id="is_yf262" name="is_yf262" value="1" style="width: 120px;"/>
+								<input type="button" id="btnsaveinteralbound262" @click="save262" class="btn btn-primary btn-sm " value="创建进仓单"/>
+						</div>		
+						<!-- 成本中心202 -->
+						<div class="form-group" v-show="inbound_type =='16' " v-cloak>
+								<label class="control-label"><font style="color:red;font-weight:bold">*</font>成本中心：</label>
+								<div class="control-inline" >
+									<input type="text" id="cb_202" name="cb_202"  class="form-control" style="width: 100px;"  @blur="queryCcDescByCostCenter202()"/>
+								</div>
+								<div class="control-inline" >
+									<input type="text" style="width: 180px;" id="cb_desc" name="cb_desc"  class="form-control" readOnly="true"/>
+								</div>
+								<label class="control-label">需求跟踪号：</label>
+								<div class="control-inline" >
+									<input type="text" id="xqgzh_202" name="xqgzh_202" value="" @blur="onXqggzChange202()" class="form-control" style="width: 100px;"/>
+								</div>
+								<input type="hidden" id="is_cb202" name="is_cb202" value="1" style="width: 120px;"/>
+								
+								<input type="button" id="btnsaveinteralbound202" @click="save202()" class="btn btn-primary btn-sm " value="创建进仓单"/>
+						</div>
+							
+						<!-- WBS元素222 -->	
+						<div class="form-group" v-show="inbound_type =='17' " v-cloak>
+							<label class="control-label"><font style="color:red;font-weight:bold">*</font>WBS元素：</label>
+							<div class="control-inline" >
+								<input type="text" id="wbs_222" name="wbs_222"  class="form-control" style="width: 100px;"  @blur="queryWBS222()"/>
+							</div>
+							<div class="control-inline" >
+								<input type="text" style="width: 180px;" id="wbs_desc" name="wbs_desc"  class="form-control" readOnly="true"/>
+							</div>
+								<label class="control-label">需求跟踪号：</label>
+							<div class="control-inline" >
+								<input type="text" id="xqgzh_222" name="xqgzh_222" value="" @blur="onXqggzChange222()" class="form-control" style="width: 100px;"/>
+							</div>
+							<input type="hidden" id="is_wbs222" name="is_wbs222" value="1" style="width: 120px;"/>
+							
+							<input type="button" id="btnsaveinteralbound222" @click="save222" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							
+						</div>
+						<!-- 客供物料501 -->	
+						<div class="form-group" v-show="inbound_type =='18' " v-cloak>
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>供应商代码：</label>
+								<div class="control-inline" >
+									<input type="text" id="vendor_501" name="vendor_501"  class="form-control" style="width: 100px;" @click="getVendorNoFuzzy501()" @blur="getVerdorName()"/>
+								</div>
+								<div class="control-inline" >
+									<input type="text" style="width: 180px;" id="vendorName_501" name="vendorName_501"  class="form-control" readOnly="true"/>
+								</div>
+								<label class="control-label">需求跟踪号：</label>
+								<div class="control-inline" >
+									<input type="text" id="xqgzh_501" name="xqgzh_501" value="" @blur="onXqggzChange()" class="form-control" style="width: 80px;"/>
+								</div>
+							    <input type="button" id="btnsaveinteralbound501" @click="save501" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							
+						</div>
+						<!-- 免费品511 -->	
+						<div class="form-group" v-show="inbound_type =='19' " v-cloak>
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>供应商代码：</label>
+							<div class="control-inline" >
+								<input type="text" id="vendor_511" name="vendor_511"  class="form-control" style="width: 80px;" @click="getVendorNoFuzzy511()" @blur="getVerdorName511()"/>
+							</div>
+							<div class="control-inline" >
+								<input type="text" style="width: 160px;" id="vendorName_511" name="vendorName_511"  class="form-control" readOnly="true"/>
+							</div>
+							
+								<label class="control-label">需求跟踪号：</label>
+							<div class="control-inline" >
+								<input type="text" id="xqgzh_511" name="xqgzh_511" value="" @blur="onXqggzChange511()" class="form-control" style="width: 80px;"/>
+							</div>
+							    <input type="button" id="btnsaveinteralbound511" @click="save511" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							
+							    <input type="button" id="btnimportOperation511" @click="importOperation511" class="btn btn-primary btn-sm " value="导入"/>
+							
+						</div>
+						<!-- 备品903 -->	
+						<div class="form-group" v-show="inbound_type =='20' " v-cloak>
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>供应商代码：</label>
+							<div class="control-inline" >
+								<input type="text" id="vendor_903" name="vendor_903"  class="form-control" style="width: 100px;" @click="getVendorNoFuzzy903()" @blur="getVerdorName903()"/>
+							</div>
+							<div class="control-inline" >
+								<input type="text" style="width: 180px;" id="vendorName_903" name="vendorName_903"  class="form-control" readOnly="true"/>
+							</div>
+								<label class="control-label">需求跟踪号：</label>
+							<div class="control-inline" >
+								<input type="text" id="xqgzh_903" name="xqgzh_903" value="" @blur="onXqggzChange903()" class="form-control" style="width: 80px;"/>
+							</div>
+							    <input type="button" id="btnsaveinteralbound903" @click="save903" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							
+						</div>
+						<!-- 调拨305 -->	
+						<div class="form-group" v-show="inbound_type =='21' " v-cloak>
+							<label class="control-label" >SAP303凭证：</label>
+							<div class="control-inline" >
+								<input type="text" id="pz303" name="pz303" value="" class="form-control"  style="width: 100px;"/>
+							</div>
+								<label class="control-label">生产日期：</label>
+							<div class="control-inline" >
+									<input type="text" id="prddt" name="prddt" v-model="PRDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+							</div>
+								<label class="control-label">需求跟踪号：</label>
+							<div class="control-inline" >
+								<input type="text" id="xqgzh" name="xqgzh" value="" class="form-control" style="width: 80px;"/>
+							</div>
+							<!--  	<label class="control-label">供应商代码：</label>
+							<div class="control-inline" >
+								<input type="text" id="vendor" name="vendor"  class="form-control" style="width: 100px;" @click="getVendorNoFuzzy()"/>
+							</div>-->
+								<label class="control-label">凭证年度：</label>
+							<div class="control-inline" >	
+								 <input id="pzyear" name="pzyear" v-model="PZYEAR" class="input-medium " style="height: 30px;" onclick="WdatePicker({dateFmt:'yyyy'});"/>
+							</div>
+							
+							    <input type="button" id="btnqueryinteralbound" @click="queryinteralbound()" class="btn btn-primary btn-sm " value="查询"/>
+							 
+							    <input type="button" id="btnsaveinteralbound" @click="save" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							
+						</div>
+						
+						<!-- 半成品生产订单A101 -->	
+						<div class="form-group" v-show="inbound_type =='61' " v-cloak>
+								<label class="control-label">生产订单：</label>
+							<div class="control-inline" >
+								<input type="text" id="AUFNR_A101" name="AUFNR_A101" value="" placeholder="多个订单用;隔开" class="form-control" style="width: 150px;"/>
+								<input type="button" id="productNoQueryA101" class="btn btn-default btn-sm" value="..."/>
+							</div>	
+								<label class="control-label">需求跟踪号：</label>
+							<div class="control-inline" >	
+								<input type="text" id="xqgzh_A101" name="xqgzh_A101" value="" @blur="onXqggzChangeA101()" class="form-control" style="width: 120px;"/>
+							</div>	
+								<input type="button" id="btnqueryinteralboundA101" @click="queryinteralboundA101()" class="btn btn-primary btn-sm " value="查询"/>
+							    
+							    <input type="button" id="btnsaveinteralboundA101" @click="saveA101" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							    
+						</div>
+						<!-- 副产品A531 -->
+						<div class="form-group" v-show="inbound_type =='63' " v-cloak>
+								<label class="control-label">生产订单：</label>
+							<div class="control-inline" >
+								<input type="text" id="AUFNR_A531" name="AUFNR_A531" value="" placeholder="多个订单用;隔开" class="form-control" style="width: 150px;"/>
+								<input type="button" id="productNoQueryA531" class="btn btn-default btn-sm" value="..."/>
+							</div>	
+								<label class="control-label">需求跟踪号：</label>
+							<div class="control-inline" >
+								<input type="text" id="xqgzh_A531" name="xqgzh_A531" value="" @blur="onXqggzChangeA531()" class="form-control" style="width: 120px;"/>
+							</div>	
+								<input type="button" id="btnqueryinteralboundA531" @click="queryinteralboundA531()" class="btn btn-primary btn-sm " value="查询"/>
+							    
+							    <input type="button" id="btnsaveinteralboundA531" @click="saveA531" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							    
+						</div>
+						<!-- 采购订单101 -->
+						<div class="form-group" v-show="inbound_type =='67' " v-cloak>
+								<label class="control-label">采购订单：</label>
+							<div class="control-inline" >
+								<input type="text" id="PONO_101" name="PONO_101" value="" placeholder="多个订单用;隔开" class="form-control" style="width: 150px;"/>
+								<input type="button" id="productNoQueryPO101" class="btn btn-default btn-sm" value="..."/>
+							</div>	
+								<label class="control-label">生产日期：</label>
+							<div class="control-inline" >
+									<input type="text" id="prddt_po101" name="prddt_po101" v-model="PRDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+							</div>	
+								<input type="button" id="btnqueryinteralboundpo101" @click="queryinteralboundpo101()" class="btn btn-primary btn-sm " value="查询"/>
+							    
+							    <input type="button" id="btnsaveinteralboundpo101" @click="savepo101" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							    
+						</div>
+						
+						<!-- 生产订单原材料进仓262 -->
+						<div class="form-group" v-show="inbound_type =='74' " v-cloak>
+								<label class="control-label"><span class="required"> *</span>生产订单：</label>
+								<div class="control-inline" style="width: 200px;">
+									<input type="text" id="AUFNR_Mo262" name="AUFNR_Mo262" value="" @blur="validMo262()" placeholder="" class="form-control" style="width: 150px;"/>
+									<!--  <input type="button" id="productNoQueryMO262" class="btn btn-default btn-sm" value="..."/>-->
+								</div>
+								<label class="control-label">需求跟踪号：</label>
+								<div class="control-inline" style="width: 120px;">
+									<input type="text" id="xqgzhMo_262" name="xqgzhMo_262" value="" @blur="onXqggzChangeMo262()" class="form-control" style="width: 120px;"/>
+								</div>	
+								<input type="button" id="btnsaveinteralboundMo262" @click="saveMo262" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							    <input type="hidden" id="is_mo262" name="is_mo262" value="1" style="width: 120px;"/>
+						</div>
+						<!-- Z25 -->
+						<div class="form-group" v-show="inbound_type =='79' " v-cloak>
+							<label class="control-label" >SAP303凭证：</label>
+							<div class="control-inline" >
+								<input type="text" id="pz303Z25" name="pz303Z25" value="" class="form-control"  style="width: 100px;"/>
+							</div>
+								<label class="control-label">生产日期：</label>
+							<div class="control-inline" >
+									<input type="text" id="prddtZ25" name="prddtZ25" v-model="PRDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+							</div>
+								<label class="control-label">需求跟踪号：</label>
+							<div class="control-inline" >
+								<input type="text" id="xqgzhZ25" name="xqgzhZ25" value="" class="form-control" style="width: 80px;"/>
+							</div>
+							<!--  	<label class="control-label">供应商代码：</label>
+							<div class="control-inline" >
+								<input type="text" id="vendor" name="vendor"  class="form-control" style="width: 100px;" @click="getVendorNoFuzzy()"/>
+							</div>-->
+								<label class="control-label">凭证年度：</label>
+							<div class="control-inline" >	
+								 <input id="pzyearZ25" name="pzyearZ25" v-model="PZYEAR" class="input-medium " style="height: 30px;" onclick="WdatePicker({dateFmt:'yyyy'});"/>
+							</div>
+							
+							    <input type="button" id="btnqueryinteralboundZ25" @click="queryinteralboundZ25()" class="btn btn-primary btn-sm " value="查询"/>
+							 
+							    <input type="button" id="btnsaveinteralboundZ25" @click="save" class="btn btn-primary btn-sm " value="创建进仓单"/>
+							
+						</div>
+						<button type="button" class="btn btn-primary btn-sm" @click="show">更多..</button>
+						
+						 <div v-show="showDiv" >
+							<div class="form-group">	
+								<label class="control-label" style="width: 80px">物流器具：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+							    	<input type="text" id="LT_WARE" name="LT_WARE" @blur="onltwareChange()"  />
+							    	</div>
+							    </div>
+						    </div>
+						    <div class="form-group">
+							    <label class="control-label" >车间：</label>
+							    <div class="control-inline">
+									<div class="input-group" style="width:80px">
+							    	<input type="text" id="WORKSHOP" name="WORKSHOP" @blur="onworkshopChange()"  />
+							    	</div>
+							    </div>
+						    </div>
+						    <div class="form-group">
+							    <label class="control-label" >车型：</label>
+							    <div class="control-inline">
+									<div class="input-group" style="width:80px">
+							    	<input type="text" id="CAR_TYPE" name="CAR_TYPE" @blur="oncartypeChange()"  />
+							    	</div>
+							    </div>
+						    </div>
+						    <div class="form-group">
+							    <label class="control-label" >模具编号：</label>
+							    <div class="control-inline">
+									<div class="input-group" style="width:80px">
+							    	<input type="text" id="MOULD_NO" name="MOULD_NO" @blur="onmouldnoChange()"  />
+							    	</div>
+							    </div>	
+						    </div>
+						    <div class="form-group">
+							    <label class="control-label" >作业员：</label>
+							    <div class="control-inline">
+									<div class="input-group" style="width:80px">
+							    	<input type="text" id="ZYY" name="ZYY" @blur="onzyyChange()"  />
+							    	</div>
+							    </div>
+						    </div>
+						 
+						    <div class="form-group">
+							    <label class="control-label" style="width: 80px">工位：</label>
+							    <div class="control-inline">
+									<div class="input-group" style="width:80px">
+							    	<input type="text" id="DIS_STATION" name="DIS_STATION" @blur="ondisstationChange()"  />
+							    	</div>
+							    </div>
+						    </div>
+						    <div class="form-group">
+						    	<label class="control-label" >班次：</label>
+						    	<div class="control-inline">
+									<div class="input-group" style="width:80px">
+						    		<input type="text" id="WORKGROUP_NO" name="WORKGROUP_NO" @blur="onworkgroupnoChange()"  />
+						    		</div>
+						    	</div>
+						    </div>
+						    <div class="form-group">
+						    	<label class="control-label" >备注：</label>
+						    	<div class="control-inline">
+									<div class="input-group" style="width:80px">
+						    		<input type="text" id="REMARK" name="REMARK" @blur="onremarkChange()"  />
+									</div>
+								</div>
+							</div>	
+						  </div>	
+						
+						
+						<div id="pgtoolbar101" v-show="inbound_type=='11'" v-cloak>
+							<div id="links101">
+								<a href='#' class='btn' id='btn_delete101' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+							</div>
+						</div>
+						
+						<div id="pgtoolbar531" v-show="inbound_type=='13' " v-cloak>
+							<div id="links531">
+								<a class="btn" href="#" id="productNoMatnrQuery531"><i class="fa fa-search" aria-hidden="true"></i> 生产订单</a>
+								<a href='#' class='btn' id='btn_delete531' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+							</div>
+						</div>
+						
+						<div id="pgtoolbar521" v-show="inbound_type=='12' " v-cloak>
+							<div id="links521">
+								<a href='#' class='btn' id='newOperation521' @click="newOperation521()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+								<a href='#' class='btn' id='btn_delete521' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a>
+							</div>
+						</div>
+						
+						<div id="pgtoolbarCO101" v-show="inbound_type=='14' " v-cloak>
+							<div id="linksCO101">
+								<a href='#' class='btn' id='newOperationco101' @click="newOperationco101()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+								<a href='#' class='btn' id='btn_deleteco101' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+							</div>
+						</div>
+						<div id="pgtoolbar262" v-show="inbound_type=='15' " v-cloak>
+							<div id="links262">
+								<a href='#' class='btn' id='newOperation262' @click="newOperation262()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+								<a href='#' class='btn' id='btn_delete262' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+								<a href='#' class='btn' id='importyf262Operation'><i class='fa fa-upload' aria-hidden='true'></i></a>
+							</div>
+						</div>
+						<div id="pgtoolbar202" v-show="inbound_type=='16' " v-cloak>
+							<div id="links202">
+								<a href='#' class='btn' id='newOperation202' @click="newOperation202()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+								<a href='#' class='btn' id='btn_delete202' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+							</div>
+						</div>
+						<div id="pgtoolbar222" v-show="inbound_type=='17' " v-cloak>
+							<div id="links222">
+								<a href='#' class='btn' id='newOperation222' @click="newOperation222()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+								<a href='#' class='btn' id='btn_delete222' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+							</div>
+						</div>
+						<div id="pgtoolbar501" v-show="inbound_type=='18' " v-cloak>
+							<div id="links501">
+								<a href='#' class='btn' id='newOperation501' @click="newOperation501()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+								<a href='#' class='btn' id='btn_delete501' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+							</div>
+						</div>
+						<div id="pgtoolbar511" v-show="inbound_type=='19' " v-cloak>
+							<div id="links511">
+								<a href='#' class='btn' id='newOperation511' @click="newOperation511()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+								<a href='#' class='btn' id='btn_delete511' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+							</div>
+						</div>
+						<div id="pgtoolbar903" v-show="inbound_type=='20' " v-cloak>
+						<div id="links903">
+							<a href='#' class='btn' id='newOperation903' @click="newOperation903()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+							<a href='#' class='btn' id='btn_delete903' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+						</div>
+						</div>
+						
+						<div id="pgtoolbar305" v-show="inbound_type=='21' " v-cloak>
+						<div id="links305">
+							<a href='#' class='btn' id='btn_delete305' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a>
+						</div>
+						</div>
+						
+						<div id="pgtoolbarA101" v-show="inbound_type=='61' " v-cloak>
+						<div id="linksA101">
+							<a href='#' class='btn' id='btn_deleteA101' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+						</div>
+						</div>
+						
+						<div id="pgtoolbarA531" v-show="inbound_type=='63' " v-cloak>
+						<div id="linksA531">
+							<a href='#' class='btn' id='btn_deleteA531' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+						</div>
+						</div>
+						
+						<div id="pgtoolbarpo101" v-show="inbound_type=='67' " v-cloak>
+						<div id="linkspo101">
+							<a href='#' class='btn' id='btn_deletepo101' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+						</div>
+						</div>
+						
+						<div id="pgtoolbarMo262" v-show="inbound_type=='74' " v-cloak>
+							<div id="linksMo262">
+								<a href='#' class='btn' id='newOperationMo262' @click="newOperationMo262()"><i class='fa fa-plus' aria-hidden='true'></i></a>
+								<a href='#' class='btn' id='btn_deleteMo262' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a> 
+								<a href='#' class='btn' id='importsc262Operation'><i class='fa fa-upload' aria-hidden='true'></i></a>
+							</div>
+						</div>
+						
+						<div id="pgtoolbarZ25" v-show="inbound_type=='79' " v-cloak>
+						<div id="linksZ25">
+							<a href='#' class='btn' id='btn_deleteZ25' @click="btn_delete_n()"><i class='fa fa-trash' aria-hidden='true'></i></a>
+						</div>
+						</div>
+					</form>
+						
+					</div>
+					</div>
+				
+					</div>
+					<div id="dataGridDiv" class="table-responsive table2excel">
+						<table id="dataGrid"></table>
+					</div>
+					<form id="print" target="_blank" method="post" action="${request.contextPath}/docPrint/inInternalBoundPreview" >
+						<button hidden="hidden" id="printButton" type="submit"></button>
+						<input hidden="hidden" name="inboundNo" id="inboundNo" type="text" >
+					</form>
+					<form id="print1" target="_blank" method="post" action="${request.contextPath}/docPrint/inInternalBoundListPreview" >
+						<button hidden="hidden" id="printButton1" type="submit"></button>
+						<input hidden="hidden" name="inboundNo1" id="inboundNo1" type="text" >
+						<input hidden="hidden" name="BigLetter" id="BigLetter" type="text" >
+					</form>
+					<form id="print2" target="_blank" method="post" action="${request.contextPath}/docPrint/inInternalBoundListPreview" >
+						<button hidden="hidden" id="printButton2" type="submit"></button>
+						<input hidden="hidden" name="inboundNo2" id="inboundNo2" type="text" >
+						<input hidden="hidden" name="SmallLetter" id="SmallLetter" type="text" >
+						<input hidden="hidden" name="subInBoundType1" id="subInBoundType1" type="text" >
+					</form>
+					<div id="resultLayer" style="display: none; padding: 10px;">
+						<h4>创建成功！进仓单号：<span id="inboundNoLayer">-</span></h4>
+						<br/>
+						<input type="button" id="btnPrint" class="btn btn-info btn-sm" value="打印标签" @click="printInInternalbound"/>
+						<input type="button1" id="btnPrint1" class="btn btn-info btn-sm" value="大letter打印" @click="printInInternalboundBigList"/>
+						<input type="button2" id="btnPrint2" class="btn btn-info btn-sm" value="小letter打印" @click="printInInternalboundSmallList"/>
+						<input type="button3" id="btnDetail" class="btn btn-info btn-sm" value="查看明细" @click="queryDetail"/>
+					</div>
+					
+				</div>
+			
+				
+				
+				<div id="import511Layer" style="display: none; padding: 10px;">
+					 <div class="modal-body">
+	                    <form id="uploadForm511" class="form-inline" action="" enctype="multipart/form-data"	method="post">
+		                    <div class="form-group">
+									<label class="control-label">模板文件：</label>
+							</div>	
+							<div class="form-group">	
+									<input type="file" id="excel" name="excel" value="" style="width: 280px;" class="form-control"/>
+									<a href="${request.contextPath}/statics/excel/import-wms-inbound511.xlsx">下载导入模板</a>
+							</div>
+							<input type="text" style="width: 180px;" id="werks_511_upload" name="werks_511_upload" hidden="true" />
+							<input type="text" style="width: 180px;" id="whNumber_511_upload" name="whNumber_511_upload"  hidden="true"/>
+							<input type="text" style="width: 180px;" id="vendor_511_upload" name="vendor_511_upload"  hidden="true"/>
+						</form>	
+							
+	                     
+	                 </div>
+				</div>
+				<!-- 生产订单查询 -->
+			<!--  <div class="hide" style="dispaly:none" id="productNoquery">
+				
+				<table class="table table-striped table-bordered" id="productNoTable" style="font-size:12px;">
+					<thead>
+						<tr>
+							<th width="10px;"><a href='#' class='btn' id='newOperation_product' onclick='newoper_n_pro()'><i class='fa fa-plus' aria-hidden='true'></i></a> </th>
+							<th width="300px;">生产订单号</th>
+						</tr>
+					</thead>
+					<tbody>
+														
+					</tbody>
+				</table>
+			</div>-->
+			
+			<div id="productNoqueryLayer" class="wrapper" style="display: none; padding: 10px;">
+				<div id="links"><!-- 批量查询生产订单 -->
+					<a href='#' class='btn' id='newOperation_product'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+					<a href='#' class='btn' id='newReset_product'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+				</div>
+				<div id="tab1_1" class="table-responsive table2excel" data-tablename="Test Table 1">
+					<table id="dataGrid_product"></table>
+				</div>
+			</div>
+			
+			<div id="productMatnrNoqueryLayer" class="wrapper" style="display: none; padding: 10px;">
+				<div id="links"><!-- 批量查询生产订单和物料 -->
+					<a href='#' class='btn' id='newOperation_product_matnr'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+					<a href='#' class='btn' id='newReset_product_matnr'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+				</div>
+				<div id="tab2_1" class="table-responsive table2excel" data-tablename="Test Table 1">
+					<table id="dataGrid_product_matnr"></table>
+				</div>
+			</div>
+			<!-- 研发内部订单262导入 -->
+			<div id="yf262importLayer" class="wrapper" style="display: none; padding: 10px;">
+				<div id="links">
+					<a href='#' class='btn' id='newReset_yf262_import'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+					<a href="${request.contextPath}/statics/excel/import-wms-inbound-262.xlsx">下载粘贴模板</a>
+				</div>
+				<div id="tab3_1" class="table-responsive table2excel" data-tablename="Test Table 1">
+					<table id="dataGrid_yf262_import"></table>
+				</div>
+			</div>
+			<!-- 生产订单262导入 -->
+			<div id="sc262importLayer" class="wrapper" style="display: none; padding: 10px;">
+				<div id="links">
+					<a href='#' class='btn' id='newReset_sc262_import'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+					<a href="${request.contextPath}/statics/excel/import-wms-inbound-262_mo.xlsx">下载粘贴模板</a>
+				</div>
+				<div id="tab4_1" class="table-responsive table2excel" data-tablename="Test Table 1">
+					<table id="dataGrid_sc262_import"></table>
+				</div>
+			</div>
+	<script src="${request.contextPath}/statics/js/wms/in/wms_internal_inbound.js?_${.now?long}"></script>
+</body>
+</html>

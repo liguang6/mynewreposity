@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>自制件品质编辑</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" class="form-inline" action="#">
+							<div class="row">
+								<div class="form-group">
+									<label class="control-label" style="width: 90px">零部件号：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 120px">
+											<input type="text" name="zzj_no" id="zzj_no" v-model="zzj_no" class="form-control">
+										</div>
+									</div>
+								</div>
+							    <div class="form-group">
+									<label class="control-label" style="width: 100px">零部件名称：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width: 120px">
+											<span class="input-icon input-icon-right" style="width: 100%;">
+		                                     	<input type="text"  name="zzj_name" id="zzj_name"  v-model="zzj_name" style="width: 100%;"  class="form-control"/>	
+		                                  	 </span>
+										</div>
+									</div>
+								</div>
+								<div class="form-group" v-if="operate=='1'" >
+									<button type="button" class="btn btn-primary btn-sm" id="btnAdd" @click="save">保存</button>
+								</div>
+							</div>
+						</form>
+		                <div id="divDataGrid1" style="width:100%;overflow:auto;">
+							<table id="dataGrid1"></table>
+						</div>		
+						<div id="divDataGrid2" style="width:100%;overflow:auto;" v-if="type=='qc'" >
+							<table id="dataGrid2"></table>
+						</div>     
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/testRecordEdit.js?_${.now?long}"></script>
+</body>
+</html>

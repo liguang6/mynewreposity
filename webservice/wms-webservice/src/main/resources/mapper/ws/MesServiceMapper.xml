@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.webservice.ws.dao.MesServiceDao">
+
+	<select id="getExistPDMMap" parameterType="Map"  resultType="String">
+    SELECT m.map_no || '##' || m.version FROM WMSTEST.MASTERDATA_PDM_MAP m
+	WHERE 
+	<foreach collection="map_list" item="map"  open="(" close=")" separator =" or ">	
+		m.map_no=#{map.map_no} and m.version=#{map.version}
+	</foreach>
+    </select>
+    
+    <insert id="savePDMMap" parameterType="Map">
+		INSERT INTO WMSTEST.MASTERDATA_PDM_MAP (ID,map_no,map_name,map_sheet,version,map_url,status,editor,edit_date,publisher,publish_date)
+		select WMSTEST.SEQ_MASTERDATA_PDM_MAP.nextval,m.* from(
+		<foreach collection="add_list" item="map" index="index" separator="union all">
+		select 
+			#{map.map_no},#{map.map_name},#{map.map_sheet},#{map.version},#{map.map_url},
+			#{map.status},#{map.editor},#{map.edit_date},#{map.publisher},#{map.publish_date}
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<update id="updatePDMMap" parameterType="Map">
+		<foreach collection="update_list" item="map"  separator=";"> 
+		update WMSTEST.MASTERDATA_PDM_MAP set map_sheet=#{map.map_sheet},map_url=#{map.map_url},status=#{map.status},
+		editor=#{map.editor},edit_date=#{map.edit_date},publisher=#{map.publisher},publish_date=#{map.publish_date}
+		where map_no=#{map.map_no} and version =#{map.version}
+		</foreach>
+	</update>
+</mapper>

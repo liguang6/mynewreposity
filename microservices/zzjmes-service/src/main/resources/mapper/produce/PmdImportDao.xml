@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.produce.dao.PmdImportDao">
+	
+	<select id="queryPmdHeader" parameterType="Map" resultType="Map">
+		select h.*,
+		(SELECT SUM(f.order_qty) FROM ZZJ_WERKS_ORDER f WHERE f.order_no = h.order_no AND f.werks= h.werks) as 'order_qty'
+		from ZZJ_PMD_HEAD h 
+		where h.order_no=#{order_no}
+		 and h.werks=#{werks}  and h.workshop=#{workshop}  and h.line=#{line}  
+	</select>
+	
+	<select id="queryPmdItems" parameterType="Map" resultType="Map">
+		select t.*,'修改' as "operation_type" 
+		from ZZJ_PMD_ITEMS t 
+		left join ZZJ_PMD_HEAD h on t.pmd_head_id = h.id
+		where t.pmd_head_id=#{pmd_head_id} 
+		<if test="zzj_no !=null and zzj_no !=''">
+			and (t.zzj_name like CONCAT('%',#{zzj_no},'%') or t.zzj_no like CONCAT('%',#{zzj_no},'%'))
+		</if>
+		<if test="zzj_name !=null and zzj_name !=''">
+			and (t.zzj_name like CONCAT('%',#{zzj_name},'%') or t.zzj_no like CONCAT('%',#{zzj_name},'%'))
+		</if>
+		<if test="assembly_position !=null and assembly_position !=''">
+			and t.assembly_position like CONCAT('%',#{assembly_position},'%')  
+		</if>
+		<if test="use_workshop !=null and use_workshop !=''">
+			and t.use_workshop like CONCAT('%',#{use_workshop},'%')   
+		</if>
+		<if test="section !=null and section !=''">
+			and t.section like CONCAT('%',#{section},'%')   
+		</if>
+		<if test="process !=null and process !=''">
+			and t.process_flow like CONCAT('%',#{process},'%')   
+		</if>
+	</select>
+	
+	<insert id="addPmdHeader" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_PMD_HEAD (order_no,werks,werks_name,workshop,workshop_name,line,line_name,creator,create_date)
+		values (#{order_no},#{werks},#{werks_name},#{workshop},#{workshop_name},#{line},#{line_name},#{editor},#{edit_date})
+	</insert>
+	
+	<insert id="addPmdDetails" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_PMD_ITEMS 
+			(pmd_head_id,no,sap_mat,sap_description,mat_description,mat_type,specification,unit,loss,quantity,
+			weight,total_weight,use_workshop,process,process_name,assembly_position,zzj_no,zzj_name,material_no,
+			filling_size,accuracy_demand,surface_treatment,memo,processflow_memo,change_description,change_subject,
+			cailiao_type,subcontracting_type,process_sequence,process_flow,process_time,process_machine,
+			process_product,process_guide,section,aperture,maiban,banhou,filling_size_max,
+			creator,creat_date)
+		values
+		<trim >
+		<foreach collection="pmd_list" item="detail" index="index" separator="," >
+			(
+				#{pmd_head_id},#{detail.no},#{detail.sap_mat},#{detail.sap_description},
+				#{detail.mat_description},#{detail.mat_type},#{detail.specification},#{detail.unit},
+				#{detail.loss},#{detail.quantity},#{detail.weight},#{detail.total_weight},#{detail.use_workshop},
+				#{detail.process},#{detail.process_name},#{detail.assembly_position},#{detail.zzj_no},
+				#{detail.zzj_name},#{detail.material_no},#{detail.filling_size},#{detail.accuracy_demand},
+				#{detail.surface_treatment},#{detail.memo},#{detail.processflow_memo},#{detail.change_description},
+				#{detail.change_subject},#{detail.cailiao_type},#{detail.subcontracting_type},
+				#{detail.process_sequence},#{detail.process_flow},#{detail.process_time},#{detail.process_machine},
+				#{detail.process_product},#{detail.process_guide},#{detail.section},#{detail.aperture},
+				#{detail.maiban},#{detail.banhou},#{detail.filling_size_max},#{creator},#{creat_date}
+			)
+		</foreach>	
+		</trim>	
+	</insert>
+	
+	<insert id="addPmdHistoryDetails" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_PMD_ITEMS_H 
+			(operate_type,pmd_head_id,no,sap_mat,sap_description,mat_description,mat_type,specification,unit,loss,quantity,
+			weight,total_weight,use_workshop,process,process_name,assembly_position,zzj_no,zzj_name,material_no,
+			filling_size,accuracy_demand,surface_treatment,memo,processflow_memo,change_description,change_subject,
+			cailiao_type,subcontracting_type,process_sequence,process_flow,process_time,process_machine,
+			process_product,process_guide,section,aperture,maiban,banhou,filling_size_max,
+			creator,creat_date)
+		values
+		<foreach collection="pmd_list" item="detail" index="index" separator=",">
+			(
+				'00',#{pmd_head_id},#{detail.no},#{detail.sap_mat},#{detail.sap_description},
+				#{detail.mat_description},#{detail.mat_type},#{detail.specification},#{detail.unit},
+				#{detail.loss},#{detail.quantity},#{detail.weight},#{detail.total_weight},#{detail.use_workshop},
+				#{detail.process},#{detail.process_name},#{detail.assembly_position},#{detail.zzj_no},
+				#{detail.zzj_name},#{detail.material_no},#{detail.filling_size},#{detail.accuracy_demand},
+				#{detail.surface_treatment},#{detail.memo},#{detail.processflow_memo},#{detail.change_description},
+				#{detail.change_subject},#{detail.cailiao_type},#{detail.subcontracting_type},
+				#{detail.process_sequence},#{detail.process_flow},#{detail.process_time},#{detail.process_machine},
+				#{detail.process_product},#{detail.process_guide},#{detail.section},#{detail.aperture},
+				#{detail.maiban},#{detail.banhou},#{detail.filling_size_max},#{creator},#{creat_date}
+			)
+		</foreach>		
+	</insert>
+	
+</mapper>

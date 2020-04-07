@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCMatManagerTypeDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.wms.business.modules.config.entity.WmsCMatManagerTypeEntity" id="wmsCMatManagerTypeMap">
+        <result property="id" column="ID"/>
+        <result property="werks" column="WERKS"/>
+        <result property="whNumber" column="WH_NUMBER"/>
+        <result property="matManagerType" column="MAT_MANAGER_TYPE"/>
+        <result property="authorizeCode" column="AUTHORIZE_CODE"/>
+        <result property="authorizeName" column="AUTHORIZE_NAME"/>
+        <result property="managerType" column="MANAGER_TYPE"/>
+        <result property="managerStaff" column="MANAGER_STAFF"/>
+        <result property="manager" column="MANAGER"/>
+        <result property="leaderStaff" column="LEADER_STAFF"/>
+        <result property="leader" column="LEADER"/>
+        <result property="del" column="DEL"/>
+        <result property="creator" column="CREATOR"/>
+        <result property="createDate" column="CREATE_DATE"/>
+        <result property="editor" column="EDITOR"/>
+        <result property="editDate" column="EDIT_DATE"/>
+    </resultMap>
+    <select id="getListByPage" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT D.ID,WERKS,WH_NUMBER,MAT_MANAGER_TYPE,
+		      AUTHORIZE_CODE ,AUTHORIZE_NAME,MANAGER_TYPE,MANAGER_STAFF,MANAGER,
+		      LEADER_STAFF,LEADER,CREATOR ,CREATE_DATE,
+		      S.VALUE MAT_MANAGER_TYPE_DESC,S1.VALUE MANAGER_TYPE_DESC
+		       FROM WMS_C_MAT_MANAGER_TYPE D
+		       LEFT JOIN SYS_DICT S ON D.MAT_MANAGER_TYPE=S.CODE  AND S.TYPE='MAT_MANAGER_TYPE'
+		       LEFT JOIN SYS_DICT S1 ON D.MANAGER_TYPE=S1.CODE  AND S1.TYPE='MANAGER_TYPE'
+		       WHERE 1=1 AND DEL='0'
+		        <if test="WERKS != null and WERKS !=''">
+		        AND D.WERKS=#{WERKS} 
+		      </if>
+              <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="MANAGER_STAFF != null and MANAGER_STAFF !=''">
+		        AND D.MANAGER_STAFF = #{MANAGER_STAFF}
+		      </if>
+		      <if test="MAT_MANAGER_TYPE != null and MAT_MANAGER_TYPE !=''">
+		        AND D.MAT_MANAGER_TYPE = #{MAT_MANAGER_TYPE}
+		      </if>
+		      <if test="LEADER_STAFF != null and LEADER_STAFF !=''">
+		        AND D.LEADER_STAFF = #{LEADER_STAFF}
+		      </if>
+		      <if test="MANAGER_TYPE!= null and MANAGER_TYPE !=''">
+		        AND D.MANAGER_TYPE = #{MANAGER_TYPE}
+		      </if>
+		      <if test="AUTHORIZE_CODE!= null and AUTHORIZE_CODE !=''">
+		        AND D.AUTHORIZE_CODE = #{AUTHORIZE_CODE}
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1)
+		       FROM WMS_C_MAT_MANAGER_TYPE D
+		       WHERE 1=1 AND DEL='0'
+		        <if test="WERKS != null and WERKS !=''">
+		        AND D.WERKS=#{WERKS} 
+		      </if>
+              <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="MANAGER_STAFF != null and MANAGER_STAFF !=''">
+		        AND D.MANAGER_STAFF = #{MANAGER_STAFF}
+		      </if>
+		      <if test="MAT_MANAGER_TYPE != null and MAT_MANAGER_TYPE !=''">
+		        AND D.MAT_MANAGER_TYPE = #{MAT_MANAGER_TYPE}
+		      </if>
+		      <if test="LEADER_STAFF != null and LEADER_STAFF !=''">
+		        AND D.LEADER_STAFF = #{LEADER_STAFF}
+		      </if>
+		      <if test="MANAGER_TYPE!= null and MANAGER_TYPE !=''">
+		        AND D.MANAGER_TYPE = #{MANAGER_TYPE}
+		      </if>
+		      <if test="AUTHORIZE_CODE!= null and AUTHORIZE_CODE !=''">
+		        AND D.AUTHORIZE_CODE = #{AUTHORIZE_CODE}
+		      </if>
+    </select>
+    <select id="getLgortSelect" parameterType="Map" resultType="Map">
+		  SELECT LGORT,LGORT_NAME FROM WMS_SAP_PLANT_LGORT D
+		       WHERE D.DEL='0' AND D.WERKS=#{WERKS} 
+    </select>
+    <!-- 更新，插入库存仓库人料关系模式 -->
+	<update id="merge" parameterType="List">
+		MERGE INTO WMS_C_MAT_MANAGER_TYPE s USING(
+		select m.WERKS,m.WH_NUMBER,m.MAT_MANAGER_TYPE,m.AUTHORIZE_CODE,m.AUTHORIZE_NAME,
+		m.MANAGER_TYPE,m.MANAGER_STAFF,m.MANAGER,m.LEADER_STAFF,
+		m.LEADER,m.DEL,m.CREATOR,m.CREATE_DATE,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		SELECT 
+		#{d.werks} WERKS,#{d.whNumber}  WH_NUMBER,#{d.matManagerType} MAT_MANAGER_TYPE, #{d.authorizeCode} AUTHORIZE_CODE,
+		#{d.authorizeName} AUTHORIZE_NAME,#{d.managerType} MANAGER_TYPE,#{d.managerStaff} MANAGER_STAFF,#{d.manager} MANAGER,
+		#{d.leaderStaff} LEADER_STAFF,#{d.leader}  LEADER,'0' DEL,#{d.creator} CREATOR,#{d.createDate} CREATE_DATE,#{d.editor} EDITOR,#{d.editDate} EDIT_DATE
+		from dual
+		</foreach>
+		) m  ) tmp 
+		on (tmp.WERKS=s.WERKS and tmp.WH_NUMBER=s.WH_NUMBER and tmp.AUTHORIZE_CODE=s.AUTHORIZE_CODE
+		and  tmp.MAT_MANAGER_TYPE=s.MAT_MANAGER_TYPE and tmp.MANAGER_TYPE=s.MANAGER_TYPE and tmp. MANAGER_STAFF=s.MANAGER_STAFF)
+		when matched then 
+			UPDATE  SET s.MAT_MANAGER_TYPE=tmp.MAT_MANAGER_TYPE,s.MANAGER_TYPE=tmp.MANAGER_TYPE,
+			s.MANAGER_STAFF=tmp.MANAGER_STAFF,s.MANAGER=tmp.MANAGER,s.LEADER_STAFF=tmp.LEADER_STAFF,s.LEADER=tmp.leader,
+			s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then 
+			insert (ID,WERKS,WH_NUMBER,MAT_MANAGER_TYPE,AUTHORIZE_CODE,AUTHORIZE_NAME,
+		    MANAGER_TYPE,MANAGER_STAFF,MANAGER,LEADER_STAFF,
+		    LEADER,DEL,CREATOR,CREATE_DATE) 
+		    VALUES (SEQ_WMS_C_MAT_MANAGER_TYPE.nextval,tmp.WERKS,tmp.WH_NUMBER,tmp.MAT_MANAGER_TYPE,
+		    tmp.AUTHORIZE_CODE,tmp.AUTHORIZE_NAME,tmp.MANAGER_TYPE,tmp.MANAGER_STAFF,tmp.MANAGER,
+		    tmp.LEADER_STAFF,tmp.LEADER,tmp.DEL,tmp.EDITOR,tmp.EDIT_DATE)
+	</update>
+</mapper>

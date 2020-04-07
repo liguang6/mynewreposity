@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 创建需求 mapper -->
+<mapper namespace="com.byd.wms.business.modules.out.dao.MaterialPickingDAO">
+<!-- 查询出库需求抬头 -->
+	<select id="getOutReqHead" resultType="Map" parameterType="Map">
+		SELECT 
+		   H.REQUIREMENT_NO,H.REQUIREMENT_TYPE,H.REQUIRED_MODEL,H.PURPOSE,H.RECEIVER,
+		   H.REQUIREMENT_STATUS,H.REQUIRED_DATE,
+		   DECODE(H.REQUIRED_TIME,'00','上午8:00-12:00','01','下午13:00-17:30','02','加班18:00-20:00','03','夜班20:00-8:00') REQUIRED_TIME,
+		   H.WERKS,H.WH_NUMBER,H.DEL,
+		   H.CREATOR,H.CREATE_DATE,H.CHECK_FLAG,H.SHIPMENT_MODEL,S.VALUE BUSINESS_NAME_DESC
+	    FROM WMS_OUT_REQUIREMENT_HEAD H
+	    LEFT JOIN SYS_DICT S ON S.CODE=H.REQUIREMENT_TYPE AND S.TYPE='BUSINESS_NAME'
+		WHERE  H.REQUIREMENT_NO=#{REQUIREMENT_NO}
+	</select>
+	<!-- 查询出库需求列表 -->
+	<select id="getOutRequirementList" resultType="Map" parameterType="Map">
+		SELECT 
+		   D.ID,D.REQUIREMENT_NO,D.REQUIREMENT_ITEM_NO,D.BUSINESS_NAME,D.BUSINESS_TYPE,
+		   D.HX_FLAG,D.REQ_ITEM_STATUS,D.MATNR,D.MAKTX,D.UNIT,D.MEINS,D.UMREZ,D.UMREN,D.QTY,
+		   D.QTY_XJ,D.QTY_REAL,D.QTY_CANCEL,D.LGORT,D.RECEIVE_LGORT,D.BOX_COUNT,D.SORT_SEQ,
+		   D.LIFNR,D.MODEL_GROUP,D.STATION,D.PO_NO,D.PO_LINE_NO,D.MO_NO,D.MO_ITEM_NO,D.RSNUM,
+		   D.RSPOS,D.SO_NO,D.SO_ITEM_NO,D.SAP_OUT_NO,D.SAP_OUT_ITEM_NO,D.COST_CENTER,
+		   D.IO_NO,D.WBS,D.CUSTOMER,D.SAKTO,D.SOBKZ,H.REQUIREMENT_TYPE,H.REQUIRED_MODEL,
+		   H.REQUIREMENT_STATUS,H.REQUIRED_DATE,H.REQUIRED_TIME,H.WERKS,H.WH_NUMBER,H.DEL
+	    FROM WMS_OUT_REQUIREMENT_HEAD H
+<!-- 	    LEFT JOIN SYS_DICT S ON S.BUSINESS_NAME -->
+	    LEFT JOIN WMS_OUT_REQUIREMENT_ITEM D ON D.REQUIREMENT_NO=H.REQUIREMENT_NO
+		WHERE 1=1
+		<include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+<!-- 		   H.WERKS=#{WERKS} AND H.WH_NUMBER=#{WH_NUMBER} -->
+		<if test="REQ_ITEM_STATUS != null and REQ_ITEM_STATUS != ''">
+		   <if test="REQ_ITEM_STATUS =='00'"><!-- 待拣配 -->
+			AND D.QTY>D.QTY_XJ
+		   </if>
+		   <if test="REQ_ITEM_STATUS =='01'"><!-- 已拣配 -->
+			AND D.QTY&lt;=D.QTY_XJ
+		   </if>
+		</if>
+		<if test="LGORT != null and LGORT != ''">
+			and D.LGORT=#{LGORT}
+		</if>
+		<if test="MATNR != null and MATNR != ''">
+			and D.MATNR=#{MATNR}
+		</if>
+		<if test="STATION != null and STATION != ''">
+			and D.STATION=#{STATION}
+		</if>
+		AND D.REQUIREMENT_NO=#{REQUIREMENT_NO}
+	</select>
+	<select id="getStockList" parameterType="List" resultType="Map">
+		<foreach collection="list" index="index" item="item"  separator=" UNION ALL ">
+			     SELECT S.ID,S.LGORT,S.BIN_CODE,S.BIN_NAME,S.MATNR,S.MAKTX,S.LIFNR,S.BATCH,S.SOBKZ,
+			       S.STOCK_QTY,S.LOCK_QTY,S.MEINS UNIT FROM WMS_CORE_STOCK S WHERE
+			       S.WERKS=#{item.WERKS} AND S.WH_NUMBER=#{item.WH_NUMBER} 
+			       <if test="item.LGORT != null and item.LGORT != ''">
+			          AND S.LGORT=#{item.LGORT}
+			       </if>
+			       <if test="item.LIFNR != null and item.LIFNR != ''">
+			          AND S.LIFNR=#{item.LIFNR}
+			       </if>
+			       <if test="item.BIN_CODE != null and item.BIN_CODE != ''">
+			          AND S.BIN_CODE=#{item.BIN_CODE}
+			       </if>
+		           <if test="item.SOBKZ != null and item.SOBKZ != ''">
+			          AND S.SOBKZ=#{item.SOBKZ}
+			       </if>
+			       AND S.MATNR=#{item.MATNR} 
+			</foreach>
+	</select>
+	<select id="getUrgentMatList" parameterType="Map" resultType="String">
+		SELECT MATNR FROM WMS_C_MAT_UTGENT  
+		WHERE NVL(DEL,'0') !='X' AND START_DATE&lt;=#{CUR_DATE} AND END_DATE>=#{CUR_DATE}
+		AND WERKS=#{WERKS}
+	</select>
+	<select id="selectWarehourseManager" resultType="Map" parameterType="Map">
+		SELECT  MANAGER_STAFF,MANAGER,LEADER_STAFF,LEADER FROM WMS_C_MAT_MANAGER_TYPE T WHERE T.MANAGER_TYPE = '01' AND DEL='0'
+		<if test="WERKS != null and WERKS != ''">
+			and WERKS = #{WERKS}
+		</if>
+		<if test="WH_NUMBER != null and WH_NUMBER != ''">
+			and WH_NUMBER = #{WH_NUMBER}
+		</if>
+		GROUP BY  MANAGER_STAFF,MANAGER,LEADER_STAFF,LEADER
+	</select>
+	<select id="getStockInfo" resultType="Map" parameterType="Map">
+		SELECT  * FROM WMS_CORE_STOCK T WHERE 
+		 WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR=#{MATNR} AND BATCH=#{BATCH} ORDER BY BATCH
+	</select>
+	<select id="getPlantBusinessInfo" resultType="Map" parameterType="Map">
+		SELECT  * FROM WMS_C_PLANT_BUSINESS T 
+		LEFT JOIN WMS_C_WMS_BUSINESS S ON T.BUSINESS_CODE=S.BUSINESS_CODE
+		WHERE  T.WERKS = #{WERKS} AND S.SOBKZ=#{SOBKZ} AND S.BUSINESS_NAME = #{BUSINESS_NAME} 
+		AND BUSINESS_TYPE=#{BUSINESS_TYPE}
+	</select>
+	<insert id="saveOutPicking" parameterType="List" >
+		INSERT INTO WMS_OUT_PICKING
+		(ID,PICK_NO,PICK_ITEM_NO,REF_BUSINESS_NO,REF_BUSINESS_ITEM_NO,BUSINESS_CODE,BUSINESS_NAME,BUSINESS_TYPE,
+		WERKS,WH_NUMBER,REQ_ITEM_STATUS,ITEM_TEXT,MATNR,MAKTX,UNIT,LIFNR,LGORT,BIN_CODE,BIN_CODE_XJ,
+		QTY,QTY_LOCK,BATCH,LGORT_RECEIVE,SOBKZ,HX_FLAG,
+		CREATOR,CREATE_DATE,DEL) 
+		SELECT SEQ_WMS_OUT_PICKING.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="detail" index="index" separator="UNION ALL">
+		SELECT  #{detail.PICK_NO},#{detail.PICK_ITEM_NO},#{detail.REQUIREMENT_NO},#{detail.REQUIREMENT_ITEM_NO},
+		#{detail.BUSINESS_CODE},#{detail.BUSINESS_NAME},#{detail.BUSINESS_TYPE},
+		#{detail.WERKS},#{detail.WH_NUMBER},#{detail.REQ_ITEM_STATUS},#{detail.ITEM_TEXT},
+		#{detail.MATNR},#{detail.MAKTX},#{detail.UNIT},#{detail.LIFNR},#{detail.LGORT},#{detail.BIN_CODE},
+		#{detail.BIN_CODE_XJ},#{detail.QTY},#{detail.QTY},#{detail.QTY_LOCK},#{detail.BATCH},#{detail.LGORT_RECEIVE},#{detail.SOBKZ},
+		#{detail.HX_FLAG},#{detail.CREATOR},#{detail.CREATE_DATE},'0'
+		FROM DUAL
+		</foreach>
+		) m
+	</insert>
+	<update id="updateStockInfo" parameterType="List">
+    	UPDATE WMS_CORE_STOCK 
+        <trim prefix="SET" suffixOverrides=",">
+            <trim prefix="STOCK_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when ID=#{d.STOCK_ID} then STOCK_QTY-#{d.STOCK_QTY}
+                </foreach>
+            </trim>
+            <trim prefix="LOCK_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when ID=#{d.STOCK_ID} then LOCK_QTY-#{d.LOCK_QTY}
+                </foreach>
+            </trim>
+            <trim prefix="XJ_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when ID=#{d.STOCK_ID} then XJ_QTY+#{d.XJ_QTY}
+                </foreach>
+            </trim>
+            <trim prefix="XJ_BIN_CODE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when ID=#{d.STOCK_ID} then #{d.XJ_BIN_CODE}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            ID=#{d.STOCK_ID}
+        </foreach>
+	</update>
+	<update id="updateReqItem" parameterType="List">
+    	UPDATE WMS_OUT_REQUIREMENT_ITEM 
+        <trim prefix="SET" suffixOverrides=",">
+            <trim prefix="QTY_XJ =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when ID=#{d.ID} then QTY_XJ+#{d.RECOMMEND_QTY}
+                </foreach>
+            </trim>
+            <trim prefix="REQ_ITEM_STATUS =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when ID=#{d.ID} then #{d.REQ_ITEM_STATUS}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            ID=#{d.ID}
+        </foreach>
+	</update>
+</mapper>

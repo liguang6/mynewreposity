@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>车间退料 创建退料单</title>
+<#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+	<div id="rrapp" v-cloak>
+		<div class="wrapper">
+			<div class="main-content">
+				<div class="box box-main">
+					<div id="bodyDiv" class="box-body">
+						<form id="searchForm" class="form-inline" action="#">
+							<table>
+							<tr>
+								<td id="searchForm" width="85%">
+									<div class="form-group">
+										<label class="control-label" style="width:65px"><span style="color:red">*</span>工厂：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<select class="form-control" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+											   <#list tag.getUserAuthWerks("RG_WSRC") as factory> 
+											      <option value="${factory.code}">${factory.code}</option>
+											   </#list>
+											</select>
+											</div>
+										</div>
+										<label class="control-label" style="width:71px"><span style="color:red">*</span>仓库号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<select class="form-control" name="wh" id="wh">
+												<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+											</select>
+											</div>
+										</div>
+										<label class="control-label"><span style="color:red">*</span>退货类型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:180px" id="parentDiv">
+											<select class="form-control" onchange="vm.onTypeChange(event)" style="width:180px" name="re_type" id="re_type" >
+											</select>
+											</div>
+										</div>
+										
+										<label class="control-label">料号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:120px" id="parentDiv">
+											<input type="text" id="matnrs" name="matnrs" value="" style="width: 85px;" class="form-control" />
+											<input type="button" id="btnMore2" class="btn btn-default btn-sm" value="..."/>
+											</div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm" width="150px">
+									<div class="form-group">
+										<input type="button" id="btnSearchData" class="btn btn-primary btn-sm" value="查询"/>		
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td id="searchForm">
+									<div id="div_kuwei" style="display:none" class="form-group">
+										<label class="control-label"><span style="color:red">*</span>退料库位：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<input type="text" id="LGORT" name="LGORT" value="" style="width: 85px;" class="form-control" />
+											<!-- <select class="form-control" name="LGORT" id="LGORT" >
+												<option v-for="w in lgortlist" :value="w.LGORT" :key="w.LGORT" :logrt_name="w.LGORT_NAME">{{ w.LGORT }}</option>
+											</select> -->
+											</div>
+										</div>
+									</div>
+									<div id="div_thgc" style="display:none" class="form-group">
+										<label class="control-label"><span style="color:red">*</span>退货工厂：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:120px" id="parentDiv">
+											<select class="form-control" name="t_werks" id="t_werks">
+											   <#list tag.getUserAuthWerks("RG_WSRC") as factory> 
+											      <option value="${factory.code}">${factory.code}</option>
+											   </#list>
+											</select>
+											</div>
+										</div>
+									</div>
+									<div id="div_scdd" class="form-group">
+										<label class="control-label">生产订单：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:400px" id="parentDiv">
+											<input type="text" id="orders" name="orders" value="" style="width: 200px;" class="form-control" />
+											<input type="button" id="btnMore" class="btn btn-default btn-sm" value="..."/>
+											</div>
+										</div>
+									</div>
+									<div id="div_nbdd" style="display:none" class="form-group">
+										<label class="control-label"><span style="color:red">*</span>内部订单：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:400px" id="parentDiv">
+											<input type="text" id="in_order" name="in_order" value="" @blur.prevent="getSapInOrderInfo();" v-on:keyup.enter="getSapInOrderInfo();" style="width: 125px;" class="form-control" />
+											<label class="control-label"><span id="inOrderInfo">回车获取内部订单信息</span></label>
+											</div>
+										</div>
+									</div>
+									<div id="div_cbzx" style="display:none" class="form-group">
+										<label class="control-label"><span style="color:red">*</span>成本中心：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" id="parentDiv">
+											<input type="text" id="costcenter" name="costcenter" value="" @blur.prevent="getSapCostCenterInfo();" v-on:keyup.enter="getSapCostCenterInfo();" style="width: 123px;" class="form-control" />
+											<label class="control-label"><span id="costcenterInfo">回车获取成本中心信息</span></label>
+											</div>
+										</div>
+									</div>
+									<div id="div_wbs" style="display:none" class="form-group">
+										<label class="control-label"><span style="color:red">*</span>WBS元素：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" id="parentDiv">
+											<input type="text" id="wbs" name="wbs" value="" @blur.prevent="getSapWbsInfo();" v-on:keyup.enter="getSapWbsInfo();" style="width: 200px;" class="form-control" />
+											<label class="control-label"><span id="wbsInfo">回车获取WBS元素信息</span></label>
+											</div>
+										</div>&nbsp;&nbsp;
+									</div>
+									<div id="div_reWerks" style="display:none" class="form-group">
+										<label class="control-label"><span style="color:red">*</span>接收公司：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<input type="text" id="re_werks" disabled="disabled" name="re_werks" value="" class="form-control" />
+											
+											</div>
+										</div>
+									</div>
+									
+									<div id="div_vendor" style="display:none" class="form-group">
+										<label class="control-label"><span style="color:red">*</span>委外单位：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" id="parentDiv">
+											<input type="text" id="vendor" name="vendor" value="" @blur.prevent="getSapVendorInfo();" v-on:keyup.enter="getSapVendorInfo();" style="width: 125px;" class="form-control" />
+											<label class="control-label"><span id="vendorInfo">回车获取委外单位信息</span></label>
+											</div>
+										</div>
+									</div>
+									<div id="div_sapOrders" style="display:none" class="form-group">
+										<label class="control-label"><span style="color:red">*</span>SAP交货单：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:400px" id="parentDiv">
+											<input type="text" id="sapOrders" name="sapOrders" value="" style="width: 200px;" class="form-control" />
+											<input type="button" id="btnSapOrderMore" class="btn btn-default btn-sm" value="..."/>
+											</div>
+										</div>
+									</div>
+									<div id="div_pono" style="display:none" class="form-group">
+										<label class="control-label">&nbsp;采购订单：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:400px" id="parentDiv">
+											<input type="text" id="ponos" name="ponos" value="" style="width: 200px;" class="form-control" />
+											<input type="button" id="btnPonoMore" class="btn btn-default btn-sm" value="..."/>
+											</div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm">
+									<div class="form-group">
+										<input type="button" id="btnReset" class="btn btn-info btn-sm" value="重置"/>
+										<input type="button" id="btnConfirm" class="btn btn-success btn-sm" value="创建退料单"/>
+									</div>
+								</td>
+							</tr>					
+							</table>
+
+						</form>
+						<div id="pgtoolbar1">
+							<div id="links">
+								<a href='#' class='btn' id='newOperation'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a> 
+								<a href='#' class='btn' id='btn_delete'><i class='fa fa-trash' aria-hidden='true'></i> 删除</a> 
+							</div>
+						</div>
+						<div id="tab1" class="table-responsive table2excel" data-tablename="Test Table 1">
+						<table id="dataGrid"></table>
+						</div>
+						<!-- <div id="dataGridPage"></div> -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4>操作成功！退货单号：<span id="outNo">-</span></h4>
+		<br/>
+		<input type="button" id="btnPrint1" class="btn btn-info btn-sm" value="大letter打印"/>
+		<input type="button" id="btnPrint2" class="btn btn-info btn-sm" value="小letter打印"/>
+	</div>
+	
+	<div id="moreLayer" class="wrapper" style="display: none; padding: 10px;">
+		<div id="links"><!-- 批量查询生产订单 -->
+			<a href='#' class='btn' id='newOperation_1'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			<a href='#' class='btn' id='newReset_1'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+		</div>
+		<div id="tab1_1" class="table-responsive table2excel" data-tablename="Test Table 1">
+			<table id="dataGrid_1"></table>
+		</div>
+	</div>
+	<div id="moreLayer2" style="display: none; padding: 10px;">
+		<div id="links"><!-- 批量查询物料号 -->
+			<a href='#' class='btn' id='newOperation_2'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			<a href='#' class='btn' id='newReset_2'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+		</div>
+		<div id="tab1_2" class="table-responsive table2excel" data-tablename="Test Table 1">
+			<table id="dataGrid_2"></table>
+		</div>
+	</div>
+	<div id="moreLayer3" style="display: none; padding: 10px;">
+		<div id="links"><!-- 批量查询SAP交货单号 -->
+			<a href='#' class='btn' id='newOperation_3'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			<a href='#' class='btn' id='newReset_3'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+		</div>
+		<div id="tab1_3" class="table-responsive table2excel" data-tablename="Test Table 1">
+			<table id="dataGrid_3"></table>
+		</div>
+	</div>
+	<div id="moreLayer4" style="display: none; padding: 10px;">
+		<div id="links"><!-- 批量查询生产订单号 -->
+			<a href='#' class='btn' id='newOperation_4'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			<a href='#' class='btn' id='newReset_4'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+		</div>
+		<div id="tab1_4" class="table-responsive table2excel" data-tablename="Test Table 1">
+			<table id="dataGrid_4"></table>
+		</div>
+	</div>
+	<style>
+	.jqgrow{height:35px}
+	</style>
+	<script src="${request.contextPath}/statics/js/wms/returngoods/workshopReturnCreate.js?_${.now?long}"></script>
+</body>
+</html>

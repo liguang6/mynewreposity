@@ -1,0 +1,97 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>人料关系模式</title>
+<#include "/web_header.html">
+<head>
+</head>
+<body >
+<div id="rrapp" v-cloak>
+<div class="main-content">
+	<div class="box box-main">
+		<div class="box-body">
+			<form id="searchForm" v-model="page.list" action="${request.contextPath}/config/matmanagertype/list" method="post" class="form-inline" >
+						<div class="form-group" style="width:140px">
+							<label class="control-label">工厂代码：</label>
+							<div class="control-inline" style="width:70px">
+                                   <!-- <input type="text" class="form-control" id="werks" name="WERKS" @click="getPlantNoFuzzy()"  style="width:80px">							 -->
+                                   <select class="form-control" name="WERKS" id="werks">
+                                        <#list tag.getUserAuthWerks("WMS_C_MAT_MANAGER_TYPE") as factory> 
+                                            <option value="${factory.code}">${factory.code}</option>
+                                        </#list>
+                                    </select>
+                           </div>
+						</div>
+						<div class="form-group" style="width:150px">
+							<label class="control-label">物料管理方式：</label>
+							<div class="control-inline" style="width:60px">
+                                   <select id="matManagerType" name="MAT_MANAGER_TYPE"  style="width:120px"
+									    class="form-control" > 
+										<option value="">全部</option>
+										<#list tag.wmsDictList('MAT_MANAGER_TYPE') as d> 
+										      <option value="${d.code}">${d.value}</option> 	  
+										</#list>
+									</select>							
+                             </div>
+						</div>
+						<div class="form-group" style="width:120px">
+							<label class="control-label">类型：</label>
+							<div class="control-inline" style="width:70px">
+                                  <select id="managerType" name="MANAGER_TYPE" 
+										class="form-control width-100" > 
+										<option value="">全部</option>
+										<#list tag.wmsDictList('MANAGER_TYPE') as d> 
+										      <option value="${d.code}">${d.value}</option> 	  
+										</#list>
+									</select>					
+                             </div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">授权码：</label>
+							<div class="control-inline">
+                                   <input type="text" class="form-control" id="authorizeCode" name="AUTHORIZE_CODE"  style="width:80px"/>							
+                             </div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">管理员工号：</label>
+							<div class="control-inline">
+                                   <input type="text" class="form-control" id="managerStaff" name="MANAGER_STAFF"  style="width:80px"/>							
+                             </div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">主管工号：</label>
+							<div class="control-inline">
+                                   <input type="text" class="form-control" id="leaderStaff" name="LEADER_STAFF"  style="width:80px"/>							
+                             </div>
+						</div>
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-sm">查询</button>
+								<button type="reset" class="btn btn-default btn-sm">重置</button>
+							</div>
+			</form>
+			
+			<div id="pgtoolbar1">
+			   <div id="links" >
+			   	<a href='#' class='btn' id='newOperation' title="新增"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			   
+			   	<a href='#' class='btn' id='editOperation' title="修改"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 修改</a>
+			   
+			   	<a href='#' class='btn' id='deleteOperation'  title="删除"><i class='fa fa-trash' aria-hidden='true'></i> 删除</a>
+			   	
+<!-- 			   <a href='#' class='btn' id='importOperation'><i class='fa fa-upload' aria-hidden='true'></i> 导入</a> -->
+			   
+			   <a href='#' class='btn' id='exportOperation' onclick="export2Excel()"><i class='fa fa-download' aria-hidden='true'></i> 导出</a>
+			   
+			   	<a href="#" class="btn" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a> 
+			   	
+			   </div>
+			</div>
+			<table id="dataGrid"></table>  
+			 <div id="dataGridPage">
+		</div>
+	</div>
+</div>
+</div>
+</div>
+<table id="tb_excel" style="display:none"></table>	
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_mat_manager_type_list.js?_${.now?long}"></script>
+</body>

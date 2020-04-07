@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.processQuality.dao.QmsCheckTemplateDao">
+
+     <select id="getListByPage" parameterType="Map" resultType="Map">
+     select t.*,'${user}' LOGIN_USER,(select count(1) from QMS_PROCESS_TEST_RECORD p where p.TEMP_NO=t.TEMP_NO) USE_COUNT
+       from   (SELECT h.TEMP_NO,h.BUS_TYPE_CODE,h.ORDER_NO,
+          CASE h.TEST_TYPE WHEN '01' THEN '大巴' WHEN '02' THEN '专用车' END TEST_TYPE,
+		     h.TEST_NODE, h.EDITOR,h.EDIT_DATE,h.CREATOR ,h.CREATE_DATE
+		       FROM QMS_PROCESS_TEST_RECORD_TEMP_HEAD h  WHERE 1=1
+		         <if test="busTypeCode != null and busTypeCode !=''">
+			        AND h.BUS_TYPE_CODE=#{busTypeCode} 
+			      </if>
+	              <if test="testNode != null and testNode !=''">
+			        AND h.TEST_NODE = #{testNode}
+			      </if>
+			      <if test="orderNo != null and orderNo !=''">
+			        AND h.ORDER_NO = #{orderNo}
+			      </if>
+			      ORDER BY h.CREATE_DATE DESC
+         LIMIT #{start},#{limit}
+         ) t
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM QMS_PROCESS_TEST_RECORD_TEMP_HEAD h WHERE  1=1
+		         <if test="busTypeCode != null and busTypeCode !=''">
+			        AND h.BUS_TYPE_CODE=#{busTypeCode} 
+			      </if>
+	              <if test="testNode != null and testNode !=''">
+			        AND h.TEST_NODE = #{testNode}
+			      </if>
+			      <if test="orderNo != null and orderNo !=''">
+			        AND h.ORDER_NO = #{orderNo}
+			      </if>
+    </select>
+  <insert id="saveHead" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_PROCESS_TEST_RECORD_TEMP_HEAD
+		(TEMP_NO,BUS_TYPE_CODE,ORDER_NO,TEST_TYPE,TEST_NODE,CREATOR ,CREATE_DATE) values
+			(#{tempNo},#{busTypeCode},#{orderNo},#{testType},#{testNode},#{user},#{createDate})
+	</insert>
+	<insert id="saveItem" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_PROCESS_TEST_RECORD_TEMP_ITEM
+		(TEMP_NO,TEMP_ITEM_NO,PROCESS_NAME,TEST_ITEM,TEST_STANDARD,TEST_GROUP,NUMBER_FLAG,
+		ONE_PASSED_FLAG,PHOTO_FLAG,PATROL_FLAG,CREATOR,CREATE_DATE) values
+		<foreach collection="list" item="detail" index="index" separator=",">
+			(#{tempNo},#{detail.tempItemNo},#{detail.processName},#{detail.testItem},#{detail.testStandard},
+			#{detail.testGroup},#{detail.numberFlag},
+			#{detail.onePassedFlag},#{detail.photoFlag},#{detail.patrolFlag},#{user},#{createDate})
+		</foreach>
+	</insert>
+	<update id="updateItem" parameterType="Map">
+		<foreach item="detail" index="index" collection="updateList" open="" separator=";" close=";">
+			update QMS_PROCESS_TEST_RECORD_TEMP_ITEM 
+			set process_name= #{detail.processName},TEST_ITEM=#{detail.testItem},
+			TEST_STANDARD=#{detail.testStandard},TEST_GROUP=#{detail.testGroup},
+			NUMBER_FLAG=#{detail.numberFlag},ONE_PASSED_FLAG=#{detail.onePassedFlag},
+			PHOTO_FLAG=#{detail.photoFlag},PATROL_FLAG=#{detail.patrolFlag}, 
+			EDITOR=#{user},EDIT_DATE=#{createDate}  where ID=#{detail.id}
+		</foreach>
+	</update>
+	
+    <select id="getItemList" parameterType="Map" resultType="Map">
+		      SELECT t.ID id,t.TEMP_NO tempNo,t.TEMP_ITEM_NO tempItemNo,t.TEST_ITEM testItem,t.PROCESS_NAME processName,
+		      t.TEST_STANDARD testStandard,t.TEST_GROUP testGroup,t.NUMBER_FLAG numberFlag,
+		        t.ONE_PASSED_FLAG onePassedFlag,t.PHOTO_FLAG photoFlag,t.PATROL_FLAG patrolFlag,
+		        (CASE  t.NUMBER_FLAG WHEN 'X' THEN '是' WHEN '0' THEN '否' END) numberFlagDesc,
+		        (CASE  t.ONE_PASSED_FLAG WHEN 'X' THEN '是' WHEN '0' THEN '否' END) onePassedFlagDesc,
+		        (CASE  t.PHOTO_FLAG WHEN 'X' THEN '是' WHEN '0' THEN '否' END) photoFlagDesc,
+		        (CASE  t.PATROL_FLAG WHEN 'X' THEN '是' WHEN '0' THEN '否' END) patrolFlagDesc
+                   FROM QMS_PROCESS_TEST_RECORD_TEMP_ITEM t WHERE t.TEMP_NO=#{tempNo}
+    </select>
+    <select id="getMaxItemNo" parameterType="String" resultType="int">
+              SELECT MAX(CAST(TEMP_ITEM_NO AS SIGNED))  FROM QMS_PROCESS_TEST_RECORD_TEMP_ITEM t WHERE t.TEMP_NO=#{tempNo}
+    </select>
+	<insert id="insertWmsCoreStockLabel" parameterType="List">
+		insert into WMS_CORE_STOCK_LABEL (ID,WERKS,WH_NUMBER,MATNR,BATCH,LABEL_NO,BIN_CODE,BIN_NAME,EDITOR,EDIT_DATE)
+		select SEQ_WMS_CORE_STOCK_LABEL.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.WERKS},#{d.WH_NUMBER},#{d.MATNR},#{d.BATCH},#{d.LABEL_NO}
+		,#{d.BIN_CODE},#{d.BIN_NAME},#{d.EDITOR},#{d.EDIT_DATE}
+		from dual
+		</foreach>
+		) m
+	</insert>
+	<select id="getCoreStockLabelList" parameterType="Map" resultType="Map">
+		    SELECT s.*  FROM   WMS_CORE_STOCK_LABEL t
+				LEFT JOIN WMS_CORE_LABEL s  ON s.LABEL_NO=t.LABEL_NO
+				 WHERE s.WERKS=#{WERKS} AND s.WH_NUMBER=#{WH_NUMBER} 
+<!-- 				 AND s.LGORT=#{LGORT} -->
+<!-- 				 AND s.LIFNR=#{LIFNR}  -->
+              <if test="LGORT!=null and LGORT!=''">
+		            AND s.LGORT=#{LGORT}
+		      </if>
+		      <if test="LGORT==null or LGORT==''">
+		            AND s.LGORT IS NULL
+		      </if>
+		      <if test="LIFNR!=null and LIFNR!=''">
+		         	AND s.LIFNR=#{LIFNR}
+		      </if>
+		      <if test="LIFNR==null or LIFNR==''">
+		         	AND s.LIFNR  IS NULL
+		      </if>
+				 AND s.MATNR=#{MATNR}  AND s.BIN_CODE=#{BIN_CODE} AND s.BATCH=#{BATCH}
+    </select>
+		<select id="getCoreLabelList" parameterType="Map" resultType="Map">
+		    SELECT s.*  FROM  WMS_CORE_LABEL s  
+				 WHERE s.WERKS=#{WERKS} AND s.WH_NUMBER=#{WH_NUMBER} 
+<!-- 				 AND s.LGORT=#{LGORT} AND s.LIFNR=#{LIFNR} AND s.SOBKZ=#{SOBKZ} -->
+             <if test="SOBKZ!=null and SOBKZ!=''">
+		            AND S.SOBKZ=#{SOBKZ}  
+		      </if>
+		      <if test="SOBKZ==null or SOBKZ==''">
+		            AND SOBKZ IS NULL
+		      </if>
+		      <if test="LGORT!=null and LGORT!=''">
+		            AND LGORT=#{LGORT}
+		      </if>
+		      <if test="LGORT==null or LGORT==''">
+		            AND LGORT IS NULL
+		      </if>
+		      <if test="LIFNR!=null and LIFNR!=''">
+		         	AND S.LIFNR=#{LIFNR}
+		      </if>
+		      <if test="LIFNR==null or LIFNR==''">
+		         	AND S.LIFNR  IS NULL
+		      </if>
+				 AND s.MATNR=#{MATNR}  AND s.BIN_CODE=#{BIN_CODE} AND s.BATCH=#{BATCH}
+    </select>
+    <update id="deleteHead" parameterType="String">
+		DELETE FROM QMS_PROCESS_TEST_RECORD_TEMP_HEAD WHERE TEMP_NO=#{tempNo}
+	</update>
+	<update id="deleteItem" parameterType="String">
+		DELETE FROM QMS_PROCESS_TEST_RECORD_TEMP_ITEM WHERE TEMP_NO=#{tempNo}
+	</update>
+	<update id="deleteItemById" parameterType="long">
+		DELETE FROM QMS_PROCESS_TEST_RECORD_TEMP_ITEM WHERE ID=#{id}
+	</update>
+	 <select id="getMaxTempNo" parameterType="Map" resultType="long">
+         SELECT max(CAST(substring(h.TEMP_NO, 3) AS SIGNED)) FROM QMS_PROCESS_TEST_RECORD_TEMP_HEAD h
+          WHERE  BUS_TYPE_CODE =#{busTypeCode} AND TEST_NODE=#{testNode}
+    </select>
+    <select id="checkTempIsUsed" parameterType="String" resultType="int">
+         SELECT count(1) FROM QMS_PROCESS_TEST_RECORD h WHERE  TEMP_NO ==#{tempNo}
+    </select>
+</mapper>

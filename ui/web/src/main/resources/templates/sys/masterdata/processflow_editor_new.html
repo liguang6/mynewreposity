@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>编辑车型工序</title>
+<#include "/header.html">
+<style>
+.op {
+   padding: 0 2px;
+}
+.op-add {
+color:#1d9e74;
+}
+.op-m {
+ color:#ca0c16;
+}
+.op-up {
+  color:#337ab7
+}
+.op-dowm {
+  color:#337ab7
+}
+</style>
+</head>
+<body>
+
+    <input id="deptId" style="display: none;" value="${deptId!''}">
+    <input id="busTypeCode" style="display: none;" value="${busTypeCode!''}"/>
+    <input id="vehicleType" style="display: none;" value="${vehicleType!''}"/>
+    
+	<div class="wrapper" id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+				<form id="inputForm"  method="post"
+					class="form-horizontal">
+					<div class="box-body">
+						
+						<br /> <input type="hidden" id="id" name="id"
+							value="1004197236652892160" />
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title="">工厂：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<div id="factoryName" style="padding-top:3px;">
+										  {{factoryName}}
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title="">车间：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+
+                                        <div id="workshopName" style="padding-top:3px;">
+                                          {{workshopName}}
+                                        </div>
+										
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required">*</span> 车型：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select v-model="busTypeCode">
+										    <#list tag.busTypeList() as busType>
+										       <option value="${busType.busTypeCode}">${busType.internalName}</option>
+										    </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required">*</span> 车辆类型：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<select v-model="vehicleType">
+										    <#list tag.wmsDictList('vehicle_type') as dict>
+										      <option value="${dict.value}">${dict.value}</option>
+										    </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required">*</span> 线别：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<input style="background-color: white;" id="deptSel" type="text" readonly="readonly"  v-model="lineName" maxlength="64" class="form-control" @click="showDeptMenu" />
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								
+							</div>
+						</div>
+
+						<div class="row" id="process-list">
+							<div class='col-xs-2'></div>
+							<div class="col-xs-10">
+								<table class='table table-bordered'>
+									<tr style="background-color: #eee">
+										<th>序号</th>
+										<th>工序代码</th>
+										<th>工序名称</th>
+										<th>工段</th>
+										<th>生产监控点</th>
+										<th>计划节点</th>
+										<th>操作</th>
+									</tr>
+									
+									<tr v-for="(process,index) in processFlows" :key="process.sortNo">
+									    <td>{{process.sortNo+1}}</td>
+									    <td>
+						                   <input type="text"  class="form-control process" :value="process.processCode" 
+							               @click="getProcess($event,index,function(e){vm.processFlows[e.index_].processId = e.process_id;vm.processFlows[e.index_].processCode = e.process_code; updateProcessFlow(e.index_,e.process_id,e.process_code); })"  />
+									    </td>
+									    
+									    <td class="processName">{{process.processName}}</td>
+									    <td class="sectionName">{{process.sectionName}}</td>
+									   
+									    <td v-if="process.monitoryPointFlag === '1'">是</td>
+									    <td v-else >否</td>
+									   
+									    <td >{{process.planNodeName}}</td>
+									    
+									    <td class="actions">
+									       <a href="#" class="op op-up" @click="moveUp(process.sortNo)"><i class="fa fa-long-arrow-up" aria-hidden="true"></i></a>
+									       <a href="#" class="op op-down" @click="moveDowm(process.sortNo)"><i class="fa fa-long-arrow-down" aria-hidden="true"></i></a>
+									       <a href="#" class="op op-add" @click="insert(process.sortNo)"><i class="fa fa-plus" aria-hidden="true"></i> </a>
+									       <a href="#" class="op op-m" @click="remove(process.sortNo)"><i class="fa fa-minus"  aria-hidden="true"></i></a>
+									    </td>
+									</tr>
+								</table>
+							</div>
+						</div>
+
+					</div>
+					
+					<div class="box-footer">
+						<div class="row">
+							<div class="col-sm-offset-5 col-sm-10">
+							
+							    <button class="btn btn-sm btn-primary"
+									id="btnSubmit" @click="saveOrUpdate($event)">
+									<i class="fa fa-check"></i> 保 存
+								</button>
+							
+								<button type="button" class="btn btn-sm btn-default"
+									id="btnCancel" @click="close">
+									<i class="fa fa-reply-all"></i> 关 闭
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	
+	<div id="menuContent" class="menuContent" style="display:none; position: absolute;z-index=999;background-color: #eee;border: 1px solid">
+	     <ul id="treeDemo" class="ztree" style="margin-top:0; width:200px;"></ul>
+    </div>
+	<script src="${request.contextPath}/statics/js/modules/setting/settingprocessflow_editor_new.js?_${.now?long}"></script>
+</body>
+</html>

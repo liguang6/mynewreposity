@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>自制件品质录入</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/zzjmes/qmTestRecord/getQcTestRules">
+						<div class="row">
+							<div class="form-group">
+                                <label class="control-label" ><span style="color:red">*</span>工厂：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									<select  name="werks" id="werks" v-model="werks" style="width:100%;height:25px">
+									   <#list tag.getUserAuthWerks("ZZJMES_QC_TEST_RECORD") as factory>
+											<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+										</#list>
+									</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>车间：</label>
+								<div class="control-inline" style="width:70px">
+                                       <select name="workshop" id="workshop" v-model="workshop" style="width:100%;height:25px">
+										  <option v-for="w in workshop_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+						    <div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>线别：</label>
+								<div class="control-inline" style="width:70px">
+                                       <select  name="line" id="line" v-model="line" style="width:100%;height:25px">
+										  <option v-for="w in line_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 50px"><span style="color:red">*</span>订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 120px">
+										<input type="text" name="order_no" id="order_no" class="form-control" @click="getZZJOrderNoSelect()" v-model="order_no">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" ><span style="color:red">*</span>批次：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									   <select  name="batch" class="input-small tab_order" style="height:28px;width:70px;" v-model="batch">
+											<option v-for="item in batch_list">{{item.batch}}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">零部件号：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 150px">
+										<span class="input-icon input-icon-right" style="width: 100%;">
+	                                     	<input type="text"  name="zzj_no" id="zzj_no"  v-model="zzj_no" style="width: 100%;"  class="form-control"/>	
+	                                     	<i class="ace-icon fa fa-barcode black btn_scan" style="cursor: pointer;" onclick="doScan('zzj_no')"> </i>
+	                                  	 </span>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+							<span style="font-size:15px;color:red;font-weight:bold;"  v-cloak title="抽检数/需求数">{{test_qty}}/{{demand_qty}}</span>			
+							</div>
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" id="btnSave" @click="save">保存</button>
+								<button type="button" class="btn btn-default btn-sm" id="reset">重置</button>
+							</div>
+						</div>
+						</form>
+		                <div id="divDataGrid1" style="width:100%;overflow:auto;">
+							<table id="dataGrid1"></table>
+						</div>		
+						<div id="divDataGrid2" style="width:100%;overflow:auto;">
+							<table id="dataGrid2"></table>
+						</div>     
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/qcTestRecord.js?_${.now?long}"></script>
+</body>
+</html>

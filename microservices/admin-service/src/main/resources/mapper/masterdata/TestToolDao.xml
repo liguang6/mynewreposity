@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.TestToolDao">
+	
+	
+	<select id="getQmsTestToolList" resultType="Map" parameterType="Map">
+		SELECT t.* 
+		FROM MASTERDATA_TEST_TOOL t 
+		WHERE NVL(t.STATUS,'0') ='0' 
+		<if test="WERKS != '' and WERKS != null">
+			AND t.WERKS = #{WERKS} 
+		</if>
+		<if test="werks != '' and werks != null">
+			AND t.WERKS = #{werks} 
+		</if>
+		<if test="TEST_TOOL_NO != '' and TEST_TOOL_NO != null">
+			AND (t.TEST_TOOL_NO like '%' ||#{TEST_TOOL_NO}|| '%' OR t.TEST_TOOL_NAME like '%' ||#{TEST_TOOL_NO}|| '%' )
+		</if>
+		<if test="test_tool_no != '' and test_tool_no != null">
+			AND (t.TEST_TOOL_NO like '%' ||#{test_tool_no}|| '%' OR t.TEST_TOOL_NAME like '%' ||#{test_tool_no}|| '%' )
+		</if>
+		<if test="TEST_TOOL_NAME != '' and TEST_TOOL_NAME != null">
+			AND (t.TEST_TOOL_NO like '%' ||#{TEST_TOOL_NAME}|| '%' OR t.TEST_TOOL_NAME like '%' ||#{TEST_TOOL_NAME}|| '%' )
+		</if>
+		<if test="test_tool_name != '' and test_tool_name != null">
+			AND (t.TEST_TOOL_NO like '%' ||#{test_tool_name}|| '%' OR t.TEST_TOOL_NAME like '%' ||#{test_tool_name}|| '%' )
+		</if>
+		<if test="pageSize != '' and pageSize != null">
+			AND ROWNUM &gt;= #{pageSize} 
+		</if>
+		
+	</select>
+	
+	<select id="getQmsTestToolListByPage" resultType="Map" parameterType="Map">
+	SELECT * FROM (
+	SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT t.* 
+		FROM MASTERDATA_TEST_TOOL t 
+		WHERE t.STATUS ='0' 
+		<if test="werks != '' and werks != null">
+			AND t.WERKS = #{werks} 
+		</if>
+		<if test="test_tool_no != '' and test_tool_no != null">
+			AND (t.TEST_TOOL_NO like '%' ||#{test_tool_no}|| '%' OR t.TEST_TOOL_NAME like '%' ||#{test_tool_no}|| '%' )
+		</if>
+		<if test="test_tool_name != '' and test_tool_name != null">
+			AND (t.TEST_TOOL_NO like '%' ||#{test_tool_name}|| '%' OR t.TEST_TOOL_NAME like '%' ||#{test_tool_name}|| '%' )
+		</if>
+		) TMP 
+	   WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	</select>
+	
+	<select id="getQmsTestToolListCount" parameterType="Map" resultType="int">
+		SELECT count(*) 
+		FROM MASTERDATA_TEST_TOOL t 
+		WHERE t.STATUS ='0' 
+		<if test="werks != '' and werks != null">
+			AND t.WERKS = #{werks} 
+		</if>
+		<if test="test_tool_no != null and test_tool_no != ''">
+			AND (t.TEST_TOOL_NO like '%' ||#{test_tool_no}|| '%' OR t.TEST_TOOL_NAME like '%' ||#{test_tool_no}|| '%' )
+		</if>
+		<if test="test_tool_name != null and test_tool_name != ''">
+			AND (t.TEST_TOOL_NO like '%' ||#{test_tool_name}|| '%' OR t.TEST_TOOL_NAME like '%' ||#{test_tool_name}|| '%' )
+		</if>
+	</select>
+	
+	<select id="selectById" parameterType="Map" resultType="Map">
+		SELECT * FROM MASTERDATA_TEST_TOOL WHERE STATUS='0'
+		<if test="ID != '' and ID != null">
+			AND ID = #{ID}
+		</if>
+	</select>
+	
+	<insert id="insertQmsTestTool" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_MASTERDATA_TEST_TOOL.NEXTVAL FROM dual
+		</selectKey>
+		INSERT INTO MASTERDATA_TEST_TOOL
+		(ID,WERKS,TEST_TOOL_NO,TEST_TOOL_NAME,SPECIFICATION,MEMO,STATUS,EDITOR,EDIT_DATE)
+		
+		VALUES (#{ID},#{werks},#{test_tool_no},#{test_tool_name},#{specification},#{memo},#{status},#{editor},#{edit_date})
+	</insert>
+	
+	<update id="updateQmsTestTool" parameterType="Map">
+		UPDATE MASTERDATA_TEST_TOOL
+		SET WERKS=#{werks},TEST_TOOL_NO=#{test_tool_no},TEST_TOOL_NAME=#{test_tool_name},SPECIFICATION=#{specification},MEMO=#{memo},
+		STATUS=#{status},EDITOR=#{editor},EDIT_DATE=#{edit_date}
+		WHERE ID=#{id}
+	</update>
+	
+	<delete id="delQmsTestTool" parameterType="Map">
+		UPDATE MASTERDATA_TEST_TOOL SET STATUS='X' WHERE ID = #{id}
+	</delete>
+	
+</mapper>

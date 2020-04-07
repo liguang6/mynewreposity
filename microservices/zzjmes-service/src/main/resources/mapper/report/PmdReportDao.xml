@@ -1,0 +1,2036 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.report.dao.PmdReportDao">
+  	  <!-- 订单产量达成明细报表 -->
+	  <select id="getPmdOutputReachList" resultType="Map" parameterType="Map">
+	  	<!--  匹配拆分后的下料明细生产工序关联的机台计划总数、汇总产量及当前工序 -->
+		SELECT x.*,
+			y.plan_process,CASE WHEN y.plan_quantity > 0 THEN y.plan_quantity ELSE 0 END AS plan_quantity,
+			CASE WHEN y.prod_quantity > 0 THEN y.prod_quantity ELSE 0 END AS prod_quantity,
+			CASE WHEN y.prod_quantity >0 THEN x.pmd_req_qty-y.prod_quantity 
+			ELSE x.pmd_req_qty END AS un_prod_quantity
+			FROM 
+			( <!-- 根据生产工序流程将单行下料明细拆分为多行数据	  -->
+				SELECT a.*,CASE WHEN a.ecn_qty > 0 THEN a.ecn_qty ELSE a.req_qty END AS pmd_req_qty,
+					  substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1) as prod_process  
+				 FROM 
+					(	<!--  根据订单、工厂、车间、线别查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况      -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							o.order_qty * di.quantity req_qty, 
+							( select sum( (t.to_no-t.from_no+1)*t.quantity )
+														from ZZJ_PMD_ECN t
+														where t.zzj_pmd_items_id = di.id 
+							) as ecn_qty,
+							di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_product,
+							SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+							di.assembly_position,di.process,di.section 
+						FROM ZZJ_PMD_HEAD dh
+							RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+							LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+							WHERE 1=1
+							AND dh.order_no = #{order_no} 
+							AND dh.werks = #{werks} 
+							AND dh.workshop = #{workshop} 
+							AND dh.line = #{line}
+							<if test="zzj_no != null and zzj_no != ''">
+							  <if test="zzj_no.indexOf(',')==-1">
+					               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+					          </if>
+					          <if test="zzj_no.indexOf(',')!=-1">
+					               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+					          </if>
+							</if>
+							<if test="section != null and section != ''">
+								AND di.section like concat('%',#{section},'%') 
+							</if>
+							<if test="use_workshop != null and use_workshop != ''">
+								AND di.use_workshop = #{use_workshop}
+							</if>
+							<if test="subcontracting_type != null and subcontracting_type != ''">
+								AND di.subcontracting_type = #{subcontracting_type}
+							</if>
+							<if test="assembly_position != null and assembly_position != ''">
+								and di.assembly_position like concat('%', #{assembly_position},'%')
+							</if>	
+							<if test="prod_process != null and prod_process != '' and prod_process !='LAST' ">
+								AND di.process_flow like concat('%', #{prod_process},'%')
+							</if>
+							<if test="orderBy != null and orderBy != ''">
+								ORDER BY #{orderBy} 
+							</if>
+							<if test="orderBy == null or orderBy == ''">
+								ORDER BY di.zzj_no,di.assembly_position
+							</if>							
+							
+					) a
+					join mysql.help_topic b 
+					on b.help_topic_id &lt; (length(a.process_product) - length(replace(a.process_product,'-',''))+1)
+			) x
+			LEFT JOIN 
+		    (	<!-- 根据订单、工厂、车间、线别查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+				SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+				pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+				FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+				LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+				LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+				WHERE 1=1
+				AND ph.order_no = #{order_no} 
+				AND ph.werks = #{werks} 
+				AND ph.workshop = #{workshop} 
+				AND ph.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND ph.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+		          </if>
+				</if>				
+				<if test="section != null and section != ''">
+					AND di.section like concat('%',#{section},'%') 
+				</if>
+				<if test="use_workshop != null and use_workshop != ''">
+					AND di.use_workshop = #{use_workshop}
+				</if>
+				<if test="subcontracting_type != null and subcontracting_type != ''">
+					AND di.subcontracting_type = #{subcontracting_type}
+				</if>
+				<if test="assembly_position != null and assembly_position != ''">
+					and di.assembly_position like concat('%', #{assembly_position},'%')
+				</if>
+	<!-- 			<if test="prod_process != null and prod_process != ''">
+					AND pi.plan_process like concat('%', #{prod_process},'%')
+				</if> -->				
+				GROUP BY pi.zzj_pmd_items_id,pi.plan_process
+			 ) y
+				ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.prod_process = y.plan_process
+			WHERE 1=1
+			<if test="status != null and status != '' and status == 'ok' ">
+				AND x.pmd_req_qty-y.prod_quantity  = 0
+			</if>			
+			<if test="status != null and status != '' and status == 'ng' ">
+				AND x.pmd_req_qty-y.prod_quantity  > 0 OR y.prod_quantity IS NULL 
+			</if>
+			<if test="prod_process != null and prod_process != '' and prod_process !='LAST'">
+				AND x.prod_process like concat('%', #{prod_process},'%')
+			</if>
+			<if test="prod_process != null and prod_process != '' and prod_process =='LAST'">
+				AND x.last_process = x.prod_process
+			</if>			
+			<if test="limit != null and limit !=''">
+			   LIMIT #{start},#{limit}
+			</if>
+	</select>
+	
+	<!-- 订单产量达成明细报表 -->
+	<select id="getPmdOutputReachCount" resultType="int" parameterType="Map">
+	 select  count(1) from (
+	  	<!--  匹配拆分后的下料明细生产工序关联的机台计划总数、汇总产量及当前工序 -->
+		SELECT x.*,
+			y.plan_process,CASE WHEN y.plan_quantity > 0 THEN y.plan_quantity ELSE 0 END AS plan_quantity,
+			CASE WHEN y.prod_quantity > 0 THEN y.prod_quantity ELSE 0 END AS prod_quantity,
+			CASE WHEN y.prod_quantity >0 THEN x.pmd_req_qty-y.prod_quantity 
+			ELSE x.pmd_req_qty END AS un_prod_quantity
+			FROM 
+			   ( <!-- 根据生产工序流程将单行下料明细拆分为多行数据	  -->
+				SELECT a.*,CASE WHEN a.ecn_qty > 0 THEN a.ecn_qty ELSE a.req_qty END AS pmd_req_qty,
+					  substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1) as prod_process  
+				 FROM 
+					(	<!--  根据订单、工厂、车间、线别查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况      -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							o.order_qty * di.quantity req_qty, 
+							( select sum( (t.to_no-t.from_no+1)*t.quantity )
+														from ZZJ_PMD_ECN t
+														where t.zzj_pmd_items_id = di.id 
+							) as ecn_qty,
+							di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_product,
+							SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+							di.assembly_position,di.process,di.section 
+						FROM ZZJ_PMD_HEAD dh
+							RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+							LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+							WHERE 1=1
+							AND dh.order_no = #{order_no} 
+							AND dh.werks = #{werks} 
+							AND dh.workshop = #{workshop} 
+							AND dh.line = #{line}
+							<if test="zzj_no != null and zzj_no != ''">
+							  <if test="zzj_no.indexOf(',')==-1">
+					               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+					          </if>
+					          <if test="zzj_no.indexOf(',')!=-1">
+					               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+					          </if>
+							</if>
+							<if test="section != null and section != ''">
+								AND di.section like concat('%',#{section},'%') 
+							</if>
+							<if test="use_workshop != null and use_workshop != ''">
+								AND di.use_workshop = #{use_workshop}
+							</if>
+							<if test="subcontracting_type != null and subcontracting_type != ''">
+								AND di.subcontracting_type = #{subcontracting_type}
+							</if>
+							<if test="assembly_position != null and assembly_position != ''">
+								and di.assembly_position like concat('%', #{assembly_position},'%')
+							</if>	
+							<if test="prod_process != null and prod_process != '' and prod_process !='LAST' ">
+								AND di.process_flow like concat('%', #{prod_process},'%')
+							</if>
+							<if test="orderBy != null and orderBy != ''">
+								ORDER BY #{orderBy} 
+							</if>
+							<if test="orderBy == null or orderBy == ''">
+								ORDER BY di.zzj_no,di.assembly_position
+							</if>							
+							
+					) a
+					join mysql.help_topic b 
+					on b.help_topic_id &lt; (length(a.process_product) - length(replace(a.process_product,'-',''))+1)
+			) x
+			LEFT JOIN 
+		    (	<!-- 根据订单、工厂、车间、线别查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+				SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+				pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+				FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+				LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+				LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+				WHERE 1=1
+				AND ph.order_no = #{order_no} 
+				AND ph.werks = #{werks} 
+				AND ph.workshop = #{workshop} 
+				AND ph.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND ph.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+		          </if>
+				</if>				
+				<if test="section != null and section != ''">
+					AND di.section like concat('%',#{section},'%') 
+				</if>
+				<if test="use_workshop != null and use_workshop != ''">
+					AND di.use_workshop = #{use_workshop}
+				</if>
+				<if test="subcontracting_type != null and subcontracting_type != ''">
+					AND di.subcontracting_type = #{subcontracting_type}
+				</if>
+				<if test="assembly_position != null and assembly_position != ''">
+					and di.assembly_position like concat('%', #{assembly_position},'%')
+				</if>
+	<!-- 			<if test="prod_process != null and prod_process != ''">
+					AND pi.plan_process like concat('%', #{prod_process},'%')
+				</if> -->				
+				GROUP BY pi.zzj_pmd_items_id,pi.plan_process
+			 ) y
+				ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.prod_process = y.plan_process
+			WHERE 1=1
+			<if test="status != null and status != '' and status == 'ok' ">
+				AND x.pmd_req_qty-y.prod_quantity  = 0
+			</if>			
+			<if test="status != null and status != '' and status == 'ng' ">
+				AND x.pmd_req_qty-y.prod_quantity  > 0 OR y.prod_quantity IS NULL 
+			</if>
+			<if test="prod_process != null and prod_process != '' and prod_process !='LAST'">
+				AND x.prod_process like concat('%', #{prod_process},'%')
+			</if>
+			<if test="prod_process != null and prod_process != '' and prod_process =='LAST'">
+				AND x.last_process = x.prod_process
+			</if>			
+		) t
+	</select>
+	
+  	  <!-- 批次产量达成明细报表 -->
+	  <select id="getBatchOutputReachList" resultType="Map" parameterType="Map">
+	  	<!--  匹配拆分后的下料明细生产工序关联的机台计划总数、汇总产量及当前工序 -->
+		SELECT x.*,
+			y.plan_process,CASE WHEN y.plan_quantity > 0 THEN y.plan_quantity ELSE 0 END AS plan_quantity,
+			CASE WHEN y.prod_quantity > 0 THEN y.prod_quantity ELSE 0 END AS prod_quantity,
+			CASE WHEN y.prod_quantity >0 THEN x.pmd_batch_req_qty-y.prod_quantity
+			ELSE x.pmd_batch_req_qty END AS un_prod_quantity,
+			z.current_process_name,
+			CASE WHEN (m.pd_test &lt;= 0 OR m.pd_test IS NULL) AND (m.qm_test &lt;= 0 OR m.qm_test IS NULL) THEN '未质检'
+			WHEN m.pd_test >0 AND (m.qm_test &lt;= 0 OR m.qm_test IS NULL) THEN '检验中'
+			WHEN m.pd_test >0 AND m.qm_test >0 THEN '已检验' END AS test_status,
+			CASE WHEN m.product_test_result = '1' THEN 'OK' 
+			WHEN m.product_test_result = '0' THEN 'NG'
+			ELSE m.product_test_result END AS product_test_result,
+			CASE WHEN m.test_result = '1' THEN 'OK' 
+			WHEN m.test_result = '0' THEN 'NG'
+			ELSE m.test_result END AS test_result
+			FROM 
+			   ( <!-- 根据生产工序流程将单行下料明细拆分为多行数据	  -->
+				SELECT a.*,CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END AS pmd_batch_req_qty,
+					  substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1) as prod_process 
+				 FROM 
+					(	<!--  根据订单、工厂、车间、线别查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况      -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,p.from_no,p.to_no,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							p.batch,p.quantity batch_qty,p.quantity*di.quantity req_batch_qty, 
+							( select sum(
+										   case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+												THEN (p.to_no-p.from_no+1)*t.quantity
+												WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+												THEN (t.to_no-p.from_no+1)*t.quantity
+												WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+												THEN (t.to_no-t.from_no+1)*t.quantity
+												WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+												THEN (p.to_no-t.from_no+1)*t.quantity
+												else 0
+											end
+										)
+									from ZZJ_PMD_ECN t
+									where t.zzj_pmd_items_id=di.id 
+							) as ecn_batch_qty,
+							di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_product,
+							SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+							di.assembly_position,di.process,di.section
+						FROM ZZJ_PMD_HEAD dh
+							RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+							LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+							LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+							AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+							WHERE 1=1
+							AND dh.order_no = #{order_no} 
+							AND dh.werks = #{werks} 
+							AND dh.workshop = #{workshop} 
+							AND dh.line = #{line}
+							<if test="zzj_no != null and zzj_no != ''">
+							  <if test="zzj_no.indexOf(',')==-1">
+					               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+					          </if>
+					          <if test="zzj_no.indexOf(',')!=-1">
+					               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+					          </if>
+							</if>
+							<if test="section != null and section != ''">
+								AND di.section like concat('%',#{section},'%') 
+							</if>
+							<if test="use_workshop != null and use_workshop != ''">
+								AND di.use_workshop = #{use_workshop}
+							</if>
+							<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+								AND p.batch = #{zzj_plan_batch}
+							</if>
+							<if test="subcontracting_type != null and subcontracting_type != ''">
+								AND di.subcontracting_type = #{subcontracting_type}
+							</if>
+							<if test="assembly_position != null and assembly_position != ''">
+								and di.assembly_position like concat('%', #{assembly_position},'%')
+							</if>	
+							<if test="prod_process != null and prod_process != ''">
+								AND di.process_flow like concat('%', #{prod_process},'%')
+							</if>
+							<if test="orderBy != null and orderBy != ''">
+								ORDER BY #{orderBy} 
+							</if>
+							<if test="orderBy == null or orderBy == ''">
+								ORDER BY di.zzj_no,di.assembly_position,p.batch
+							</if>							
+							
+					) a
+					join mysql.help_topic b 
+					on b.help_topic_id &lt; (length(a.process_product) - length(replace(a.process_product,'-',''))+1)
+			) x
+			LEFT JOIN 
+		    (	<!-- 根据订单、工厂、车间、线别查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+				SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+				pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+				FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+				LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+				LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+				WHERE 1=1
+				AND ph.order_no = #{order_no} 
+				AND ph.werks = #{werks} 
+				AND ph.workshop = #{workshop} 
+				AND ph.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND ph.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+		          </if>
+				</if>				
+				<if test="section != null and section != ''">
+					AND di.section like concat('%',#{section},'%') 
+				</if>
+				<if test="use_workshop != null and use_workshop != ''">
+					AND di.use_workshop = #{use_workshop}
+				</if>
+				<if test="subcontracting_type != null and subcontracting_type != ''">
+					AND di.subcontracting_type = #{subcontracting_type}
+				</if>
+				<if test="assembly_position != null and assembly_position != ''">
+					and di.assembly_position like concat('%', #{assembly_position},'%')
+				</if>
+	<!-- 			<if test="prod_process != null and prod_process != ''">
+					AND pi.plan_process like concat('%', #{prod_process},'%')
+				</if> -->				
+				GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+			 ) y
+				ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.prod_process = y.plan_process
+			LEFT JOIN ZZJ_PMD_CURRENT_PROCESS z 
+				ON x.order_no = z.order_no AND x.werks = z.werks AND x.workshop = z.workshop AND x.line = z.line
+				AND x.batch = z.zzj_plan_batch AND x.zzj_pmd_items_id = z.zzj_pmd_items_id 
+			<!-- 关联检验记录 -->
+			LEFT JOIN	
+				( 
+					SELECT rh.*,SUM(ri.pd_test) AS pd_test,
+					SUM(ri.qm_test) AS qm_test
+					FROM ZZJ_QM_TEST_RECORD_HEAD rh
+					LEFT JOIN 
+					(	
+						SELECT rn.zzj_qm_test_head_id, 
+							CASE WHEN rn.result_type = '0' THEN SUM(1) ELSE 0 END AS pd_test,
+							CASE WHEN rn.result_type = '1' THEN SUM(1) ELSE 0 END AS qm_test
+						FROM ZZJ_QM_TEST_RECORD_HEAD rm 
+						LEFT JOIN ZZJ_QM_TEST_RECORD_ITEMS rn ON rm.id = rn.zzj_qm_test_head_id
+						WHERE rm.order_no = #{order_no} 
+						AND rm.werks = #{werks}  
+						AND rm.workshop = #{workshop}  
+						GROUP BY rn.zzj_qm_test_head_id,rn.result_type
+					) ri ON ri.zzj_qm_test_head_id = rh.id
+					WHERE 1 = 1
+					AND rh.order_no = #{order_no} 
+					AND rh.werks = #{werks}  
+					AND rh.workshop = #{workshop} 
+					GROUP BY rh.order_no,rh.werks,rh.workshop,rh.zzj_no,rh.zzj_plan_batch
+				) m
+				ON x.order_no = m.order_no AND x.werks = m.werks AND x.workshop = m.workshop 
+				AND x.batch = m.zzj_plan_batch AND x.zzj_no = m.zzj_no 				
+			WHERE 1=1
+			<if test="status != null and status != '' and status == 'ok' ">
+				AND x.pmd_batch_req_qty-y.prod_quantity  = 0
+			</if>			
+			<if test="status != null and status != '' and status == 'ng' ">
+				AND x.pmd_batch_req_qty-y.prod_quantity  > 0 OR y.prod_quantity IS NULL 
+			</if>
+			<if test="prod_process != null and prod_process != '' ">
+				AND x.prod_process like concat('%', #{prod_process},'%')
+			</if>
+			<if test="last_process != null and last_process != '' and last_process =='LAST'">
+				AND x.last_process = x.prod_process
+			</if>			
+			<if test="current_proces != null and current_proces != ''">
+				AND z.current_process_name like concat('%', #{current_proces},'%')
+			</if>	
+			<if test="test_status != null and test_status != '' and test_status=='not_test' ">
+				AND (m.pd_test &lt;= 0 OR m.pd_test IS NULL) AND (m.qm_test &lt;= 0 OR m.qm_test IS NULL)
+			</if>
+			<if test="test_status != null and test_status != '' and test_status=='testing' ">
+				AND m.pd_test >0 AND (m.qm_test &lt;= 0 OR m.qm_test IS NULL) 
+			</if>	
+			<if test="test_status != null and test_status != '' and test_status=='tested' ">
+				AND m.pd_test >0 AND m.qm_test >0 
+			</if>					
+			<if test="product_test_result != null and product_test_result != '' and product_test_result =='OK' ">
+				AND m.product_test_result = '0'
+			</if>
+			<if test="product_test_result != null and product_test_result != '' and product_test_result =='NG' ">
+				AND m.product_test_result = '1'
+			</if>						
+			<if test="test_result != null and test_result != '' and test_result =='OK' ">
+				AND m.test_result = '0'
+			</if>
+			<if test="test_result != null and test_result != '' and test_result =='NG' ">
+				AND m.test_result = '1'
+			</if>				
+			<if test="limit != null and limit !=''">
+			   LIMIT #{start},#{limit}
+			</if>
+	</select>
+	
+	<!-- 批次产量达成明细报表 -->
+	<select id="getBatchOutputReachCount" resultType="int" parameterType="Map">
+	 select  count(1) from (
+	  	<!--  匹配拆分后的下料明细生产工序关联的机台计划总数、汇总产量及当前工序 -->
+			SELECT x.*,
+			y.plan_process,CASE WHEN y.plan_quantity > 0 THEN y.plan_quantity ELSE 0 END AS plan_quantity,
+			CASE WHEN y.prod_quantity > 0 THEN y.prod_quantity ELSE 0 END AS prod_quantity,
+			CASE WHEN y.prod_quantity >0 THEN x.pmd_batch_req_qty-y.prod_quantity
+			ELSE x.pmd_batch_req_qty END AS un_prod_quantity,
+			z.current_process_name,
+			CASE WHEN (m.pd_test &lt;= 0 OR m.pd_test IS NULL) AND (m.qm_test &lt;= 0 OR m.qm_test IS NULL) THEN '未质检'
+			WHEN m.pd_test >0 AND (m.qm_test &lt;= 0 OR m.qm_test IS NULL) THEN '检验中'
+			WHEN m.pd_test >0 AND m.qm_test >0 THEN '已检验' END AS test_status,
+			CASE WHEN m.product_test_result = '1' THEN 'OK' 
+			WHEN m.product_test_result = '0' THEN 'NG'
+			ELSE m.product_test_result END AS product_test_result,
+			CASE WHEN m.test_result = '1' THEN 'OK' 
+			WHEN m.test_result = '0' THEN 'NG'
+			ELSE m.test_result END AS test_result			
+			FROM 
+			   ( <!-- 根据生产工序流程将单行下料明细拆分为多行数据	  -->
+				SELECT a.*,CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END AS pmd_batch_req_qty,
+					  substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1) as prod_process 
+				 FROM 
+					(	<!--  根据订单、工厂、车间、线别查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况      -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,p.from_no,p.to_no,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							p.batch,p.quantity batch_qty,p.quantity*di.quantity req_batch_qty, 
+							( select sum(
+										   case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+												THEN (p.to_no-p.from_no+1)*t.quantity
+												WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+												THEN (t.to_no-p.from_no+1)*t.quantity
+												WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+												THEN (t.to_no-t.from_no+1)*t.quantity
+												WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+												THEN (p.to_no-t.from_no+1)*t.quantity
+												else 0
+											end
+										)
+									from ZZJ_PMD_ECN t
+									where t.zzj_pmd_items_id=di.id 
+							) as ecn_batch_qty,
+							di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_product,
+							SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+							di.assembly_position,di.process,di.section
+						FROM ZZJ_PMD_HEAD dh
+							RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+							LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+							LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+							AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+							WHERE 1=1
+							AND dh.order_no = #{order_no} 
+							AND dh.werks = #{werks} 
+							AND dh.workshop = #{workshop} 
+							AND dh.line = #{line}
+							<if test="zzj_no != null and zzj_no != ''">
+							  <if test="zzj_no.indexOf(',')==-1">
+					               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+					          </if>
+					          <if test="zzj_no.indexOf(',')!=-1">
+					               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+					          </if>
+							</if>
+							<if test="section != null and section != ''">
+								AND di.section like concat('%',#{section},'%') 
+							</if>
+							<if test="use_workshop != null and use_workshop != ''">
+								AND di.use_workshop = #{use_workshop}
+							</if>
+							<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+								AND p.batch = #{zzj_plan_batch}
+							</if>
+							<if test="subcontracting_type != null and subcontracting_type != ''">
+								AND di.subcontracting_type = #{subcontracting_type}
+							</if>
+							<if test="assembly_position != null and assembly_position != ''">
+								and di.assembly_position like concat('%', #{assembly_position},'%')
+							</if>	
+							<if test="prod_process != null and prod_process != '' ">
+								AND di.process_flow like concat('%', #{prod_process},'%')
+							</if>
+							<if test="orderBy != null and orderBy != ''">
+								ORDER BY #{orderBy} 
+							</if>
+							<if test="orderBy == null or orderBy == ''">
+								ORDER BY di.zzj_no,di.assembly_position,p.batch
+							</if>							
+							
+					) a
+					join mysql.help_topic b 
+					on b.help_topic_id &lt; (length(a.process_product) - length(replace(a.process_product,'-',''))+1)
+			) x
+			LEFT JOIN 
+		    (	<!-- 根据订单、工厂、车间、线别查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+				SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+				pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+				FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+				LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+				LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+				WHERE 1=1
+				AND ph.order_no = #{order_no} 
+				AND ph.werks = #{werks} 
+				AND ph.workshop = #{workshop} 
+				AND ph.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND ph.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+		          </if>
+				</if>				
+				<if test="section != null and section != ''">
+					AND di.section like concat('%',#{section},'%') 
+				</if>
+				<if test="use_workshop != null and use_workshop != ''">
+					AND di.use_workshop = #{use_workshop}
+				</if>
+				<if test="subcontracting_type != null and subcontracting_type != ''">
+					AND di.subcontracting_type = #{subcontracting_type}
+				</if>
+				<if test="assembly_position != null and assembly_position != ''">
+					AND di.assembly_position like concat('%', #{assembly_position},'%')
+				</if>
+	<!-- 			<if test="prod_process != null and prod_process != ''">
+					AND pi.plan_process like concat('%', #{prod_process},'%')
+				</if> -->				
+				GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+			 ) y
+				ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.prod_process = y.plan_process
+			LEFT JOIN ZZJ_PMD_CURRENT_PROCESS z 
+				ON x.order_no = z.order_no AND x.werks = z.werks AND x.workshop = z.workshop AND x.line = z.line
+				AND x.batch = z.zzj_plan_batch AND x.zzj_pmd_items_id = z.zzj_pmd_items_id 
+			<!-- 关联检验记录 -->
+			LEFT JOIN	
+			( 
+				SELECT rh.*,SUM(ri.pd_test) AS pd_test,
+				SUM(ri.qm_test) AS qm_test
+				FROM ZZJ_QM_TEST_RECORD_HEAD rh
+				LEFT JOIN 
+				(	
+					SELECT rn.zzj_qm_test_head_id, 
+						CASE WHEN rn.result_type = '0' THEN SUM(1) ELSE 0 END AS pd_test,
+						CASE WHEN rn.result_type = '1' THEN SUM(1) ELSE 0 END AS qm_test
+					FROM ZZJ_QM_TEST_RECORD_HEAD rm 
+					LEFT JOIN ZZJ_QM_TEST_RECORD_ITEMS rn ON rm.id = rn.zzj_qm_test_head_id
+					WHERE rm.order_no = #{order_no} 
+					AND rm.werks = #{werks}  
+					AND rm.workshop = #{workshop}  
+					GROUP BY rn.zzj_qm_test_head_id,rn.result_type
+				) ri ON ri.zzj_qm_test_head_id = rh.id
+				WHERE 1 = 1
+				AND rh.order_no = #{order_no} 
+				AND rh.werks = #{werks}  
+				AND rh.workshop = #{workshop} 
+				GROUP BY rh.order_no,rh.werks,rh.workshop,rh.zzj_no,rh.zzj_plan_batch
+			) m
+			ON x.order_no = m.order_no AND x.werks = m.werks AND x.workshop = m.workshop 
+				AND x.batch = m.zzj_plan_batch AND x.zzj_no = m.zzj_no				
+			WHERE 1=1
+			<if test="status != null and status != '' and status == 'ok' ">
+				AND x.pmd_batch_req_qty-y.prod_quantity  = 0
+			</if>			
+			<if test="status != null and status != '' and status == 'ng' ">
+				AND x.pmd_batch_req_qty-y.prod_quantity  > 0 OR y.prod_quantity IS NULL 
+			</if>
+			<if test="prod_process != null and prod_process != '' ">
+				AND x.prod_process like concat('%', #{prod_process},'%')
+			</if>
+			<if test="last_process != null and last_process != '' and last_process =='LAST'">
+				AND x.last_process = x.prod_process
+			</if>	
+			<if test="current_proces != null and current_proces != ''">
+				AND z.current_process_name like concat('%', #{current_proces},'%')
+			</if>
+			<if test="test_status != null and test_status != '' and test_status=='not_test' ">
+				AND (m.pd_test &lt;= 0 OR m.pd_test IS NULL) AND (m.qm_test &lt;= 0 OR m.qm_test IS NULL)
+			</if>
+			<if test="test_status != null and test_status != '' and test_status=='testing' ">
+				AND m.pd_test >0 AND (m.qm_test &lt;= 0 OR m.qm_test IS NULL) 
+			</if>	
+			<if test="test_status != null and test_status != '' and test_status=='tested' ">
+				AND m.pd_test >0 AND m.qm_test >0 
+			</if>					
+			<if test="product_test_result != null and product_test_result != '' and product_test_result =='OK' ">
+				AND m.product_test_result = '0'
+			</if>
+			<if test="product_test_result != null and product_test_result != '' and product_test_result =='NG' ">
+				AND m.product_test_result = '1'
+			</if>						
+			<if test="test_result != null and test_result != '' and test_result =='OK' ">
+				AND m.test_result = '0'
+			</if>
+			<if test="test_result != null and test_result != '' and test_result =='NG' ">
+				AND m.test_result = '1'
+			</if>	
+		) t
+	</select>	
+	
+	<!-- 订单需求达成报表 -->
+	<select id="getPmdReqReachList" resultType="Map" parameterType="Map">
+		SELECT 	m.order_no,m.order_desc,
+		<if test="report_type != null and report_type != '' and report_type == 'section' ">
+			m.section,
+		</if>
+		<if test="report_type != null and report_type != '' and report_type == 'use_workshop' ">
+			m.use_workshop,
+		</if>
+		COUNT(m.pmd_req_qty) AS req_sum,
+		SUM(CASE WHEN m.pmd_req_qty = m.plan_quantity THEN 1 ELSE 0 END) AS plan_sum,
+		SUM(CASE WHEN m.pmd_req_qty = m.prod_quantity THEN 1 ELSE 0 END) AS prod_sum,
+		COUNT(m.pmd_req_qty)-SUM(CASE WHEN m.pmd_req_qty = m.prod_quantity THEN 1 ELSE 0 END) AS un_prod_sum,
+		CONCAT(round(100*SUM(CASE WHEN m.pmd_req_qty = m.prod_quantity THEN 1 ELSE 0 END)/COUNT(m.pmd_req_qty),2), '%') AS reach
+			FROM 
+				(	SELECT x.*,CASE WHEN x.ecn_qty > 0 THEN x.ecn_qty ELSE x.req_qty END AS pmd_req_qty,
+						CASE WHEN y.plan_quantity IS NULL THEN 0 ELSE y.plan_quantity END AS plan_quantity,
+						CASE WHEN y.prod_quantity IS NULL THEN 0 ELSE y.prod_quantity END AS prod_quantity
+						FROM(
+								 SELECT dh.order_no,dh.werks,dh.workshop,dh.line,
+												CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+												o.order_qty * di.quantity req_qty,
+												( select sum( (t.to_no-t.from_no+1)*t.quantity )
+															from ZZJ_PMD_ECN t
+															where t.zzj_pmd_items_id = di.id 
+													) as ecn_qty,
+												di.id zzj_pmd_items_id,di.material_no,di.zzj_no,di.zzj_name,di.process_product,
+												<if test="prod_process != null and prod_process != ''">
+													#{prod_process} last_process,
+												</if>
+												<if test="prod_process == null or prod_process == ''">
+													SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+												</if>
+												di.assembly_position,di.process,di.section,di.use_workshop
+									FROM ZZJ_PMD_HEAD dh
+											RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id 
+											LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+											LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+													AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+											WHERE 1=1
+											AND dh.werks = #{werks} 
+											AND dh.workshop = #{workshop} 
+											AND dh.line = #{line}
+											<if test="start_date != null and start_date != ''">
+												AND p.start_date >= #{start_date} 
+											</if>
+											<if test="end_date != null and end_date != ''">
+												AND p.end_date &lt;= #{end_date}
+											</if>
+											<if test="order_no != null and order_no != ''">
+												AND dh.order_no = #{order_no} 
+											</if>
+											<if test="prod_process != null and prod_process != ''">
+												AND FIND_IN_SET(#{prod_process},di.process_product ) >0
+											</if>
+									GROUP BY dh.order_no,dh.werks,dh.workshop,dh.line,di.id
+								) x
+								LEFT JOIN 
+								(	
+									SELECT ph.order_no,ph.werks,ph.workshop,ph.line,
+									pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+									FROM ZZJ_MACHINE_PLAN_ITEMS pi
+									LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+									LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+									LEFT JOIN ZZJ_PLAN p ON p.order_no = ph.order_no  
+													AND p.werks = ph.werks AND p.workshop = ph.workshop and p.line = ph.line
+									WHERE 1=1
+									AND ph.werks = #{werks} 
+									AND ph.workshop = #{workshop} 
+									AND ph.line = #{line}
+									<if test="start_date != null and start_date != ''">
+										AND p.start_date >= #{start_date} 
+									</if>
+									<if test="end_date != null and end_date != ''">
+										AND p.end_date &lt;= #{end_date}
+									</if>
+									<if test="order_no != null and order_no != ''">
+										AND ph.order_no = #{order_no} 
+									</if>
+									<if test="prod_process != null and prod_process != ''">
+										AND pi.plan_process = #{prod_process} 
+									</if>
+									
+									GROUP BY pi.zzj_pmd_items_id,pi.plan_process
+								) y
+								ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+								AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.last_process = y.plan_process
+							) m
+							<if test="report_type != null and report_type != '' and report_type == 'order' ">
+								GROUP BY m.order_no
+							</if>
+							<if test="report_type != null and report_type != '' and report_type == 'section' ">
+								GROUP BY m.order_no,m.section
+							</if>
+							<if test="report_type != null and report_type != '' and report_type == 'use_workshop' ">
+								GROUP BY m.order_no,m.use_workshop
+							</if>
+	</select>
+	
+	<!-- 订单需求达成报表 -->
+	<select id="getPmdReqReachCount" resultType="int" parameterType="Map">
+			SELECT COUNT(1)	 FROM 	
+			 (	SELECT x.*,CASE WHEN x.ecn_qty > 0 THEN x.ecn_qty ELSE x.req_qty END AS pmd_req_qty
+						FROM(
+							 SELECT dh.order_no,dh.werks,dh.workshop,dh.line,
+											CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+											o.order_qty * di.quantity req_qty,
+											( select sum( (t.to_no-t.from_no+1)*t.quantity )
+														from ZZJ_PMD_ECN t
+														where t.zzj_pmd_items_id = di.id 
+												) as ecn_qty,
+											di.id zzj_pmd_items_id,di.material_no,di.zzj_no,di.zzj_name,di.process_product,
+											SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+											di.assembly_position,di.process,di.section,di.use_workshop
+								FROM ZZJ_PMD_HEAD dh
+										RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id 
+										LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+										LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+												AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+										WHERE 1=1
+										AND dh.werks = #{werks} 
+										AND dh.workshop = #{workshop} 
+										AND dh.line = #{line}
+										<if test="start_date != null and start_date != ''">
+											AND p.start_date >= #{start_date} 
+										</if>
+										<if test="end_date != null and end_date != ''">
+											AND p.end_date &lt;= #{end_date}
+										</if>
+										<if test="order_no != null and order_no != ''">
+											AND dh.order_no = #{order_no} 
+										</if>
+										<if test="prod_process != null and prod_process != ''">
+											AND LOCATE(#{prod_process},di.process_product ) >0
+										</if>
+										GROUP BY dh.order_no,dh.werks,dh.workshop,dh.line,di.id 
+							 ) x 
+							<if test="report_type != null and report_type != '' and report_type == 'order' ">
+								GROUP BY x.order_no
+							</if>
+							<if test="report_type != null and report_type != '' and report_type == 'section' ">
+								GROUP BY x.order_no,x.section
+							</if>
+							<if test="report_type != null and report_type != '' and report_type == 'use_workshop' ">
+								GROUP BY x.order_no,x.use_workshop
+							</if>	
+				 ) m
+	</select>
+	
+	<!-- 订单批次需求达成报表 -->
+	<select id="getOrderBatchReachList" resultType="Map" parameterType="Map">
+		SELECT 	m.order_no,m.order_desc,m.zzj_plan_batch,
+		<if test="report_type != null and report_type != '' and report_type == 'section' ">
+			m.section,
+		</if>
+		<if test="report_type != null and report_type != '' and report_type == 'use_workshop' ">
+			m.use_workshop,
+		</if>
+		COUNT(m.batch_req_qty) AS req_sum,
+		SUM(CASE WHEN m.batch_req_qty = m.plan_quantity THEN 1 ELSE 0 END) AS plan_sum,
+		SUM(CASE WHEN m.batch_req_qty = m.prod_quantity THEN 1 ELSE 0 END) AS prod_sum,
+		COUNT(m.batch_req_qty)-SUM(CASE WHEN m.batch_req_qty = m.prod_quantity THEN 1 ELSE 0 END) AS un_prod_sum,
+		CONCAT(round(100*SUM(CASE WHEN m.batch_req_qty = m.prod_quantity THEN 1 ELSE 0 END)/COUNT(m.batch_req_qty),2), '%') AS reach
+			FROM  
+				(	SELECT x.*,
+						CASE WHEN x.ecn_batch_qty > 0 THEN x.ecn_batch_qty ELSE x.req_batch_qty END AS batch_req_qty,
+						CASE WHEN y.plan_quantity IS NULL THEN 0 ELSE y.plan_quantity END AS plan_quantity,
+						CASE WHEN y.prod_quantity IS NULL THEN 0 ELSE y.prod_quantity END AS prod_quantity
+						FROM(
+								 SELECT dh.order_no,dh.werks,dh.workshop,dh.line,
+												CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+												di.id zzj_pmd_items_id,di.material_no,di.zzj_no,di.zzj_name,di.process_product,
+												<if test="prod_process != null and prod_process != ''">
+													#{prod_process} last_process,
+												</if>
+												<if test="prod_process == null or prod_process == ''">
+													SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+												</if>
+												di.assembly_position,di.process,di.section,di.use_workshop,
+												p.batch AS zzj_plan_batch,
+												p.quantity*di.quantity req_batch_qty, 
+												( select sum(
+																	case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+																			 THEN (p.to_no-p.from_no+1)*t.quantity
+																			 WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+																			 THEN (t.to_no-p.from_no+1)*t.quantity
+																			 WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+																			 THEN (t.to_no-t.from_no+1)*t.quantity
+																			 WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+																			THEN (p.to_no-t.from_no+1)*t.quantity
+																			else 0
+																	end)
+														from ZZJ_PMD_ECN t
+														where t.zzj_pmd_items_id=di.id 
+												) as ecn_batch_qty 
+									 FROM   ZZJ_PMD_HEAD dh
+											RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id 
+											LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+											LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+													AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+											WHERE 1=1
+											AND dh.werks = #{werks} 
+											AND dh.workshop = #{workshop} 
+											AND dh.line = #{line}
+											<if test="start_date != null and start_date != ''">
+												AND p.start_date >= #{start_date} 
+											</if>
+											<if test="end_date != null and end_date != ''">
+												AND p.end_date &lt;= #{end_date}
+											</if>
+											<if test="order_no != null and order_no != ''">
+												AND dh.order_no = #{order_no} 
+											</if>
+											<if test="prod_process != null and prod_process != ''">
+												AND LOCATE(#{prod_process},di.process_product ) >0
+											</if>
+											<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+												AND p.batch = #{zzj_plan_batch}
+											</if>											
+								) x
+								LEFT JOIN 
+								(	
+									SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+									pi.machine_plan_head_id,pi.zzj_pmd_items_id,pi.plan_process,
+									pi.plan_quantity plan_quantity,pi.prod_quantity prod_quantity
+									FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+									LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+									LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+									LEFT JOIN ZZJ_PLAN p ON p.order_no = ph.order_no  
+													AND p.werks = ph.werks AND p.workshop = ph.workshop and p.line = ph.line
+									WHERE 1=1 
+									AND ph.werks = #{werks} 
+									AND ph.workshop = #{workshop} 
+									AND ph.line = #{line}
+									<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+										AND ph.zzj_plan_batch = #{zzj_plan_batch}
+									</if>									
+									<if test="start_date != null and start_date != ''">
+										AND p.start_date >= #{start_date} 
+									</if>
+									<if test="end_date != null and end_date != ''">
+										AND p.end_date &lt;= #{end_date}
+									</if>
+									<if test="order_no != null and order_no != ''">
+										AND ph.order_no = #{order_no} 
+									</if>
+									<if test="prod_process != null and prod_process != ''">
+										AND pi.plan_process = #{prod_process}
+									</if>
+									
+									GROUP BY pi.machine_plan_head_id,pi.zzj_pmd_items_id,pi.plan_process
+								) y
+								ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+								AND x.zzj_plan_batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.last_process = y.plan_process
+							) m
+							<if test="report_type != null and report_type != '' and report_type == 'order' ">
+								GROUP BY m.order_no,m.zzj_plan_batch
+							</if>
+							<if test="report_type != null and report_type != '' and report_type == 'section' ">
+								GROUP BY m.order_no,m.zzj_plan_batch,m.section
+							</if>
+							<if test="report_type != null and report_type != '' and report_type == 'use_workshop' ">
+								GROUP BY m.order_no,m.zzj_plan_batch,m.use_workshop
+							</if>
+	</select>
+	
+	<!-- 订单批次需求达成报表 -->
+	<select id="getOrderBatchReachCount" resultType="int" parameterType="Map">
+			SELECT COUNT(1)	 FROM 	
+			 (	SELECT x.*
+						FROM(
+							 SELECT dh.order_no,dh.werks,dh.workshop,dh.line,
+									CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+									o.order_qty * di.quantity req_qty,
+									di.id zzj_pmd_items_id,di.material_no,di.zzj_no,di.zzj_name,di.process_product,
+									SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+									di.assembly_position,di.process,di.section,di.use_workshop,
+									p.batch AS zzj_plan_batch 
+								FROM ZZJ_PMD_HEAD dh
+										RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id 
+										LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+										LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+												AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+										WHERE 1=1
+										AND dh.werks = #{werks} 
+										AND dh.workshop = #{workshop} 
+										AND dh.line = #{line}
+										<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+											AND p.batch = #{zzj_plan_batch}
+										</if>											
+										<if test="start_date != null and start_date != ''">
+											AND p.start_date >= #{start_date} 
+										</if>
+										<if test="end_date != null and end_date != ''">
+											AND p.end_date &lt;= #{end_date}
+										</if>
+										<if test="order_no != null and order_no != ''">
+											AND dh.order_no = #{order_no} 
+										</if>
+										<if test="prod_process != null and prod_process != ''">
+											AND LOCATE(#{prod_process},di.process_product ) >0
+										</if>
+							 ) x 
+							<if test="report_type != null and report_type != '' and report_type == 'order' ">
+								GROUP BY x.order_no,x.zzj_plan_batch
+							</if>
+							<if test="report_type != null and report_type != '' and report_type == 'section' ">
+								GROUP BY x.order_no,x.zzj_plan_batch,x.section
+							</if>
+							<if test="report_type != null and report_type != '' and report_type == 'use_workshop' ">
+								GROUP BY x.order_no,x.zzj_plan_batch,x.use_workshop
+							</if>	
+				 ) m
+	</select>
+	
+	
+	<select id="getWorkgroupReachList" resultType="Map" parameterType="Map">
+		SELECT 	m.order_no,m.order_desc,
+			CASE WHEN m.workgroup IS NULL THEN '-' ELSE m.workgroup END AS workgroup,
+			CASE WHEN m.workgroup_name IS NULL THEN '-' ELSE m.workgroup_name END AS workgroup_name,
+			SUM(CASE WHEN m.plan_quantity>0 THEN 1 ELSE 0 END) AS plan_sum,
+			SUM(CASE WHEN m.plan_quantity = m.prod_quantity AND m.plan_quantity>0 THEN 1 ELSE 0 END) AS prod_sum,
+			COUNT(m.plan_quantity)-SUM(CASE WHEN m.plan_quantity = m.prod_quantity THEN 1 ELSE 0 END) AS un_prod_sum,
+			CONCAT(round(100*SUM(CASE WHEN m.plan_quantity = m.prod_quantity THEN 1 ELSE 0 END)/COUNT(m.plan_quantity),2), '%') AS reach
+			FROM 
+				(   SELECT x.order_no,x.werks,x.workshop,x.line,x.order_desc,x.workgroup,x.workgroup_name,
+					CASE WHEN x.plan_quantity IS NULL THEN 0 ELSE x.plan_quantity END AS plan_quantity,
+					CASE WHEN x.prod_quantity IS NULL THEN 0 ELSE x.prod_quantity END AS prod_quantity
+					FROM (	<!--  根据订单、工厂、车间、线别查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+							SELECT p.order_no,p.werks,p.workshop,p.line,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							pi.zzj_pmd_items_id,pi.machine,pi.plan_process,ma.workgroup,ma.workgroup_name,
+							SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+							FROM  ZZJ_PLAN p 
+							LEFT JOIN ZZJ_WERKS_ORDER o ON p.order_no = o.order_no
+							LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph  ON p.order_no = ph.order_no  
+											AND p.werks = ph.werks AND p.workshop = ph.workshop and p.line = ph.line
+							LEFT JOIN ZZJ_MACHINE_PLAN_ITEMS pi ON pi.machine_plan_head_id = ph.id
+							
+							LEFT JOIN ZZJ_MACHINE_ASSIGN ma ON pi.machine = ma.machine_code 
+											AND ph.werks = ma.werks AND ph.workshop = ma.workshop 
+							WHERE 1=1
+							AND p.werks = #{werks} 
+							AND p.workshop = #{workshop} 
+							AND p.line = #{line}									
+							<if test="start_date != null and start_date != '' and (end_date == null or end_date == '') ">
+								AND p.start_date >= #{start_date} 
+							</if>
+							<if test=" (start_date == null or start_date == '') and (end_date != null and end_date != '') ">
+								AND p.end_date &lt;= #{end_date}
+							</if>
+							<if test="start_date != null and start_date != ''  and end_date != null and end_date != ''">
+								AND ( #{end_date} >= p.start_date >= #{start_date} OR #{start_date} &lt;= p.end_date &lt;= #{end_date}) 
+							</if>
+							<if test="order_no != null and order_no != ''">
+								AND p.order_no = #{order_no} 
+							</if>
+							<if test="workgroup != null and workgroup != ''">
+								AND ma.workgroup = #{workgroup}
+							</if>
+							GROUP BY p.batch,pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+						 ) x
+							
+				) m
+				GROUP BY m.order_no,m.workgroup;
+				
+					
+	</select>
+	
+  	<!-- 组合件加工进度报表 -->
+  	<select id="getOrderAssemblyList" resultType="Map" parameterType="Map">
+	  	<!--  匹配下料明细最后一道工序关联的机台计划总数、汇总产量 -->
+		SELECT x.*,
+			CASE WHEN x.ecn_batch_qty > 0 THEN x.ecn_batch_qty ELSE x.req_batch_qty END AS pmd_batch_req_qty,
+			CASE WHEN y.plan_quantity >0 THEN y.plan_quantity ELSE 0 END AS plan_quantity,
+			CASE WHEN y.prod_quantity >0 THEN y.prod_quantity ELSE 0 END AS prod_quantity,
+			CASE WHEN y.prod_quantity >0 THEN (CASE WHEN x.ecn_batch_qty > 0 THEN x.ecn_batch_qty ELSE x.req_batch_qty END) -y.prod_quantity
+			ELSE ( CASE WHEN x.ecn_batch_qty > 0 THEN x.ecn_batch_qty ELSE x.req_batch_qty END ) END AS un_prod_quantity,
+			COUNT(z.zzj_no) AS component_req_quantity,
+			SUM(CASE WHEN z.finished IS NULL THEN 0 ELSE z.finished END) AS component_finished_quantity,
+			SUM(CASE WHEN z.not_finished IS NULL THEN 0 ELSE z.not_finished END) AS component_un_finished_quantity
+			FROM 
+		  ( 
+				<!--  根据订单、工厂、车间、线别、物料类型查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况 结果按零部件编号、装配位置、批次分组   -->
+				SELECT dh.order_no,dh.werks,dh.workshop,dh.line,p.from_no,p.to_no,
+				CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+				p.batch,p.quantity batch_qty,p.quantity*di.quantity req_batch_qty, 
+				( select sum(
+								 case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+									THEN (p.to_no-p.from_no+1)*t.quantity
+									WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+									THEN (t.to_no-p.from_no+1)*t.quantity
+									WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+									THEN (t.to_no-t.from_no+1)*t.quantity
+									WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+									THEN (p.to_no-t.from_no+1)*t.quantity
+									else 0
+								end
+							)
+						from ZZJ_PMD_ECN t
+						where t.zzj_pmd_items_id=di.id 
+				) as ecn_batch_qty,
+				di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_product,
+				SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+				di.assembly_position,di.process,di.section
+			FROM ZZJ_PMD_HEAD dh
+				RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+				LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+				LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+				AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+				WHERE 1=1
+				AND dh.order_no = #{order_no} 
+				AND dh.werks = #{werks} 
+				AND dh.workshop = #{workshop}  
+				AND dh.line = #{line}
+				AND di.cailiao_type = '自制组合件'
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+		          </if>
+				</if>			
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">	
+					AND p.batch = #{zzj_plan_batch} 
+				</if>
+				ORDER BY di.zzj_no,di.assembly_position,p.batch
+			) x
+			LEFT JOIN 
+		  (	    <!-- 根据订单、工厂、车间、线别、物料类型查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+				SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+				pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+				FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+				LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+				LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+				WHERE 1=1
+				AND ph.order_no = #{order_no} 
+				AND ph.werks = #{werks}  
+				AND ph.workshop = #{workshop} 
+				AND ph.line = #{line}
+				AND di.cailiao_type = '自制组合件'
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+		          </if>
+				</if>				
+				AND SUBSTRING_INDEX(di.process_product, '-', -1) = pi.plan_process
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND ph.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+			 ) y
+				ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.last_process = y.plan_process
+			LEFT JOIN 
+			(
+				<!--  匹配下料明细最后一道工序关联的机台计划总数、汇总产量 -->
+				SELECT a.*,b.plan_process,
+					CASE WHEN b.plan_quantity > 0 THEN b.plan_quantity ELSE 0 END AS plan_quantity,
+					CASE WHEN b.prod_quantity > 0 THEN b.prod_quantity ELSE 0 END AS prod_quantity,
+					CASE WHEN b.prod_quantity >0 THEN (CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END) -b.prod_quantity
+					ELSE ( CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END ) END AS un_prod_quantity,
+					CASE WHEN b.prod_quantity >0 AND ( (CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END) -b.prod_quantity ) = 0
+					THEN 1 ELSE 0 END AS finished,
+					CASE WHEN b.prod_quantity >0 AND ( (CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END) -b.prod_quantity ) = 0
+					THEN 0 ELSE 1 END AS not_finished					
+					FROM 
+					( 
+						<!--  根据订单、工厂、车间、线别、物料类型查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况 结果按零部件编号、装配位置、批次分组   -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,p.from_no,p.to_no,
+						CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+						p.batch,p.quantity batch_qty,p.quantity*di.quantity req_batch_qty, 
+						( select sum(
+										 case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+											THEN (p.to_no-p.from_no+1)*t.quantity
+											WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+											THEN (t.to_no-p.from_no+1)*t.quantity
+											WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+											THEN (t.to_no-t.from_no+1)*t.quantity
+											WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+											THEN (p.to_no-t.from_no+1)*t.quantity
+											else 0
+										end
+									)
+								from ZZJ_PMD_ECN t
+								where t.zzj_pmd_items_id=di.id 
+						) as ecn_batch_qty,
+						di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_product,
+						SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+						di.assembly_position,di.process,di.section
+					FROM ZZJ_PMD_HEAD dh
+						RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+						LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+						LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+						AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+						WHERE 1=1
+						AND dh.order_no = #{order_no} 
+						AND dh.werks = #{werks} 
+						AND dh.workshop = #{workshop} 
+						AND dh.line = #{line} 
+						<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+							AND p.batch = #{zzj_plan_batch}
+						</if>
+						ORDER BY di.zzj_no,di.assembly_position,p.batch
+					) a
+					LEFT JOIN 
+					(	<!-- 根据订单、工厂、车间、线别、物料类型查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+						SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+						pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+						FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+						LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+						LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+						WHERE 1=1
+						AND ph.order_no = #{order_no} 
+						AND ph.werks = #{werks}  
+						AND ph.workshop = #{workshop} 
+						AND ph.line = #{line} 
+						AND SUBSTRING_INDEX(di.process_product, '-', -1) = pi.plan_process
+						<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+							AND ph.zzj_plan_batch = #{zzj_plan_batch}
+						</if>
+						GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+					 ) b
+						ON a.order_no = b.order_no AND a.werks = b.werks AND a.workshop = b.workshop AND a.line = b.line
+						AND a.batch = b.zzj_plan_batch AND a.zzj_pmd_items_id = b.zzj_pmd_items_id AND a.last_process = b.plan_process
+					WHERE 1=1
+				) z
+					ON x.order_no = z.order_no AND x.werks = z.werks AND x.workshop = z.workshop AND x.line = z.line AND x.batch = z.batch
+					AND CONCAT(x.zzj_no,'_',x.zzj_name) = z.assembly_position
+			WHERE 1=1
+			<if test="status != null and status != '' and status == 'ok' ">
+				COUNT(z.zzj_no) - SUM(CASE WHEN z.finished IS NULL THEN 0 ELSE z.finished END) = 0
+			</if>			
+			<if test="status != null and status != '' and status == 'ng' ">
+				SUM(CASE WHEN z.not_finished IS NULL THEN 0 ELSE z.not_finished END) > 0
+			</if>			
+			GROUP BY x.werks,x.workshop,x.line,x.zzj_no,x.assembly_position,x.batch  
+			<if test="limit != null and limit !=''">
+			   LIMIT #{start},#{limit}
+			</if>					
+  	</select>
+  	
+  	<!-- 组合件加工进度报表 -->
+	<select id="getOrderAssemblyListCount" resultType="int" parameterType="Map">
+		SELECT  count(1) from (
+			<!--  匹配下料明细最后一道工序关联的机台计划总数、汇总产量 -->
+			SELECT x.*,y.plan_process,
+			CASE WHEN y.plan_quantity >0 THEN y.plan_quantity ELSE 0 END AS plan_quantity,
+			CASE WHEN y.prod_quantity >0 THEN y.prod_quantity ELSE 0 END AS prod_quantity,
+			CASE WHEN y.prod_quantity >0 THEN (CASE WHEN x.ecn_batch_qty > 0 THEN x.ecn_batch_qty ELSE x.req_batch_qty END) -y.prod_quantity
+			ELSE ( CASE WHEN x.ecn_batch_qty > 0 THEN x.ecn_batch_qty ELSE x.req_batch_qty END ) END AS un_prod_quantity,
+			COUNT(z.zzj_no) AS component_req_quantity,
+			SUM(CASE WHEN z.finished IS NULL THEN 0 ELSE z.finished END) AS component_finished_quantity,
+			SUM(CASE WHEN z.not_finished IS NULL THEN 0 ELSE z.not_finished END) AS component_un_finished_quantity
+			FROM 
+		  	( 
+				<!--  根据订单、工厂、车间、线别、物料类型查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况 结果按零部件编号、装配位置、批次分组   -->
+				SELECT dh.order_no,dh.werks,dh.workshop,dh.line,p.from_no,p.to_no,
+				CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+				p.batch,p.quantity batch_qty,p.quantity*di.quantity req_batch_qty, 
+				( select sum(
+								 case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+									THEN (p.to_no-p.from_no+1)*t.quantity
+									WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+									THEN (t.to_no-p.from_no+1)*t.quantity
+									WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+									THEN (t.to_no-t.from_no+1)*t.quantity
+									WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+									THEN (p.to_no-t.from_no+1)*t.quantity
+									else 0
+								end
+							)
+						from ZZJ_PMD_ECN t
+						where t.zzj_pmd_items_id=di.id 
+				) as ecn_batch_qty,
+				di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_product,
+				SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+				di.assembly_position,di.process,di.section
+			FROM ZZJ_PMD_HEAD dh
+				RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+				LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+				LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+				AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+				WHERE 1=1
+				AND dh.order_no = #{order_no} 
+				AND dh.werks = #{werks} 
+				AND dh.workshop = #{workshop}  
+				AND dh.line = #{line}
+				AND di.cailiao_type = '自制组合件'
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+		          </if>
+				</if>	
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">			
+					AND p.batch = #{zzj_plan_batch} 
+				</if>
+				ORDER BY di.zzj_no,di.assembly_position,p.batch
+			) x
+			LEFT JOIN 
+		  (	    <!-- 根据订单、工厂、车间、线别、物料类型查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+				SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+				pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+				FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+				LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+				LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+				WHERE 1=1
+				AND ph.order_no = #{order_no} 
+				AND ph.werks = #{werks}  
+				AND ph.workshop = #{workshop} 
+				AND ph.line = #{line}
+				AND di.cailiao_type = '自制组合件'
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+		          </if>
+				</if>				
+				AND SUBSTRING_INDEX(di.process_product, '-', -1) = pi.plan_process
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND ph.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+			 ) y
+				ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.last_process = y.plan_process
+			LEFT JOIN 
+			(
+				<!--  匹配下料明细最后一道工序关联的机台计划总数、汇总产量 -->
+				SELECT a.*,b.plan_process,
+					CASE WHEN b.plan_quantity > 0 THEN b.plan_quantity ELSE 0 END AS plan_quantity,
+					CASE WHEN b.prod_quantity > 0 THEN b.prod_quantity ELSE 0 END AS prod_quantity,
+					CASE WHEN b.prod_quantity >0 THEN (CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END) -b.prod_quantity
+					ELSE ( CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END ) END AS un_prod_quantity,
+					CASE WHEN b.prod_quantity >0 AND ( (CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END) -b.prod_quantity ) = 0
+					THEN 1 ELSE 0 END AS finished,
+					CASE WHEN b.prod_quantity >0 AND ( (CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END) -b.prod_quantity ) = 0
+					THEN 0 ELSE 1 END AS not_finished					
+					FROM 
+					( 
+						<!--  根据订单、工厂、车间、线别、物料类型查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况 结果按零部件编号、装配位置、批次分组   -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,p.from_no,p.to_no,
+						CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+						p.batch,p.quantity batch_qty,p.quantity*di.quantity req_batch_qty, 
+						( select sum(
+										 case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+											THEN (p.to_no-p.from_no+1)*t.quantity
+											WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+											THEN (t.to_no-p.from_no+1)*t.quantity
+											WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+											THEN (t.to_no-t.from_no+1)*t.quantity
+											WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+											THEN (p.to_no-t.from_no+1)*t.quantity
+											else 0
+										end
+									)
+								from ZZJ_PMD_ECN t
+								where t.zzj_pmd_items_id=di.id 
+						) as ecn_batch_qty,
+						di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_product,
+						SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+						di.assembly_position,di.process,di.section
+					FROM ZZJ_PMD_HEAD dh
+						RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+						LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+						LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+						AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+						WHERE 1=1
+						AND dh.order_no = #{order_no} 
+						AND dh.werks = #{werks} 
+						AND dh.workshop = #{workshop} 
+						AND dh.line = #{line} 
+						<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+							AND p.batch = #{zzj_plan_batch}
+						</if>
+						ORDER BY di.zzj_no,di.assembly_position,p.batch
+					) a
+					LEFT JOIN 
+					(	<!-- 根据订单、工厂、车间、线别、物料类型查询下料明细机台计划及产量（根据下料明细ID和计划工序分组） -->
+						SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+						pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity
+						FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+						LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id
+						LEFT JOIN ZZJ_PMD_ITEMS di ON pi.zzj_pmd_items_id = di.id
+						WHERE 1=1
+						AND ph.order_no = #{order_no} 
+						AND ph.werks = #{werks}  
+						AND ph.workshop = #{workshop} 
+						AND ph.line = #{line} 
+						AND SUBSTRING_INDEX(di.process_product, '-', -1) = pi.plan_process
+						<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+							AND ph.zzj_plan_batch = #{zzj_plan_batch}
+						</if>
+						GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+					 ) b
+						ON a.order_no = b.order_no AND a.werks = b.werks AND a.workshop = b.workshop AND a.line = b.line
+						AND a.batch = b.zzj_plan_batch AND a.zzj_pmd_items_id = b.zzj_pmd_items_id AND a.last_process = b.plan_process
+					WHERE 1=1
+				) z
+					ON x.order_no = z.order_no AND x.werks = z.werks AND x.workshop = z.workshop AND x.line = z.line AND x.batch = z.batch
+					AND CONCAT(x.zzj_no,'_',x.zzj_name) = z.assembly_position
+			WHERE 1=1
+			<if test="status != null and status != '' and status == 'ok' ">
+				COUNT(z.zzj_no) - SUM(CASE WHEN z.finished IS NULL THEN 0 ELSE z.finished END) = 0
+			</if>			
+			<if test="status != null and status != '' and status == 'ng' ">
+				SUM(CASE WHEN z.not_finished IS NULL THEN 0 ELSE z.not_finished END) > 0
+			</if>			
+			GROUP BY x.werks,x.workshop,x.line,x.zzj_no,x.assembly_position,x.batch  
+		) t
+	</select>
+  	
+	<!-- 工序工时-加工时长报表 -->
+	<select id="getPmdProcessTimeList" resultType="Map" parameterType="Map">
+		<!--  匹配拆分后的下料明细生产工序关联的机台计划总数、汇总产量及当前工序 -->
+		SELECT x.*,
+			y.plan_process,CASE WHEN y.plan_quantity > 0 THEN y.plan_quantity ELSE 0 END AS plan_quantity,
+			CASE WHEN y.prod_quantity > 0 THEN y.prod_quantity ELSE 0 END AS prod_quantity,
+			CASE WHEN y.prod_quantity >0 THEN x.pmd_batch_req_qty-y.prod_quantity
+			ELSE x.pmd_batch_req_qty END AS un_prod_quantity,
+			z.current_process_name,y.machine_plan_date,m.output_date,
+			CASE WHEN y.machine_plan_date >0 AND m.output_date > 0 
+			THEN TIMESTAMPDIFF(MINUTE,y.machine_plan_date,m.output_date) ELSE '-' END AS product_time
+			FROM 
+			   ( <!--根据生产工序流程将单行下料明细拆分为多行数据-->
+				SELECT a.*,CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END AS pmd_batch_req_qty,
+					  substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1) as prod_process 
+				 FROM 
+					(	<!--根据订单、工厂、车间、线别查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况-->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,p.from_no,p.to_no,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							p.batch,p.quantity batch_qty,p.quantity*di.quantity req_batch_qty, 
+							( select sum(
+										   case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+												THEN (p.to_no-p.from_no+1)*t.quantity
+												WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+												THEN (t.to_no-p.from_no+1)*t.quantity
+												WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+												THEN (t.to_no-t.from_no+1)*t.quantity
+												WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+												THEN (p.to_no-t.from_no+1)*t.quantity
+												else 0
+											end
+										)
+									from ZZJ_PMD_ECN t
+									where t.zzj_pmd_items_id=di.id 
+							) as ecn_batch_qty,
+							di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_time,di.process_product,
+							SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+							di.assembly_position,di.process,di.section
+						FROM ZZJ_PMD_HEAD dh
+							RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+							LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+							LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+							AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+							WHERE 1=1
+							AND dh.order_no = #{order_no} 
+							AND dh.werks = #{werks} 
+							AND dh.workshop = #{workshop} 
+							AND dh.line = #{line}
+							<if test="zzj_no != null and zzj_no != ''">
+							  <if test="zzj_no.indexOf(',')==-1">
+					               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+					          </if>
+					          <if test="zzj_no.indexOf(',')!=-1">
+					               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+					          </if>
+							</if>
+							<if test="section != null and section != ''">
+								AND di.section like concat('%',#{section},'%') 
+							</if>
+							<if test="use_workshop != null and use_workshop != ''">
+								AND di.use_workshop = #{use_workshop}
+							</if>
+							<if test="subcontracting_type != null and subcontracting_type != ''">
+								AND di.subcontracting_type = #{subcontracting_type}
+							</if>
+							<if test="assembly_position != null and assembly_position != ''">
+								and di.assembly_position like concat('%', #{assembly_position},'%')
+							</if>	
+							<if test="prod_process != null and prod_process != '' and prod_process !='LAST' ">
+								AND di.process_flow like concat('%', #{prod_process},'%')
+							</if>
+							<if test="orderBy != null and orderBy != ''">
+								ORDER BY #{orderBy} 
+							</if>
+							<if test="orderBy == null or orderBy == ''">
+								ORDER BY di.zzj_no,di.assembly_position
+							</if>
+					) a
+					join mysql.help_topic b 
+					on b.help_topic_id &lt; (length(a.process_product) - length(replace(a.process_product,'-',''))+1)
+			) x
+			LEFT JOIN 
+		  (	<!-- 根据订单、工厂、车间、线别查询下料明细机台计划、产量、机台计划最早下达时间（根据下料明细ID和计划工序分组） -->
+				SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+				pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity,
+				MIN(pi.create_date) machine_plan_date
+				FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+				LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id 
+				WHERE 1=1
+				AND ph.order_no = #{order_no} 
+				AND ph.werks = #{werks} 
+				AND ph.workshop = #{workshop} 
+				AND ph.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND ph.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND pi.zzj_no like concat('%',#{zzj_no},'%') 	  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND FIND_IN_SET(pi.zzj_no,#{zzj_no}) 
+		          </if>
+				</if>
+				<if test="prod_process != null and prod_process != '' ">
+					pi.plan_process like concat('%',#{prod_process},'%') 	
+				</if>					
+				GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+			 ) y
+			ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.prod_process = y.plan_process
+			<!--当前工序 -->
+			LEFT JOIN ZZJ_PMD_CURRENT_PROCESS z 
+				ON x.order_no = z.order_no AND x.werks = z.werks AND x.workshop = z.workshop AND x.line = z.line
+				AND x.batch = z.zzj_plan_batch AND x.zzj_pmd_items_id = z.zzj_pmd_items_id 
+			<!-- 查询订单下料明细工序最后录入产量时间 -->
+			LEFT JOIN
+			( 
+				SELECT op.order_no,op.werks,op.workshop,op.line,op.zzj_plan_batch,
+					op.zzj_no,op.zzj_pmd_items_id,op.machine_plan_items_id,op.process,
+					MAX(op.create_date) output_date
+				FROM ZZJ_OUTPUT op 
+				WHERE 1=1
+				AND op.order_no = #{order_no}  
+				AND op.werks = #{werks}  
+				AND op.workshop = #{workshop} 
+				AND op.line =  #{line}	
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND op.zzj_plan_batch = #{zzj_plan_batch}
+				</if>				
+				<if test="prod_process != null and prod_process != '' ">
+					op.process like concat('%',#{prod_process},'%') 	
+				</if>	
+				GROUP BY op.zzj_pmd_items_id,op.zzj_plan_batch,op.process
+			) m
+			ON x.order_no = m.order_no AND x.werks = m.werks AND x.workshop = m.workshop AND x.line = m.line
+				AND x.batch = m.zzj_plan_batch AND x.zzj_pmd_items_id = m.zzj_pmd_items_id AND x.prod_process = m.process 
+			WHERE 1=1
+			<if test="time_out != null and time_out != ''  ">
+				TIMESTAMPDIFF(MINUTE,y.machine_plan_date,m.output_date) - #{prod_process}  >= 0
+			</if>			
+			<if test="prod_process != null and prod_process != '' ">
+				AND x.prod_process like concat('%', #{prod_process},'%')
+			</if>			
+			<if test="limit != null and limit !=''">
+			   LIMIT #{start},#{limit}
+			</if>
+	</select>
+
+	<!-- 工序工时-加工时间报表 -->
+	<select id="getPmdProcessTimeCount" resultType="int" parameterType="Map">
+	 select  count(1) from (
+		<!--  匹配拆分后的下料明细生产工序关联的机台计划总数、汇总产量及当前工序 -->
+		SELECT x.*,
+			y.plan_process,CASE WHEN y.plan_quantity > 0 THEN y.plan_quantity ELSE 0 END AS plan_quantity,
+			CASE WHEN y.prod_quantity > 0 THEN y.prod_quantity ELSE 0 END AS prod_quantity,
+			CASE WHEN y.prod_quantity >0 THEN x.pmd_batch_req_qty-y.prod_quantity
+			ELSE x.pmd_batch_req_qty END AS un_prod_quantity,
+			z.current_process_name,y.machine_plan_date,m.output_date,
+			CASE WHEN y.machine_plan_date >0 AND m.output_date > 0 
+			THEN TIMESTAMPDIFF(MINUTE,y.machine_plan_date,m.output_date) ELSE '-' END AS product_time
+			FROM 
+			   ( <!-- 根据生产工序流程将单行下料明细拆分为多行数据	  -->
+				SELECT a.*,CASE WHEN a.ecn_batch_qty > 0 THEN a.ecn_batch_qty ELSE a.req_batch_qty END AS pmd_batch_req_qty,
+					  substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1) as prod_process 
+				 FROM 
+					(	<!--  根据订单、工厂、车间、线别查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况      -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,p.from_no,p.to_no,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							p.batch,p.quantity batch_qty,p.quantity*di.quantity req_batch_qty, 
+							( select sum(
+										   case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+												THEN (p.to_no-p.from_no+1)*t.quantity
+												WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+												THEN (t.to_no-p.from_no+1)*t.quantity
+												WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+												THEN (t.to_no-t.from_no+1)*t.quantity
+												WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+												THEN (p.to_no-t.from_no+1)*t.quantity
+												else 0
+											end
+										)
+									from ZZJ_PMD_ECN t
+									where t.zzj_pmd_items_id=di.id 
+							) as ecn_batch_qty,
+							di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_time,di.process_product,
+							SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+							di.assembly_position,di.process,di.section
+						FROM ZZJ_PMD_HEAD dh
+							RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+							LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+							LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+							AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+							WHERE 1=1
+							AND dh.order_no = #{order_no} 
+							AND dh.werks = #{werks} 
+							AND dh.workshop = #{workshop} 
+							AND dh.line = #{line}
+							<if test="zzj_no != null and zzj_no != ''">
+							  <if test="zzj_no.indexOf(',')==-1">
+					               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+					          </if>
+					          <if test="zzj_no.indexOf(',')!=-1">
+					               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+					          </if>
+							</if>
+							<if test="section != null and section != ''">
+								AND di.section like concat('%',#{section},'%') 
+							</if>
+							<if test="use_workshop != null and use_workshop != ''">
+								AND di.use_workshop = #{use_workshop}
+							</if>
+							<if test="subcontracting_type != null and subcontracting_type != ''">
+								AND di.subcontracting_type = #{subcontracting_type}
+							</if>
+							<if test="assembly_position != null and assembly_position != ''">
+								and di.assembly_position like concat('%', #{assembly_position},'%')
+							</if>	
+							<if test="prod_process != null and prod_process != '' and prod_process !='LAST' ">
+								AND di.process_flow like concat('%', #{prod_process},'%')
+							</if>
+							<if test="orderBy != null and orderBy != ''">
+								ORDER BY #{orderBy} 
+							</if>
+							<if test="orderBy == null or orderBy == ''">
+								ORDER BY di.zzj_no,di.assembly_position
+							</if>
+					) a
+					join mysql.help_topic b 
+					on b.help_topic_id &lt; (length(a.process_product) - length(replace(a.process_product,'-',''))+1)
+			) x
+			LEFT JOIN 
+		  (	<!-- 根据订单、工厂、车间、线别查询下料明细机台计划、产量、机台计划最早下达时间（根据下料明细ID和计划工序分组） -->
+				SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+				pi.zzj_pmd_items_id,pi.plan_process,SUM(pi.plan_quantity) plan_quantity,SUM(pi.prod_quantity) prod_quantity,
+				MIN(pi.create_date) machine_plan_date
+				FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+				LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id 
+				WHERE 1=1
+				AND ph.order_no = #{order_no} 
+				AND ph.werks = #{werks} 
+				AND ph.workshop = #{workshop} 
+				AND ph.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND ph.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               AND pi.zzj_no like concat('%',#{zzj_no},'%') 	  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               AND FIND_IN_SET(pi.zzj_no,#{zzj_no}) 
+		          </if>
+				</if>
+				<if test="prod_process != null and prod_process != '' ">
+					pi.plan_process like concat('%',#{prod_process},'%') 	
+				</if>					
+				GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+			 ) y
+			ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.prod_process = y.plan_process
+			<!--当前工序 -->
+			LEFT JOIN ZZJ_PMD_CURRENT_PROCESS z 
+				ON x.order_no = z.order_no AND x.werks = z.werks AND x.workshop = z.workshop AND x.line = z.line
+				AND x.batch = z.zzj_plan_batch AND x.zzj_pmd_items_id = z.zzj_pmd_items_id 
+			<!-- 查询订单下料明细工序最后录入产量时间 -->
+			LEFT JOIN
+			( 
+				SELECT op.order_no,op.werks,op.workshop,op.line,op.zzj_plan_batch,
+					op.zzj_no,op.zzj_pmd_items_id,op.machine_plan_items_id,op.process,
+					MAX(op.create_date) output_date
+				FROM ZZJ_OUTPUT op 
+				WHERE 1=1
+				AND op.order_no = #{order_no}  
+				AND op.werks = #{werks}  
+				AND op.workshop = #{workshop} 
+				AND op.line =  #{line}	
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND op.zzj_plan_batch = #{zzj_plan_batch}
+				</if>				
+				<if test="prod_process != null and prod_process != '' ">
+					op.process like concat('%',#{prod_process},'%') 	
+				</if>	
+				GROUP BY op.zzj_pmd_items_id,op.zzj_plan_batch,op.process
+			) m
+			ON x.order_no = m.order_no AND x.werks = m.werks AND x.workshop = m.workshop AND x.line = m.line
+				AND x.batch = m.zzj_plan_batch AND x.zzj_pmd_items_id = m.zzj_pmd_items_id AND x.prod_process = m.process 
+			WHERE 1=1
+			<if test="time_out != null and time_out != ''  ">
+				TIMESTAMPDIFF(MINUTE,y.machine_plan_date,m.output_date) - #{prod_process}  >= 0
+			</if>			
+			<if test="prod_process != null and prod_process != '' ">
+				AND x.prod_process like concat('%', #{prod_process},'%')
+			</if>
+
+	 ) t
+	</select>
+
+	<!-- 工序工时-流转时间报表 -->
+	<select id="getPmdProcessTransferTimeList" resultType="Map" parameterType="Map">
+		<!--匹配拆分后的下料明细生产工序关联的机台计划总数、汇总产量及当前工序-->
+		SELECT x.*,
+			CASE WHEN y.machine_plan_date > 0 AND u.first_receive_date >0
+			THEN TIMESTAMPDIFF(MINUTE,y.machine_plan_date,u.first_receive_date) ELSE '-' END AS process_in_time, 
+			CASE WHEN y.machine_plan_date >0 AND m.output_date > 0 
+			THEN TIMESTAMPDIFF(MINUTE,y.machine_plan_date,m.output_date) ELSE '-' END AS product_time,
+			CASE WHEN m.output_date > 0 AND n.last_receive_date > 0
+			THEN TIMESTAMPDIFF(MINUTE,m.output_date,n.last_receive_date) ELSE '-' END AS process_out_time,
+			CASE WHEN v.output_date > 0 AND y.machine_plan_date > 0
+			THEN TIMESTAMPDIFF(MINUTE,y.machine_plan_date,v.output_date) ELSE '-' END AS process_circulation_time 
+			FROM 
+			   ( <!-- 根据生产工序流程将单行下料明细拆分为多行数据及下道工序-->
+				SELECT a.*,
+						substring_index(substring_index(concat('-',a.process_product,'-'),concat('-',
+								substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1)
+								,'-'),1),'-',-1) pre_prod_process,						
+					  substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1) as prod_process,
+						substring_index(substring_index(concat('-',a.process_product,'-'),concat('-',
+								substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1)
+								,'-'),-1),'-',1) next_prod_process 
+				 FROM 
+					(	<!--  根据订单、工厂、车间、线别查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况      -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							p.batch,
+							di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_time,di.process_product,
+							SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+							di.assembly_position,di.process,di.section
+						FROM ZZJ_PMD_HEAD dh
+							RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+							LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+							LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+							AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+							WHERE 1=1
+							AND dh.order_no = #{order_no} 
+							AND dh.werks = #{werks} 
+							AND dh.workshop = #{workshop} 
+							AND dh.line = #{line}
+							<if test="zzj_no != null and zzj_no != ''">
+							  <if test="zzj_no.indexOf(',')==-1">
+					               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+					          </if>
+					          <if test="zzj_no.indexOf(',')!=-1">
+					               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+					          </if>
+							</if>		
+							<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+								AND p.batch = #{zzj_plan_batch}
+							</if>		    	
+							ORDER BY di.zzj_no,di.assembly_position,p.batch
+					) a
+					join mysql.help_topic b on b.help_topic_id &lt; (length(a.process_product) - length(replace(a.process_product,'-',''))+1) 
+			) x
+			LEFT JOIN 
+		    ( <!-- 根据订单、工厂、车间、线别查询下料明细机台计划(机台绑定)最早下达时间（根据下料明细ID和计划工序分组） -->
+					SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+					pi.zzj_pmd_items_id,pi.plan_process,
+					MIN(pi.create_date) machine_plan_date
+					FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+					LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id 
+					WHERE 1=1
+					AND ph.order_no = #{order_no} 
+					AND ph.werks = #{werks} 
+					AND ph.workshop = #{workshop} 
+					AND ph.line = #{line}
+					<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+						AND ph.zzj_plan_batch = #{zzj_plan_batch}
+					</if>
+					<if test="zzj_no != null and zzj_no != ''">
+						<if test="zzj_no.indexOf(',')==-1">
+							AND pi.zzj_no like concat('%',#{zzj_no},'%') 	  
+						</if>
+						<if test="zzj_no.indexOf(',')!=-1">
+							AND FIND_IN_SET(pi.zzj_no,#{zzj_no}) 
+						</if>
+					</if>
+					<if test="prod_process != null and prod_process != '' ">
+						pi.plan_process like concat('%',#{prod_process},'%') 	
+					</if>	
+					GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+			) y
+			ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.prod_process = y.plan_process
+			<!-- 查询订单下料明细工序最后录入产量时间 -->
+			LEFT JOIN
+			( 
+				SELECT op.order_no,op.werks,op.workshop,op.line,op.zzj_plan_batch,
+					op.zzj_no,op.zzj_pmd_items_id,op.machine_plan_items_id,op.process,
+					MAX(op.create_date) output_date
+				FROM ZZJ_OUTPUT op 
+				WHERE 1=1
+				AND op.order_no = #{order_no} 
+				AND op.werks = #{werks} 
+				AND op.workshop = #{workshop} 
+				AND op.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND op.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+					<if test="zzj_no.indexOf(',')==-1">
+						AND op.zzj_no like concat('%',#{zzj_no},'%') 	  
+					</if>
+					<if test="zzj_no.indexOf(',')!=-1">
+						AND FIND_IN_SET(op.zzj_no,#{zzj_no}) 
+					</if>
+				</if>
+				<if test="prod_process != null and prod_process != '' ">
+					op.process like concat('%',#{prod_process},'%') 	
+				</if>
+				GROUP BY op.zzj_pmd_items_id,op.zzj_plan_batch,op.process
+			) m
+			ON x.order_no = m.order_no AND x.werks = m.werks AND x.workshop = m.workshop AND x.line = m.line
+				AND x.batch = m.zzj_plan_batch AND x.zzj_pmd_items_id = m.zzj_pmd_items_id AND x.prod_process = m.process 
+			<!-- 查询订单下料明细工序与下道工序最晚交接时间 -->
+			LEFT JOIN 
+			(
+				SELECT  hv.order_no,hv.werks,hv.workshop,hv.zzj_pmd_items_id,hv.zzj_plan_batch,
+				hv.deliver_process_name,hv.receive_process_name,
+				MAX(hv.edit_date) last_receive_date
+				FROM ZZJ_MAT_HANDOVER hv
+				WHERE hv.handover_type = '01'
+				AND hv.order_no = #{order_no} 
+				AND hv.werks = #{werks} 
+				AND hv.workshop = #{workshop} 
+				<if test="prod_process != null and prod_process != '' ">
+					op.deliver_process_name like concat('%',#{prod_process},'%') 	
+				</if>
+				GROUP BY hv.zzj_pmd_items_id,hv.zzj_plan_batch,hv.deliver_process_name,hv.receive_process_name
+			) n
+			ON x.order_no = n.order_no AND x.werks = n.werks AND x.workshop = n.workshop 
+			AND x.batch = n.zzj_plan_batch AND x.zzj_pmd_items_id = n.zzj_pmd_items_id 
+			AND x.prod_process = n.deliver_process_name AND x.next_prod_process = n.receive_process_name 
+			<!-- 查询订单下料明细工序与上道工序最早交接时间 -->
+			LEFT JOIN 
+			(
+				SELECT  hv.order_no,hv.werks,hv.workshop,hv.zzj_pmd_items_id,hv.zzj_plan_batch,
+				hv.deliver_process_name,hv.receive_process_name,
+				MIN(hv.edit_date) first_receive_date
+				FROM ZZJ_MAT_HANDOVER hv
+				WHERE hv.handover_type = '01'
+				AND hv.order_no = #{order_no} 
+				AND hv.werks = #{werks} 
+				AND hv.workshop = #{workshop} 
+				<if test="prod_process != null and prod_process != '' ">
+					op.deliver_process_name like concat('%',#{prod_process},'%') 	
+				</if> 
+				GROUP BY hv.zzj_pmd_items_id,hv.zzj_plan_batch,hv.deliver_process_name,hv.receive_process_name
+			) u
+			ON x.order_no = u.order_no AND x.werks = u.werks AND x.workshop = u.workshop 
+			AND x.batch = u.zzj_plan_batch AND x.zzj_pmd_items_id = u.zzj_pmd_items_id 
+			AND x.pre_prod_process = u.deliver_process_name AND x.prod_process = u.receive_process_name 
+			<!-- 查询订单下料明细工序最后录入产量时间 -->
+			LEFT JOIN
+			( 
+				SELECT op.order_no,op.werks,op.workshop,op.line,op.zzj_plan_batch,
+					op.zzj_no,op.zzj_pmd_items_id,op.machine_plan_items_id,op.process,
+					MAX(op.create_date) output_date
+				FROM ZZJ_OUTPUT op 
+				WHERE 1=1
+				AND op.order_no = #{order_no} 
+				AND op.werks = #{werks} 
+				AND op.workshop = #{workshop} 
+				AND op.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND op.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+					<if test="zzj_no.indexOf(',')==-1">
+						AND op.zzj_no like concat('%',#{zzj_no},'%') 	  
+					</if>
+					<if test="zzj_no.indexOf(',')!=-1">
+						AND FIND_IN_SET(op.zzj_no,#{zzj_no}) 
+					</if>
+				</if>
+				<if test="prod_process != null and prod_process != '' ">
+					op.process like concat('%',#{prod_process},'%') 	
+				</if>	
+				GROUP BY op.zzj_pmd_items_id,op.zzj_plan_batch,op.process
+			) v
+			ON x.order_no = v.order_no AND x.werks = v.werks AND x.workshop = v.workshop AND x.line = v.line
+				AND x.batch = v.zzj_plan_batch AND x.zzj_pmd_items_id = v.zzj_pmd_items_id AND x.pre_prod_process = v.process 
+			WHERE 1=1
+			<if test="prod_process != null and prod_process != '' ">
+				AND x.prod_process like concat('%', #{prod_process},'%')
+			</if>
+			<if test="limit != null and limit !=''">
+			   LIMIT #{start},#{limit}
+			</if>
+	</select>
+
+	<!-- 工序工时-流转时间报表 -->
+	<select id="getPmdProcessTransferTimeCount" resultType="int" parameterType="Map">
+		select  count(1) from (
+		<!--匹配拆分后的下料明细生产工序关联的机台计划总数、汇总产量及当前工序-->
+		SELECT x.*,
+			CASE WHEN y.machine_plan_date > 0 AND u.first_receive_date >0
+			THEN TIMESTAMPDIFF(MINUTE,y.machine_plan_date,u.first_receive_date) ELSE '-' END AS process_in_time, 
+			CASE WHEN y.machine_plan_date >0 AND m.output_date > 0 
+			THEN TIMESTAMPDIFF(MINUTE,y.machine_plan_date,m.output_date) ELSE '-' END AS product_time,
+			CASE WHEN m.output_date > 0 AND n.last_receive_date > 0
+			THEN TIMESTAMPDIFF(MINUTE,m.output_date,n.last_receive_date) ELSE '-' END AS process_out_time 
+			FROM 
+			   ( <!-- 根据生产工序流程将单行下料明细拆分为多行数据及下道工序-->
+				SELECT a.*,
+						substring_index(substring_index(concat('-',a.process_product,'-'),concat('-',
+								substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1)
+								,'-'),1),'-',-1) pre_prod_process,						
+					  substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1) as prod_process,
+						substring_index(substring_index(concat('-',a.process_product,'-'),concat('-',
+								substring_index(substring_index(a.process_product,'-',b.help_topic_id+1),'-',-1)
+								,'-'),-1),'-',1) next_prod_process 
+				 FROM 
+					(	<!--  根据订单、工厂、车间、线别查询下料明细、批次计划信息并计算批次计划需求数量 考虑技改情况      -->
+						SELECT dh.order_no,dh.werks,dh.workshop,dh.line,
+							CONCAT(o.order_name,' ',o.bus_type_code,' ',o.order_qty,'台') order_desc,
+							p.batch,
+							di.id zzj_pmd_items_id,di.no,di.material_no,di.zzj_no,di.zzj_name,di.process_flow,di.process_time,di.process_product,
+							SUBSTRING_INDEX(di.process_product, '-', -1) last_process,
+							di.assembly_position,di.process,di.section
+						FROM ZZJ_PMD_HEAD dh
+							RIGHT JOIN ZZJ_PMD_ITEMS di ON di.pmd_head_id = dh.id
+							LEFT JOIN ZZJ_WERKS_ORDER o ON dh.order_no = o.order_no
+							LEFT JOIN ZZJ_PLAN p ON p.order_no = dh.order_no  
+							AND p.werks = dh.werks AND p.workshop = dh.workshop and p.line = dh.line
+							WHERE 1=1
+							AND dh.order_no = #{order_no} 
+							AND dh.werks = #{werks} 
+							AND dh.workshop = #{workshop} 
+							AND dh.line = #{line}
+							<if test="zzj_no != null and zzj_no != ''">
+							  <if test="zzj_no.indexOf(',')==-1">
+					               AND (di.zzj_no like concat('%',#{zzj_no},'%') OR di.zzj_name like concat('%',#{zzj_no},'%'))		  
+					          </if>
+					          <if test="zzj_no.indexOf(',')!=-1">
+					               AND (FIND_IN_SET(di.zzj_no,#{zzj_no}) OR FIND_IN_SET(di.zzj_name,#{zzj_no}))
+					          </if>
+							</if>		
+							<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+								AND p.batch = #{zzj_plan_batch}
+							</if>		    	
+							ORDER BY di.zzj_no,di.assembly_position,p.batch
+					) a
+					join mysql.help_topic b on b.help_topic_id &lt; (length(a.process_product) - length(replace(a.process_product,'-',''))+1) 
+			) x
+			LEFT JOIN 
+		    ( <!-- 根据订单、工厂、车间、线别查询下料明细机台计划(机台绑定)最早下达时间（根据下料明细ID和计划工序分组） -->
+					SELECT ph.order_no,ph.werks,ph.workshop,ph.line,ph.zzj_plan_batch,
+					pi.zzj_pmd_items_id,pi.plan_process,
+					MIN(pi.create_date) machine_plan_date
+					FROM ZZJ_MACHINE_PLAN_ITEMS pi 
+					LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph ON pi.machine_plan_head_id = ph.id 
+					WHERE 1=1
+					AND ph.order_no = #{order_no} 
+					AND ph.werks = #{werks} 
+					AND ph.workshop = #{workshop} 
+					AND ph.line = #{line}
+					<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+						AND ph.zzj_plan_batch = #{zzj_plan_batch}
+					</if>
+					<if test="zzj_no != null and zzj_no != ''">
+						<if test="zzj_no.indexOf(',')==-1">
+							AND pi.zzj_no like concat('%',#{zzj_no},'%') 	  
+						</if>
+						<if test="zzj_no.indexOf(',')!=-1">
+							AND FIND_IN_SET(pi.zzj_no,#{zzj_no}) 
+						</if>
+					</if>
+					<if test="prod_process != null and prod_process != '' ">
+						pi.plan_process like concat('%',#{prod_process},'%') 	
+					</if>	
+					GROUP BY pi.zzj_pmd_items_id,pi.machine_plan_head_id,pi.plan_process
+			) y
+			ON x.order_no = y.order_no AND x.werks = y.werks AND x.workshop = y.workshop AND x.line = y.line
+				AND x.batch = y.zzj_plan_batch AND x.zzj_pmd_items_id = y.zzj_pmd_items_id AND x.prod_process = y.plan_process
+			<!-- 查询订单下料明细工序最后录入产量时间 -->
+			LEFT JOIN
+			( 
+				SELECT op.order_no,op.werks,op.workshop,op.line,op.zzj_plan_batch,
+					op.zzj_no,op.zzj_pmd_items_id,op.machine_plan_items_id,op.process,
+					MAX(op.create_date) output_date
+				FROM ZZJ_OUTPUT op 
+				WHERE 1=1
+				AND op.order_no = #{order_no} 
+				AND op.werks = #{werks} 
+				AND op.workshop = #{workshop} 
+				AND op.line = #{line}
+				<if test="zzj_plan_batch != null and zzj_plan_batch != ''">
+					AND op.zzj_plan_batch = #{zzj_plan_batch}
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+					<if test="zzj_no.indexOf(',')==-1">
+						AND op.zzj_no like concat('%',#{zzj_no},'%') 	  
+					</if>
+					<if test="zzj_no.indexOf(',')!=-1">
+						AND FIND_IN_SET(op.zzj_no,#{zzj_no}) 
+					</if>
+				</if>
+				<if test="prod_process != null and prod_process != '' ">
+					op.process like concat('%',#{prod_process},'%') 	
+				</if>
+				GROUP BY op.zzj_pmd_items_id,op.zzj_plan_batch,op.process
+			) m
+			ON x.order_no = m.order_no AND x.werks = m.werks AND x.workshop = m.workshop AND x.line = m.line
+				AND x.batch = m.zzj_plan_batch AND x.zzj_pmd_items_id = m.zzj_pmd_items_id AND x.prod_process = m.process 
+			<!-- 查询订单下料明细工序与下道工序最晚交接时间 -->
+			LEFT JOIN 
+			(
+				SELECT  hv.order_no,hv.werks,hv.workshop,hv.zzj_pmd_items_id,hv.zzj_plan_batch,
+				hv.deliver_process_name,hv.receive_process_name,
+				MAX(hv.edit_date) last_receive_date
+				FROM ZZJ_MAT_HANDOVER hv
+				WHERE hv.handover_type = '01'
+				AND hv.order_no = #{order_no} 
+				AND hv.werks = #{werks} 
+				AND hv.workshop = #{workshop} 
+				<if test="prod_process != null and prod_process != '' ">
+					op.deliver_process_name like concat('%',#{prod_process},'%') 	
+				</if>
+				GROUP BY hv.zzj_pmd_items_id,hv.zzj_plan_batch,hv.deliver_process_name,hv.receive_process_name
+			) n
+			ON x.order_no = n.order_no AND x.werks = n.werks AND x.workshop = n.workshop 
+			AND x.batch = n.zzj_plan_batch AND x.zzj_pmd_items_id = n.zzj_pmd_items_id 
+			AND x.prod_process = n.deliver_process_name AND x.next_prod_process = n.receive_process_name 
+			<!-- 查询订单下料明细工序与上道工序最早交接时间 -->
+			LEFT JOIN 
+			(
+				SELECT  hv.order_no,hv.werks,hv.workshop,hv.zzj_pmd_items_id,hv.zzj_plan_batch,
+				hv.deliver_process_name,hv.receive_process_name,
+				MIN(hv.edit_date) first_receive_date
+				FROM ZZJ_MAT_HANDOVER hv
+				WHERE hv.handover_type = '01'
+				AND hv.order_no = #{order_no} 
+				AND hv.werks = #{werks} 
+				AND hv.workshop = #{workshop} 
+				<if test="prod_process != null and prod_process != '' ">
+					op.deliver_process_name like concat('%',#{prod_process},'%') 	
+				</if> 
+				GROUP BY hv.zzj_pmd_items_id,hv.zzj_plan_batch,hv.deliver_process_name,hv.receive_process_name
+			) u
+			ON x.order_no = u.order_no AND x.werks = u.werks AND x.workshop = u.workshop 
+			AND x.batch = u.zzj_plan_batch AND x.zzj_pmd_items_id = u.zzj_pmd_items_id 
+			AND x.pre_prod_process = u.deliver_process_name AND x.prod_process = u.receive_process_name 
+			WHERE 1=1
+			<if test="prod_process != null and prod_process != '' ">
+				AND x.prod_process like concat('%', #{prod_process},'%')
+			</if>
+		) t
+	</select>
+	
+	
+</mapper>

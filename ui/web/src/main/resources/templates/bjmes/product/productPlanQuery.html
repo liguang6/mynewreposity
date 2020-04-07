@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>作业计划</title>
+<#include "/web_header.html">
+<style type="text/css">
+[v-cloak] {
+	display: none
+}
+</style>
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form class="form-inline"  id="searchForm" action="${request.contextPath}/bjmes/product/pe/getProductPlanList">
+						<div class="form-group">
+							<label class="control-label" style="width: 50px"><span style="color: red">*</span>工厂：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width: 70px">
+									<select name="werks" id="werks" v-model="werks" style="width: 100%; height: 25px">
+										<#list tag.getUserAuthWerks("BJMES_PRODUCT_PLAN_QUERY") as factory>
+										<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+										</#list>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" ><span style="color:red">*</span>车间：</label>
+							<div class="control-inline" style="width:70px">
+                                      <select  name="workshop" id="workshop" v-model="workshop" style="width:100%;height:25px">
+									  <option v-for="w in workshop_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+									</select>
+							</div>
+						</div>
+					
+						<div class="form-group">
+							<label class="control-label"><span style="color:red">*</span>订单：</label>
+							<div class="control-inline">
+								<div class="input-group treeselect" style="width: 90px" >
+									<input v-model="order_no" type="text" name="order_no" id="order_no"  class="form-control" @click="getOrderNoFuzzy()" placeholder="订单编号">
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">产品类别：</label>
+							<div class="control-inline">
+								<div class="input-group treeselect" style="width: 70px">
+									<select v-model="product_type_code" name="product_type_code" id="product_type_code" style="width: 70px;height: 25px;">
+										<option value=""></option>
+										<option v-for="w in product_type_list" :value="w.product_type_code">{{ w.product_type_name }}</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">产品名称：</label>
+							<div class="control-inline">
+								<div class="input-group treeselect" style="width: 60px">
+									<select v-model="product_code" name="product_code" id="product_code" style="width: 110px;height: 25px;">
+										<option value=""></option>
+										<option v-for="w in product_list" :value="w.product_code">{{ w.product_name }}</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="form-group" >
+							<label class="control-label" style="width: 60px">计划日期：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:175px">
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+	                                    <input type="text" id="start_date" name="start_date" 
+										class="form-control" style="width: 80px;height: 25px"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(){}});" />						    
+									 </div>
+									 -
+									<div class="input-group" style="width:80px">
+									    <input type="text" id="end_date" name="end_date" 
+										class="form-control" style="width: 80px;height: 25px"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(){}});" />						
+									 </div>
+								</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<input type="button" id="btnQuery" @click="query" class="btn btn-info btn-sm" value="查询" /> 
+							
+						</div>
+					</form>
+					
+					<table id="dataGrid"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/bjmes/product/productPlanQuery.js?_${.now?long}"></script>
+</body>
+</html>

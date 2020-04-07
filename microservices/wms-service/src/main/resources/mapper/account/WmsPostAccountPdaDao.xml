@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.in.dao.WmsSTOReceiptPdaDao">
+
+	<select id="getwhTaskCount" parameterType="map" resultType="int">
+		SELECT COUNT(1)
+		  FROM (SELECT COUNT(1) COUNT
+				  FROM WMS_PDA_SCAN_CACHE T
+				 WHERE WH_NUMBER = #{WH_NUMBER}
+				   AND T.CREATOR = #{CREATOR}
+				   AND T.MENU_KEY = #{MENU_KEY}
+				 GROUP BY T.WERKS, T.MATNR, T.SAP_OUT_NO)
+	</select>
+
+	<select id="getwhTask" parameterType="Map" resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT C.* FROM WMS_PDA_SCAN_CACHE C
+		WHERE
+		WH_NUMBER=#{WH_NUMBER}
+		AND C.CREATOR =#{USER_NAME}
+		AND C.MENU_KEY=#{MENU_KEY}
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND C.LABEL_NO = #{LABEL_NO}
+		</if>
+		<if test="REF_DOC_NO !=null and REF_DOC_NO !='' ">
+			AND C.REF_DOC_NO = #{REF_DOC_NO}
+		</if>
+		<if test="REF_DOC_ITEM !=null and REF_DOC_ITEM !='' ">
+			AND C.REF_DOC_ITEM = #{REF_DOC_ITEM}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND C.MATNR = #{MATNR}
+		</if>
+		) TMP WHERE ROWNUM &lt;=#{end}) WHERE ROW_ID > #{start}
+	</select>
+
+
+</mapper>

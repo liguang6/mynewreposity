@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>总装JIS排序类别配置</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+					<div class="form-group" style="align:center;margin-top:15px">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    供应工厂代码：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+							      <select  name="fWerks" id="fWerks" v-model="assemblysorttype.fWerks"  class="required" style="width:100%;height:25px">
+									<#list tag.getUserAuthWerks("WMS_C_ASSEMBLY_SORTTYPE") as factory> 
+										<option value="${factory.code}">${factory.code}</option>
+									</#list>
+								</select>
+								</div>
+						</div>
+					</div>
+					
+					<div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     JIS排序类别：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="jisSortType" name="jisSortType" class="form-control required"  v-model="assemblysorttype.jisSortType"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    排序号：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="sortNum" name="sortNum" class="form-control"  v-model="assemblysorttype.sortNum" />
+							    </div>
+							  </div>
+					</div>
+					
+					
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_c_assembly_sorttype_edit.js?_${.now?long}"></script>
+</body>
+</html>

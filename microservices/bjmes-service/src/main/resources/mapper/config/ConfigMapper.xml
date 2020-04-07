@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.bjmes.modules.config.dao.BjMesProductsDao">
+	 
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+      	SELECT P.*,F.process_flow_name FROM BJMES_C_PRODUCTS P
+		LEFT JOIN (select distinct process_flow_code,process_flow_name from BJMES_C_PROCESS_FLOW) F
+		ON P.process_flow_code=F.process_flow_code
+		where 1=1 and P.parent_product_id is null
+		         <if test="product_type_code != null and product_type_code !=''">
+			        AND P.product_type_code=#{product_type_code} 
+			      </if>
+			      <if test="product != null and product !=''">
+			        AND (P.product_code like CONCAT('%',#{product},'%') or P.product_name like CONCAT('%',#{product},'%'))
+			      </if>
+			      <if test="process_flow != null and process_flow !=''">
+			        AND (P.process_flow_code like CONCAT('%',#{process_flow},'%') or F.process_flow_name like CONCAT('%',#{process_flow},'%'))
+			      </if>
+			      <if test="process != null and process !=''">
+			        AND (P.process_code like CONCAT('%',#{process},'%') or P.process_name like CONCAT('%',#{process},'%'))
+			      </if>
+			      <if test="status != null and status !=''">
+			        AND P.status = #{status}
+			      </if>
+			       ORDER BY edit_date DESC
+         LIMIT #{start},#{limit}
+                
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT count(*) FROM BJMES_C_PRODUCTS   WHERE 1=1 and parent_product_id is null
+		         <if test="product_type_code != null and product_type_code !=''">
+			        AND product_type_code=#{product_type_code} 
+			      </if>
+	              <if test="product_code != null and product_code !=''">
+			        AND product_code = #{product_code}
+			      </if>
+			      <if test="status != null and status !=''">
+			        AND status = #{status}
+			      </if>
+    </select>
+    
+    <select id="getById" parameterType="Long" resultType="Map">
+      SELECT *
+		       FROM BJMES_C_PRODUCTS  WHERE ID=#{id}
+    </select>
+    <select id="getList" parameterType="Map" resultType="Map">
+    	SELECT P.*,F.process_flow_name FROM BJMES_C_PRODUCTS P
+		LEFT JOIN (select distinct process_flow_code,process_flow_name from BJMES_C_PROCESS_FLOW) F
+		ON P.process_flow_code=F.process_flow_code
+		where 1=1 and P.parent_product_id is null
+		<if test="product_code != null and product_code !=''">
+		AND (P.product_code LIKE CONCAT('%',#{product_code},'%') or P.product_name LIKE CONCAT('%',#{product_code},'%'))
+		
+		</if>
+		<if test="product_type_code != null and product_type_code !=''">
+		and P.product_type_code=#{product_type_code}
+		</if>
+	              
+    </select>
+    <insert id="save" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into BJMES_C_PRODUCTS
+		(parent_product_id,product_type_code,product_type_name,product_code,product_name,process_code,process_name,
+		process_flow_code,status,editor,edit_date,parent_process_code,parent_process_name) values
+			(#{parent_product_id},#{product_type_code},#{product_type_name},#{product_code},#{product_name},
+			#{process_code},#{process_name},#{process_flow_code},#{status},#{editor},#{edit_date},#{parent_process_code},#{parent_process_name})
+	</insert>
+	<insert id="saveBatch" parameterType="List">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into BJMES_C_PRODUCTS
+			(parent_product_id,product_type_code,product_type_name,product_code,product_name,process_code,process_name,
+			process_flow_code,status,editor,edit_date,parent_process_code,parent_process_name) values
+		<foreach collection="list" item="d" index="index" separator=",">
+			(#{d.parent_product_id},#{d.product_type_code},#{d.product_type_name},#{d.product_code},#{d.product_name},
+			#{d.process_code},#{d.process_name},#{d.process_flow_code},#{d.status},#{d.editor},#{d.edit_date},#{d.parent_process_code},#{d.parent_process_name})
+		</foreach>
+		
+	</insert>
+	<update id="update" parameterType="Map">
+			update BJMES_C_PRODUCTS set parent_product_id=#{parent_product_id},product_type_code=#{product_type_code},
+			product_type_name= #{product_type_name},product_code=#{product_code},product_name=#{product_name}, 
+			process_code=#{process_code},process_name=#{process_name},process_flow_code=#{process_flow_code},
+			status=#{status},editor=#{editor},edit_date=#{edit_date},parent_process_code=#{parent_process_code},
+			parent_process_name=#{parent_process_name}
+			where id=#{id}
+	</update>
+	<update id="delete" parameterType="Long">
+			delete from BJMES_C_PRODUCTS  where id=#{id}
+	</update>
+	<update id="deleteByParentId" parameterType="Long">
+			delete from BJMES_C_PRODUCTS  where parent_product_id=#{id}
+	</update>
+	
+	<select id="getByParentId" parameterType="Long" resultType="Map">
+      select p.id,p.product_code,p.product_name,p.process_flow_code,p1.parent_process_code process_code,p1.parent_process_name process_name,p1.id chid 
+		from (SELECT * FROM BJMES_C_PRODUCTS WHERE ID=#{id}) p
+		LEFT JOIN BJMES_C_PRODUCTS p1
+		on p.id=p1.parent_product_id and p1.parent_product_id=#{id}
+    </select>
+	<update id="updateTestNode" parameterType="Map" >
+		update BJMES_C_PRODUCTS set
+		test_node=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.test_node}
+		</foreach>
+		,editor=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{editor}
+		</foreach>
+		,edit_date=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{edit_date}
+		</foreach>
+		where id in
+		<foreach collection="detail_list" item="detail" index="index" separator="," open=" (" close=")">
+			#{detail.id}
+		</foreach>
+	</update>
+</mapper>

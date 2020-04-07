@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>看板类型新增</title>
+	<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+					<div class="form-group" style="align:center;margin-top:15px">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>工厂代码
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text" name="werks"  class="form-control required" v-model="maturgent.WERKS"  id="werks"  @click="getPlantNoFuzzy()"  placeholder="工厂代码"/>
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>仓库号
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text"  id="whNumber" name="whNumber" class="form-control required"  v-model="maturgent.WH_NUMBER" placeholder="仓库号" />
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>显示开始时间
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text"  id="startDate" name="startDate" class="form-control required"  v-model="maturgent.START_DATE" placeholder="开始时间" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})"/>
+							</div>
+						</div>
+					</div>
+					  <div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>显示结束时间
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<input type="text"  id="endDate" name="endDate" class="form-control required"  v-model="maturgent.END_DATE" placeholder="结束时间" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})"/>
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>类型
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<select id="kanbanType" name="kanbanType" v-model="maturgent.KANBAN_TYPE" class="required" style="width:100%">
+									<option value=''>请选择</option>
+									<#list tag.wmsDictList('KANBAN_TYPE') as d>
+									<option value="${d.code}">${d.value}</option>
+								    </#list>
+								</select>
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>看板消息
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<textarea type="text"  id="kanbanMsg" name="kanbanMsg" class="form-control required"  v-model="maturgent.KANBAN_MSG" placeholder="看板消息" rows="5">
+								{{maturgent.KANBAN_MSG}}
+								</textarea>
+							</div>
+						</div>
+					</div>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/sys/news_edit.js?_${.now?long}"></script>
+</body>
+</html>

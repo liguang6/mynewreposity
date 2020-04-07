@@ -1,0 +1,206 @@
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+                border:1px solid #6FACEF;
+                margin-left: 40%;
+            }
+            .btn{
+                border:1px solid #1271EF;background:transparent url(${request.contextPath}/statics/ins/btn_bg.jpg) repeat-x;/**/
+                padding:0 8px;line-height:22px;color: #fff; font-weight:bold;
+            }
+        </style>
+        <title>立库退料（312）</title>
+        <meta http-equiv="ContenType" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <div id="global_content_smq">
+            <div class="smq_test" >
+                <div style="background-color:#1d7bd3;color:white;height:30px;">
+                    <h2 style="font-size:16px;">
+                        <button style="float:left;" class="topBtn" onclick='window.location.replace("${request.contextPath}/index.html?m=1")'>首页</button>
+                        立库余料退回(262)
+                        <button style="float:right;" class="topBtn" onclick='window.location.replace("${request.contextPath}/logout")'>注销</button></h2>
+                </div>
+                <div id="divSysInfo"></div>
+                <div id="divSysError" style="color:red ;text-align:center;"></div>
+
+                <div class="box" style="text-align:center">
+                    <button id="but_input" class="btn" onclick="changePoReTab('input');" >录入</button>
+                    <button id="but_datainfo" class="btn" onclick="changePoReTab('data');" >数据表</button>
+                    <button id="but_headinfo" class="btn" onclick="changePoReTab('head');" style="display: none" >抬头信息</button>
+                </div>
+                <br><br>
+                <!--      输入页签          -->
+                <div id="div_input" style="display: none">
+                    <div class="box">
+                        <label id="barcodeLabel" style="text-align: left">&nbsp;标签号</label>
+                        <div >
+                            <input id="barcode" name="barcode"  type="text"/>
+                            <button id="scan" onclick="poreScanPre();" >扫描</button>
+                        </div>
+                    </div>
+                    <div class="box" >
+                        <label style="text-align: left">&nbsp;储位</label>
+                        <div >
+                            <input id="BIN_CODE" name="BIN_CODE"  type="text"/>
+                        </div>
+                    </div>
+                    <div class="box">
+                        <label style="text-align: left">&nbsp;托盘号</label>
+                        <div >
+                            <input id="TPNUM" name="TPNUM" type="text" />
+                        </div>
+                    </div>
+                    <br><br>
+                    <div style="color:#1d7bd3; border:solid #1d7bd3; border-width:1px 0px 0px 0px;">
+                        <br><br>
+                        <div >
+                            <label style="line-height: 18px;width: 50px;text-align: left;
+                        padding-left:10px;float: left;">条码 ID</label>
+                            <input id="wa_labelid" name="pore_labelid" class="input_readonly" type="text" readonly />
+                        </div>
+                        <div >
+                            <label style="line-height: 18px;width:50px;text-align: left;
+                        padding-left:10px;float: left;">已扫箱数</label>
+                            <input id="wa_boxqty" name="pore_boxqty" class="input_readonly" type="text" readonly />
+
+                        </div>
+                        <div >
+                            <label style="line-height: 18px;width: 50px;text-align: left;
+                        padding-left:10px;float: left;">物料 号</label>
+                            <input id="wa_matnr" name="pore_matnr" class="input_readonly" type="text" readonly />
+                        </div>
+                        <div >
+                            <label style="line-height: 18px;width: 50px;text-align: left;
+                        padding-left:10px;float: left;">物料描述</label>
+                            <input id="wa_maktx" name="pore_maktx" class="input_readonly" type="text" readonly />
+                        </div>
+                        <div >
+                            <label style="line-height: 18px;width: 50px;text-align: left;
+                        padding-left:10px;float: left;">数  量</label>
+                            <input id="wa_qty" name="pore_qty" class="input_readonly" type="text" readonly />
+                        </div>
+                        <div >
+                            <label style="line-height: 18px;width: 50px;text-align: left;
+                        padding-left:10px;float: left;">批  次</label>
+                            <input id="wa_batch" name="pore_batch" class="input_readonly" type="text" readonly />
+                        </div>
+                    </div>
+
+
+
+                    <!--  隐藏暂存数据  -->
+                    <input type="hidden" id="lineNo" name="lineNo" value="-1" />
+                    <!--明细信息 -->
+                    <input type="hidden" id="itemarrays" name="itemarrays" />
+                    <!-- 已装箱数量 -->
+                    <input type="hidden" id="hi_boxqty" name="hi_boxqty" value="0" />
+                    <!-- 每次扫描根据条码查询的数据 -->
+                    <input type="hidden" id="porescandata" name="porescandata" />
+
+<!--                    <div style="text-align:center;">-->
+<!--                        <br><br>-->
+<!--                        <button type="submit" class="btn"> 保存</button>&ndash;&gt;-->
+<!--                        <button id="btnCancel" type="button" class="btn"> 返回</button>-->
+<!--                    </div>-->
+                </div>
+                <!--      数据表页签        -->
+                <div id="div_datainfo" style="display: none">
+                    <div id="div_data_info" style="display: none">
+                        <P>数据列表</P>
+                        <table id="poreDataGrid"></table>
+                        <div id='porePager'></div>
+                    </div>
+                    <!--   数据列表信息    -->
+<!--                    <div>-->
+<!--                        <div style="text-align:center;">-->
+<!--                            <br><br>-->
+<!--                            <button type="submit" class="btn"> 保存</button>&ndash;&gt;-->
+<!--                            <button id="btnCancel" type="button" class="btn"> 返回</button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+                    <!--   数据列表条码信息    -->
+                    <div id="div_data_barinfo" style="display: none">
+                        <P>条码数据列表</P>
+                        <table id="poreBarDataGrid"></table>
+                        <div id='poreBarPager'></div>
+                        <div style="text-align:center;">
+                            <br>
+                            <button id="btnPoReBarDeleteBar"  type="button" class="btn" >删除</button>
+<!--                            <button id="btnCancel" type="button" class="btn"> 返回</button>-->
+                        </div>
+                    </div>
+                </div>
+                <!--      抬头信息页签      -->
+                <div id="div_headinfo" style="display: none">
+<!--                    <P>抬头信息</P>-->
+                    <div id="div_headconfirm">
+                        <div >
+                            <label >凭证日期</label>
+<!--                            <input id="docDate" name="docDate" type="text" class="form-control" placeholder="凭证日期" data-toggle="date">-->
+                            <input id="docDate" name="docDate"  type="date" />
+<!--                            <input type="date" value="2015-09-24"/>-->
+                        </div>
+                        <div >
+                            <label >记账日期</label>
+                            <input id="debitDate" name="debitDate"  type="date" />
+                        </div>
+                        <div >
+                            <label >抬头文本</label>
+                            <input id="headText" name="headText" type="text" />
+                        </div>
+<!--                        <div style="text-align:center;">-->
+<!--                            <br><br>-->
+<!--                            <button id="btnCancel" type="button" class="btn"> 返回</button>-->
+<!--                            <button id="btnConfirm" type="button" class="btn"> 确认</button>-->
+<!--                        </div>-->
+                    </div>
+<!--                    <div id="div_headresult" style="display: none">-->
+<!--                        <button id="btnCancel" type="button" class="btn"> 返回</button>-->
+<!--                    </div>-->
+                </div>
+
+                <!-- //确认返回信息页签-->
+                <div id="div_headconfirm_result" style="display: none">
+                    <br><br>
+                    <div style="border: 1px solid blue">
+                        <div >
+                            <label >WMS凭证号</label>
+                            <input id="WMS_NO" name="WMS_NO" class="input_readonly" type="text" readonly />
+                        </div>
+                        <div >
+                            <label >退货单号</label>
+                            <input id="RETURN_NO" name="RETURN_NO" class="input_readonly" type="text" readonly />
+                        </div>
+                        <div >
+                            <label >退货单行项目</label>
+                            <input id="RETURN_ITEM_NO" name="RETURN_ITEM_NO" class="input_readonly" type="text" readonly />
+                        </div>
+                        <div >
+                            <label >作业时长</label>
+                            <input id="pore_time_slot" name="pore_time_slot" class="input_readonly" type="text" readonly />
+                        </div>
+                    </div>
+                </div>
+
+
+                <div style="text-align:center;">
+                    <br><br>
+                    <button id="btnPoReDeleteBar"  type="button" class="btn" style="display: none" >删除</button>
+                    <button id="btnCancel" type="button" class="btn" style="display: none"> 返回</button>
+                    <button id="btnConfirmInfo" type="button" class="btn" style="display: none"> 生成订单</button>
+                    <button id="btnConfirm" type="button" class="btn" style="display: none"> 确认</button>
+                </div>
+
+
+            </div>
+        </div>
+
+        <script src="${request.contextPath}/statics/js/return/reMaterialWarehouseTwo.js?_${.now?long}"></script>
+
+    </body>
+</html>

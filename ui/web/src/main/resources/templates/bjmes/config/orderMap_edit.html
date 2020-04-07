@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>产品图号</title>
+<#include "/web_header.html">
+<style type="text/css">
+   .selectBG{
+       color:red;
+    };
+    jqgrow {
+		height: 35px
+	}
+    </style>
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+						<form id="searchForm" action="" method="post" class="form-inline" >
+						
+						</form>	
+					<div id="pgtoolbar1">
+							<div id="links" >
+							<a href='#' class='btn' id='addNewRow' onclick="addNewRow()" title="新增"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+							
+							<a href='#' class='btn' id='editOperation' title="保存" @click="save"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 保存</a>
+
+							</div>
+						 </div>
+ 					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	
+	<script src="${request.contextPath}/statics/js/bjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/bjmes/config/orderMap_edit.js?_${.now?long}"></script>
+</body>
+</html>

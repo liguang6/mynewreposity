@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsInPoItemAuthDao">
+	 <select id="getPolist"  parameterType="List" resultType="Map">
+	     SELECT I.EBELN,I.EBELP,I.MATNR,I.TXZ01,I.WERKS,I.MAX_MENGE,H.LIFNR FROM WMS_SAP_PO_HEAD H,WMS_SAP_PO_ITEM I 
+			WHERE H.EBELN=I.EBELN AND I.LOEKZ IS NULL AND I.ELIKZ IS NULL AND I.RETPO IS NULL AND H.EBELN=#{ebeln}
+			AND I.WERKS IN 
+			<foreach collection="werksList" item="it" open="(" close=")" separator=",">
+				#{it.werks}
+			</foreach>	
+	 </select>
+</mapper>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>创建出库需求</title> <#include "/web_header.html">
+	<style>
+		select {
+			height: 25px;
+			border-radius:0px;
+			border:1px solid #d2d6de;
+			padding:0 6px;
+		}
+		[v-cloak] { display: none }
+	</style>
+</head>
+<body>
+<div class="wrapper" id="vue-app">
+	<div class="main-content" id="vue">
+		<div class="box box-main">
+			<div class="box-body">
+				<form id="searchForm" class="form-inline">
+					<div class="form-group">
+						<label class="control-label"><span
+								class="required"> *</span>工厂：</label>
+						<div class="control-inline" style="width: 75px;">
+							<select class="form-control"  name="werks" id="werks"  onchange="vm.onPlantChange(event)">
+								<#list tag.getUserAuthWerks("A91") as factory>
+								<option value="${factory.code}">${factory.code}</option>
+							</#list>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label class="control-label"><span
+								class="required"> *</span>仓库号：</label>
+						<div class="control-inline" style="width: 80px;">
+							<select class="form-control" v-model="whNumber" name="whNumber" id="whNumber" style="height: 28px;width: 60px;">
+								<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label class="control-label"><span
+								class="required"> *</span>需求类型：</label>
+						<div class="control-inline">
+							<!-- <select  name="requireTypes" id="requireTypes" v-model="requireTypes">
+                                <option value="1">生产订单领料261</option>
+                                <option value="2">生产订单补料261</option>
+                                <option value="3">库存地点调拨311—类型转移</option>
+                                <option value="4">成本中心领料201</option>
+                                <option value="5">内部订单 CO订单领料</option>
+                                <option value="6">委外订单投料（541）</option>
+                                <option value="7">SAP交货单销售发货</option>
+                                <option value="8">UB转储单调拨（351）</option>
+                                <option value="10">外部销售发货（251）</option>
+                                <option value="11">工厂间调拨</option>
+                                <option value="12">WBS元素发货221</option>
+                                <option value="13">库存地点调拨311—类型不转移</option>
+                                <option value="16">工厂间调拨发货（A303）</option>
+                                <option value="17">SAP交货单销售发货（A311T）</option>
+                                <option value="73">报废（551）</option>
+                                <option value="75">STO一步联动发货311</option>
+                                <option value="76">扫描看板卡创建需求</option>
+                                <option value="77">工厂间调拨301（总装）</option>
+                            </select> -->
+							<select id="requireTypes" name="requireTypes" v-model="requireTypes" class="input-medium" style="height: 30px;width:100%">
+								<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE" >
+									{{t.BUSINESS_NAME}}
+								</option>
+							</select>
+						</div>
+					</div>
+
+
+					<div  class="form-group" v-if="requireTypes === '41' || requireTypes === '42' || requireTypes === '48'" v-cloak>
+						<label class="control-label"><span
+								class="required"> *</span>过滤非上线物料：</label>
+						<div class="control-inline">
+							<select  name="filterUseMaterials" id="filterUseMaterials"  v-model="filterUseMaterials">
+								<option value='1'>是</option>
+								<option value='0'>否</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label class="control-label"><span
+								class="required"> *</span>需求日期：</label>
+						<div class="control-inline">
+							<input class="form-control" id="requireDate" v-model="requireDate" style="width: 100px;"
+								   onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){vm.requireDate = pd.cal.getDateStr();}});" />
+
+							<div class="control-inline">
+								<select name="requireTime" id="requireTime" v-model="requireTime">
+									<option value="00">上午8:00-12:00</option>
+									<option value="01">下午13:00-17:30</option>
+									<option value="02">加班18:00-20:00</option>
+									<option value="03">夜班20:00-8:00</option>
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '50' || requireTypes === '51' || requireTypes === '54'" v-cloak>
+						<label class="control-label" >客户代码：</label>
+						<div class="control-inline">
+							<!-- 弹出框 -->
+							<input class="form-control" name="costomerCode"  v-model="costomerCode" placeholder="客户代码"/>
+							<span style="width: 100px;background-color: #f2f2f2">{{customerDesc}}</span>
+						</div>
+					</div>
+					<div  class="form-group" v-if="requireTypes === '52'" v-cloak>
+						<label class="control-label" ><span class="required ">* </span>客户代码：</label>
+						<div class="control-inline">
+							<!-- 弹出框 -->
+							<input class="form-control" name="costomerCode"  v-model="costomerCode" placeholder="客户代码"/>
+							<span style="width: 100px;background-color: #f2f2f2">{{customerDesc}}</span>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes ==='64' || requireTypes === '43' || requireTypes === '46' || requireTypes === '53' || requireTypes === '75' || requireTypes === '77'" v-cloak>
+						<label class="control-label" > <span
+								class="required "> *</span>接收工厂：
+						</label>
+						<div class="control-inline">
+							<input class="form-control" style="width: 100px;text-transform:uppercase;"  v-model="acceptPlant" placeholder="接收工厂" @blur="validateCostcenter()"/>
+						</div>
+					</div>
+
+
+					<div  class="form-group" v-if="requireTypes === '47' || requireTypes === '41' || requireTypes === '42' || requireTypes === '48' || requireTypes === '43' || requireTypes === '49' || requireTypes === '50' || requireTypes === '51' ||requireTypes === '54' || requireTypes === '64' || requireTypes === '52'  || requireTypes === '53' || requireTypes === '75' || requireTypes === '76'" v-cloak>
+						<label class="control-label"  style="width: 41px;">库位：</label>
+						<div class="control-inline">
+							<!-- 弹出框 -->
+							<input class="form-control" name="lgortList"  v-model="lgortList" placeholder="多个库位时以逗号分隔" @click='openLgortSelectWindow()'/>
+						</div>
+					</div>
+
+					<!--<div class="form-group" v-if="requireTypes === '47'|| requireTypes === '46' ">
+                        <label class="control-label"  style="width: 41px;">库位：</label>
+                        <div class="control-inline">
+                            &lt;!&ndash; 弹出框 &ndash;&gt;
+                            <input class="form-control" name="lgortList" v-model="lgortList" placeholder="多个库位时以逗号分隔"/>
+                        </div>
+                    </div>-->
+
+
+					<!-- 						<div class="form-group" v-if="requireTypes === '76'">
+                                                <label class="control-label" > <span class="required ">* </span>接收库位：</label>
+                                                <div class="control-inline">
+                                                    弹出框
+                                                    <input class="form-control" name="aceptLgortList"  v-model="aceptLgortList" placeholder="多个库位时以逗号分隔" @click='openLgortSelectWindow(function(data){vm.aceptLgortList = data;})'/>
+                                                </div>
+                                            </div> -->
+
+					<div  class="form-group" v-if="requireTypes === '76'" v-cloak>
+						<label class="control-label" > <span class="required ">* </span>线边仓：</label>
+						<div class="control-inline">
+							<!-- 弹出框 -->
+							<input class="form-control" style="text-transform:uppercase;" name="aceptLgortList"  v-model="aceptLgortList" placeholder="线边仓" />
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '75' || requireTypes === '47'|| requireTypes === '46' || requireTypes === '48' ||requireTypes === '77'" v-cloak>
+						<label class="control-label" > <span class="required ">* </span>接收库位：</label>
+						<div class="control-inline">
+							<!-- 弹出框 -->
+							<input class="form-control" style="width: 100px;text-transform:uppercase;" name="aceptLgortList" v-model="aceptLgortList" placeholder="多个库位时以逗号分隔"/>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '50'">
+						<label class="control-label" > <span class="required ">* </span>接收库位：</label>
+						<div class="control-inline">
+							<!-- 弹出框 -->
+							<input class="form-control" name="aceptLgortList" v-model="aceptLgortList" style="width: 51px;"/>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '46' || requireTypes === '77'">
+						<label class="control-label" >发送库位：</label>
+						<div class="control-inline">
+							<!-- 弹出框 -->
+							<input class="form-control" name="sendLgortList"  v-model="sendLgortList" placeholder="多个库位时以逗号分隔" @click='openLgortSelectWindow(function(data){vm.sendLgortList = data;})'/>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '49'">
+						<label class="control-label" > <span class="required"> *</span>委外单位：</label>
+						<div class="control-inline">
+							<!-- 弹出框 -->
+							<input class="form-control" name="w_vendor"  id="w_vendor" v-model="w_vendor" @click="getVendor($event)" onblur="valadateVendor()"/>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '41' || requireTypes === '42' || requireTypes === '48'">
+						<label class="control-label" ><span
+								class="required"> *</span>汇总模式：</label>
+						<div class="control-inline">
+							<select  name="summaryMode" id="summaryMode" v-model="summaryMode">
+								<option value="01">按订单备料</option>
+								<option value="02">按产线备料</option>
+								<option value="03">按料号汇总</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label class="control-label" >领料用途：</label>
+						<div class="control-inline">
+							<input class="form-control" placeholder="领料用途" name="use" v-model='use'/>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '50' || requireTypes === '51' ||requireTypes === '54' || requireTypes === '52' || requireTypes === '75'">
+						<label class="control-label" >预计运输天数：</label>
+						<div class="control-inline">
+							<input style="width: 50px;" class="form-control"  name="transportDay" v-model='transportDay'/>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '50' || requireTypes === '51' || requireTypes === '54' || requireTypes === '52' || requireTypes === '75'">
+						<label class="control-label" >运输方式：</label>
+						<div class="control-inline">
+							<select v-model="transportType">
+								<option value="1">快运</option>
+							</select>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '50' || requireTypes === '51' || requireTypes === '54' || requireTypes === '52' || requireTypes === '75'">
+						<label class="control-label" >发货地区：</label>
+						<div class="control-inline">
+							<select v-model="shipArea">
+								<option value="1">长沙</option>
+							</select>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes === '50' || requireTypes === '51' || requireTypes === '54' || requireTypes === '52' || requireTypes === '75'">
+						<label class="control-label" >收货地区：</label>
+						<div class="control-inline">
+							<select v-model="acceptArea">
+								<option value="2">南京</option>
+							</select>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes ==='44'  || requireTypes === '45'">
+						<label class="control-label" > <span
+								class="required "> *</span>接收公司代码：
+						</label>
+						<div class="control-inline">
+							<input class="form-control" style="width: 100px;text-transform:uppercase;"  v-model="compcode" placeholder="接收公司代码" @blur="validateCostcenter()"/>
+						</div>
+					</div>
+
+
+					<div  class="form-group" v-if="requireTypes ==='44' || requireTypes ==='73'">
+						<label class="control-label"><span
+								class="required"> *</span>成本中心：</label>
+						<div class="control-inline">
+							<input class="form-control" placeholder="成本中心代码" style="width: 100px;" v-model="costcenter" @blur="validateCostcenter()"/>
+							<span>{{costcenterName}}</span>
+						</div>
+					</div>
+
+					<!-- <div class="form-group" v-if="requireTypes ==='73'">
+                        <label class="control-label"><span
+                                class="required"> *</span>移动原因：</label>
+                        <div class="control-inline">
+                            <input class="form-control" placeholder="移动原因" style="width: 100px;" v-model="bfyy" />
+                            <span>{{costcenterName}}</span>
+                        </div>
+                    </div> -->
+
+					<div class="form-group" v-if="requireTypes ==='43'">
+						<label class="control-label" style="width: 100px"><span
+								class="required"> *</span>内部订单号：</label>
+						<div class="control-inline">
+							<input class="form-control" style="width: 100px;" v-model="innerOrder" @blur="getInnerOrder()"/>
+							<span>{{innerOrderName}}</span>
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes ==='45'">
+						<label class="control-label" style="width: 100px"><span
+								class="required"> *</span>WBS元素号：</label>
+						<div class="control-inline">
+							<input class="form-control" style="width: 150px;"
+								   placeholder="WBS元素号" v-model="wbsElementNo" @blur="validateWbs()"/>
+							<span>{{wbsElementName}}</span>
+						</div>
+					</div>
+
+					<div class="form-group" v-if="requireTypes ==='76'">
+						<label class="control-label"><span
+								class="required"> *</span>看板卡：</label>
+						<div class="control-inline">
+							<input class="form-control" placeholder="看板卡" style="width: 100px;" v-model="barcode" />
+							<input type="button" value="扫描" @click="search" />
+						</div>
+					</div>
+					<div  class="form-group" v-if="requireTypes ==='76'">
+						<label class="control-label"><span
+								class="required"> *</span>超市：</label>
+						<div class="control-inline">
+							<input class="form-control" placeholder="超市" style="width: 100px;" v-model="supermarket" />
+							<!--<span>{{costcenterName}}</span>-->
+						</div>
+					</div>
+
+					<div  class="form-group" v-if="requireTypes ==='77'">
+						<label class="control-label" >配送模式：</label>
+						<div class="control-inline">
+							<select v-model="deliveryType">
+								<option value="JIT">JIT</option>
+								<option value="JIS">JIS</option>
+								<option value="SPS">SPS</option>
+							</select>
+						</div>
+					</div>
+					<div  class="form-group" v-if="requireTypes ==='77'">
+						<label class="control-label" >优先级：</label>
+						<div class="control-inline">
+							<select v-model="priority ">
+								<option value="0">正常</option>
+								<option value="1">紧急</option>
+							</select>
+						</div>
+					</div>
+					<div  class="form-group" >
+						<label class="control-label" >接收方：</label>
+						<div class="control-inline">
+							<input class="form-control" style="width: 100px;"  v-model="receiver" placeholder="接收方" />
+						</div>
+					</div>
+
+				</form>
+				<div id="resultLayer" style="display: none; padding: 10px;">
+<!-- 					<h4>创建需求成功！需求号：<a id="reqDetail" class="toNewPage" title="需求明细"><span id="outreqNoLayer">-</span></a></h4>
+					<br/> -->
+					<h4>创建需求成功！需求号：<span id="resultMsg">-</span></h4>
+				</div>
+
+				<div id="pgtoolbar1">
+					<div  id="links" v-if=" requireTypes === '41' ||requireTypes === '42' || requireTypes === '48' || requireTypes === '49' || requireTypes === '50' || requireTypes === '51' || requireTypes === '64' || requireTypes === '52'
+						|| requireTypes === '46' || requireTypes === '47' || requireTypes === '53' || requireTypes === '54' || requireTypes === '77'  ">
+						<!-- 生产订单，生产订单补料，线边仓业务,委外订单 工具栏 -->
+						<a v-if="requireTypes === '41' || requireTypes === '42' || requireTypes === '48'"  class="btn" href="#" id="produceOrder" @click="produceOrder()"><i class="fa fa-search" aria-hidden="true"></i> 生产订单</a>
+						<a v-if="requireTypes === '49' || requireTypes === '52'" class="btn" href="#" @click="produceOrder()"><i class="fa fa-search" aria-hidden="true"></i> 采购订单</a>
+						<a v-if="requireTypes === '50' || requireTypes === '51' || requireTypes === '54'" class="btn" href="#" @click="produceOrder()"><i class="fa fa-search" aria-hidden="true"></i> SAP交货单</a>
+						<a v-if="requireTypes === '64'" class="btn" href="#" @click="produceOrder()"><i class="fa fa-plus" aria-hidden="true"></i> UB转储单</a>
+						<a v-if="requireTypes === '53'" class="btn" href="#" @click="produceOrder()"><i class="fa fa-search" aria-hidden="true"></i> 凭证号</a>
+						<a v-if="requireTypes === '77'" class="btn" href="#" @click="produceOrder()"><i class="fa fa-search" aria-hidden="true"></i> 配送单号</a>
+						<a v-if="requireTypes === '42' || requireTypes === '52' || requireTypes === '48' ||requireTypes === '49' || requireTypes === '46' || requireTypes === '47'" class="btn" href="#" id="produceOrder" @click="add()"><i class="fa fa-plus" aria-hidden="true"></i> 增加新项</a>
+						<a  class="btn" href='#'  class='btn' @click="remove()"><i class='fa fa-times' title="删除" aria-hidden='true'></i> 删除</a>
+						<a v-if="requireTypes === '46'|| requireTypes === '47' || requireTypes === '48' || requireTypes === '41' || requireTypes === '42'" href='#' class='btn' id='importOperation222' @click="importExcel()"><i class='fa fa-upload' aria-hidden='true'></i> 导入</a>
+
+						<a  href="#" class="btn" title="需求创建" @click="create()"><i class="fa fa-check"></i> 需求创建</a>
+
+					</div>
+					<div  id="links" v-if="requireTypes === '44'|| requireTypes === '43' || requireTypes === '45' || requireTypes === '73' || requireTypes === '75'" >
+						<!-- 成本中心业务，工具栏 -->
+						<a  class="btn" href="#" id="produceOrder" @click="add()"><i class="fa fa-plus" aria-hidden="true"></i> 增加新项</a>
+						<a href='#' class='btn' @click="remove"><i class='fa fa-times' title="删除" aria-hidden='true'></i> 删除</a>
+						<!-- <a href="#" class="btn" id="btnSearch" title="批导" @click="batchUpload_4()"><i class="fa fa-upload"></i> 批导</a> -->
+						<a v-if="requireTypes === '43'" href='#' class='btn' id='importOperation3' @click="importExcel()"><i class='fa fa-upload' aria-hidden='true'></i> 导入</a>
+						<a href="#" class="btn" @click="create()" title="需求创建"><i class="fa fa-check"></i> 需求创建</a>
+
+						
+					</div>
+
+					<div  id="links" v-if="requireTypes === '76'" >
+						<!-- 扫描看板卡创建需求，工具栏 -->
+						<a href='#' class='btn' @click="removePda311"><i class='fa fa-times' title="删除" aria-hidden='true'></i> 删除</a>
+						<!-- <a href="#" class="btn" id="btnSearch" title="批导" @click="batchUpload_4()"><i class="fa fa-upload"></i> 批导</a> -->
+						<a href="#" class="btn" @click="create()" title="需求创建"><i class="fa fa-check"></i> 需求创建</a>
+					</div>
+
+				</div>
+				<div id="dataGridDiv">
+					<table id="dataGrid"></table>
+					<div id="psetcols"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/out/out_req_create.js?_${.now?long}"></script>
+</html>

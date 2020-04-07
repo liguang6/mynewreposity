@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCMatStorageDao">
+
+	<resultMap id="wmsCMatStorageMap" type="com.byd.wms.business.modules.config.formbean.WmsCMatStorageFormbean" >
+        <result property="id" column="ID"/>
+        <result property="werks" column="WERKS"/>
+        <result property="whNumber" column="WH_NUMBER"/>
+        <result property="matnr" column="MATNR"/>
+        <result property="maktx" column="MAKTX"/>
+        <result property="storageAreaCode" column="STORAGE_AREA_CODE"/>
+        <result property="storageModel" column="STORAGE_MODEL"/>
+        <result property="inControlFlag" column="IN_CONTROL_FLAG"/>
+        <result property="outControlFlag" column="OUT_CONTROL_FLAG"/>
+        <result property="length" column="LENGTH"/>
+        <result property="width" column="WIDTH"/>
+        <result property="height" column="HEIGHT"/>
+        <result property="sizeUnit" column="SIZE_UNIT"/>
+        <result property="volum" column="VOLUM"/>
+        <result property="volumUnit" column="VOLUM_UNIT"/>
+        <result property="weight" column="WEIGHT"/>
+        <result property="weightUnit" column="WEIGHT_UNIT"/>
+        <result property="storageUnit" column="STORAGE_UNIT"/>
+        <result property="qty" column="QTY"/>
+        <result property="stockL" column="STOCK_L"/>
+        <result property="stockM" column="STOCK_M"/>
+        <result property="mpqFlag" column="MPQ_FLAG"/>
+        <result property="externalBatchFlag" column="EXTERNAL_BATCH_FLAG"/>
+        <result property="correlationMaterial" column="CORRELATION_MATERIAL"/>
+        <result property="repulsiveMaterial" column="REPULSIVE_MATERIAL"/>
+        
+        <result property="editor" column="EDITOR"/>
+        <result property="editDate" column="EDIT_DATE"/>
+    </resultMap>
+	 <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,CONCAT(WERKS,'-') || CONCAT(WH_NUMBER,'-') || MATNR  AS UNIQUE_STR  FROM WMS_C_MAT_STORAGE
+	        WHERE CONCAT(WERKS,'-') || CONCAT(WH_NUMBER,'-') || MATNR IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+			AND DEL='0'
+	 </select>
+	 
+	 <select id="getCMatStorageList" parameterType="Map" resultMap="wmsCMatStorageMap">
+	 SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+	 	SELECT M.*,S.MAKTX FROM WMS_C_MAT_STORAGE M LEFT JOIN WMS_SAP_MATERIAL S ON M.WERKS=S.WERKS AND M.MATNR=S.MATNR
+	 	WHERE M.DEL='0'
+      	<if test="werks != null and werks !=''">
+		        AND M.WERKS = #{werks}
+		</if>
+		
+      	<if test="whNumber != null and whNumber !=''">
+		        AND M.WH_NUMBER = #{whNumber}
+		</if>
+		<if test="matnr != null and matnr !=''">
+		        AND M.MATNR = #{matnr}
+		</if>
+		ORDER BY M.EDIT_DATE DESC
+		) TMP 
+		 WHERE ROWNUM  &lt;=#{end})  
+	  WHERE ROW_ID > #{start}
+	  
+	 </select>
+	 
+	 <select id="getCMatStorageCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1) FROM WMS_C_MAT_STORAGE M  WHERE  M.DEL='0'
+       <if test="werks != null and werks !=''">
+		        AND M.WERKS = #{werks}
+		</if>
+		
+      	<if test="whNumber != null and whNumber !=''">
+		        AND M.WH_NUMBER = #{whNumber}
+		</if>
+		<if test="matnr != null and matnr !=''">
+		        AND M.MATNR = #{matnr}
+		</if>
+    </select>
+</mapper>

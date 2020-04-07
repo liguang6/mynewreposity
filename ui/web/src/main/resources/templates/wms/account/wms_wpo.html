@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>无PO收货账务处理</title>
+<#include "/web_header.html">
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+	<div id="rrapp" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+						<form id="searchForm" class="form-inline" :action="formUrl">
+							<table>
+								<tr>
+									<td width="90%">
+										<div class="form-group">
+											<label class="control-label"><span style="color:red">*</span>收货工厂：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:80px" id="parentDiv">
+												<select name="WERKS" id="WERKS" v-model="WERKS" style="height: 28px;width:100%">
+												   <#list tag.getUserAuthWerks("ACCOUNT_WPO") as factory>
+												      <option value="${factory.code}">${factory.code}</option>
+												   </#list>
+												</select>
+												</div>
+											</div>
+											<label class="control-label"><span style="color:red">*</span>仓库号：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:70px;" id="parentDiv" >
+												<select name="WH_NUMBER" id="WH_NUMBER" v-model="WH_NUMBER" style="height: 28px;width:100%">
+													<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+												</select>
+												</div>
+											</div>
+											<label class="control-label"><span style="color:red">*</span>供应商代码：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:80px" id="parentDiv">
+												<input type="text" id="LIFNR" name="LIFNR" value="" v-model="LIFNR" style="width: 80px;" class="form-control width-100" />
+												</div>
+											</div>
+											<label class="control-label">收货日期：</label>
+											<div class="control-inline" style="width:80px;">
+												<input id="CREATE_DATE_S" name="CREATE_DATE_S" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+											</div>
+											<label class="control-label">-</label>
+											<div class="control-inline"  style="width:80px;">
+												<input id="CREATE_DATE_E" name="CREATE_DATE_E"  onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+											</div>	
+											<label class="control-label">需求跟踪号：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:100px" id="parentDiv">
+												<input type="text" id="BEDNR" name="BEDNR" value="" v-model="BEDNR" style="width: 100px;" class="form-control width-100" />
+												</div>
+											</div>													
+										</div>
+									</td>
+									<td width="10%">
+										<div class="form-group">
+											<input type="button" id="btnSearchData" class="btn btn-primary btn-sm" value="查询" @click="query" />
+										</div>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-group">
+											<label class="control-label"><span style="color:red">*</span>凭证日期：</label>
+											<div class="control-inline" style="width:80px;">
+												<input id="PZ_DATE" name="PZ_DATE"  onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+											</div>
+										</div>
+										<div class="form-group">
+											<label class="control-label"><span style="color:red">*</span>记账日期：</label>
+											<div class="control-inline"  style="width:80px;">
+												<input id="JZ_DATE" name="JZ_DATE"  onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+											</div>														
+										</div>
+									</td>
+									<td>
+										<div class="form-group">
+											<input type="button" @click="post" id="btnConfirm" class="btn btn-success btn-sm" value="过账"/>
+										</div>
+									</td>
+								</tr>					
+							</table>
+						</form>
+						<div id="tab1" v-cloak class="table-responsive table2excel" data-tablename="Test Table 1">
+							<table id="dataGrid"></table>
+						</div>
+						<!-- <div id="dataGridPage"></div> -->
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><span id="rtnMst">-</span></h4>
+		<br/>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/wms/account/wms_wpo.js?_${.now?long}"></script>
+</body>
+</html>

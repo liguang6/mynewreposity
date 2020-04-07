@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.WmsInReceiptQueryDao">
+
+	 <select id="getReceiptInfoList"  parameterType="List" resultType="Map">
+	  SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+	     SELECT D.ID,RECEIPT_NO,RECEIPT_ITEM_NO,S.VALUE BUSINESS_NAME,F_WERKS,F_WH_NUMBER,
+	     F_LGORT,F_BATCH,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,UNIT,RECEIPT_QTY,BATCH,SOBKZ,
+	     ASNNO,ASNITM,PO_NO,PO_ITEM_NO,SAP_OUT_NO,SAP_OUT_ITEM_NO,SAP_MATDOC_NO,BUSINESS_TYPE,
+	     SAP_MATDOC_ITEM_NO,LIFNR,LIKTX,FULL_BOX_QTY,BOX_COUNT,AFNAM,BEDNR,RECEIPT_DATE,
+	     RECEIVER,GR_AREA,RETURNABLE_QTY,RETURN_QTY,INABLE_QTY,IN_QTY,TRY_QTY,TRY_IN_QTY,
+	     DESTROY_QTY,IQC_COST_CENTER,TEST_FLAG,DESTROY_GZ_QTY,WH_RETURN_QTY,CREATOR,RECEIPT_REASON,
+	     CREATE_DATE FROM WMS_IN_RECEIPT D
+	     LEFT JOIN SYS_DICT S ON S.CODE=D.BUSINESS_NAME AND S.TYPE='BUSINESS_NAME'
+	     WHERE 1=1
+	      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+	      <if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		   </if>
+	       <if test="WH_NUMBER !=null and WH_NUMBER  !='' ">
+			AND WH_NUMBER =#{WH_NUMBER }
+		   </if>
+		   <if test="MATNR !=null and MATNR !='' ">
+			AND MATNR like '%' || #{MATNR} || '%'
+		   </if>		  
+		   <if test="LIFNR !=null and LIFNR !='' ">
+			AND LIFNR like '%' || #{LIFNR} || '%' 
+		   </if>
+		   <if test="BATCH !=null and BATCH !='' ">
+			AND BATCH like '%' || #{BATCH} || '%'
+		   </if>		   
+		   <if test="BUSINESS_NAME !=null and BUSINESS_NAME !='' ">
+			AND BUSINESS_NAME=#{BUSINESS_NAME}  <!-- 收货类型 -->
+		   </if>
+		   <if test="CREATOR !=null and CREATOR !='' ">
+			AND CREATOR like '%' || #{CREATOR} || '%'   <!-- 操作人 -->
+		   </if>
+		   <if test="RECEIPT_START_DATE !=null and RECEIPT_START_DATE !='' ">
+			AND RECEIPT_DATE&gt;= CONCAT(#{RECEIPT_START_DATE}, ' 00:00:00') 
+		   </if>
+		   <if test="RECEIPT_END_DATE !=null and RECEIPT_END_DATE !='' ">
+			AND RECEIPT_DATE&lt;= CONCAT(#{RECEIPT_END_DATE}, ' 23:59:59') 
+		   </if>
+		    <if test="ASNNO !=null and ASNNO !='' ">
+			AND ASNNO=#{ASNNO}  <!-- SCM送货单号 -->
+		   </if>
+		   <if test="PO_NO !=null and PO_NO !='' ">
+			AND PO_NO=#{PO_NO}  <!-- 采购顶单号 -->
+		   </if>
+		   <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+			AND SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+		   </if>
+		   <if test="RECEIPT_NO !=null and RECEIPT_NO !='' ">
+			AND RECEIPT_NO=#{RECEIPT_NO}  <!-- 送货单号 -->
+		   </if>
+		     ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+	 </select>
+	 
+	<select id="getReceiptInfoCount"  parameterType="Map" resultType="int">
+       SELECT COUNT(1) FROM WMS_IN_RECEIPT WHERE 1=1
+       <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+	     <if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		   </if>
+	       <if test="WH_NUMBER !=null and WH_NUMBER  !='' ">
+			AND WH_NUMBER =#{WH_NUMBER }
+		   </if>
+		   <if test="MATNR !=null and MATNR !='' ">
+			AND MATNR like '%' || #{MATNR} || '%' 
+		   </if>		  
+		   <if test="LIFNR !=null and LIFNR !='' ">
+			AND LIFNR like '%' || #{LIFNR} || '%' 
+		   </if>
+		   <if test="BATCH !=null and BATCH !='' ">
+			AND BATCH like '%' || #{BATCH} || '%'
+		   </if>
+		    <if test="BUSINESS_NAME !=null and BUSINESS_NAME !='' ">
+			AND BUSINESS_NAME=#{BUSINESS_NAME}  <!-- 收货类型 -->
+		   </if>
+		   <if test="CREATOR !=null and CREATOR !='' ">
+			AND CREATOR=#{CREATOR}  <!-- 操作人 -->
+		   </if>
+		   <if test="RECEIPT_START_DATE !=null and RECEIPT_START_DATE !='' ">
+			AND RECEIPT_DATE&gt;= CONCAT(#{RECEIPT_START_DATE}, ' 00:00:00') 
+		   </if>
+		   <if test="RECEIPT_END_DATE !=null and RECEIPT_END_DATE !='' ">
+			AND RECEIPT_DATE&lt;= CONCAT(#{RECEIPT_END_DATE}, ' 23:59:59') 
+		   </if>
+		    <if test="ASNNO !=null and ASNNO !='' ">
+			AND ASNNO=#{ASNNO}  <!-- SCM送货单号 -->
+		   </if>
+		   <if test="PO_NO !=null and PO_NO !='' ">
+			AND PO_NO=#{PO_NO}  <!-- 采购顶单号 -->
+		   </if>
+		   <if test="SAP_OUT_NO !=null and SAP_OUT_NO !='' ">
+			AND SAP_OUT_NO=#{SAP_OUT_NO}  <!-- SAP交货单号 -->
+		   </if>
+		   <if test="RECEIPT_NO !=null and RECEIPT_NO !='' ">
+			AND RECEIPT_NO=#{RECEIPT_NO}  <!-- 送货单号 -->
+		   </if>
+		</select>
+		
+		<select id="getPOITEMBednr" parameterType="Map" resultType="Map">
+		select EBELN,EBELP,BEDNR from WMS_SAP_PO_ITEM 
+		where ebeln=#{PO_NO} and to_number(ebelp)=to_number(#{PO_ITEM_NO})
+	</select>
+	
+	<select id="getStockInfoList" parameterType="Map" resultType="Map">
+		<if test="STOCK_TYPE == '仓库库存' ">
+			SELECT * FROM ( 
+         	SELECT TMP.*, ROWNUM ROW_ID FROM (
+			SELECT s.WERKS,s.WH_NUMBER,s.BIN_CODE,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.LIFNR,s.LIKTX,s.SOBKZ,
+			nvl(s.STOCK_QTY,0) STOCK_QTY,s.FREEZE_QTY,s.VIRTUAL_QTY,s.VIRTUAL_LOCK_QTY,s.LOCK_QTY,
+			s.XJ_QTY,s.XJ_BIN_CODE,s.SO_NO,s.SO_ITEM_NO,s.F_BATCH,s.RSB_QTY,s.BATCH
+			FROM WMS_CORE_STOCK s
+			WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+			and (s.STOCK_QTY > 0 or s.FREEZE_QTY > 0 or s.VIRTUAL_QTY > 0 or s.VIRTUAL_LOCK_QTY > 0 
+			or s.LOCK_QTY > 0 or s.XJ_QTY > 0 or s.RSB_QTY > 0)
+			<if test="LGORT !=null and LGORT !='' ">
+				and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+			</if>
+			<if test="MATNR !=null and MATNR !='' ">
+				and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+			</if>
+			<if test="LIFNR !=null and LIFNR !='' ">
+				and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+			</if>
+			<if test="MAKTX !=null and MAKTX !='' ">
+				and s.MAKTX like ('%'||#{MAKTX}||'%')
+			</if>
+			<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+				and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER} 
+				and  INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+			</if>
+			<if test="BATCH !=null and BATCH !='' ">
+				and INSTR(','||#{BATCH}||',',','||s.BATCH||',')>0
+			</if>
+			<if test="BIN_CODE !=null and BIN_CODE !='' ">
+				and INSTR(','||#{BIN_CODE}||',',','||s.BIN_CODE||',')>0
+			</if>
+			<if test="SOBKZ !=null and SOBKZ !='' ">
+				and s.SOBKZ=#{SOBKZ}
+			</if>
+			
+			)TMP
+			<if test="END !=null ">
+				WHERE ROWNUM  &lt;=#{END}
+			</if>
+			)  
+			<if test="START !=null ">
+				WHERE ROW_ID > #{START} 	
+			</if>	  		
+		</if>
+		
+		<if test="STOCK_TYPE=='收料房库存' ">
+			SELECT * FROM ( 
+	         	SELECT TMP.*, ROWNUM ROW_ID FROM (
+			SELECT s.WERKS,s.WH_NUMBER,'' BIN_CODE,s.LGORT,s.MATNR,s.MAKTX,s.UNIT MEINS,s.LIFNR,s.LIKTX,s.SOBKZ,
+			s.RH_QTY STOCK_QTY,'' FREEZE_QTY,'' VIRTUAL_QTY,'' VIRTUAL_LOCK_QTY,'' LOCK_QTY,
+			'' XJ_QTY,'' XJ_BIN_CODE,'' SO_NO,'' SO_ITEM_NO,s.F_BATCH,'' RSB_QTY,s.BATCH
+			FROM WMS_IN_RH_STOCK s
+			WHERE s.WERKS=#{WERKS}  and s.WH_NUMBER=#{WH_NUMBER} and nvl(s.DEL,0)!='X'
+			<if test="LGORT !=null and LGORT !='' ">
+				and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+			</if>
+			<if test="MATNR !=null and MATNR !='' ">
+				and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+			</if>
+			<if test="LIFNR !=null and LIFNR !='' ">
+				and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+			</if>
+			<if test="MAKTX !=null and MAKTX !='' ">
+				and s.MAKTX like ('%'||#{MAKTX}||'%')
+			</if>
+			<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+				and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER} 
+				and  INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+			</if>
+			<if test="BATCH !=null and BATCH !='' ">
+				and INSTR(','||#{BATCH}||',',','||s.BATCH||',')>0
+			</if>
+			<if test="SOBKZ !=null and SOBKZ !='' ">
+				and s.SOBKZ=#{SOBKZ}
+			</if>
+			)TMP
+			<if test="END !=null ">
+				WHERE ROWNUM  &lt;=#{END}
+			</if>
+			)  
+			<if test="START !=null ">
+				WHERE ROW_ID > #{START} 	
+			</if>				
+		</if>
+		
+		<if test="STOCK_TYPE == '危化品库存' ">
+			SELECT * FROM ( 
+         	SELECT TMP.*, ROWNUM ROW_ID FROM (
+			SELECT s.WERKS,s.WH_NUMBER,s.BIN_CODE,s.LGORT,s.MATNR,s.MAKTX,s.MEINS,s.LIFNR,s.LIKTX,s.SOBKZ,
+			nvl(s.STOCK_QTY,0) STOCK_QTY,s.FREEZE_QTY,s.VIRTUAL_QTY,s.VIRTUAL_LOCK_QTY,s.LOCK_QTY,
+			s.XJ_QTY,s.XJ_BIN_CODE,s.SO_NO,s.SO_ITEM_NO,s.F_BATCH,s.RSB_QTY,s.BATCH
+			FROM WMS_CORE_STOCK s
+			LEFT JOIN WMS_C_MAT_DANGER d on d.MATNR=s.MATNR
+			WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+			and d.WERKS=#{WERKS} and nvl(d.DEL,'0') !='X' and nvl(d.DANGER_FLAG,'0')='X'
+			<if test="LGORT !=null and LGORT !='' ">
+				and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+			</if>
+			<if test="MATNR !=null and MATNR !='' ">
+				and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+				and INSTR(','||#{MATNR}||',',','||d.MATNR||',')>0
+			</if>
+			<if test="LIFNR !=null and LIFNR !='' ">
+				and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+			</if>
+			<if test="MAKTX !=null and MAKTX !='' ">
+				and s.MAKTX like ('%'||#{MAKTX}||'%')
+			</if>
+			<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+				and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER} 
+				and  INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+			</if>
+			<if test="BATCH !=null and BATCH !='' ">
+				and INSTR(','||#{BATCH}||',',','||s.BATCH||',')>0
+			</if>
+			<if test="BIN_CODE !=null and BIN_CODE !='' ">
+				and INSTR(','||#{BIN_CODE}||',',','||s.BIN_CODE||',')>0
+			</if>
+			<if test="SOBKZ !=null and SOBKZ !='' ">
+				and s.SOBKZ=#{SOBKZ}
+			</if>
+			
+			)TMP
+			<if test="END !=null ">
+				WHERE ROWNUM  &lt;=#{END}
+			</if>
+			)  
+			<if test="START !=null ">
+				WHERE ROW_ID > #{START} 	
+			</if>	  	
+		</if>
+				
+	</select>
+	
+	<select id="getStockInfoCount" parameterType="Map" resultType="int">
+		<if test="STOCK_TYPE == '仓库库存' ">
+			SELECT count(s.ID)
+			FROM WMS_CORE_STOCK s
+			WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+			and (s.STOCK_QTY > 0 or s.FREEZE_QTY > 0 or s.VIRTUAL_QTY > 0 or s.VIRTUAL_LOCK_QTY > 0 
+			or s.LOCK_QTY > 0 or s.XJ_QTY > 0 or s.RSB_QTY > 0)
+			<if test="LGORT !=null and LGORT !='' ">
+				and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+			</if>
+			<if test="MATNR !=null and MATNR !='' ">
+				and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+			</if>
+			<if test="LIFNR !=null and LIFNR !='' ">
+				and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+			</if>
+			<if test="MAKTX !=null and MAKTX !='' ">
+				and s.MAKTX like ('%'||#{MAKTX}||'%')
+			</if>
+			<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+				and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER} 
+				and  INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+			</if>
+			<if test="BATCH !=null and BATCH !='' ">
+				and INSTR(','||#{BATCH}||',',','||s.BATCH||',')>0
+			</if>
+			<if test="BIN_CODE !=null and BIN_CODE !='' ">
+				and INSTR(','||#{BIN_CODE}||',',','||s.BIN_CODE||',')>0
+			</if>
+			<if test="SOBKZ !=null and SOBKZ !='' ">
+				and s.SOBKZ=#{SOBKZ}
+			</if>
+		</if>
+		
+		<if test="STOCK_TYPE=='收料房库存' ">
+			SELECT count(s.ID)
+			FROM WMS_IN_RH_STOCK s
+			WHERE s.WERKS=#{WERKS}  and s.WH_NUMBER=#{WH_NUMBER} and nvl(s.DEL,0)!='X'
+			<if test="LGORT !=null and LGORT !='' ">
+				and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+			</if>
+			<if test="MATNR !=null and MATNR !='' ">
+				and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+			</if>
+			<if test="LIFNR !=null and LIFNR !='' ">
+				and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+			</if>
+			<if test="MAKTX !=null and MAKTX !='' ">
+				and s.MAKTX like ('%'||#{MAKTX}||'%')
+			</if>
+			<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+				and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER} 
+				and  INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+			</if>
+			<if test="BATCH !=null and BATCH !='' ">
+				and INSTR(','||#{BATCH}||',',','||s.BATCH||',')>0
+			</if>
+			<if test="SOBKZ !=null and SOBKZ !='' ">
+				and s.SOBKZ=#{SOBKZ}
+			</if>					
+		</if>
+		
+		<if test="STOCK_TYPE == '危化品库存' ">
+			SELECT count(s.ID)
+			FROM WMS_CORE_STOCK s
+			LEFT JOIN WMS_C_MAT_DANGER d on d.MATNR=s.MATNR
+			WHERE s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER}
+			and d.WERKS=#{WERKS} and nvl(d.DEL,'0') !='X' and nvl(d.DANGER_FLAG,'0')='X'
+			<if test="LGORT !=null and LGORT !='' ">
+				and INSTR(','||#{LGORT}||',',','||s.LGORT||',')>0
+			</if>
+			<if test="MATNR !=null and MATNR !='' ">
+				and INSTR(','||#{MATNR}||',',','||s.MATNR||',')>0
+				and INSTR(','||#{MATNR}||',',','||d.MATNR||',')>0
+			</if>
+			<if test="LIFNR !=null and LIFNR !='' ">
+				and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+			</if>
+			<if test="MAKTX !=null and MAKTX !='' ">
+				and s.MAKTX like ('%'||#{MAKTX}||'%')
+			</if>
+			<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+				and s.MATNR in (select MATNR from WMS_C_MAT_MANAGER where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER} 
+				and  INSTR(','||#{AUTHORIZE_CODE}||',',','||AUTHORIZE_CODE||',')>0)
+			</if>
+			<if test="BATCH !=null and BATCH !='' ">
+				and INSTR(','||#{BATCH}||',',','||s.BATCH||',')>0
+			</if>
+			<if test="BIN_CODE !=null and BIN_CODE !='' ">
+				and INSTR(','||#{BIN_CODE}||',',','||s.BIN_CODE||',')>0
+			</if>
+			<if test="SOBKZ !=null and SOBKZ !='' ">
+				and s.SOBKZ=#{SOBKZ}
+			</if>
+		</if>
+	</select>
+	
+	<select id="queryBasicDataUnsyncCount" parameterType="Map" resultType="int">
+		SELECT count(id) FROM SCHEDULE_JOB_MSG j
+		WHERE 1=1 
+		<if test="WERKS !=null and WERKS !=''">
+			and WERKS = #{WERKS}
+		</if>
+		<if test="BUKRS !=null and BUKRS !=''">
+			and BUKRS = #{BUKRS}
+		</if>
+		<if test="MEG_TYPE !=null and MEG_TYPE !=''">
+			and MEG_TYPE = #{MEG_TYPE}
+		</if>
+	</select>
+	
+	<select id="queryBasicDataUnsync" parameterType="Map" resultType="Map" >
+		SELECT * FROM(
+		SELECT TMP.*,ROWNUM ROW_ID FROM
+		(SELECT * FROM SCHEDULE_JOB_MSG j
+		WHERE 1=1 
+		<if test="WERKS !=null and WERKS !=''">
+			and WERKS = #{WERKS}
+		</if>
+		<if test="BUKRS !=null and BUKRS !=''">
+			and BUKRS = #{BUKRS}
+		</if>
+		<if test="MEG_TYPE !=null and MEG_TYPE !=''">
+			and MEG_TYPE = #{MEG_TYPE}
+		</if>
+		)TMP
+			<if test="END !=null ">
+				WHERE ROWNUM  &lt;=#{END}
+			</if>
+			)  
+			<if test="START !=null ">
+				WHERE ROW_ID > #{START} 	
+			</if>	
+	</select>
+	<select id="getLabelData" parameterType="Map" resultType="Map" >
+		SELECT t.*,r.PO_NO,r.PO_ITEM_NO,r.BEDNR 
+			FROM WMS_CORE_LABEL t
+			LEFT JOIN WMS_IN_RECEIPT r ON t.RECEIPT_NO = r.RECEIPT_NO AND t.RECEIPT_ITEM_NO = r.RECEIPT_ITEM_NO 
+			WHERE 1=1 AND t.RECEIPT_NO IN
+			<foreach item="detail" index="index" collection="receiptNoList" open="(" close=")" separator=",">
+			    #{detail}
+			</foreach>
+	</select>
+</mapper>

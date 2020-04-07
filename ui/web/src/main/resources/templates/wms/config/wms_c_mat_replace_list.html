@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${tag.getLocale("MATERIAL_SUBSTITUTION_DATA","M")}</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" v-model="page.list"
+						action="${request.contextPath}/config/matreplace/list"
+						method="post" class="form-inline ">
+						<div class="form-group">
+							<label class="control-label">${tag.getLocale("FACTORYCODE","M")}</label>
+							<div class="control-inline">
+								<input type="text" class="form-control" id="werks" name="werks"
+									@click="getPlantNoFuzzy()" placeholder="${tag.getLocale("FACTORYCODE","M")}">
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">${tag.getLocale("MATNR","M")}</label>
+							<div class="control-inline">
+								<input type="text" class="form-control" id="matnr" name="matnr"
+									@change="getMaterialNoFuzzy()" placeholder="${tag.getLocale("MATNR","M")}">
+							</div>
+						</div>
+						<div class="form-group">
+							<button type="submit" class="btn btn-primary btn-sm">${tag.getLocale("QUERY","M")}</button>
+							<button type="reset" class="btn btn-default btn-sm">${tag.getLocale("RESET","M")}</button>
+						</div>
+					</form>
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#' class='btn' id='newOperation'
+								title="${tag.getLocale("ADD","M")}"><i class='fa fa-plus'
+								aria-hidden='true'></i> ${tag.getLocale("ADD","M")}</a> <a href='#'
+								class='btn' id='editOperation' title="${tag.getLocale("UPDATE","M")}"><i
+								class='fa fa-pencil-square-o' aria-hidden='true'></i>
+								${tag.getLocale("UPDATE","M")}</a> <a href='#' class='btn'
+								id='deleteOperation' title="${tag.getLocale("DELETE","M")}"><i
+								class='fa fa-trash' aria-hidden='true'></i>
+								${tag.getLocale("DELETE","M")}</a> <a href="#" class="btn"
+								id="btnSearch" title="${tag.getLocale("QUERY","M")}"><i
+								class="fa fa-filter"></i> ${tag.getLocale("QUERY","M")}</a>
+						</div>
+					</div>
+					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>
+					<table id="tb_excel" style="display: none"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script
+		src="${request.contextPath}/statics/js/wms/config/wms_c_mat_replace_list.js?_${.now?long}"></script>
+</body>

@@ -1,0 +1,48 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>存储类型搜索顺序配置</title>
+<#include "/web_header.html">
+</head>
+<body >
+<div id="rrapp" v-cloak>
+<div class="main-content">
+	<div class="box box-main">
+		<div class="box-body">
+			<form id="searchForm" v-model="page.list" action="${request.contextPath}/config/wmsCoreSearchSequence/list" method="post" class="form-inline" >
+						<div class="form-group">
+							<label class="control-label">${tag.getLocale('warehouseCode','M')}：</label>
+							<div class="control-inline">
+                                   <input type="text" @click="getWhNoFuzzy()" class="form-control" id="warehouseCode" name="warehouseCode"   placeholder="${tag.getLocale('warehouseCode','M')}">
+                             </div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">${tag.getLocale('storageAreaSearch','M')}：</label>
+							<div class="control-inline">
+                                   <input type="text" class="form-control" name="storageAreaSearch"   placeholder="${tag.getLocale('storageAreaSearch','M')}">
+                             </div>
+						</div>
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-sm">${tag.getLocale("QUERY","M")}</button>
+								<button type="reset" class="btn btn-default btn-sm">${tag.getLocale("RESET","M")}</button>
+							</div>
+			</form>
+			<div id="pgtoolbar1">
+			   <div id="links" >
+				   <a href='#' class='btn' id='newOperation' title="新增"><i class='fa fa-plus' aria-hidden='true'></i> ${tag.getLocale("ADD","M")}</a>
+
+				   <a href='#' class='btn' id='editOperation' title="修改"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> ${tag.getLocale("UPDATE","M")}</a>
+
+				   <a href='#' class='btn' id='deleteOperation'  title="删除"><i class='fa fa-trash' aria-hidden='true'></i>${tag.getLocale("DELETE","M")}</a>
+
+				   <a href="#" class="btn" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a>
+			   </div>
+			</div>
+			<table id="dataGrid"></table>  
+			 <div id="dataGridPage">
+		</div>
+	</div>
+</div>
+</div>
+</div>
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+	<script src="${request.contextPath}/statics/js/wms/config/wms_core_search_sequence_list.js?_${.now?long}"></script>
+</body>

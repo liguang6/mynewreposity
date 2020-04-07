@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库房退货</title>
+<#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+	<div id="rrapp" v-cloak>
+		<div class="wrapper">
+			<div class="main-content">
+				<div class="box box-main">
+					<div id="bodyDiv" class="box-body">
+						<form id="searchForm" class="form-inline" action="#">
+							<table>
+							<tr>
+								<td id="searchForm" width="75%">
+									<div class="form-group">
+										<label class="control-label"><span style="color:red">*</span>工厂：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:60px" id="parentDiv">
+											<select class="form-control" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+											   <#list tag.getUserAuthWerks("RG_WHO") as factory> 
+											      <option value="${factory.code}">${factory.code}</option>
+											   </#list>
+											</select>
+											</div>
+										</div>
+										<label class="control-label"><span style="color:red">*</span>仓库号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:60px" id="parentDiv">
+											<select class="form-control" name="wh" id="wh">
+												<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+											</select>
+											</div>
+										</div>
+										<label class="control-label">退货类型：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:140px" id="parentDiv">
+											<select class="form-control" name="business_name" id="business_name" onchange="vm.onBusinessChange(event)">
+											<!-- <option value='29'>采购订单退货161</option>
+											<option value='28'>采购订单退货122</option>
+											<option value='27'>STO退货</option>
+											<option value='30'>生产订单半成品退货</option>
+											<option value='34'>WBS元素成品退货</option>
+											<option value='33'>成本中心成品退货</option>
+											<option value='37'>内部/CO订单退料</option> -->
+												<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE">
+													{{t.BUSINESS_NAME}}
+												</option>
+											</select>
+											</div>
+										</div>
+										<label id="lable1" class="control-label"><span style="color:red">*</span>采购订单：</label>
+										<label id="lable2" class="control-label"><span style="color:red">*</span>SAP退货交货单：</label>
+										<label id="lable3" class="control-label"><span style="color:red">*</span>生产订单：</label>
+										<label id="lable4" class="control-label"><span style="color:red">*</span>WBS元素：</label>
+										<label id="lable10" class="control-label"><span style="color:red">*</span>成本中心：</label>
+										<label id="lable11" class="control-label"><span style="color:red">*</span>内部/CO订单：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:140px" id="parentDiv">
+											<input type="text" id="pono" name="pono" value="" style="width: 100px;" class="form-control width-300" />
+											<input type="button" id="btnMore" class="btn btn-default btn-sm" value="..."/>
+											</div>
+										</div>
+										
+										<label class="control-label">库位：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:60px" id="parentDiv">
+											<select v-model="lgort" class="form-control" name="LGORT" id="LGORT" >
+												<option value=''>全部</option>
+												<option v-for="w in lgortlist" :value="w.LGORT" :key="w.LGORT" :logrt_name="w.LGORT_NAME">{{ w.LGORT }}</option>
+											</select></div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm" width="25%">
+									<div class="form-group">
+										<input type="button" id="btnSearchData" class="btn btn-primary btn-sm" value="查询"/>
+										<input type="button" id="btnReset" class="btn btn-info btn-sm" value="重置"/>
+										<input type="button" id="btnCreat" class="btn btn-success btn-sm" value="创建退货单"/>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td id="searchForm" width="75%">
+									<label id="lable5" class="control-label" style="font-weight:500"><span style="color:red">*</span>料号：</label>
+									<div id="div_mat" class="control-inline">
+										<div class="input-group treeselect" style="width:190px" id="parentDiv">
+										<input type="text" id="matnr" name="matnr" value="" style="width: 150px;" class="form-control width-300" />
+										<input type="button" id="btnMatMore" class="btn btn-default btn-sm" value="..."/>
+										</div>
+									</div>
+								</td>
+							</tr>
+							</table>
+
+						</form>
+						<div id="tab1" class="table-responsive table2excel" data-tablename="Test Table 1">
+						<table id="dataGrid"></table>
+						</div>
+						<!-- <div id="dataGridPage"></div> -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4>操作成功！退货单号：<span id="outNo">-</span></h4>
+		<br/>
+		<input type="button" id="btnPrint1" class="btn btn-info btn-sm" value="大letter打印"/>
+		<input type="button" id="btnPrint2" class="btn btn-info btn-sm" value="小letter打印"/>
+	</div>
+	
+	<div id="moreLayer" style="display: none; padding: 10px;">
+		<textarea id="ponos" rows="5" cols="55"></textarea>
+		<br/>
+		<span>*每行输入一个订单号</span>
+	</div>
+	<div id="moreLayer1" style="display: none; padding: 10px;">
+		<div id="links"><!-- 批量查询订单号 -->
+			<a href='#' class='btn' id='newOperation_1'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			<a href='#' class='btn' id='newReset_1'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+		</div>
+		<div id="tab1_2" class="table-responsive table2excel" data-tablename="Test Table 1">
+			<table id="dataGrid_1"></table>
+		</div>
+	</div>
+	<div id="moreLayer2" style="display: none; padding: 10px;">
+		<div id="links"><!-- 批量查询物料号 -->
+			<a href='#' class='btn' id='newOperation_2'><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			<a href='#' class='btn' id='newReset_2'><i class='fa fa-refresh' aria-hidden='true'></i> 重置</a>
+		</div>
+		<div id="tab1_2" class="table-responsive table2excel" data-tablename="Test Table 1">
+			<table id="dataGrid_2"></table>
+		</div>
+	</div>
+	<style>
+	.jqgrow{height:35px}
+	</style>
+	<script src="${request.contextPath}/statics/js/wms/returngoods/wareHouseOut.js?_${.now?long}"></script>
+</body>
+</html>

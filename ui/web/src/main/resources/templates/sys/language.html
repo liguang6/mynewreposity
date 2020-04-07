@@ -1,0 +1,49 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<#include "/header.html">
+<title>${tag.getLocale("INTERNATIONAL_MANAGEMENT","M")}</title>
+</head>
+<body >
+<div id="rrapp" v-cloak>
+<div class="main-content">
+	<div class="box box-main">
+		<div class="box-body">
+			<form id="searchForm" v-model="page.list" action="${request.contextPath}/sys/language/list" method="post" class="form-inline" >
+						<div class="form-group">
+							<label class="control-label">${tag.getLocale("KEY_VALUE","M")}：</label>
+							<div class="control-inline">
+                                   <input type="text" class="form-control" name="pkey"  @keyup.enter="query" placeholder="key">							
+                             </div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">${tag.getLocale("LANGUAGE_DESCRIPTION","M")}：</label>
+							<div class="control-inline">
+                                   <input type="text" class="form-control" name="mdesc"  @keyup.enter="query" placeholder='${tag.getLocale("LANGUAGE_DESCRIPTION","M")}'>							
+                             </div>
+						</div>
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-sm" @click="query">${tag.getLocale("QUERY","M")}</button>
+								<button type="reset" class="btn btn-default btn-sm">${tag.getLocale("RESET","M")}</button>
+							</div>
+			</form>
+			<div id="pgtoolbar1">
+				<div id="links"  >
+							<a  class="btn" href="#" id="produceOrder" @click="add()"><i class="fa fa-plus" aria-hidden="true"></i>${tag.getLocale("ADD_NEW_ITEM","M")}</a>
+							<a href="#" class="btn" @click="save()" title='${tag.getLocale("SAVE","M")}'><i class="fa fa-check"></i> ${tag.getLocale("SAVE","M")}</a>
+ 							<!-- <a href="#" class="btn" @click="remove()" title="删除"><i class="fa fa-times"  aria-hidden="true"></i> 删除</a> -->
+							<a href="#" class="btn" id="btnSearch"  title='${tag.getLocale("QUERY","M")}'><i class="fa fa-filter"></i> ${tag.getLocale("QUERY","M")}</a>
+							
+				</div>
+			</div>
+			<table id="dataGrid"></table>  
+			 <div id="dataGridPage">
+		</div>
+	</div>
+</div>
+</div>
+</div>
+<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><span id="resultMsg"></span></h4>
+</div>
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+	<script src="${request.contextPath}/statics/js/sys/locale.js?_${.now?long}"></script>
+</body>

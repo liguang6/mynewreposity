@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>工厂间调拨业务类型配置</title>
+<#include "/web_header.html">
+</head>
+<body >
+<div id="rrapp" v-cloak>
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form id="searchForm" v-model="page.list" action="${request.contextPath}/config/cPlantTo/list" method="post" class="form-inline" >
+					<div class="form-group">
+						<label class="control-label">调出工厂：</label>
+						<div class="control-inline">
+                             <!-- <input type="text" class="form-control" id="werks" name="werks" @click="getPlantNoFuzzy()"  placeholder="工厂代码">							 -->
+                             <select name="WERKS" id="werks"  v-model="WERKS" style="height: 28px;width:100%;">
+                             	<option value=''>全部</option>
+                                <#list tag.getUserAuthWerks("WMS_C_PLANT_TO") as factory> 
+                                    <option value="${factory.code}">${factory.code}</option>
+                                </#list>
+                            </select>
+                    </div>
+					</div>
+					<div class="form-group">
+						<label class="control-label">调出库位：</label>
+						<div class="control-inline">
+                             <select v-model="LGORT" style="height: 28px;width:100%;" name="LGORT"  id="lgort" > 
+                             	<option value="">全部</option>
+								<option v-for="w in lgortlist" :value="w.LGORT" :key="w.LGORT" :logrt_name="w.LGORT_NAME">{{ w.LGORT }}</option>
+							</select>
+                    </div>
+					</div>
+					<div class="form-group">
+						<label class="control-label">WMS移动类型：</label>
+						<div class="control-inline">
+                             <input type="text" id="wms_move_type" name="WMS_MOVE_TYPE" class="input-medium" style="width:100px;height:28px;" v-model="WMS_MOVE_TYPE">
+                        </div>
+					</div>
+					<div class="form-group">
+						<label class="control-label">SAP移动类型：</label>
+						<div class="control-inline">
+                           <input type="text" id="sap_move_type" class="input-medium" name="SAP_MOVE_TYPE" style="width:100px;height:28px;;" v-model="SAP_MOVE_TYPE">
+                        </div>
+					</div>
+					<div class="form-group">
+						<label class="control-label">库存类型：</label>
+						<div class="control-inline">
+                           <select style="height:28px;" v-model="SOBKZ" id="sobkz" name="SOBKZ">
+                           		<option value="">全部</option>
+                           		<option value="K">K</option>
+                           		<option value="Z">Z</option>
+                           </select>
+                        </div>
+					</div>
+					<div class="form-group">
+						<button type="submit" class="btn btn-primary btn-sm">查询</button>
+						<button type="reset" class="btn btn-default btn-sm">重置</button>
+					</div>
+				</form>
+				<div id="pgtoolbar1">
+				   <div id="links" >
+				   <a href='#' class='btn' id='newOperation' title="新增"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>				   
+				   <a href='#' class='btn' id='editOperation' title="修改"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 修改</a>				   
+				   <a href='#' class='btn' id='deleteOperation'  title="删除"><i class='fa fa-trash' aria-hidden='true'></i> 删除</a>			   
+				   <a href="#" class="btn" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a> 
+				   </div>
+				</div>
+				<div id="divDataGrid" style="width:100%;overflow:auto;">
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+				</div>	
+				<table id="tb_excel" style="display:none"></table>	
+		</div>
+	</div>
+	</div>
+</div>
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_plant_to_list.js?_${.now?long}"></script>
+</body>

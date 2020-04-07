@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCoreWhBinSeqDao">
+	 <delete id="delBinSeq" parameterType="Map">
+		DELETE FROM WMS_CORE_WH_BIN_SEQ WHERE WH_NUMBER=#{whNumber} AND
+		       BIN_CODE IN
+		       <foreach collection="binCodeList" item="detail" index="index" open="(" close=")" separator=",">
+			            #{detail.binCode}
+			   </foreach>
+	</delete>
+</mapper>

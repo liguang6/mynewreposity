@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.kn.dao.WmsCBarcodeSterilisationDao">
+    <select id="getListCount" parameterType="Map" resultType="int">
+        select con from
+        (select COUNT(1) con
+        from WMS_CORE_WMSDOC_HEAD WCWH, WMS_CORE_WMSDOC_ITEM WCWI
+        where WCWH.Wms_No = WCWI.Wms_No
+        and WCWI.Del = 0
+        <if test="werks != null and werks !=''">
+            AND WCWH.WMS_NO=#{credentialsNum}
+        </if>
+        <if test="whNumber != null and whNumber !=''">
+            AND WCWH.PZ_DATE = #{credentialsYear}
+        </if>
+        )
+        where 1=1
+        <if test="sql_filter != null and sql_filter != ''">
+            and ${sql_filter}
+        </if>
+    </select>
+
+    <select id="queryBarcodeSterilisation" parameterType="Map" resultType="Map">
+        SELECT * FROM (
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+        select WCWI.Matnr Matnr,
+        WCWI.Wms_Move_Type WmsMoveType,
+        WCWI.Qty_Wms  QtyWms,
+        WCWI.Bin_Code BinCode,
+        WCWI.Maktx Maktx,
+        WCWI.Lifnr Lifnr,
+        WCWI.Batch Batch,
+        WCWI.Werks Werks,
+        WCWI.Unit Unit,
+        WCWI.Wms_No WmsNo,
+        WCWI.Wms_Item_No WmsItemNo,
+        WCWI.Id Id
+        from WMS_CORE_WMSDOC_HEAD WCWH, WMS_CORE_WMSDOC_ITEM WCWI
+        where WCWH.Wms_No = WCWI.Wms_No
+        and WCWI.Del = 0
+        <if test="credentialsNum != null and credentialsNum !=''">
+            AND WCWH.WMS_NO=#{credentialsNum}
+        </if>
+        <if test="credentialsYear != null and credentialsYear !=''">
+            AND WCWH.PZ_DATE = #{credentialsYear}
+        </if>
+        <if test="werks != null and werks !=''">
+            AND WCWI.WERKS = #{werks}
+        </if>
+        <if test="whNumber != null and whNumber !=''">
+            AND WCWI.WH_NUMBER = #{whNumber}
+        </if>
+        ) TMP
+        WHERE ROWNUM  &lt;=#{END}
+        <if test="sql_filter != null and sql_filter != ''">
+            and ${sql_filter}
+        </if>
+        )
+        WHERE ROW_ID > #{START}
+        <if test="orderBy !=null and orderBy !='' ">
+            ORDER BY  ${orderBy}
+        </if>
+
+    </select>
+
+
+    <select id="queryBarcodeSterilisationOne" parameterType="Map" resultType="Map">
+    SELECT TMP.*, ROWNUM ROW_ID FROM (
+    select WCWI.Matnr Matnr,
+        WCWI.Wms_Move_Type WmsMoveType,
+        WCWI.Qty_Wms  QtyWms,
+        WCWI.Bin_Code BinCode,
+        WCWI.Maktx Maktx,
+        WCWI.Lifnr Lifnr,
+        WCWI.Batch Batch,
+        WCWI.Werks Werks,
+        WCWI.Unit Unit,
+        WCWI.Wms_No WmsNo,
+        WCWI.Wms_Item_No WmsItemNo,
+        WCWI.Id Id,
+        WCWI.Receipt_No ReceiptNo,
+        WCWI.Receipt_Item_No ReceiptItemNo,
+        WCWI.Sobkz Sobkz,
+        WCWI.Create_Date CreateDate,
+        WCWI.Wh_Number WhNumber,
+        WCWI.Lgort Lgort
+    from  WMS_CORE_WMSDOC_ITEM WCWI
+    where  WCWI.Del = 0
+    and WCWI.Id=#{sterilisationId}
+    )TMP
+    </select>
+
+    <select id="queryBarcode" parameterType="java.util.ArrayList" resultType="Map">
+    SELECT TMP.*, ROWNUM ROW_ID FROM (
+        select t.Liktx,
+        t.Label_No ,
+        t.Matnr,
+        t.Maktx,
+        t.Lifnr,
+        t.Werks,
+--         t.Po_No ,
+--         t.Po_Item_No ,
+        t.Product_Date ,
+        t.Batch,
+        t.Box_Qty ,
+        t.Unit
+        from wms_core_label t
+        where 1=1
+        and t.del=0
+        and  t.Label_No in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    )TMP
+
+    </select>
+
+    <select id="getBarcodeCount" parameterType="Map" resultType="int">
+        select con from
+        (select COUNT(1) con
+        from wms_core_label t
+        where 1=1
+        and t.Del = 0
+        and t.Label_No in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        )
+    </select>
+</mapper>

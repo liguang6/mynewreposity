@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+ .msg-font{color:red}
+</style>
+<meta charset="UTF-8">
+<title>机台计划导入</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="expTemplateForm" method="post" class="form-inline"  action="${request.contextPath}/zzjmes/machinePlan/expTemplateData" >
+						<div class="row">
+							<div class="form-group">
+                                <label class="control-label" ><span style="color:red">*</span>工厂：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:60px">
+									<select  name="werks" id="werks" v-model="werks" style="width:100%;height:25px">
+									   <#list tag.getUserAuthWerks("ZZJMES_MACHINE_PLAN_IMPORT") as factory>
+											<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+										</#list>
+									</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>车间：</label>
+								<div class="control-inline" style="width:60px">
+                                       <select class="required" name="workshop" id="workshop" v-model="workshop" style="width:100%;height:25px">
+										  <option v-for="w in workshop_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>线别：</label>
+								<div class="control-inline" style="width:60px">
+                                       <select class="" name="line" id="line" v-model="line" style="width:100%;height:25px">
+										  <option v-for="w in line_list" :value="w.code" :key="w.ID">{{ w.NAME }}</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 45px"><span style="color:red">*</span>订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 100px">
+										<input type="text" name="order_no" id="search_order"  class="form-control" @click="getOrderNoFuzzy()">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" ><span style="color:red">*</span>批次：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:60px">
+									  <select  name="zzj_plan_batch" id="zzj_plan_batch" v-model="zzj_plan_batch" style="width:100%;height:25px" >
+					                  
+									  </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" >工序：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:60px">
+									  <select v-model="process" name="process" id="process" style="width: 100%;height: 25px;">
+									        <option value=''></option>
+									        <option value='首工序'>首工序</option>
+											<option v-for="w in processList" :value="w.PROCESS_NAME">{{ w.PROCESS_NAME }}</option>
+									  </select>
+									</div>
+								</div>
+							</div>
+<!-- 							<div class="form-group"> -->
+<!--                                  <label class="control-label" style="width: 80px"> -->
+<!-- 								    <a href="${request.contextPath}/statics/excel/zzjmes/import-machine-plan.xlsx" id='template'>下载导入模板</a> -->
+<!-- 						         </label> -->
+<!-- 							</div> -->
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>文件：</label>
+								<div class="control-inline" style="width: 160px">
+									<input type="file" id="excel" name="excel" class="form-control" style="width:100%"/>
+								</div>
+							</div>
+							<div class="form-group">
+							    <button type="button"  class="btn btn-primary btn-sm" id="btnLoad" @click="load">模板下载</button>
+								<button type="button"  class="btn btn-primary btn-sm" id="btnImport" @click="imp">导入</button>
+								<button type="button"  class="btn btn-primary btn-sm" id="btnExport" @click="exp" >错误导出</button>
+							</div>
+						</div>
+						</form>
+						<table id="dataGrid"></table>
+					</div>
+				</div>
+				<!--返回结果DIV-->
+				<div id="resultLayer" style="display: none; padding: 10px;">
+					<h4><span id="resultMsg"></span></h4>
+					<br/>
+				</div>
+				<form id="exportForm"  method="post" action="${request.contextPath}/zzjmes/machinePlan/expUploadData" style="display:none">
+						<input name="entityList" id="entityList" type="text" hidden="hidden">
+				</form>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/machinePlanImp.js?_${.now?long}"></script>
+</body>
+</html>

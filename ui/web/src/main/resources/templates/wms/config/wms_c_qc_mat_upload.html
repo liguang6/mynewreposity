@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>导入物料质检配置</title>
+<#include "/web_header.html">
+</head>
+<body>
+   <div class="wrapper container" id="vue" >
+		<div class="main-content" >
+								<div class="box box-main">
+									
+									<div class="box-body">
+									   
+										<form id="uploadForm" class="form-inline" action="${request.contextPath}/config/wmscqcmat/preview" 
+										enctype="multipart/form-data" method="post">
+											<div class="form-group"  style="width:160px">
+												<label class="control-label">工厂代码：</label>
+												<div class="control-inline" style="width:90px">
+														 <select  id="werks" name="werks" class="form-control  width-400">
+															<#list tag.getUserAuthWerks("WMS_C_QC_MAT") as factory> 
+																<option value="${factory.code}">${factory.code}</option>
+															</#list>
+														</select>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label">模板文件：</label>
+												<div class="control-inline" >
+													<input type="file" id="excel" name="excel" value=""
+														 class="form-control width-400"/>
+												</div>
+											</div>
+
+											
+											
+											<div class="form-group">
+												<button type="submit"  class="btn btn-primary btn-sm">导入预览</button>
+
+										        <a href="${request.contextPath}/statics/excel/import_wms_c_qc_mat.xlsx">下载导入模板</a>
+											</div>
+											
+											</form>
+											
+										<table id="dataGrid"></table>
+										
+									</div>
+								</div>
+							</div>
+						</div>
+						
+	 <script type="text/javascript">
+	 var excelData = null; 
+	  $("#uploadForm").validate({
+		  submitHandler:function(e){
+			  //e.preventDefault();
+			  //提交表单 & 加载数据
+			  var form = new FormData(document.getElementById("uploadForm"));
+				$.ajax({
+					url:baseUrl + "config/wmscqcmat/preview",
+					data:form,
+					type:"post",
+					contentType:false,
+					processData:false,
+					success:function(data){
+						if(data.code == 0){
+							//加载jqgrid
+							$("#dataGrid").dataGrid({
+							 	datatype: 'local', 
+								colNames:['工厂代码','物料号','物料描述','供应商代码','供应商名称','质检标示','有效开始日期','有效结束日期','校验信息',''],
+								colModel:[
+								          {name:"werks",index:'werks',align:'center'},
+								          {name:"matnr",index:'matnr',align:'center'},
+								          {name:"maktx",index:'maktx',align:'center'},
+								          {name:"lifnr",index:'lifnr',align:'center'},
+								          {name:"liktx",index:'liktx',align:'center'},
+								          {name:"testFlagDesc",index:'testFlagDesc',align:'center'},
+								          {name:"startDate",index:'startDate',align:'center'},
+								          {name:"endDate",index:'endDate',align:'center'},
+                                          {name:"msg",index:'msg',align:'center'},
+                                           {name:"testFlag",index:'testFlag',hidden:true},
+								 ],
+								 viewrecords:true,  
+								// rowNum:15, 
+							});
+							//清空数据
+							$("#dataGrid").dataGrid("clearGridData");
+							//加入数据
+							var werks=$("#werks").val();
+							for(dIndex in data.data){
+								if(data.data[dIndex].werks=werks){
+									data.data[dIndex].msg='请导入'+werks+'工厂数据';
+								}
+								$("#dataGrid").dataGrid("addRowData",dIndex+1,data.data[dIndex]);
+							}
+							excelData = data.data;
+						}
+						else
+						  alert("上传失败," + data.msg);
+					}.bind(this)
+				});
+		  }
+	  });
+	  
+	  
+	 function saveUpload(){
+		 if(excelData === null){
+			 alert("需要上传的数据为空");
+			 wm.saveFlag=false;
+			 return false;	
+		 }
+		 for(var dIndex in excelData){
+			 if(excelData[dIndex].msg!=''){
+				 alert("第"+excelData[dIndex].rowNo+"行数据校验未通过!");
+				 wm.saveFlag=false;
+				 return false;
+			 }
+		 }
+		 //提交数据 & 关闭窗口
+		 var jsondata = JSON.stringify(excelData);
+		 $.ajax({
+			 url:baseUrl + "config/wmscqcmat/import",
+			 type:"post",
+			 dataType:"json",
+			 contentType: 'application/json',
+			 data:jsondata,
+			 success:function(resp){
+				 if(resp.code === 0){
+					 close();
+					 js.showMessage('保存成功');
+				 }else{
+					 alert("上传失败," + resp.msg)
+				 }
+			 }
+		 })
+	 }
+	 </script>
+</body>
+</html>

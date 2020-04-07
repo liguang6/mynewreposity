@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>QE确认</title>  
+<#include "/web_header.html">
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper" id="page_div">
+		<div class="main-content">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" :action="formUrl">
+						<div class="form-group">
+							<label class="control-label">工厂：</label>
+							<div class="control-inline" style="width:150px;">
+							<select class="input-medium" name="WERKS" id="WERKS" style="height: 30px;width: 150px;">
+							   <#list tag.getUserAuthWerks("QMS_UNPROCESS_TEST_IN") as WERKS>
+							      <option value="${WERKS.code}" >${WERKS.NAME}</option>
+							   </#list>
+							</select>
+							</div>
+						</div>
+						<div class="form-group" >
+							<!-- <label class="control-label"><span style="color:red">*</span>检验类别：</label> -->
+							<div class="control-inline" style="width:70px;">
+							<select class="input-medium" name="TEST_TYPE" id="TEST_TYPE" v-model="TEST_TYPE" style="height: 30px;width: 70px;" >
+							   <!-- <option value="">请选择</option> -->
+							   <option value="01">大巴</option>
+							   <option value="02">专用车</option>
+							</select>
+							</div>
+						</div>
+						<div class="form-group"> 
+							<label class="control-label">检验节点：</label>
+							<div class="control-inline">
+								<select style="height: 30px;width:90px;" class="input-medium"  name="TEST_NODE" id="TEST_NODE"  >
+									<option value=''>全部</option>		
+									<option v-for="node in TEST_NODE_LIST"  :key="node.TEST_NODE" :value="node.TEST_NODE">
+										{{node.TEST_NODE}}
+									</option>								
+								</select>
+							</div>							
+						</div>
+						<div class="form-group">	
+							<label class="control-label" >订单：</label>
+							<div class="control-inline" >
+							<input id="ORDER_NO" name="ORDER_NO"  class="input-medium" style="width: 80px; height: 30px;" type="text" /> 						
+							</div>
+						</div>
+						<div class="form-group">	
+							<label class="control-label" >车号/VIN：</label>
+							<div class="control-inline" >
+							<span class="input-icon input-icon-right" style="width: 170px;">
+							<input  id="VIN"   class="input-medium" style="width: 170px; height: 30px;" type="text" /> 
+							<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('VIN')"> </i>
+							<input v-if="TEST_TYPE=='01' "  name="BUS_NO"  v-model="BUS_NO"  type="hidden" />
+							<input v-if="TEST_TYPE=='02' "  name="VIN"  v-model="VIN"   type="hidden"/>
+							</span>
+							</div>
+						</div>
+						<div class="form-group"> 
+							<label class="control-label">问题分类：</label>
+							<div class="control-inline">
+								<select style="height: 30px;width:75px;" class="input-medium"  name="FAULT_TYPE" id="FAULT_TYPE"  >
+									<option value=''>全部</option>		
+									<#list tag.qmsDictList("bad_type") as unit> 
+	                                   <option value="${unit.value}">${unit.value}</option>
+	                            	</#list>									
+								</select>
+							</div>							
+						</div>
+						<div class="form-group"> 
+							<label class="control-label">整改单位：</label>
+							<div class="control-inline">
+								<select style="height: 30px;width:90px;" class="input-medium"  name="RECTIFY_UNIT" id="RECTIFY_UNIT"  >
+									<option value=''>全部</option>		
+									<#list tag.qmsDictList("RECTIFY_UNIT") as unit> 
+	                                   <option value="${unit.value}">${unit.value}</option>
+	                            	</#list>						
+								</select>
+							</div>							
+						</div>
+						
+						<div class="form-group">
+						<label class="control-label" >判定：</label>
+							<div class="control-inline">
+								<select style="height: 30px;width:80px;" class="input-medium"  name="JUDGE" id="JUDGE"  >
+									<option value=''>全部</option>		
+									<option value='NG'>NG</option>	
+									<option value='OK'>OK</option>		
+									<option value='NA'>NA</option>					
+								</select>
+								
+							</div>
+						</div>
+						
+									
+						<div class="form-group">
+							<button type="button" class="btn btn-primary btn-sm" @click="query">查询</button>
+							<button type="button" class="btn btn-success btn-sm" @click="saveRecord">保存</button>
+						</div>
+						
+						<input type="hidden" name="TEST_CLASS"  value="整车"> 
+					</form>
+					
+					<div id="divDataGrid" style="width:100%;overflow:auto;" >
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+				</div>	
+					
+				</div>
+			</div>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/qms/processQuality/qms_unprocess_test_in.js?_${.now?long}"></script>
+</body>
+</html>

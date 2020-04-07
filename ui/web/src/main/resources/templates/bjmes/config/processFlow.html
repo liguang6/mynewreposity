@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>加工流程</title>
+<#include "/web_header.html">
+</head>
+<body >
+<div id="rrapp" v-cloak>
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form id="searchForm" v-model="page.list" action="${request.contextPath}/config/bjMesProcessFlow/list" method="post" class="form-inline" >
+					<div class="form-group">
+						<label class="control-label">加工流程代码：</label>
+						<div class="control-inline">
+							<input type="text" class="form-control" id="process_flow_code" name="process_flow_code" style="width: 80px;">
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="control-label">加工流程名称：</label>
+						<div class="control-inline">
+							<input type="text" class="form-control" id="process_flow_name" name="process_flow_name" >							
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="control-label">状态：</label>
+						<div class="control-inline">
+							<select id="status" name="status" style="width:80px;height: 25px;" > 
+								<option value="">全部</option>
+								<option value='0'>正常</option>
+								<option value='1'>停用</option>
+							</select>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<button type="submit" class="btn btn-primary btn-sm">查询</button>
+						<button type="reset" class="btn btn-default btn-sm">重置</button>
+					</div>
+				</form>
+				<div id="pgtoolbar1">
+				   <div id="links" >
+						<a href='#' class='btn' id='newOperation' title="新增"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+						
+						<a href='#' class='btn' id='editOperation' title="修改"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 修改</a>
+						
+						<a href='#' class='btn' id='deleteOperation'  title="删除"><i class='fa fa-trash' aria-hidden='true'></i> 删除</a>
+						
+						<a href='#' class='btn' id='newComp' title="加工节点"><i class='fa fa-cog fa-fw' aria-hidden='true'></i> 加工节点</a>
+						
+						<a href="#" class="btn" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a> 
+				   </div>
+				</div>
+				<div id="divDataGrid" style="width:100%;overflow:auto;">
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+				</div>
+				<!--批量新增加工流程-->
+				<div id="addDiv" style="display: none; padding: 10px;">
+					<table id="addGrid"></table>
+				</div>
+				<!--批量新增加工节点-->
+				<div id="editNodeDiv" style="display: none; padding: 10px;">
+					<table id="addNodeGrid"></table>
+				</div>	
+				<!--单条修改加工流程-->	
+				<div id="editDiv" style="display: none; padding: 10px;">
+					<div class="form-group" style="align:center;margin-top:15px">
+						<div  style="float:left;width:100%">
+								<label style="float:left;width:35%" class="col-sm-3 control-label no-padding-right" >
+									<font style="color:red;font-weight:bold">*</font>加工流程代码：
+								</label>
+								<div style="float:left;width:65%" class="col-sm-8">
+									<input v-model="process_flow.process_flow_code" type="text" autocomplete="off"  style="width:100%"class="form-control">
+								</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center;margin-top:15px">
+						<div  style="float:left;width:100%">
+								<label style="float:left;width:35%" class="col-sm-3 control-label no-padding-right" >
+									<font style="color:red;font-weight:bold">*</font>加工流程名称：
+								</label>
+								<div style="float:left;width:65%" class="col-sm-8">
+									<input  v-model="process_flow.process_flow_name" type="text" autocomplete="off"style="width:100%"class="form-control">	                    
+								</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center;margin-top:15px">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:35%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>状态：
+							</label>
+							<div style="float:left;width:65%" class="col-sm-8">
+								<select v-model="process_flow.status" style="width:100%;height: 25px;" > 
+									<option value="">全部</option>
+									<option value='0'>正常</option>
+									<option value='1'>停用</option>
+								</select>	                    
+							</div>
+						</div>
+					</div>
+				</div>	
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/bjmes/config/processFlow.js?_${.now?long}"></script>
+</body>
+</html>

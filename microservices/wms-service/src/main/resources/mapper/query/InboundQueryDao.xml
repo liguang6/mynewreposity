@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.InboundQueryDao">
+     <select id="getInboundList" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT DISTINCT D.ID,D.WERKS,D.WH_NUMBER,D.INBOUND_NO,D.CREATOR,D.CREATE_DATE,
+		      DECODE(D.INBOUND_TYPE,'00','外购进仓单','01','自制进仓单') INBOUND_TYPE,D.INBOUN_STATUS,
+		      DECODE(D.INBOUN_STATUS,'00','已创建','01','部分进仓','02','已完成','04','关闭') INBOUN_STATUS_DESC,
+		      S.VALUE BUSINESS_NAME_DESC
+		       FROM WMS_IN_INBOUND_HEAD D
+		       LEFT JOIN WMS_IN_INBOUND_ITEM B ON B.INBOUND_NO=D.INBOUND_NO 
+		       LEFT JOIN SYS_DICT S ON S.CODE=B.BUSINESS_NAME AND S.TYPE='BUSINESS_NAME'
+              <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+		      WHERE D.DEL='0' AND D.WERKS=#{WERKS} 
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="INBOUND_TYPE != null and INBOUND_TYPE !=''">
+		        AND D.INBOUND_TYPE = #{INBOUND_TYPE}
+		      </if>
+		      <if test="INBOUN_STATUS != null and INBOUN_STATUS !=''">
+		        AND D.INBOUN_STATUS = #{INBOUN_STATUS}
+		      </if>
+		      <if test="CREATOR != null and CREATOR !=''">
+		        AND D.CREATOR = #{CREATOR}
+		      </if>
+		      <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+				AND D.CREATE_DATE&gt;=#{CREATE_DATE_START}
+			  </if>
+			  <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+				AND D.CREATE_DATE&lt;=#{CREATE_DATE_END}
+			  </if>
+			  <if test="INBOUND_NO != null and INBOUND_NO !=''">
+		        AND D.INBOUND_NO = #{INBOUND_NO}
+		      </if>
+		      <if test="BUSINESS_NAME != null and BUSINESS_NAME !=''">
+		        AND B.BUSINESS_NAME = #{BUSINESS_NAME}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND B.MATNR like '%' ||#{MATNR}|| '%' 
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getInboundCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_IN_INBOUND_HEAD D
+      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+      WHERE D.DEL='0'  AND D.WERKS=#{WERKS} 
+          <if test="WH_NUMBER != null and WH_NUMBER !=''">
+	        AND D.WH_NUMBER = #{WH_NUMBER}
+	      </if>
+	      <if test="INBOUND_TYPE != null and INBOUND_TYPE !=''">
+	        AND D.INBOUND_TYPE = #{INBOUND_TYPE}
+	      </if>
+	      <if test="INBOUN_STATUS != null and INBOUN_STATUS !=''">
+		        AND D.INBOUN_STATUS = #{INBOUN_STATUS}
+		      </if>
+		      <if test="CREATOR != null and CREATOR !=''">
+		        AND D.CREATOR = #{CREATOR}
+		      </if>
+	      <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND D.CREATE_DATE&gt;=#{CREATE_DATE_START}
+		  </if>
+		  <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND D.CREATE_DATE&lt;=#{CREATE_DATE_END}
+		  </if> 
+		  <if test="INBOUND_NO != null and INBOUND_NO !=''">
+	        AND D.INBOUND_NO = #{INBOUND_NO}
+	      </if>
+    </select>
+    <select id="getInboundItemList" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		   SELECT D.INBOUND_NO,D.INBOUND_ITEM_NO,D.ITEM_TEXT,D.BUSINESS_NAME,
+		      D.BUSINESS_TYPE,D.WERKS,D.WH_NUMBER,D.LGORT,D.MATNR,D.MAKTX,D.BIN_CODE,
+		      D.UNIT,D.F_QTY,D.IN_QTY,D.TRY_QTY,D.BATCH,D.REAL_QTY,D.QTY_CANCEL,D.SOBKZ,
+		      D.FULL_BOX_QTY,D.BOX_COUNT,D.WH_MANAGER,D.RECEIPT_NO,D.RECEIPT_ITEM_NO,
+		      D.LIFNR,D.LIKTX,D.COST_CENTER,D.IO_NO,D.WBS,D.SAKTO,D.ANLN1,D.MO_NO,D.MO_ITEM_NO,
+		      D.PRODUCT_DATE,D.SAP_MATDOC_NO,D.SAP_MATDOC_ITEM_NO,D.BEDNR,D.MEMO,
+		      DECODE(D.ITEM_STATUS,'00','已创建','01','部分进仓','02','已完成','04','关闭') ITEM_STATUS,H.INBOUN_STATUS
+     	       FROM WMS_IN_INBOUND_ITEM D 
+		       LEFT JOIN WMS_IN_INBOUND_HEAD H ON D.INBOUND_NO=H.INBOUND_NO
+		       WHERE D.DEL='0' 
+		      <if test="WERKS != null and WERKS !=''">
+		      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+		        AND D.WERKS = #{WERKS}
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND D.BATCH = #{BATCH}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND D.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="INBOUND_NO != null and INBOUND_NO !=''">
+                AND D.INBOUND_NO=#{INBOUND_NO}
+ 		      </if>
+	       ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  ORDER BY to_number(INBOUND_ITEM_NO) ASC,MATNR ASC
+    </select>
+    <select id="getInboundItemCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_IN_INBOUND_ITEM D
+          WHERE 1=1 
+              <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+              <if test="WERKS != null and WERKS !=''">
+		        AND D.WERKS = #{WERKS}
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND D.BATCH = #{BATCH}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND D.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="INBOUND_NO != null and INBOUND_NO !=''">
+                AND D.INBOUND_NO=#{INBOUND_NO}
+ 		      </if>
+    </select>
+    <update id="updateHead" parameterType="Map">
+		UPDATE WMS_IN_INBOUND_HEAD SET
+		<if test="INBOUN_STATUS != null and INBOUN_STATUS =='00'">
+             DEL='X'
+        </if>
+        <if test="INBOUN_STATUS != null and INBOUN_STATUS=='01'">
+             INBOUN_STATUS='04'
+        </if>
+		   WHERE INBOUND_NO=#{INBOUND_NO}
+	</update>
+    <update id="updateItem" parameterType="Map">
+		UPDATE WMS_IN_INBOUND_ITEM SET
+		<if test="INBOUN_STATUS != null and INBOUN_STATUS =='00'">
+             DEL='X'
+        </if>
+        <if test="INBOUN_STATUS != null and INBOUN_STATUS=='01'">
+             ITEM_STATUS='04'
+        </if>
+		  WHERE INBOUND_NO=#{INBOUND_NO}
+	</update>
+</mapper>

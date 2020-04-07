@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.kn.dao.WmsKnLabelRecordDao">
+	<select id="getLabelRecordList" parameterType="Map"
+		resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT s.WERKS,
+		s.LABEL_NO,
+		s.PO_NO,
+		s.PO_ITEM_NO,
+		s.MATNR,
+		s.MAKTX,
+		s.LIFNR,
+		s.BOX_QTY,
+		s.BOX_SN,
+		s.UNIT,
+		s.PRODUCT_DATE,
+		c.EFFECT_DATE,
+		s.F_BATCH,
+		s.BATCH,
+		s.REMARK,
+		s.ID,
+		s.RECEIPT_NO,
+		s.RECEIPT_ITEM_NO,
+		s.INBOUND_NO,
+		s.INBOUND_ITEM_NO,
+		s.WMS_NO,
+		s.WMS_ITEM_NO,
+		s.F_LABEL_NO,
+		s.LABEL_STATUS,
+		s.FULL_BOX_QTY,
+		s.END_FLAG,
+		s.DEL,
+		s.WH_NUMBER,
+		s.LGORT,
+		s.BIN_CODE,
+		s.F_UNIT,
+		s.SOBKZ,
+		s.LIKTX,
+		s.QC_RESULT_CODE
+		FROM
+		WMS_CORE_LABEL S
+		LEFT JOIN WMS_CORE_MAT_BATCH C
+		ON S.WERKS = C.WERKS
+		AND S.BATCH = C.BATCH
+		AND S.MATNR = C.MATNR
+		AND S.LIFNR = C.LIFNR
+		WHERE 1=1
+		and s.del = '0'
+		<if test="LABEL_NO != null and LABEL_NO !=''">
+			AND s.LABEL_NO = #{LABEL_NO}
+		</if>
+		<if test="PO_ITEM_NO!= null and PO_ITEM_NO !=''">
+			AND s.PO_ITEM_NO = #{PO_ITEM_NO}
+		</if>
+		<if test="PO_NO != null and PO_NO !=''">
+			AND s.PO_NO = #{PO_NO}
+		</if>
+		<if test="werks != null and werks !=''">
+			AND s.WERKS=#{werks}
+		</if>
+		<if test="whNumber != null and whNumber !=''">
+			AND s.WH_NUMBER = #{whNumber}
+		</if>
+		<if test="MATNR != null and MATNR !=''">
+		    AND s.MATNR = #{MATNR}
+		</if>
+		<if test="BATCH != null and BATCH !=''">
+		    AND s.BATCH = #{BATCH}
+		</if>
+		<if test="labelList != null and labelList.size > 0">
+			AND LABEL_NO in
+			<foreach collection="labelList" item="item" open="("
+				close=")" separator=",">
+				#{item}
+			</foreach>
+		</if>
+		) TMP
+		WHERE ROWNUM &lt;=#{end})
+		WHERE ROW_ID > #{start}
+		<if test="orderBy !=null and orderBy !='' ">
+			ORDER BY ${orderBy}
+		</if>
+	</select>
+
+	<select id="getLabelRecordCount" parameterType="Map"
+		resultType="int">
+		SELECT COUNT(1) FROM wms_core_label s
+		WHERE 1=1
+		and s.del = '0'
+		<if test="LABEL_NO != null and LABEL_NO !=''">
+			AND s.LABEL_NO = #{LABEL_NO}
+		</if>
+		<if test="PO_ITEM_NO!= null and PO_ITEM_NO !=''">
+			AND s.PO_ITEM_NO = #{PO_ITEM_NO}
+		</if>
+		<if test="PO_NO != null and PO_NO !=''">
+			AND s.PO_NO = #{PO_NO}
+		</if>
+		<if test="werks != null and werks !=''">
+			AND s.WERKS=#{werks}
+		</if>
+		<if test="whNumber != null and whNumber !=''">
+			AND s.WH_NUMBER = #{whNumber}
+		</if>
+		<if test="MATNR != null and MATNR !=''">
+		    AND s.MATNR = #{MATNR}
+		</if>
+		<if test="BATCH != null and BATCH !=''">
+		    AND s.BATCH = #{BATCH}
+		</if>
+		<if test="labelList != null and labelList.size > 0">
+			AND LABEL_NO in
+			<foreach collection="labelList" item="item" open="("
+				close=")" separator=",">
+				#{item}
+			</foreach>
+		</if>
+	</select>
+
+	<select id="queryById" resultType="Map">
+		select * from
+		wms_core_label
+		where id = #{id}
+		and del ='0'
+	</select>
+
+	<select id="getLabelBywmsNo" resultType="Map">
+		select LABEL_NO
+		from
+		WMS_CORE_WMSDOC_ITEM
+		where WMS_NO = #{wmsNo}
+		and del ='0'
+	</select>
+
+	<update id="updateLabel" parameterType="Map">
+		update
+		wms_core_label set
+		EDITOR=#{EDITOR},
+		EDIT_DATE = #{EDIT_DATE},
+		LIFNR
+		=#{LIFNR},
+		BOX_QTY=#{BOX_QTY},
+		F_BATCH=#{F_BATCH},
+		REMARK =#{REMARK}
+		where
+		id=#{ID}
+
+
+
+	</update>
+
+	<update id="deleteLabel" parameterType="Map">
+		update
+		wms_core_label set
+		del = 'X'
+		where
+		id=#{ID}
+	</update>
+
+	<update id="updateBfCf" parameterType="Map">
+		update wms_core_label set
+		BOX_QTY = cast(nvl(#{BOX_QTY},0) as number),
+		EDITOR=#{EDITOR},
+		EDIT_DATE = #{EDIT_DATE}
+		where
+		id=#{ID}
+
+	</update>
+
+	<insert id="insertByCf" parameterType="Map">
+		insert into WMS_CORE_LABEL
+		(ID,LABEL_NO,F_LABEL_NO,RECEIPT_NO,RECEIPT_ITEM_NO,LABEL_STATUS,BOX_SN,
+		FULL_BOX_QTY,BOX_QTY,END_FLAG,WERKS,MATNR,MAKTX,F_UNIT,F_BATCH,
+		BATCH,SOBKZ,DEL,CREATOR,CREATE_DATE,WH_NUMBER,LGORT,BIN_CODE,UNIT,INBOUND_NO,INBOUND_ITEM_NO,
+		PRODUCT_DATE,LIFNR,LIKTX
+		)
+		VALUES (SEQ_WMS_CORE_LABEL.nextval,
+		#{LABEL_NO},#{F_LABEL_NO},#{RECEIPT_NO},#{RECEIPT_ITEM_NO},#{LABEL_STATUS},#{BOX_SN},
+		cast(nvl(#{FULL_BOX_QTY},0) as number),cast(nvl(#{BOX_QTY},0) as
+		number),#{END_FLAG},#{WERKS},
+		#{MATNR},#{MAKTX},#{F_UNIT},#{F_BATCH},#{BATCH},#{SOBKZ},'0',#{CREATOR},#{CREATE_DATE},
+		#{WH_NUMBER},#{LGORT},#{BIN_CODE},#{UNIT},#{INBOUND_NO},#{INBOUND_ITEM_NO},
+		#{PRODUCT_DATE},#{LIFNR},#{LIKTX}
+
+		)
+	</insert>
+
+	<select id="getPoList" parameterType="Map"
+			resultType="Map">
+		SELECT I.WERKS,I.EBELN,I.EBELP,I.MATNR,I.TXZ01,I.MEINS,
+		(I.MAX_MENGE - nvl((SELECT SUM(L.BOX_QTY) FROM WMS_CORE_LABEL L WHERE L.PO_NO= I.EBELN AND L.PO_ITEM_NO = I.EBELP  AND L.DEL='0' ),0)) MAX_MENGE,
+		H.LIFNR,S.PRFRQ,I.LGORT,I.SOBKZ,
+		(SELECT V.NAME1 FROM WMS_SAP_VENDOR V WHERE V.LIFNR = H.LIFNR ) AS LIKTX,
+		(SELECT C.PRFRQFLAG FROM WMS_C_WH C WHERE C.WERKS=I.WERKS AND C.WH_NUMBER=#{WH_NUMBER} AND C.DEL_FLAG = '0') AS PRFRQFLAG
+		FROM WMS_SAP_PO_ITEM I,WMS_SAP_PO_HEAD H, WMS_SAP_MATERIAL S
+		WHERE I.EBELN = H.EBELN AND I.MATNR=S.MATNR
+		AND S.WERKS = I.WERKS AND I.LOEKZ IS NULL
+		AND (I.ELIKZ != 'X' OR I.ELIKZ IS NULL)
+		<if test="WERKS != null and WERKS !=''">
+			AND I.WERKS=#{WERKS}
+		</if>
+		<if test="EBELN != null and EBELN !=''">
+			AND I.EBELN = #{EBELN}
+		</if>
+	</select>
+	<select id="getPOCount" parameterType="Map"
+			resultType="int">
+		SELECT COUNT(1) FROM WMS_SAP_PO_ITEM I
+		WHERE  I.LOEKZ IS NULL AND (I.ELIKZ != 'X' OR I.ELIKZ IS NULL)
+		<if test="WERKS != null and WERKS !=''">
+			AND I.WERKS=#{WERKS}
+		</if>
+		<if test="EBELN != null and EBELN !=''">
+			AND I.EBELN = #{EBELN}
+		</if>
+	</select>
+
+	<!--二部 根据采购订单打印条码-->
+	<insert id="insertCoreLabel" parameterType="List">
+		INSERT INTO WMS_CORE_LABEL
+		(ID, LABEL_NO, RECEIPT_NO, RECEIPT_ITEM_NO, LABEL_STATUS, QC_RESULT_CODE, BOX_SN, FULL_BOX_QTY, BOX_QTY, END_FLAG, DEL,
+		WERKS, WH_NUMBER, LGORT, MATNR, MAKTX, BIN_CODE,  UNIT, SOBKZ, BATCH, LIFNR, LIKTX, PRODUCT_DATE, EFFECT_DATE, CREATOR, CREATE_DATE,PO_NO,PO_ITEM_NO)
+		select SEQ_WMS_CORE_LABEL.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.LABEL_NO},#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.LABEL_STATUS},#{d.QC_RESULT_CODE},#{d.BOX_SN},
+			#{d.FULL_BOX_QTY},#{d.BOX_QTY},#{d.END_FLAG},#{d.DEL},#{d.WERKS},#{d.WH_NUMBER},#{d.LGORT},#{d.MATNR},
+			#{d.TXZ01},#{d.BIN_CODE},#{d.MEINS},#{d.SOBKZ},#{d.BATCH},#{d.LIFNR},#{d.LIKTX},#{d.PRODUCT_DATE},#{d.EFFECT_DATE},#{d.CREATOR},#{d.CREATE_DATE},
+			#{d.EBELN},#{d.EBELP}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+	<select id="getLabelList" parameterType="Map" resultType="Map">
+		SELECT I.* FROM WMS_CORE_LABEL I
+		WHERE LABEL_NO in
+		<foreach collection="LABEL_NO_LIST" item="LABEL_NO" index="index" separator="," open="(" close=")">
+			#{LABEL_NO}
+		</foreach>
+	</select>
+	<!--<update id="mergeLabelByCf" parameterType="List"> merge into wms_core_label 
+		s using( select m.ID,m.BOX_QTY,m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.F_BATCH, 
+		m.BATCH,m.UNIT,sum(cast(nvl(m.RH_QTY,0) as number)) RH_QTY,m.SOBKZ,m.LIFNR,m.LIKTX,'0' 
+		DEL,m.CREATOR,m.CREATE_DATE from( <foreach collection="list" item="d" index="index" 
+		separator="union all"> select #{d.ID}, #{d.LABEL_NO},#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.LABEL_STATUS},#{d.BOX_SN}, 
+		cast(nvl(#{d.FULL_BOX_QTY},0) as number),cast(nvl(#{d.BOX_QTY},0) as number),#{d.END_FLAG},#{d.WERKS}, 
+		#{d.MATNR},#{d.MAKTX},#{d.F_UNIT},#{d.F_BATCH},#{d.BATCH},#{d.SOBKZ},'0',#{d.CREATOR},#{d.CREATE_DATE}, 
+		#{d.WH_NUMBER},#{d.LGORT},#{d.BIN_CODE},#{d.UNIT},#{d.INBOUND_NO},#{d.INBOUND_ITEM_NO}, 
+		#{d.PRODUCT_DATE},#{d.LIFNR},#{d.LIKTX} from dual </foreach> ) m )tmp on 
+		(tmp.ID=s.ID) when matched then update set s.box_qty=tmp.box_qty when not 
+		matched then insert (ID,LABEL_NO,RECEIPT_NO,RECEIPT_ITEM_NO,LABEL_STATUS,BOX_SN, 
+		FULL_BOX_QTY,BOX_QTY,END_FLAG,WERKS,MATNR,MAKTX,F_UNIT,F_BATCH, BATCH,SOBKZ,DEL,CREATOR,CREATE_DATE,WH_NUMBER,LGORT,BIN_CODE,UNIT,INBOUND_NO,INBOUND_ITEM_NO, 
+		PRODUCT_DATE,LIFNR,LIKTX ) VALUES (select SEQ_WMS_CORE_LABEL.nextval, #{tmp.LABEL_NO},#{tmp.RECEIPT_NO},#{tmp.RECEIPT_ITEM_NO},#{tmp.LABEL_STATUS},#{tmp.BOX_SN}, 
+		cast(nvl(#{tmp.FULL_BOX_QTY},0) as number),cast(nvl(#{tmp.BOX_QTY},0) as 
+		number),#{tmp.END_FLAG},#{tmp.WERKS}, #{tmp.MATNR},#{tmp.MAKTX},#{tmp.F_UNIT},#{tmp.F_BATCH},#{tmp.BATCH},#{tmp.SOBKZ},'0',#{tmp.CREATOR},#{tmp.CREATE_DATE}, 
+		#{tmp.WH_NUMBER},#{tmp.LGORT},#{tmp.BIN_CODE},#{tmp.UNIT},#{tmp.INBOUND_NO},#{tmp.INBOUND_ITEM_NO}, 
+		#{tmp.PRODUCT_DATE},#{tmp.LIFNR},#{tmp.LIKTX} ) </update> -->
+
+	<select id="getMatEffectList" parameterType="Map" resultType="Map">
+		select distinct a.matnr,a.batch,a.effect_date,b.prfrq,
+			to_char(to_date(#{PRODUCT_DATE}, 'yyyy-mm-dd') + to_number(nvl(b.prfrq,0)),
+                        'yyyy-mm-dd') update_date
+		from WMS_CORE_MAT_BATCH a
+		join WMS_SAP_MATERIAL b on a.matnr=b.matnr and a.werks=b.werks
+		where
+		a.WERKS=#{WERKS}
+		<if test="LIFNR != null and LIFNR !=''">
+			AND a.LIFNR = #{LIFNR}
+		</if>
+		<if test="MATNR != null and MATNR !=''">
+		    AND a.MATNR = #{MATNR}
+		</if>
+		<if test="BATCH != null and BATCH !=''">
+		    AND a.BATCH = #{BATCH}
+		</if>
+		<if test="F_BATCH != null and F_BATCH !=''">
+		    AND a.F_BATCH = #{F_BATCH}
+		</if>
+	</select>
+	<update id="updateMatEffect" parameterType="Map">
+		update
+		WMS_CORE_MAT_BATCH a
+		set a.EFFECT_DATE=#{EFFECT_DATE}		
+		where
+		 a.WERKS=#{WERKS}		
+		<if test="LIFNR != null and LIFNR !=''">
+			AND a.LIFNR = #{LIFNR}
+		</if>
+		<if test="MATNR != null and MATNR !=''">
+		    AND a.MATNR = #{MATNR}
+		</if>
+		<if test="BATCH != null and BATCH !=''">
+		    AND a.BATCH = #{BATCH}
+		</if>
+		<if test="F_BATCH != null and F_BATCH !=''">
+		    AND a.F_BATCH = #{F_BATCH}
+		</if>
+	</update>
+	
+	<update id="updateLabelMatEffect" parameterType="Map">
+		update
+		WMS_CORE_LABEL a
+		set a.EFFECT_DATE=#{EFFECT_DATE}		
+		where
+		 a.WERKS=#{WERKS}		
+		<if test="LIFNR != null and LIFNR !=''">
+			AND a.LIFNR = #{LIFNR}
+		</if>
+		<if test="MATNR != null and MATNR !=''">
+		    AND a.MATNR = #{MATNR}
+		</if>
+		<if test="BATCH != null and BATCH !=''">
+		    AND a.BATCH = #{BATCH}
+		</if>
+		<if test="F_BATCH != null and F_BATCH !=''">
+		    AND a.F_BATCH = #{F_BATCH}
+		</if>
+	</update>
+
+
+</mapper>

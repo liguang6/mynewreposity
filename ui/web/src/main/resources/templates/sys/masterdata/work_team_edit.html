@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>小班组维护</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+				<tr>
+				<td>
+					<div class="form-group" style="align:center">
+								<label  class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>工厂代码：
+								 </label>
+							   	<div  class="control-inline">
+							   	    <select  name="WERKS" id="WERKS" style="width:200px;height:25px" v-model="werks">
+		                                <#list tag.getUserAuthWerks("MASTERDATA_WORKGROUP") as factory> 
+		                                    <option value="${factory.code}">${factory.code}</option>
+		                                </#list>
+                            		</select>
+							    </div>
+					</div>
+				</td>
+				</tr>
+				<tr>
+				<td>
+					<div class="form-group">
+						<label class="control-label" style="width:80px">车间：</label>
+						
+                        <div class="control-inline">
+								<select style="width:200px;height:25px" name="WORKSHOP" id="WORKSHOP" v-model="workshopcode">
+									<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+								</select>
+						</div>
+					</div>
+				</td>
+				</tr>
+				<!--  <tr>
+				<td>
+					
+					<div class="form-group" style="align:center">
+								<label  class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>车间编号：
+								 </label>
+							   	<div  class="control-inline">
+							   	    <input type="text" style="width:200px;height:25px" class="form-control required" id="WORKSHOP" 
+									 name="WORKSHOP"  @blur="getWorkGroupInfo" v-model="workshopcode"/>
+							    </div>
+					</div>
+				</td>
+				</tr>-->
+					
+				<tr>
+				<td>
+					<div class="form-group" style="align:center">
+                        
+								<label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>班组名称：
+								</label>
+							   	<div  class="control-inline">
+									<select class="required" style="width:200px;height:25px" name="WORKGROUP_NO" id="WORKGROUP_NO" v-model="workgroupcode" onchange="vm.onWorkGroupChange(event)" >
+										 <option v-for="w in workgrouplist" :value="w.CODE" >{{ w.NAME }}</option>
+									</select>
+							    </div>
+							 
+					</div>
+				</td>
+				</tr>
+					
+				<tr>
+				<td>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     <font style="color:red;font-weight:bold">*</font>小班组名称：
+								</label>
+							   	<div class="control-inline">
+							   	    <select class="required" style="width:200px;height:25px" name="WORKTEAM_NO" id="WORKTEAM_NO" v-model="workteamcode" >
+										 <option v-for="w in workteamlist" :value="w.WORKGROUP_NO" >{{ w.WORKGROUP_NAME }}</option>
+									</select>
+							    </div>
+						</div>
+				</td>
+				</tr>
+					
+				<tr>
+				<td>
+					
+						<div class="form-group" style="align:center">
+	                            
+							   	    <input type="text" class="form-control" id="PARENT_ID" 
+									 name="PARENT_ID"  v-model="dept_id" style="display:none"/>
+							  
+						</div>
+				</td>
+				</tr>
+				<tr>
+				<td>
+						<div class="form-group" style="align:center">
+	                            
+							   	    <input type="text" class="form-control" id="TREE_NAMES" 
+									 name="TREE_NAMES"  v-model="tree_names" style="display:none"/>
+							   
+						</div>
+						</div>
+				</td>
+				</tr>
+				<tr>
+				<td>
+						
+						<div class="form-group" style="align:center">
+	                            
+							   	    <input type="text" class="form-control" id="DEPT_TYPE" 
+									 name="DEPT_TYPE" value="TEAM" style="display:none"/>
+							   
+						</div>
+						
+				</td>
+				</tr>
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/sys/masterdata/work_team_edit.js?_${.now?long}"></script>
+</body>
+</html>

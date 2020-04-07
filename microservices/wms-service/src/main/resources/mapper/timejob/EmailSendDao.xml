@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.timejob.dao.EmailSendDao">
+	<resultMap type="com.byd.wms.business.modules.timejob.entity.WmsEmailAddresseeEntity" id="unQualityMap">
+		<id column="id" property="id"/>
+		<result column="email_addr" property="addressee"/>
+        <result column="notice_type" property="noticeType"/>
+		<collection property="wmsEmailMessageEntity" ofType="com.byd.wms.business.modules.timejob.entity.WmsEmailMessageEntity">
+			<id column="sid" property="id"/>
+			<result column="werks" property="werks"/>
+			<result column="matnr" property="matnr"/>
+			<result column="maktx" property="maktx"/>
+			<result column="batch" property="batch"/>
+			<result column="inspection_qty" property="qty"/>
+			<result column="unit" property="unit"/>
+			<result column="lifnr" property="lifnr"/>
+			<result column="liktx" property="liktx"/>
+			<result column="receipt_date" property="receiptDate"/>
+			<result column="wh_number" property="whNumber"/>
+		</collection>
+	</resultMap>
+
+
+	<select id="queryUnQualityMessage" resultMap="unQualityMap">
+		select snm.id,
+			   snm.email_addr,
+			   snm.notice_type,
+			   wqii.id sid,
+			   wqii.werks,
+			   wqii.matnr,
+			   wqii.maktx,
+			   wqii.batch,
+			   wqii.inspection_qty,
+			   wqii.unit,
+			   wqii.lifnr,
+			   wqii.liktx,
+			   wqii.receipt_date,
+			   wqii.wh_number
+		  from wms_qc_inspection_item wqii, SYS_NOTICE_MAIL snm
+		 where wqii.werks = snm.werks
+		   and wqii.wh_number = snm.wh_number
+		   and wqii.inspection_item_status = 00
+		   and wqii.del = '0'
+		   and  sysdate>to_date(substr(wqii.receipt_date,1,10),'yyyy-MM-dd')+1
+	</select>
+
+    <resultMap type="com.byd.wms.business.modules.timejob.entity.WmsEmailAddresseeEntity" id="unStorageMap">
+        <id column="id" property="id"/>
+        <result column="email_addr" property="addressee"/>
+        <result column="notice_type" property="noticeType"/>
+        <collection property="wmsEmailMessageEntity" ofType="com.byd.wms.business.modules.timejob.entity.WmsEmailMessageEntity">
+            <id column="sid" property="id"/>
+            <result column="werks" property="werks"/>
+            <result column="matnr" property="matnr"/>
+            <result column="maktx" property="maktx"/>
+            <result column="batch" property="batch"/>
+            <result column="inspection_qty" property="qty"/>
+            <result column="unit" property="unit"/>
+            <result column="lifnr" property="lifnr"/>
+            <result column="liktx" property="liktx"/>
+            <result column="receipt_date" property="receiptDate"/>
+            <result column="qc_date" property="qcDate"/>
+            <result column="qc_result_text" property="qcResultText"/>
+            <result column="wh_number" property="whNumber"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryUnStorageMessage" resultMap="unStorageMap">
+          select snm.id,
+               snm.email_addr,
+               snm.notice_type,
+               wqii.id sid,
+               wqii.werks,
+               wqii.matnr,
+               wqii.maktx,
+               wqii.batch,
+               wqii.inspection_qty,
+               wqii.unit,
+               wqii.lifnr,
+               wqii.liktx,
+               wqii.receipt_date,
+               wqr.qc_date,
+               wqr.qc_result_text,
+               wqii.wh_number
+          from wms_in_receipt         wir,
+               wms_qc_inspection_item wqii,
+               WMS_QC_RESULT          wqr,
+               SYS_NOTICE_MAIL        snm
+         where wir.inable_qty is not null
+           and wir.inable_qty > 0
+           and wir.receipt_no = wqii.receipt_no
+           and wir.receipt_item_no = wqii.receipt_item_no
+           and wqii.inspection_no = wqr.inspection_no
+           and wqii.inspection_item_no = wqr.inspection_item_no
+           and wqii.werks = snm.werks
+           and wqii.wh_number = snm.wh_number
+           and wqii.del = '0'
+           and wir.del='0'
+           and wqr.del='0'
+           and sysdate > to_date(wqr.qc_date, 'yyyy-MM-dd hh24:mi:ss') + 1
+	</select>
+
+    <resultMap type="com.byd.wms.business.modules.timejob.entity.WmsEmailAddresseeEntity" id="unQualifiedMap">
+        <id column="id" property="id"/>
+        <result column="email_addr" property="addressee"/>
+        <result column="notice_type" property="noticeType"/>
+        <collection property="wmsEmailMessageEntity" ofType="com.byd.wms.business.modules.timejob.entity.WmsEmailMessageEntity">
+            <id column="sid" property="id"/>
+            <result column="werks" property="werks"/>
+            <result column="matnr" property="matnr"/>
+            <result column="maktx" property="maktx"/>
+            <result column="batch" property="batch"/>
+            <result column="inspection_qty" property="qty"/>
+            <result column="unit" property="unit"/>
+            <result column="lifnr" property="lifnr"/>
+            <result column="liktx" property="liktx"/>
+            <result column="receipt_date" property="receiptDate"/>
+            <result column="qc_date" property="qcDate"/>
+            <result column="qc_result_text" property="qcResultText"/>
+            <result column="qc_result" property="qcResult"/>
+            <result column="wh_number" property="whNumber"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryUnQualifiedMessage" resultMap="unQualifiedMap">
+          select snm.id,
+               snm.email_addr,
+               snm.notice_type,
+               wqii.id sid,
+               wqii.werks,
+               wqii.matnr,
+               wqii.maktx,
+               wqii.batch,
+               wqii.inspection_qty,
+               wqii.unit,
+               wqii.lifnr,
+               wqii.liktx,
+               wqii.receipt_date,
+               wqr.qc_date,
+               wqr.qc_result_text,
+               wqr.qc_result,
+               wqii.wh_number
+          from wms_c_qc_result         wcqr,
+               wms_qc_inspection_item wqii,
+               WMS_QC_RESULT          wqr,
+               SYS_NOTICE_MAIL        snm
+           where wcqr.werks=wqr.werks
+           and wcqr.QC_RESULT_CODE=wqr.QC_RESULT_CODE
+           and wqii.inspection_no = wqr.inspection_no
+           and wqii.inspection_item_no = wqr.inspection_item_no
+           and wqii.werks = snm.werks
+           and wqii.wh_number = snm.wh_number
+           and wqr.del='0'
+           and wcqr.del='0'
+           and wcqr.wh_flag='0'
+	</select>
+
+    <resultMap type="com.byd.wms.business.modules.timejob.entity.WmsEmailAddresseeEntity" id="overDueMessageMap">
+        <id column="id" property="id"/>
+        <result column="email_addr" property="addressee"/>
+        <result column="notice_type" property="noticeType"/>
+        <collection property="wmsEmailMessageEntity" ofType="com.byd.wms.business.modules.timejob.entity.WmsEmailMessageEntity">
+            <id column="sid" property="id"/>
+            <result column="werks" property="werks"/>
+            <result column="matnr" property="matnr"/>
+            <result column="maktx" property="maktx"/>
+            <result column="batch" property="batch"/>
+            <result column="stock_qty" property="qty"/>
+            <result column="meins" property="unit"/>
+            <result column="lifnr" property="lifnr"/>
+            <result column="liktx" property="liktx"/>
+            <result column="effect_Date" property="effectDate"/>
+            <result column="wh_number" property="whNumber"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryOverDueMessage" resultMap="overDueMessageMap">
+        select snm.id,
+        snm.email_addr,
+        snm.notice_type,
+        wcs.id sid,
+        wcs.werks,
+        wcs.matnr,
+        wcs.maktx,
+        wcs.batch,
+        wcs.stock_qty,
+        wcs.meins,
+        wcs.lifnr,
+        wcs.liktx,
+        wcmb.effect_date,
+        wcs.wh_number
+        from WMS_CORE_STOCK wcs, WMS_CORE_MAT_BATCH wcmb, SYS_NOTICE_MAIL snm
+        where wcs.stock_qty > 0
+        and wcs.bin_code &lt;&gt; 'BBBB'
+        and wcs.werks = snm.werks
+        and wcs.wh_number = snm.wh_number
+        and wcs.matnr = wcmb.matnr
+        and wcs.batch = wcmb.batch
+        and sysdate > to_date(wcmb.effect_date, 'yyyy-MM-dd hh24:mi:ss') - 3
+
+    </select>
+</mapper>

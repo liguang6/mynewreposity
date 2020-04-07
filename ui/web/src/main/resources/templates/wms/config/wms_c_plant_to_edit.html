@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>编辑配置</title> 
+<#include "/web_header.html">
+</head>
+<body>
+
+<div id="rrapp" v-cloak class="wrapper" >
+		<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> 调出工厂</div>
+									<div class="col-sm-6">
+										<select name="WERKS_F" id="WERKS_F"  v-model="WERKS_F" style="height: 28px;width:100%;">
+			                             	<option value=''>请选择</option>
+			                                <#list tag.getUserAuthWerks("WMS_C_PLANT_TO") as factory> 
+			                                    <option value="${factory.code}">${factory.code}</option>
+			                                </#list>
+			                            </select>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> 调出库位</div>
+									<div class="col-sm-6">
+										<select v-model="LGORT_F" style="height: 28px;width:100%;" name="LGORT_F"  id="LGORT_F" > 
+			                             	<option value="">请选择</option>
+											<option v-for="w in lgortlist" :value="w.LGORT" :key="w.LGORT" :logrt_name="w.LGORT_NAME">{{ w.LGORT }}</option>
+										</select>
+										
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> 接收工厂</div>
+									<div class="col-sm-6">
+										<input id="WERKS_T"  name="WERKS_T" class="form-control required"  v-model="WERKS_T"/>
+									</div>
+								</div>
+							</div>
+							
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> 接收库位</div>
+									<div class="col-sm-6">
+										<input id="LGORT_T"  name="LGORT_T" class="form-control required"  v-model="LGORT_T"/>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> WMS移动类型</div>
+									<div class="col-sm-6">
+										<input id="WMS_MOVE_TYPE"  name="WMS_MOVE_TYPE" class="form-control required"  v-model="WMS_MOVE_TYPE"/>
+									</div>
+								</div>
+							</div>
+							
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> SAP移动类型</div>
+									<div class="col-sm-6">
+										<input id="SAP_MOVE_TYPE"  name="SAP_MOVE_TYPE" class="form-control required"  v-model="SAP_MOVE_TYPE"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span class="required"> * </span>特殊库存类型
+									</div>
+									<div class="col-sm-6">
+										<select id="SOBKZ" name="SOBKZ" v-model="SOBKZ" style="width:100%">
+									   	    <option value=''>请选择</option>
+									   	    <option value='K'>K</option>
+									   	    <option value='Z'>Z</option>
+							   	    	</select> 
+									</div>
+								</div>
+							</div>
+
+						</div>			
+					</div>
+					<input type="hidden" v-model="ID" name="ID">
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+				</div>
+			</div>
+		</div>
+
+
+	</div>
+
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_plant_to_edit.js?_${.now?long}"></script>
+</body>
+
+
+
+</html>

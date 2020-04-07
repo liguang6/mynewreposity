@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.pda.dao.JITDao">
+	<select id="JITScanLabel" parameterType="Map" resultType="Map">
+		select a.*  from WMS_CORE_LABEL a 
+		where a.label_no = #{LABEL_NO} and a.werks = #{WERKS}
+		and a.del = '0' and a.label_status not in ('09','10','11','12','20')
+	</select>
+	
+	<select id="JITScanDeliveryNo" parameterType="Map" resultType="Map">
+		select a.*  from wms_ws_call_material a 
+		where a.DELIVERY_NO  = #{DELIVERY_NO} and a.del = '0'
+	</select>
+	      
+</mapper>
+
+  

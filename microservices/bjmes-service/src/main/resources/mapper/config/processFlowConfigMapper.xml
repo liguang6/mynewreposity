@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.bjmes.modules.config.dao.BjMesProcessFlowDao">
+	 
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+        select distinct process_flow_code,process_flow_name,status,editor,edit_date from BJMES_C_PROCESS_FLOW t where 1=1
+		<if test="process_flow_code != null and process_flow_code !=''">
+			AND t.process_flow_code=#{process_flow_code} 
+		</if>
+		<if test="process_flow_name != null and process_flow_name !=''">
+			AND t.process_flow_name like concat('%',#{process_flow_name},'%')
+		</if>
+		<if test="status != null and status !=''">
+			AND t.status = #{status}
+		</if>
+		ORDER BY edit_date DESC
+        LIMIT #{start},#{limit}            
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+        select count(distinct process_flow_code) from BJMES_C_PROCESS_FLOW t where 1=1
+		<if test="process_flow_code != null and process_flow_code !=''">
+			AND t.process_flow_code=#{process_flow_code} 
+		</if>
+		<if test="process_flow_name != null and process_flow_name !=''">
+			AND t.process_flow_name like concat('%',#{process_flow_name},'%')
+		</if>
+		<if test="status != null and status !=''">
+			AND t.status = #{status}
+		</if>
+    </select>
+    
+    <select id="getList" parameterType="Map" resultType="Map">
+      SELECT * FROM BJMES_C_PROCESS_FLOW  WHERE 1=1
+		<if test="process_flow_code != null and process_flow_code !=''">
+		AND process_flow_code=#{process_flow_code} 
+		</if>
+		<if test="process_flow_name != null and process_flow_name !=''">
+		AND process_flow_name = #{process_flow_name}
+		</if>
+		<if test="status != null and status !=''">
+		AND status=#{status}
+		</if>
+    </select>
+    
+    <select id="getById" parameterType="Long" resultType="Map">
+       SELECT D.ID id,NAME name,TYPE type,CODE code,VALUE value,REMARK remark,
+          D.CREATOR creator ,D.CREATE_DATE createDate
+		       FROM QMS_C_DICT D  WHERE ID=#{id}
+    </select>
+    
+    <insert id="saveProcessFlow" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into BJMES_C_PROCESS_FLOW (process_flow_code,process_flow_name,status,editor,edit_date) values
+		<foreach collection="list" item="d" open=" " close=" " separator=" ,">
+			(#{d.process_flow_code},#{d.process_flow_name},#{d.status},#{editor},#{edit_date})
+		</foreach>
+	</insert>
+	<insert id="saveNodeInfo" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into BJMES_C_PROCESS_FLOW (process_flow_code,process_flow_name,status,editor,edit_date,
+		seq,node_code,node_name,scan_flag,online_plan_node_flag,offline_plan_node_flag) values
+		<foreach collection="add_list" item="d" open=" " close=" " separator=" ,">
+			(#{process_flow_code},#{process_flow_name},#{status},#{editor},#{edit_date},#{d.seq},#{d.node_code},
+			#{d.node_name},#{d.scan_flag},#{d.online_plan_node_flag},#{d.offline_plan_node_flag})
+		</foreach>
+	</insert>
+	<update id="updateProcessFlow" parameterType="Map">
+		update BJMES_C_PROCESS_FLOW set process_flow_name=#{process_flow_name},
+			status=#{status} ,editor= #{editor},edit_date=#{edit_date} 
+			where process_flow_code=#{process_flow_code} order by seq
+	</update>
+	<update id="delById" parameterType="Long">
+		delete from BJMES_C_PROCESS_FLOW  where id=#{id}
+	</update>
+	<update id="delByProcessFlowCode" parameterType="String">
+		delete from BJMES_C_PROCESS_FLOW  where process_flow_code=#{process_flow_code}
+	</update>
+	<update id="updateNodeSeq" parameterType="Map" >
+		update BJMES_C_PROCESS_FLOW set
+		seq=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.seq}
+		</foreach>
+		,editor=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{editor}
+		</foreach>
+		,edit_date=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{edit_date}
+		</foreach>
+		where id in
+		<foreach collection="detail_list" item="detail" index="index" separator="," open=" (" close=")">
+			#{detail.id}
+		</foreach>
+	</update>
+	<update id="updateNodeInfo" parameterType="Map" >
+		update BJMES_C_PROCESS_FLOW set
+		seq=
+		<foreach collection="update_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.seq}
+		</foreach>
+		,node_code=
+		<foreach collection="update_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.node_code}
+		</foreach>
+		,node_name=
+		<foreach collection="update_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.node_name}
+		</foreach>
+		,scan_flag=
+		<foreach collection="update_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.scan_flag}
+		</foreach>
+		,online_plan_node_flag=
+		<foreach collection="update_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.online_plan_node_flag}
+		</foreach>
+		,offline_plan_node_flag=
+		<foreach collection="update_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{detail.offline_plan_node_flag}
+		</foreach>
+		,editor=
+		<foreach collection="update_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{editor}
+		</foreach>
+		,edit_date=
+		<foreach collection="update_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.id} then #{edit_date}
+		</foreach>
+		where id in
+		<foreach collection="update_list" item="detail" index="index" separator="," open=" (" close=")">
+			#{detail.id}
+		</foreach>
+	</update>
+	<select id="getNodeList" parameterType="Map" resultType="Map">
+        SELECT t.id,t.node_code,t.node_name,t.scan_flag,t.online_plan_node_flag,t.offline_plan_node_flag,
+		(case  scan_flag when '0' then '否' when 'X' then '是' end) scan_flag_desc,
+		(case  online_plan_node_flag when '0' then '下线' when 'X' then '上线' end) plan_node_flag_desc
+		FROM BJMES_C_PROCESS_FLOW t  WHERE 1=1 and ifnull(t.node_code,'')!=''
+			AND t.process_flow_code=#{process_flow_code} 		
+    </select>
+	<select id="checkProcessFlow" parameterType="Map" resultType="Map">
+        SELECT group_concat(distinct process_flow_code) process_flow_code  FROM BJMES_C_PROCESS_FLOW 
+		WHERE process_flow_code in 
+		<foreach collection="list" item="d" open="(" close=")" separator=" ,">
+			#{d.process_flow_code}
+		</foreach>
+    </select>
+</mapper>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.produce.dao.OutsourcingDao">
+	
+	<select id="getOutsourcingMatInfo" parameterType="Map" resultType="Map">	
+		SELECT t.*,SUM(y.prod_quantity) prod_quantity, #{zzj_plan_batch} zzj_plan_batch,
+		CONCAT(o.order_no,o.order_name,o.bus_type_code,' ',o.order_qty,'台') order_desc,
+		#{FULL_NAME} FULL_NAME,
+		(SELECT CASE WHEN SUM(s.outsourcing_quantity) IS NULL THEN 0 ELSE SUM(s.outsourcing_quantity) END  FROM ZZJ_SUBCONTRACTING_ITEMS s 
+			WHERE s.zzj_pmd_items_id = t.zzj_pmd_items_id AND s.order_no = t.order_no 
+			AND (s.process = #{process_name} or s.process_name = #{process_name}) AND s.zzj_plan_batch = #{zzj_plan_batch}
+		) already_outsourcing_quantity
+		FROM
+		(	SELECT m.*,h.order_no,m.id zzj_pmd_items_id,
+				substring_index(left(m.process_flow,LOCATE(#{process_name},m.process_flow)-2), '-', -1) pre_process
+				FROM ZZJ_PMD_ITEMS m
+				INNER JOIN ZZJ_PMD_HEAD h ON m.pmd_head_id = h.id 
+					AND h.order_no = #{order_no} AND h.werks = #{werks} 
+					AND h.workshop = #{workshop} AND h.line = #{line} 
+				WHERE m.zzj_no = #{zzj_no}
+				AND LOCATE(#{process_name},m.process_flow)
+		) t
+		LEFT JOIN ZZJ_MACHINE_PLAN_ITEMS y ON t.id = y.zzj_pmd_items_id AND y.plan_process = t.pre_process 
+		INNER JOIN ZZJ_MACHINE_PLAN_HEAD e ON e.id = y.machine_plan_head_id AND e.zzj_plan_batch = #{zzj_plan_batch}
+		LEFT JOIN ZZJ_WERKS_ORDER o ON t.order_no = o.order_no
+		GROUP BY t.zzj_pmd_items_id 
+	</select>
+	
+	<select id="getOutsourcingMatInfoByMachinePlan" parameterType="Map" resultType="Map">	
+		SELECT t.*,y.prod_quantity
+		FROM
+		(	SELECT m.*,
+				substring_index(left(m.process_flow,LOCATE(#{process_name},m.process_flow)-2), '-', -1) pre_process
+				FROM ZZJ_PMD_ITEMS m
+				INNER JOIN ZZJ_PMD_HEAD h ON m.pmd_head_id = h.id 
+					AND h.order_no = #{order_no} AND h.werks = #{werks} 
+					AND h.workshop = #{workshop} AND h.line = #{line} 
+				LEFT JOIN ZZJ_MACHINE_PLAN_ITEMS p ON m.id = p.zzj_pmd_items_id AND p.id = #{machine_plan_items_id}
+				WHERE m.zzj_no = #{zzj_no}
+				AND LOCATE(#{process_name},m.process_flow)
+		) t
+		LEFT JOIN ZZJ_MACHINE_PLAN_ITEMS y ON t.id = y.zzj_pmd_items_id 
+	</select>
+	
+	<select id="queryMaxOutsourcingNo" resultType="String" parameterType="Map">
+	<![CDATA[
+		SELECT MAX(outsourcing_no) FROM ZZJ_SUBCONTRACTING_HEAD 
+		WHERE 
+		werks = #{werks} AND 
+		outsourcing_no LIKE CONCAT('%',SUBSTRING(#{business_date},1,4),'%')
+	]]>
+	</select>
+
+	<insert id="addSubcontractingHead" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_SUBCONTRACTING_HEAD (outsourcing_no,werks,werks_name,workshop,workshop_name,line,line_name,
+		vendor,total_weight,business_date,memo,editor,edit_date)
+		values (#{outsourcing_no},#{werks},#{werks_name},#{workshop},#{workshop_name},#{line},#{line_name},
+		#{vendor},#{total_weight},#{business_date},#{memo},#{editor},#{edit_date})
+	</insert>
+	
+	<insert id="addSubcontractingItems" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_SUBCONTRACTING_ITEMS  
+			(outsourcing_head_id,item_no,order_no,zzj_plan_batch,process,process_name,zzj_no,
+			zzj_pmd_items_id,product_order,outsourcing_quantity,weight,total_weight,sender,memo,editor,edit_date)
+		values
+		<trim >
+		<foreach collection="matInfoList" item="detail" index="index" separator="," >
+			(
+				#{outsourcing_head_id},#{detail.item_no},#{detail.order_no},#{detail.zzj_plan_batch},
+				#{detail.outsourcing_process},#{detail.outsourcing_process_name},#{detail.zzj_no},#{detail.zzj_pmd_items_id},
+				#{detail.product_order},#{detail.outsourcing_quantity},#{detail.weight},#{detail.total_weight},#{detail.sender},#{detail.memo},
+				#{editor},#{edit_date}
+			)
+		</foreach>	
+		</trim>	
+	</insert>
+	
+	<select id="getMachineByProcess" parameterType="Map" resultType="Map">	
+		select p.* from ZZJ_MACHINE_ASSIGN p where 1=1 and p.status = '00' and p.del != 'X'
+		<if test="werks !=null and werks !=''">
+			and ( p.werks = #{werks} or p.werks_name = #{werks} )
+		</if>
+		<if test="workshop !=null and workshop !=''">
+			and ( p.workshop = #{workshop} or p.workshop_name = #{workshop} )
+		</if>
+		<if test="line !=null and line !=''">
+			and ( p.line = #{line} or p.line_name = #{line} )
+		</if>	
+		<foreach collection="matInfoList" index="index" item="d" separator="or" open="AND (" close=")">
+			p.process_code = #{d.outsourcing_process}
+		</foreach>
+		order by p.machine_code asc
+	</select>
+	
+	<insert id="saveJTPlanItems" parameterType="List">
+		insert into ZZJ_MACHINE_PLAN_ITEMS (machine_plan_head_id,zzj_pmd_items_id,no,zzj_no,plan_process,plan_quantity,piece_quantity,machine,plan_date,status,
+		product_order,creator,create_date) values
+		<foreach collection="list" item="d" open=" " close=" " separator=" ,">
+			((select h.id from ZZJ_MACHINE_PLAN_HEAD h where h.order_no = #{d.order_no} and h.werks= #{d.werks} and h.workshop = #{d.workshop}
+			and h.line = #{d.line} and h.zzj_plan_batch = #{d.zzj_plan_batch}),#{d.zzj_pmd_items_id},#{d.no},#{d.zzj_no},#{d.plan_process},#{d.plan_quantity},
+			#{d.piece_quantity},#{d.machine},#{d.plan_date},'1',#{d.product_order},#{d.creator},#{d.creat_date})
+		</foreach>
+	</insert>
+	
+</mapper>

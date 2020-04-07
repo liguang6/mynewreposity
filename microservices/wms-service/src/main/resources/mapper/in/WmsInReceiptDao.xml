@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.in.dao.WmsInReceiptDao">
+	<resultMap type="Map" id="wmsDocMap">
+		<result property="LABEL_NO"  column="LABEL_NO" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap>
+
+	<select id="getMatStock" parameterType="Map" resultType="String">
+		select t.matnr|| '#*' || t.STOCK || '#*' ||
+			CASE WHEN nvl(m.STOCK_L,0)=0 THEN 'N' ELSE TO_CHAR(m.STOCK_L) END STOCK_QTY
+			FROM
+			(	SELECT s.MATNR,s.WERKS,s.WH_NUMBER,SUM(nvl(s.stock_qty,0)) STOCK
+					FROM WMS_CORE_STOCK s
+					where 1=1
+					<foreach collection="matList" item="d" open="and (" close=")" separator="or">
+						matnr = #{d.MATNR} and werks = #{d.WERKS} and wh_number = #{d.WH_NUMBER}
+					</foreach>
+				GROUP BY s.matnr,s.WERKS,s.WH_NUMBER
+			) t  LEFT JOIN WMS_C_MAT_STORAGE m ON t.MATNR = m.MATNR AND t.WERKS = m.WERKS AND t.WH_NUMBER = m.WH_NUMBER AND nvl(m.DEL,'0') !='X'
+	</select>
+
+	<select id="getUrgentMatList" parameterType="Map" resultType="String">
+		select MATNR
+		from wms_c_mat_urgent
+		where nvl(DEL,'0') !='X' and START_DATE&lt;=#{CUR_DATE} and END_DATE>=#{CUR_DATE}
+		and WERKS=#{WERKS}
+	</select>
+
+	<select id="getDangerMatList" parameterType="Map" resultType="Map">
+		select MATNR ,nvl(GOOD_DATES,0) GOOD_DATES,nvl(MIN_GOOD_DATES,0) MIN_GOOD_DATES,EXTENDED_EFFECT_DATE from wms_c_mat_danger where nvl(DEL,'0') !='X' and nvl(DANGER_FLAG,'0') ='X' and WERKS=#{WERKS} and LIFNR=#{LIFNR}
+	</select>
+
+	<select id="getLabelInfo" parameterType="Map" resultType="Map">
+	SELECT L.* FROM WMS_CORE_LABEL L WHERE L.LABEL_NO = #{LabelNo}
+	<if test="LGORT !=null and LGORT !=''">
+	AND L.LGORT = #{LGORT}
+	</if>
+	<if test="BIN_CODE !=null and BIN_CODE !=''">
+	AND L.BIN_CODE = #{BIN_CODE}
+	</if>
+	</select>
+
+	<select id="getPoItemListByPo" parameterType="List" resultType="String">
+		select distinct i.EBELN||'#*'||i.EBELP as EBELP from WMS_SAP_PO_ITEM i
+		where
+		<foreach collection="condList" item="d" open="(" close=")" separator="or">
+			i.EBELN=#{d.EBELN} and to_number(i.EBELP)=to_number(#{d.EBELP})
+		</foreach>
+	</select>
+	<select id="getPoTypeListByPo" parameterType="List" resultType="String">
+		SELECT distinct h.EBELN||'#*'||h.BSART as BSART FROM WMS_SAP_PO_HEAD h
+		where
+		<foreach collection="poList" item="d" open="(" close=")" separator="or">
+			h.EBELN=#{d}
+		</foreach>
+	</select>
+
+
+	<select id="getReceiptCount" parameterType="Map" resultType="String">
+		<if test="ASNNO !=null">
+			select '{'||wm_concat('"'||r.ASNNO||'#*'||r.MATNR||'#*'||r.ASNITM||'":"'||(sum(r.RECEIPT_QTY)-sum(nvl(r.RETURN_QTY,0))-sum(nvl(r.WH_RETURN_QTY,0)))||'"' )||'}' as count_info
+			from WMS_IN_RECEIPT r
+			where nvl(r.DEL,'0')!='X'
+			<foreach collection="item_list" item="item" open=" and (" close=")" separator="or">
+				r.ASNNO=#{ASNNO} and to_number(r.ASNITM)=to_number(#{item})
+			</foreach>
+			group by r.ASNNO,r.MATNR,r.ASNITM
+		</if>
+
+		<if test="PO_NO !=null">
+		select '{'||wm_concat('"'||r.PO_NO||'#*'||r.MATNR||'#*'||r.PO_ITEM_NO||'":"'||(sum(r.RECEIPT_QTY)-sum(nvl(r.RETURN_QTY,0))-sum(nvl(r.WH_RETURN_QTY,0)))||'"' )||'}' as count_info
+		from WMS_IN_RECEIPT r
+		where nvl(r.DEL,'0')!='X'
+			<foreach collection="item_list" item="item" open="and (" close=")" separator="or">
+				r.PO_NO=#{PO_NO} and to_number(r.PO_ITEM_NO)=to_number(#{item})
+			</foreach>
+
+		group by r.PO_NO,r.MATNR,r.PO_ITEM_NO
+		</if>
+
+		<if test="SAP_MATDOC_NO !=null">
+		select '{'||wm_concat('"'||r.SAP_MATDOC_NO||'#*'||r.MATNR||'#*'||r.SAP_MATDOC_ITEM_NO||'":"'||(sum(r.RECEIPT_QTY)-sum(nvl(r.RETURN_QTY,0))-sum(nvl(r.WH_RETURN_QTY,0)))||'"' )||'}' as count_info
+		from WMS_IN_RECEIPT r
+		where nvl(r.DEL,'0')!='X'
+			<foreach collection="item_list" item="item" open="and (" close=")" separator="or">
+				r.SAP_MATDOC_NO=#{SAP_MATDOC_NO} and to_number(r.SAP_MATDOC_ITEM_NO)=to_number(#{item})
+			</foreach>
+			group by r.SAP_MATDOC_NO,r.MATNR,r.SAP_MATDOC_ITEM_NO
+		</if>
+
+	</select>
+
+	<select id="getVendorInfo" parameterType="Map" resultType="Map">
+<!-- 		select p.WERKS,p.VENDOR_FLAG,nvl(v.SHORT_NAME,' ') as SHORT_NAME,nvl(v.VENDOR_MANAGER,' ')as VENDOR_MANAGER,
+		nvl(v.NAME1,' ') NAME1,nvl(v.IS_SCM,'0') IS_SCM
+		from WMS_C_WH p
+		left join WMS_C_VENDOR v  on p.WERKS=v.WERKS and nvl(v.DEL_FLAG,'0') !='X' and v.LIFNR=#{LIFNR}
+		where p.WERKS=#{WERKS}
+		and nvl(p.DEL_FLAG,'0') !='X'
+		and rownum= 1 -->
+
+		SELECT * FROM (
+			SELECT v.LIFNR,nvl(v.NAME1,' ') NAME1,
+				nvl(cv.SHORT_NAME,' ') as SHORT_NAME,nvl(cv.VENDOR_MANAGER,' ')as VENDOR_MANAGER,nvl(cv.IS_SCM,'0') IS_SCM
+				FROM WMS_SAP_VENDOR v
+				left join WMS_C_VENDOR cv ON v.LIFNR = cv.LIFNR and nvl(cv.DEL_FLAG,'0') !='X' and cv.WERKS=#{WERKS}
+				WHERE v.LIFNR = #{LIFNR} ) t1
+				LEFT JOIN
+				(SELECT p.WERKS,nvl(p.VENDOR_FLAG,'0') VENDOR_FLAG
+				FROM WMS_C_WH p
+				WHERE  p.WERKS = #{WERKS} AND p.WH_NUMBER = #{WH_NUMBER} and nvl(p.DEL_FLAG,'0') !='X' ) t2 ON 1=1
+	</select>
+
+	<select id="getBendrAfnam" parameterType="List" resultType="String">
+		select '{'||wm_concat('"'||i.EBELN||'#*'||i.EBELP||'":"'||(i.BEDNR||'#*'||i.AFNAM)||'#*'||nvl(i.SOBKZ,'Z')||'"' )||'}' as bendr_afnam
+		from WMS_SAP_PO_ITEM i
+		where
+		<foreach collection="condList" item="d" open="(" close=")" separator="or">
+			i.EBELN=#{d.EBELN} and to_number(i.EBELP)=to_number(#{d.EBELP})
+		</foreach>
+	</select>
+
+	<select id="getTestFlag" parameterType="Map" resultType="String">
+		select p.TEST_FLAG from WMS_C_QC_PLANT p
+    	where p.WERKS=#{WERKS} and p.BUSINESS_NAME= #{BUSINESS_NAME} and nvl(p.DEL,'0') !='X'
+    	and p.START_DATE &lt;= #{SEARCH_DATE} and p.END_DATE>= #{SEARCH_DATE}
+    	and rownum=1
+	</select>
+
+	<select id="getLabelNoByMatDocNo" parameterType="Map" resultMap="wmsDocMap">
+		SELECT LABEL_NO,WMS_NO,WMS_ITEM_NO,WMS_SAP_MAT_DOC
+		FROM WMS_CORE_WMSDOC_ITEM WHERE
+		WH_NUMBER = #{WH_NUMBER} AND WMS_SAP_MAT_DOC LIKE '%' ||#{SAP_MATDOC_NO}|| '%'
+	</select>
+
+	<select id="getLabelInfoByLabelNo" parameterType="List" resultType="Map">
+		<foreach collection="list" item="d"  separator="union all" >
+			select * from WMS_CORE_LABEL where
+			LABEL_NO = #{d.LABEL_NO} and nvl(DEL,'0') !='X'
+			<if test="d.WERKS !=null">
+				and WERKS = #{d.WERKS}
+			</if>
+		</foreach>
+	</select>
+
+	<insert id="insertInspectionHead" parameterType="Map" >
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_QC_INSPECTION_HEAD.nextval FROM dual
+		</selectKey>
+		insert into WMS_QC_INSPECTION_HEAD (ID,INSPECTION_NO,INSPECTION_TYPE,INSPECTION_STATUS,IS_AUTO,
+		WERKS,WH_NUMBER,CREATOR,CREATE_DATE)
+		values (#{ID},#{INSPECTION_NO},#{INSPECTION_TYPE},#{INSPECTION_STATUS},#{IS_AUTO},#{WERKS},
+		#{WH_NUMBER},#{CREATOR},#{CREATE_DATE})
+	</insert>
+
+	<select id="getQCMatList" parameterType="Map" resultType="Map">
+		select MATNR,LIFNR from WMS_C_QC_MAT
+		where WERKS=#{WERKS} and TEST_FLAG=#{TEST_FLAG} and nvl(DEL,'0')!='X' and START_DATE&lt;=#{SEARCH_DATE}
+		and END_DATE>=#{SEARCH_DATE} and MATNR in
+		<foreach collection="matList" item="m" open="(" close=")" separator=",">
+			#{m.MATNR}
+		</foreach>
+	</select>
+
+	<insert id="insertInspectionItem" parameterType="List">
+		insert into WMS_QC_INSPECTION_ITEM (ID,INSPECTION_NO,INSPECTION_ITEM_NO,INSPECTION_ITEM_STATUS,
+		STOCK_SOURCE,WERKS,WH_NUMBER,LGORT,BIN_CODE,SOBKZ,MATNR,MAKTX,UNIT,INSPECTION_QTY,BOX_COUNT,
+		BATCH,LIFNR,LIKTX,TRY_QTY,RECEIVER,AFNAM,BEDNR,RECEIPT_DATE,RECEIPT_NO,RECEIPT_ITEM_NO,DEL,
+		CREATOR,CREATE_DATE)
+		select SEQ_WMS_QC_INSPECTION_ITEM.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select
+		#{d.INSPECTION_NO} INSPECTION_NO,#{d.INSPECTION_ITEM_NO} INSPECTION_ITEM_NO,#{d.INSPECTION_ITEM_STATUS} INSPECTION_ITEM_STATUS,#{d.STOCK_SOURCE} STOCK_SOURCE,
+		#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT,#{d.BIN_CODE} BIN_CODE,#{d.SOBKZ} SOBKZ,#{d.MATNR} MATNR,#{d.MAKTX} MAKTX,#{d.UNIT} UNIT,#{d.RECEIPT_QTY} RECEIPT_QTY,
+		#{d.BOX_COUNT} BOX_COUNT,#{d.BATCH} BATCH,#{d.LIFNR} LIFNR,#{d.LIKTX} LIKTX,#{d.TRY_QTY} TRY_QTY,#{d.RECEIVER} RECEIVER,#{d.AFNAM} AFNAM,#{d.BEDNR} BEDNR,
+		#{d.CREATE_DATE} RECEIPT_DATE,#{d.RECEIPT_NO} RECEIPT_NO,#{d.RECEIPT_ITEM_NO} RECEIPT_ITEM_NO,'0' DEL,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE
+		from dual
+		</foreach>
+		) m
+	</insert>
+
+	<insert id="insertReceiptInfo" parameterType="List" >
+		insert into WMS_IN_RECEIPT (ID,RECEIPT_NO,RECEIPT_ITEM_NO,
+		BUSINESS_NAME,BUSINESS_TYPE,F_WERKS,F_WH_NUMBER,F_LGORT,F_BATCH,WERKS,WH_NUMBER,
+		LGORT,MATNR,MAKTX,UNIT,RECEIPT_QTY,BATCH,SOBKZ,ASNNO,ASNITM,PO_NO,PO_ITEM_NO,SAP_OUT_NO,
+		SAP_OUT_ITEM_NO,SAP_MATDOC_NO,SAP_MATDOC_ITEM_NO,LIFNR,LIKTX,FULL_BOX_QTY,BOX_COUNT,
+		AFNAM,BEDNR,RECEIPT_DATE,RECEIVER,GR_AREA,INABLE_QTY,TRY_QTY,TEST_FLAG,CREATOR,CREATE_DATE,RECEIPT_REASON
+		)
+		select SEQ_WMS_IN_RECEIPT.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select
+		#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.BUSINESS_NAME},#{d.BUSINESS_TYPE},
+		#{d.F_WERKS},#{d.F_WH_NUMBER},#{d.F_LGORT},#{d.F_BATCH},#{d.WERKS},#{d.WH_NUMBER},#{d.LGORT},#{d.MATNR},
+		#{d.MAKTX},#{d.UNIT},nvl(#{d.RECEIPT_QTY},0),#{d.BATCH},#{d.SOBKZ},#{d.ASNNO},#{d.ASNITM},#{d.PO_NO},#{d.PO_ITEM_NO},
+		#{d.SAP_OUT_NO},#{d.SAP_OUT_ITEM_NO},#{d.SAP_MATDOC_NO},#{d.SAP_MATDOC_ITEM_NO},#{d.LIFNR},#{d.LIKTX},
+		nvl(#{d.FULL_BOX_QTY},0),nvl(#{d.BOX_COUNT},0),#{d.AFNAM},#{d.BEDNR},#{d.RECEIPT_DATE},#{d.RECEIVER},#{d.GR_AREA},
+		nvl(#{d.INABLE_QTY},0),nvl(#{d.TRY_QTY},0),#{d.TEST_FLAG},#{d.CREATOR},#{d.CREATE_DATE},#{d.RECEIPT_REASON}
+		from dual
+		</foreach>
+		) m
+	</insert>
+
+	<insert id="insertQCResult" parameterType="List">
+		insert into WMS_QC_RESULT (ID,QC_RESULT_NO,QC_RESULT_ITEM_NO,INSPECTION_NO,INSPECTION_ITEM_NO,
+		QC_RECORD_TYPE,STOCK_SOURCE,WERKS,WH_NUMBER,LGORT,LIFNR,SOBKZ,MATNR,MAKTX,UNIT,RESULT_QTY,
+		BATCH,QC_DATE,QC_RESULT_CODE,QC_RESULT_TEXT,QC_RESULT,CREATOR,CREATE_DATE,LABEL_NO
+		)
+		select SEQ_WMS_QC_RESULT.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select
+		#{d.QC_RESULT_NO},#{d.QC_RESULT_ITEM_NO},#{d.INSPECTION_NO},#{d.INSPECTION_ITEM_NO},#{d.QC_RECORD_TYPE},
+		#{d.STOCK_SOURCE},#{d.WERKS},#{d.WH_NUMBER},#{d.LGORT},#{d.LIFNR},#{d.SOBKZ},#{d.MATNR},#{d.MAKTX},#{d.UNIT},#{d.RESULT_QTY},#{d.BATCH},
+		#{d.QC_DATE},#{d.QC_RESULT_CODE},#{d.QC_RESULT_TEXT},#{d.QC_RESULT},#{d.CREATOR},#{d.CREATE_DATE},#{d.LABEL_NO}
+		from dual
+		</foreach>
+		) m
+	</insert>
+
+	<insert id="insertQCRecord" parameterType="List">
+		insert into WMS_QC_RECORD (ID,QC_RECORD_NO,QC_RECORD_ITEM_NO,INSPECTION_NO,INSPECTION_ITEM_NO,
+		QC_RECORD_TYPE,STOCK_SOURCE,WERKS,WH_NUMBER,LGORT,LIFNR,SOBKZ,MATNR,MAKTX,UNIT,RECORD_QTY,
+		BATCH,QC_DATE,QC_RESULT_CODE,QC_RESULT_TEXT,QC_RESULT,CREATOR,CREATE_DATE,LABEL_NO
+		)
+		select SEQ_WMS_QC_RECORD.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select
+		#{d.QC_RECORD_NO},#{d.QC_RECORD_ITEM_NO},#{d.INSPECTION_NO},#{d.INSPECTION_ITEM_NO},#{d.QC_RECORD_TYPE},
+		#{d.STOCK_SOURCE},#{d.WERKS},#{d.WH_NUMBER},#{d.LGORT},#{d.LIFNR},#{d.SOBKZ},#{d.MATNR},#{d.MAKTX},#{d.UNIT},#{d.RECORD_QTY},#{d.BATCH},
+		#{d.QC_DATE},#{d.QC_RESULT_CODE},#{d.QC_RESULT_TEXT},#{d.QC_RESULT},#{d.CREATOR},#{d.CREATE_DATE},#{d.LABEL_NO}
+		from dual
+		</foreach>
+		) m
+	</insert>
+
+	<update id="updateWMSDocItemInspection" parameterType="List">
+		update WMS_CORE_WMSDOC_ITEM
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="INSPECTION_NO =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO} then #{d.INSPECTION_NO}
+                </foreach>
+            </trim>
+            <trim prefix="INSPECTION_ITEM_NO =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO} then #{d.INSPECTION_ITEM_NO}
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WMS_NO=#{d.WMS_NO} and WMS_ITEM_NO=#{d.WMS_ITEM_NO}
+        </foreach>
+	</update>
+
+	<update id="updateReceiptInableQty" parameterType="List">
+    	update WMS_IN_RECEIPT
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="INABLE_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then #{d.RESULT_QTY}
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+        </foreach>
+	</update>
+
+	<select id="getRhStockList" parameterType="List" resultType="String">
+		select distinct (WERKS||'**'||WH_NUMBER||'**'||LGORT||'**'||MATNR||'**'||LIFNR||'**'||nvl(F_BATCH,'')||'**'||BATCH||'**'||SOBKZ)
+		from WMS_IN_RH_STOCK
+		where nvl(DEL,'0') !='X'
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER} and LGORT=#{d.LGORT}
+            and MATNR=#{d.MATNR} and LIFNR=#{d.LIFNR} and BATCH=#{d.BATCH}
+            and SOBKZ=#{d.SOBKZ}
+        </foreach>
+	</select>
+
+	<insert id="insertRhStock" parameterType="List" >
+		insert into WMS_IN_RH_STOCK (ID,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,F_BATCH,BATCH,UNIT,RH_QTY,SOBKZ,LIFNR,
+		LIKTX,CREATOR,CREATE_DATE)
+		select SEQ_WMS_QC_RECORD.nextval,m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.F_BATCH,
+		m.BATCH,m.UNIT,sum(cast(nvl(m.RH_QTY,0) as number)),m.SOBKZ,m.LIFNR,m.LIKTX,m.CREATOR,m.CREATE_DATE
+		from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select
+		#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.F_BATCH} F_BATCH,#{d.BATCH} BATCH,#{d.UNIT} UNIT,#{d.RH_QTY} RH_QTY,#{d.SOBKZ} SOBKZ,#{d.LIFNR} LIFNR,
+		#{d.LIKTX} LIKTX,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE
+		from dual
+		</foreach>
+		) m
+		group by m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.F_BATCH,m.SOBKZ,m.LIFNR
+	</insert>
+
+	<update id="updateRhStock" parameterType="List">
+		<!-- update WMS_IN_RH_STOCK set RH_QTY=RH_QT+(
+		select sum(cast(nvl(m.RH_QTY,0) as number)) from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select
+		#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.F_BATCH} F_BATCH,#{d.BATCH} BATCH,#{d.UNIT} UNIT,#{d.RH_QTY} RH_QTY,#{d.SOBKZ} SOBKZ,#{d.LIFNR} LIFNR,
+		#{d.LIKTX} LIKTX,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE
+		from dual
+		</foreach>
+		) m
+		group by m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.F_BATCH,m.SOBKZ,m.LIFNR
+		) where  -->
+		merge into WMS_IN_RH_STOCK s using(
+		select m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.F_BATCH,
+		m.BATCH,m.UNIT,sum(cast(nvl(m.RH_QTY,0) as number)) RH_QTY,m.SOBKZ,m.LIFNR,m.LIKTX,'0' DEL,m.CREATOR,m.CREATE_DATE
+		from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select
+		#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.F_BATCH} F_BATCH,#{d.BATCH} BATCH,#{d.UNIT} UNIT,#{d.RH_QTY} RH_QTY,#{d.SOBKZ} SOBKZ,#{d.LIFNR} LIFNR,
+		#{d.LIKTX} LIKTX,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE
+		from dual
+		</foreach>
+		) m
+		group by m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.F_BATCH,m.BATCH,m.UNIT,m.SOBKZ,m.LIFNR,m.LIKTX,m.CREATOR,m.CREATE_DATE
+		)tmp
+		on (tmp.WERKS=s.WERKS and tmp.WH_NUMBER=s.WH_NUMBER and tmp.LGORT=s.LGORT
+		and tmp.MATNR=s.MATNR and tmp.BATCH=s.BATCH and tmp.SOBKZ=s.SOBKZ and tmp.LIFNR=s.LIFNR)
+		when matched then
+			update  set s.RH_QTY=s.RH_QTY+tmp.RH_QTY
+		when not matched then
+			insert (ID,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,F_BATCH,BATCH,UNIT,RH_QTY,SOBKZ,LIFNR,
+		LIKTX,CREATOR,CREATE_DATE)
+		VALUES (SEQ_WMS_QC_RECORD.nextval,tmp.WERKS,tmp.WH_NUMBER,tmp.LGORT,tmp.MATNR,tmp.MAKTX,
+		tmp.F_BATCH,tmp.BATCH,tmp.UNIT,tmp.RH_QTY,tmp.SOBKZ,tmp.LIFNR,tmp.LIKTX,tmp.CREATOR,tmp.CREATE_DATE
+
+		)
+	</update>
+
+	<insert id="insertCoreLabel" parameterType="List">
+		<!-- 		insert into WMS_CORE_LABEL (ID,LABEL_NO,RECEIPT_NO,RECEIPT_ITEM_NO,LABEL_STATUS,QC_RESULT_CODE,BOX_SN,
+                FULL_BOX_QTY,BOX_QTY,END_FLAG,WERKS,MATNR,MAKTX,F_UNIT,F_BATCH,
+                BATCH,SOBKZ,DEL,CREATOR,CREATE_DATE,WH_NUMBER,LGORT,BIN_CODE,UNIT,INBOUND_NO,INBOUND_ITEM_NO,
+                PRODUCT_DATE,LIFNR,LIKTX,EFFECT_DATE,PRODUCT_CODE,STATION,ON_LINE_TYPE,ON_LINE_MOUTH,CAR_TYPE,
+                DOSAGE,CONFIGURATION,WMS_NO,WMS_ITEM_NO
+                )
+                select SEQ_WMS_CORE_LABEL.nextval,m.* from(
+                <foreach collection="list" item="d" index="index" separator="union all">
+                select  #{d.LABEL_NO},#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.LABEL_STATUS},#{d.QC_RESULT_CODE},#{d.BOX_SN},
+                cast(nvl(#{d.FULL_BOX_QTY},0) as number),cast(nvl(#{d.BOX_QTY},0) as number),#{d.END_FLAG},#{d.WERKS},
+                #{d.MATNR},#{d.MAKTX},#{d.F_UNIT},#{d.F_BATCH},#{d.BATCH},#{d.SOBKZ},'0',#{d.CREATOR},#{d.CREATE_DATE},
+                #{d.WH_NUMBER},#{d.LGORT},#{d.BIN_CODE},#{d.UNIT},#{d.INBOUND_NO},#{d.INBOUND_ITEM_NO},
+                #{d.PRODUCT_DATE},#{d.LIFNR},#{d.LIKTX},#{d.EFFECT_DATE},#{d.PRODUCT_CODE},#{d.STATION},#{d.ON_LINE_TYPE},
+                #{d.ON_LINE_MOUTH},#{d.CAR_TYPE},#{d.DOSAGE},#{d.CONFIGURATION},#{d.WMS_NO},#{d.WMS_ITEM_NO}
+                from dual
+                </foreach>
+                ) m -->
+		<!-- 优化为存在相同数据就更新 唯一字段 LABEL_NO WERKS -->
+		merge into WMS_CORE_LABEL s using(
+		select m.LABEL_NO,m.RECEIPT_NO,m.RECEIPT_ITEM_NO,m.LABEL_STATUS,m.QC_RESULT_CODE,m.BOX_SN,
+		m.FULL_BOX_QTY,m.BOX_QTY,m.END_FLAG,m.WERKS,m.MATNR,m.MAKTX,m.F_UNIT,m.F_BATCH,
+		m.BATCH,m.SOBKZ,m.DEL,m.CREATOR,m.CREATE_DATE,m.WH_NUMBER,m.LGORT,m.BIN_CODE,m.UNIT,m.INBOUND_NO,m.INBOUND_ITEM_NO,
+		m.PRODUCT_DATE,m.LIFNR,m.LIKTX,m.EFFECT_DATE,m.PRODUCT_CODE,m.STATION,m.ON_LINE_TYPE,m.ON_LINE_MOUTH,m.CAR_TYPE,
+		m.DOSAGE,m.CONFIGURATION,m.WMS_NO,m.WMS_ITEM_NO
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.LABEL_NO} LABEL_NO,#{d.RECEIPT_NO} RECEIPT_NO,#{d.RECEIPT_ITEM_NO} RECEIPT_ITEM_NO,
+			#{d.LABEL_STATUS} LABEL_STATUS,#{d.QC_RESULT_CODE} QC_RESULT_CODE,#{d.BOX_SN} BOX_SN,
+			cast(nvl(#{d.FULL_BOX_QTY},0) as number) FULL_BOX_QTY,cast(nvl(#{d.BOX_QTY},0) as number) BOX_QTY,
+			#{d.END_FLAG} END_FLAG,#{d.WERKS} WERKS,#{d.MATNR} MATNR,#{d.MAKTX} MAKTX,#{d.F_UNIT} F_UNIT,
+			#{d.F_BATCH} F_BATCH,#{d.BATCH} BATCH,#{d.SOBKZ} SOBKZ,'0' DEL,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE,
+			#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT,#{d.BIN_CODE} BIN_CODE,#{d.UNIT} UNIT,#{d.INBOUND_NO} INBOUND_NO,
+			#{d.INBOUND_ITEM_NO} INBOUND_ITEM_NO,#{d.PRODUCT_DATE} PRODUCT_DATE,#{d.LIFNR} LIFNR,#{d.LIKTX} LIKTX,
+			#{d.EFFECT_DATE} EFFECT_DATE,#{d.PRODUCT_CODE} PRODUCT_CODE,#{d.STATION} STATION,#{d.ON_LINE_TYPE} ON_LINE_TYPE,
+			#{d.ON_LINE_MOUTH} ON_LINE_MOUTH,#{d.CAR_TYPE} CAR_TYPE,#{d.DOSAGE} DOSAGE,
+			#{d.CONFIGURATION} CONFIGURATION,#{d.WMS_NO} WMS_NO,#{d.WMS_ITEM_NO} WMS_ITEM_NO
+			from dual
+		</foreach>
+		) m
+		group by m.LABEL_NO,m.RECEIPT_NO,m.RECEIPT_ITEM_NO,m.LABEL_STATUS,m.QC_RESULT_CODE,m.BOX_SN,
+		m.FULL_BOX_QTY,m.BOX_QTY,m.END_FLAG,m.WERKS,m.MATNR,m.MAKTX,m.F_UNIT,m.F_BATCH,
+		m.BATCH,m.SOBKZ,m.DEL,m.CREATOR,m.CREATE_DATE,m.WH_NUMBER,m.LGORT,m.BIN_CODE,m.UNIT,m.INBOUND_NO,m.INBOUND_ITEM_NO,
+		m.PRODUCT_DATE,m.LIFNR,m.LIKTX,m.EFFECT_DATE,m.PRODUCT_CODE,m.STATION,m.ON_LINE_TYPE,m.ON_LINE_MOUTH,m.CAR_TYPE,
+		m.DOSAGE,m.CONFIGURATION,m.WMS_NO,m.WMS_ITEM_NO
+		) tmp
+		on (tmp.WERKS=s.WERKS and tmp.LABEL_NO=s.LABEL_NO  )
+		when matched then
+		update  set
+		s.CREATOR = tmp.CREATOR,s.CREATE_DATE = tmp.CREATE_DATE
+		when not matched then
+		insert (ID,LABEL_NO,RECEIPT_NO,RECEIPT_ITEM_NO,LABEL_STATUS,QC_RESULT_CODE,BOX_SN,
+		FULL_BOX_QTY,BOX_QTY,END_FLAG,WERKS,MATNR,MAKTX,F_UNIT,F_BATCH,
+		BATCH,SOBKZ,DEL,CREATOR,CREATE_DATE,WH_NUMBER,LGORT,BIN_CODE,UNIT,INBOUND_NO,INBOUND_ITEM_NO,
+		PRODUCT_DATE,LIFNR,LIKTX,EFFECT_DATE,PRODUCT_CODE,STATION,ON_LINE_TYPE,ON_LINE_MOUTH,CAR_TYPE,
+		DOSAGE,CONFIGURATION,WMS_NO,WMS_ITEM_NO
+		)
+		VALUES (SEQ_WMS_CORE_LABEL.nextval,tmp.LABEL_NO,tmp.RECEIPT_NO,tmp.RECEIPT_ITEM_NO,tmp.LABEL_STATUS,tmp.QC_RESULT_CODE,tmp.BOX_SN,
+		tmp.FULL_BOX_QTY,tmp.BOX_QTY,tmp.END_FLAG,tmp.WERKS,tmp.MATNR,tmp.MAKTX,tmp.F_UNIT,tmp.F_BATCH,
+		tmp.BATCH,tmp.SOBKZ,tmp.DEL,tmp.CREATOR,tmp.CREATE_DATE,tmp.WH_NUMBER,tmp.LGORT,tmp.BIN_CODE,tmp.UNIT,
+		tmp.INBOUND_NO,tmp.INBOUND_ITEM_NO,tmp.PRODUCT_DATE,tmp.LIFNR,tmp.LIKTX,tmp.EFFECT_DATE,tmp.PRODUCT_CODE,
+		tmp.STATION,tmp.ON_LINE_TYPE,tmp.ON_LINE_MOUTH,tmp.CAR_TYPE,tmp.DOSAGE,tmp.CONFIGURATION,tmp.WMS_NO,tmp.WMS_ITEM_NO
+		)
+	</insert>
+
+	<select id="getPOItems" parameterType="Map" resultType="Map">
+		select h.EBELN PO_NO,h.BSART,h.LIFNR,(select NAME1 from WMS_SAP_VENDOR where LIFNR=h.LIFNR and rownum=1) LIKTX,
+		i.EBELP PO_ITEM_NO,h.FRGRL,i.WERKS,i.MATNR,i.TXZ01,i.LGORT,i.MENGE,i.MEINS UNIT,i.SOBKZ,i.AFNAM,i.MAX_MENGE,i.BEDNR,i.RETPO,
+		(select IS_SCM from WMS_C_VENDOR where WERKS=i.WERKS and LIFNR=h.LIFNR and nvl(DEL_FLAG,'0')!='X' and rownum=1) IS_SCM,
+		case when (select HX_FLAG from WMS_C_WH WHERE WERKS=i.WERKS and rownum=1 )='X' and x.HX_QTY>0 then 'X'
+		else '0' end as RECEIPT_FLAG,
+		(select FULL_BOX_QTY from WMS_C_MAT_PACKAGE_HEAD where PACKAGE_TYPE='01' and nvl(DEL,'0')!='X' and WH_NUMBER=#{WH_NUMBER} and WERKS=i.WERKS and MATNR=i.MATNR and LIFNR=h.LIFNR  and rownum=1) FULL_BOX_QTY,
+		CASE WHEN i.MATNR IS NULL THEN i.TXZ01 ELSE
+		(SELECT MAKTX from WMS_SAP_MATERIAL WHERE MATNR = i.MATNR AND WERKS = i.WERKS) END AS MAKTX
+		from WMS_SAP_PO_HEAD h
+		left join WMS_SAP_PO_ITEM i on h.EBELN=i.EBELN
+		left join WMS_HX_PO x on x.EBELN=i.EBELN and x.EBELP=i.EBELP
+		where h.EBELN=#{PO_NO} and nvl(h.FRGRL,'0')!='X' and i.LOEKZ is null and nvl(i.ELIKZ,'0') !='X' and nvl(i.RETPO,'0') !='X' and i.KNTTP is null
+	</select>
+	<select id="getPOLifnr" parameterType="List" resultType="String">
+		select distinct h.LIFNR from WMS_SAP_PO_HEAD h
+	where h.EBELN in
+		<foreach collection="lifnrList" item="d" open="(" close=")" separator=",">
+			#{d}
+		</foreach>
+	</select>
+
+	<select id="getItemAuthWerksList" parameterType="Map" resultType="Map">
+		select AUTH_WERKS,EBELN PO_NO,EBELP PO_ITEM_NO,MATNR,WERKS
+		from WMS_IN_PO_ITEM_AUTH
+		where EBELN=#{PO_NO} and DEL!='X'
+	</select>
+
+	<select id="getMatListByMATNR" parameterType="List" resultType="Map">
+		select MATNR,MAKTX,WERKS,case when nvl(BSTME,' ')=' ' then MEINS else BSTME end  as UNIT
+		from WMS_SAP_MATERIAL
+		where MATNR in
+		<foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+		<if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		and nvl(MAT_LVORM,'0') !='X'
+	</select>
+
+	<select id="getHXMatList" parameterType="Map" resultType="Map">
+		select F_WERKS,WERKS,F_WH_NUMBER,WH_NUMBER,SAP_MATDOC_NO,SAP_MATDOC_ITEM_NO,
+		MATNR,MAKTX,ENTRY_QNT,ENTRY_UOM,HX_QTY_XS,LIFNR
+		from WMS_HX_TO where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+		and SAP_MATDOC_NO=#{SAP_MATDOC_NO} and HX_QTY_XS>0
+	</select>
+
+	<update id="update303HXInfo" parameterType="List">
+		update WMS_HX_TO
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="SS303DB =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+                     and SAP_MATDOC_NO=#{d.SAP_MATDOC_NO} and SAP_MATDOC_ITEM_NO=#{d.SAP_MATDOC_ITEM_NO}
+                     then cast(#{d.RECEIPT_QTY} as decimal(10,3))+nvl(SS303DB,0)
+                </foreach>
+            </trim>
+            <trim prefix="HX_QTY_XS =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                      when WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+                     and SAP_MATDOC_NO=#{d.SAP_MATDOC_NO} and SAP_MATDOC_ITEM_NO=#{d.SAP_MATDOC_ITEM_NO}
+                     then HX_QTY_XS-cast(#{d.RECEIPT_QTY} as decimal(10,3))
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+             and SAP_MATDOC_NO=#{d.SAP_MATDOC_NO} and SAP_MATDOC_ITEM_NO=#{d.SAP_MATDOC_ITEM_NO}
+        </foreach>
+	</update>
+
+	<select id="getHXPOMatList" parameterType="Map" resultType="Map">
+		SELECT p.EBELN PO_NO,p.EBELP PO_ITEM_NO,p.EBELN,p.EBELP,p.WERKS,p.LIFNR,p.MATNR,p.MAKTX,p.LGORT,p.UNIT,
+		p.HX_QTY,i.BEDNR,i.AFNAM,i.SOBKZ,p.WH_NUMBER
+		FROM WMS_HX_PO p
+		LEFT JOIN WMS_SAP_PO_ITEM i ON i.EBELN=p.EBELN AND i.EBELP=p.EBELP AND i.MATNR=p.MATNR AND i.WERKS=p.WERKS
+		WHERE  p.EBELN=#{PO_NO} and i.EBELN=#{PO_NO}  and p.HX_QTY>0 AND p.WH_NUMBER=#{WH_NUMBER}
+		AND nvl(p.CANCEL_FLAG,'0')!='X'
+	</select>
+
+	<update id="updatePOHXInfo" parameterType="List">
+		update WMS_HX_PO
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="SS103 =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+                     and EBELN=#{d.PO_NO} and EBELP=#{d.PO_ITEM_NO}
+                     then cast(#{d.RECEIPT_QTY} as decimal(10,3))+nvl(SS103,0)
+                </foreach>
+            </trim>
+            <trim prefix="HX_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                      when WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+                      and EBELN=#{d.PO_NO} and EBELP=#{d.PO_ITEM_NO}
+                     then HX_QTY-cast(#{d.RECEIPT_QTY} as decimal(10,3))
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+              and EBELN=#{d.PO_NO} and EBELP=#{d.PO_ITEM_NO}
+        </foreach>
+	</update>
+
+	<select id="getHXDNMatList" parameterType="Map" resultType="Map">
+		SELECT d.VBELN SAP_OUT_NO,d.POSNR SAP_OUT_ITEM_NO,d.WERKS,d.F_WERKS,d.WH_NUMBER,d.F_WH_NUMBER,
+		d.MATNR,d.MAKTX,d.EBELN PO_NO,d.EBELP PO_ITEM_NO,d.LIFNR,d.UNIT,d.HX_QTY_XS
+		FROM WMS_HX_DN d
+		WHERE d.VBELN=#{SAP_OUT_NO}  and d.WH_NUMBER=#{WH_NUMBER} and d.HX_QTY_XS>0
+	</select>
+
+	<update id="updateDNHXInfo" parameterType="List">
+		update WMS_HX_DN
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="SS103T =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+                     and VBELN=#{d.SAP_OUT_NO} and POSNR=#{d.SAP_OUT_ITEM_NO}
+                     then cast(#{d.RECEIPT_QTY} as decimal(10,3))+nvl(SS103T,0)
+                </foreach>
+            </trim>
+            <trim prefix="HX_QTY_XS =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                      when WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+                      and VBELN=#{d.SAP_OUT_NO} and POSNR=#{d.SAP_OUT_ITEM_NO}
+                     then HX_QTY_XS-cast(#{d.RECEIPT_QTY} as decimal(10,3))
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+              and VBELN=#{d.SAP_OUT_NO} and POSNR=#{d.SAP_OUT_ITEM_NO}
+        </foreach>
+	</update>
+
+	<select id="getHasReceiveQty" parameterType="Map" resultType="Map">
+		select nvl((sum(nvl(receipt_qty,0))-sum(nvl(return_qty,0))),0) HAS_RECEIPT_QTY
+		from wms_in_receipt where asnno=#{ASNNO} and asnitm=#{ASNITM}
+	</select>
+
+	<select id="getWHAddr" parameterType="String" resultType="String" >
+		SELECT WH_NUMBER FROM WMS_CORE_WH_ADDRESS
+		WHERE WERKS=#{WERKS} AND INSTR(','||LGORT_NO||',', ','||#{LGORT}||',')>0
+		AND ROWNUM=1
+	</select>
+</mapper>

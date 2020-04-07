@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>关键零部件追溯</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/qms/keyParts/queryTraceBackPage" data-page-no="" data-page-size="" data-order-by="" >
+						<div class="row">
+					      <div class="form-group">
+								<label class="control-label" style="width: 70px">订单类型：</label>
+								<div class="control-inline">
+                                       <select  name="testType" id="testType"  v-model="testType" style="width:100%;height:25px" >
+										  <#list tag.qmsDictList('order_type') as d> 
+										     <option value="${d.code}">${d.value}</option> 
+										   </#list>
+									</select>		
+								</div>
+							</div>
+							<div class="form-group" >
+								<label class="control-label" >VIN：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									<div class="control-inline">
+										<div class="input-group" >
+		                                    <input type="text" id="vin" name="vin" class="form-control" style="width: 140px;"/>						    
+										 </div>
+									</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group" v-show="!showList">
+								<label class="control-label" >车号：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									<div class="control-inline">
+										<div class="input-group" >
+		                                    <input type="text" id="busNumber" name="busNumber" class="form-control" style="width: 120px;"/>						    
+										 </div>
+									</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" >零部件：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+										<div class="control-inline">
+											<div class="input-group" >
+			                                    <input type="text" id="parts" name="parts" class="form-control" style="width: 100px;"/>						    
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group" v-show="!showList">
+								<label class="control-label" >批次：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									<div class="control-inline">
+										<div class="input-group" >
+		                                    <input type="text" id="batch" name="batch" class="form-control" style="width: 120px;"/>						    
+										 </div>
+									</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group" v-show="showList">
+								<label class="control-label" >物料流水号：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									<div class="control-inline">
+										<div class="input-group" >
+		                                    <input type="text" id="materialNo" name="materialNo" class="form-control" style="width: 110px;"/>						    
+										 </div>
+									</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+	                          <label class="control-label" style="width: 50px">订单号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   	<input type="text"  id="orderNo" name="orderNo" style="width: 90px;" 
+									   	class="form-control" @click="getOrderNoSelect()"/>
+									</div>
+								</div>
+							</div>
+						<div class="form-group">
+							<input type="button" class="btn btn-primary btn-sm" @click="query" value="查询"/>
+						</div>
+					</div>
+				</form>
+						<table id="dataGrid"></table>
+						<div  id="dataGridPage" ></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/qms/processQuality/qms_trace_back.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.DictDao">
+	
+	<select id="getDictlistByType" parameterType="Map" resultType="Map">
+		SELECT * FROM MASTERDATA_DICT d WHERE d.TYPE = #{TYPE} AND NVL(d.DEL_FLAG,'0') = '0'
+	</select>
+
+	<select id="queryMasterDictWerksOrderNum" parameterType="Map" resultType="int">
+	SELECT ORDER_NUM FROM MASTERDATA_DICT WHERE "TYPE" = 'WERKS' AND CODE = #{WERKS}
+	</select>
+
+</mapper>

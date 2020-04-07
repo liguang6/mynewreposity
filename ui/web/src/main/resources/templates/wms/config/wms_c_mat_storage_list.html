@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>物料存储配置</title>
+<#include "/web_header.html">
+</head>
+<body >
+<div id="rrapp" v-cloak>
+<div class="main-content">
+	<div class="box box-main">
+		<div class="box-body">
+			<form id="searchForm" v-model="page.list" action="${request.contextPath}/config/matstorage/list" method="post" class="form-inline" >
+						<div class="form-group">
+							<label class="control-label">工厂代码：</label>
+							<div class="control-inline">
+                                   <!-- <input type="text" class="form-control" id="werks" name="werks" @click="getPlantNoFuzzy()"  style="width:80px" placeholder="工厂代码">							 -->
+							      <select  name="werks" id="werks" @change="onPlantChange(event)"  style="width:100%;height:25px">
+									<#list tag.getUserAuthWerks("WMS_C_MAT_STORAGE") as factory> 
+										<option value="${factory.code}">${factory.code}</option>
+									</#list>
+								  </select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">仓库代码：</label>
+							<div class="control-inline">
+                                   <!-- <input type="text" class="form-control" id="whNumber" name="whNumber" @click="getWhNoFuzzy()"
+                                    style="width:80px"  @blur="whNumerBlur()"  placeholder="仓库代码">							 -->
+							        <select  name="whNumber" id="whNumber" @change="whNumerBlur()" class="form-control">
+										<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+									</select>
+							 </div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">物料号：</label>
+							<div class="control-inline">
+							      <input type="text" class="form-control" id="matnr" name="matnr" @click="getMaterialNoFuzzy()"   placeholder="物料号">							
+<!--                                     <select id="storageTypeCode" name="storageTypeCode"  @change="storageTypeCodeChange" style="width:120px" class="form-control"> -->
+<!-- 									   	  <option value=''>请选择</option> -->
+<!-- 							   	    </select>                            -->
+						    </div>
+						</div>
+<!-- 						<div class="form-group"> -->
+<!-- 							<label class="control-label">存储区代码：</label> -->
+<!-- 							<div class="control-inline"> -->
+<!--                                     <select id="areaCode" name="areaCode"  style="width:120px" class="form-control"> -->
+<!-- 									   	  <option value=''>请选择</option> -->
+<!-- 							   	    </select>                            -->
+<!-- 						    </div> -->
+<!-- 						</div> -->
+						
+						<div class="form-group">
+							<button type="submit" class="btn btn-primary btn-sm">查询</button>
+							<button type="reset" class="btn btn-default btn-sm">重置</button>
+						</div>
+			</form>
+			<div id="pgtoolbar1">
+			   <div id="links" >
+			   <a href='#' class='btn' id='newOperation' title="新增"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+			   
+			   <a href='#' class='btn' id='editOperation' title="修改"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 修改</a>
+			   
+			   <a href='#' class='btn' id='deleteOperation'  title="删除"><i class='fa fa-trash' aria-hidden='true'></i> 删除</a>
+			   
+			   <a href='#' class='btn' id='importOperation'><i class='fa fa-upload' aria-hidden='true'></i> 导入</a>
+			   
+			   	<a href='#' class='btn' id='exportOperation' onclick="export2Excel()"><i class='fa fa-download' aria-hidden='true'></i> 导出</a>
+			   
+			   <a href="#" class="btn" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a> 
+			   </div>
+			</div>
+			<div id="divDataGrid" style="width:100%;overflow:auto;">
+				<table id="dataGrid"></table>
+				<div id="dataGridPage"></div>
+			</div>	
+			<table id="tb_excel" style="display:none"></table>	
+	</div>
+</div>
+</div>
+</div>
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_mat_storage_list.js?_${.now?long}"></script>
+</body>

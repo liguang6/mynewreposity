@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>进仓单交接</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+.v-cloak { display: none }
+	
+.urgent-select {
+	color:#f44444;
+}
+.to_right {
+            width: 0;
+            height: 0;
+            border-left: 50px solid #00FFFF;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+        }
+</style>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+                   <form id="searchForm" class="form-inline" action="#">
+						<!-- 查询条件 -->
+						<div class="form-group" align="left">
+							<label class="control-label" style="width: 70px" ><span
+								class="required">*</span>收货工厂：</label>
+							<div class="control-inline" style="width: 80px;">
+								<select class="form-control" name="werks" id="werks"
+									onchange="vm.onPlantChange(event)"> 
+									<#list tag.getUserAuthWerks("AUTO_PUTAWAY") as factory> 
+										<option value="${factory.code}">${factory.code}</option> 
+									</#list>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label" style="width: 70px"><span class="required">
+									*</span>仓库号：</label>
+							<div class="control-inline" style="width: 80px;">
+								<select class="form-control" v-model="whNumber" name="whNumber" id="whNumber" style="height: 28px;width: 60px;">
+									<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+							<div class="form-group">
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>凭证号：</label>
+								<input type="text" id="matDoc" name="matDoc" value="" class="form-control"  style="width: 120px;"/>
+							</div>
+							<div class="form-group">
+								<label class="control-label" >凭证年：</label>
+								<input type="text" id="docYear" name="docYear" value="" class="form-control"  style="width: 50px;"/>
+							</div>
+							<!-- <div class="form-group">
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>接收库位：</label>
+								<input type="text" id="lgort" name="lgort" value="" class="form-control"  style="width: 60px;"/>
+							</div> -->
+							<div class="form-group">
+								<label class="control-label" ><font style="color:red;font-weight:bold">*</font>发货工厂：</label>
+								<input type="text" id="fromWerks" name="fromWerks" value="" class="form-control"  style="width: 60px;text-transform:uppercase;"/>
+							</div>
+							<div class="form-group">
+							    <input type="button" id="btnqueryhandoverbound" class="btn btn-primary btn-sm " value="查询"/>
+							    <input type="button" id="btnsaveinteralbound" @click="save" class="btn btn-primary btn-sm " value="确认"/>
+								<button type="reset" class="btn btn-default btn-sm ">重置</button>
+							</div>
+							<br/>
+							<div class="form-group">
+								<label class="control-label" style="width: 70px">凭证日期：</label>
+								<div class="control-inline">
+									<input type="text" id="pzddt" name="pzddt" v-model="PZDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 70px">记账日期：</label>
+								<div class="control-inline">
+									<input type="text" id="jzddt" name="jzddt" v-model="JZDDT" value=""
+										class="form-control"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+										style="width: 80px;"
+										/>
+								</div>
+							</div>
+							<input type="text" id="dhhidden" name="dhhidden"   style="width: 80px;display:none"/>
+				   </form>
+					
+					<table id="dataGrid"></table>
+				</div>
+				<div class="form-inline" id="viewStatus" style="height: 50px;" align="center">
+					<div id="createpo" class="form-group" style="width:100px;height:40px;border:1px solid #000;background:#00FFFF" align="center">
+						<label class="control-label">创建采购订单</label>
+						<label class="control-label" style="display:none" id ="successpo">成功</label>
+						<label class="control-label" style="display:none" id ="failpo">失败</label>
+					</div>
+					<div class="form-group">
+						<div class="to_right"></div>
+    				</div>
+					<div id="createdn" class="form-group" style="width:100px;height:40px;border:1px solid #000;background:#00FFFF" align="center">
+						<label class="control-label">创建交货单</label>
+						<br>
+						<label class="control-label" style="display:none" id ="successdn">成功</label>
+						<label class="control-label" style="display:none" id ="faildn">失败</label>
+					</div>
+					<div class="form-group">
+						<div class="to_right"></div>
+    				</div>
+					<div id="postdn" class="form-group" style="width:100px;height:40px;border:1px solid #000;background:#00FFFF" align="center">
+						<label class="control-label">交货单过账</label>
+						<br>
+						<label class="control-label" style="display:none" id ="successpost">成功</label>
+						<label class="control-label" style="display:none" id ="failpost">失败</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><br/>
+		<span id="resultMsg">-</span></h4>
+		<br/>
+		<form id="print" target="_blank" method="post" action="${request.contextPath}/docPrint/labelLabelPreview" style="width:100px;float:left">
+			<button id="btnPrint1" class="btn btn-primary btn-sm" type="submit">标签打印-标签</button>
+			<input name="labelList" id="labelList" type="text" hidden="hidden">
+		</form>
+		<form id="print_A4" target="_blank" method="post" action="${request.contextPath}/docPrint/labelPreview_A4" style="width:100px;float:left;margin-left: 5px;">
+			<button id="btnPrint_A4" class="btn btn-primary btn-sm" type="submit">标签打印-A4</button>
+			<input name="labelListA4" id="labelListA4" type="text" hidden="hidden">
+		</form>
+		<form id="print_inspection" target="_blank" method="post" action="${request.contextPath}/docPrint/inspectionLabelPreview" style="width:100px;float:left;margin-left: 5px;">
+			<button id="btnPrint2" class="btn btn-primary btn-sm" type="submit">送检单打印</button>
+			<input name="inspectionList" id="inspectionList" type="text" hidden="hidden">
+		</form>
+		<!-- <input type="button" id="btnPrint1" class="btn btn-info btn-sm" value="大letter打印"/> -->
+		<!-- <input type="button" id="btnPrint2" class="btn btn-info btn-sm" value="小letter打印"/> -->
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/wms/in/wms_auto_putaway.js?_${.now?long}"></script>
+</body>
+</html>

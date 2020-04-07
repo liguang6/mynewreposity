@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 需求拣配 mapper -->
+<mapper namespace="com.byd.wms.business.modules.out.dao.WmsOutRequirementHeadDao">
+
+	<select id="selectRequirement" parameterType="Map" resultType="Map">
+		select ROWNUM indx,temp.* from (select task.*,item.qty,item.qty_real,head.receive_werks,item.receive_lgort,head.receiver,
+			wsv.name1 as LIKTX, head.purpose,item.business_type,item.business_name,item.mo_no,item.mo_item_no,
+			item.sap_out_no,item.sap_out_item_no,item.cost_center,item.io_no,item.wbs,
+			item.customer,(task.confirm_quantity - nvl(task.real_quantity,0)) gz_qty,
+			(task.confirm_quantity - nvl(task.real_quantity,0)) gz_qty_hidden,item.sap_matdoc_no,
+			item.sap_matdoc_item_no,item.po_no,item.po_item_no,item.rsnum,item.rspos,item.station,item.autyp
+          from WMS_OUT_REQUIREMENT_HEAD head,
+               WMS_OUT_REQUIREMENT_ITEM item,
+               WMS_CORE_WH_TASK         task
+     left join WMS_SAP_VENDOR           wsv
+            on wsv.lifnr = task.lifnr
+         where task.reference_delivery_no = item.requirement_no
+           and task.reference_delivery_item = item.requirement_item_no
+           and head.requirement_no = item.requirement_no
+           and task.wt_status in ('01','02','04')
+           and task.del = 0
+           and item.req_item_status in ('02','03','04')
+           and nvl(head.del,'0') = '0'
+		   <if test="WH_NUMBER !=null and WH_NUMBER !=''">
+			   and head.WH_NUMBER = #{WH_NUMBER}
+		   </if>
+		   <if test="WERKS !=null and WERKS !=''">
+			   and head.WERKS = #{WERKS}
+		   </if>
+		   <if test="REQUIREMENT_NO !=null and REQUIREMENT_NO !=''">
+			   and head.REQUIREMENT_NO = #{REQUIREMENT_NO}
+		   </if>
+		   <if test="REQUIREMENT_STATUS !=null and REQUIREMENT_STATUS !=''">
+			   and head.REQUIREMENT_STATUS = #{REQUIREMENT_STATUS}
+		   </if>
+		   <if test="REQ_ITEM_STATUS !=null and REQ_ITEM_STATUS !=''">
+			   and item.REQ_ITEM_STATUS = #{REQ_ITEM_STATUS}
+		   </if>
+		   <if test='CONDMG !=null and CONDMG=="1" '>
+		   	   and task.matnr in
+	           (select a.matnr
+	              from wms_c_mat_manager a
+	             where a.authorize_code = #{WH_MANAGER}
+	               and a.WERKS = head.werks
+	               and a.WH_NUMBER = head.wh_number)
+           </if>
+           <if test='CONDMG !=null and CONDMG=="2" '>
+			   and task.lgort = #{WH_MANAGER}
+           </if>
+           <if test="STATION !=null and STATION !=''">
+			   and item.STATION = #{STATION}
+		   </if>
+		   <if test="LGORT !=null and LGORT !=''">
+			   and task.LGORT = #{LGORT}
+		   </if>
+		   ORDER BY item.id) temp
+	</select>
+
+
+	<!-- 需求查询  -->
+	<select id="selectRequirementHeadList" resultType="Map">
+		SELECT DISTINCT
+		A.REQUIREMENT_NO,
+		A.REQUIREMENT_TYPE,
+		A.REQUIREMENT_STATUS,
+		A.WERKS,
+		A.WH_NUMBER,
+		A.REQUIRED_DATE,
+		A.CREATE_DATE,
+		A.CREATOR,
+		(SELECT C.value  FROM sys_dict C WHERE C.CODE = B.BUSINESS_NAME AND C.TYPE='BUSINESS_NAME') as BUSINESS_NAME_VALUE
+		FROM WMS_OUT_REQUIREMENT_HEAD A
+		LEFT JOIN WMS_OUT_REQUIREMENT_ITEM B
+		ON A.REQUIREMENT_NO = B.REQUIREMENT_NO
+		WHERE 1 = 1
+		<if test="REQUIREMENT_STATUS != null and REQUIREMENT_STATUS !=''">
+			AND A.REQUIREMENT_STATUS = #{REQUIREMENT_STATUS}
+		</if>
+		<if test="werks != null and werks !=''">
+			AND A.WERKS = #{werks}
+		</if>
+		<if test="WH_NUMBER != null and WH_NUMBER !=''">
+			AND A.WH_NUMBER = #{WH_NUMBER}
+		</if>
+		<if test="requireTypes != null and requireTypes !=''">
+			AND A.REQUIREMENT_TYPE = #{requireTypes}
+		</if>
+		<if test="REQUIREMENT_NO != null and REQUIREMENT_NO !=''">
+			AND A.REQUIREMENT_NO = trim(#{REQUIREMENT_NO})
+		</if>
+		<if test="RECEIVE_WERKS != null and RECEIVE_WERKS !=''">
+			AND A.RECEIVE_WERKS = #{RECEIVE_WERKS}
+		</if>
+		<if test="MATNR !=null and MATNR.size > 0">
+			AND B.MATNR IN
+			<foreach collection="MATNR" item="M" separator="," open="(" close=")">
+				#{M}
+			</foreach>
+		</if>
+		<if test="COST_CENTER != null and COST_CENTER !=''">
+			AND B.COST_CENTER LIKE '%' || #{COST_CENTER} || '%'
+		</if>
+		<if test="MO_NO != null and MO_NO !=''">
+			AND B.MO_NO LIKE '%' || #{MO_NO} || '%'
+		</if>
+		<if test="WBS != null and WBS !=''">
+			AND B.WBS LIKE '%' || #{WBS} || '%'
+		</if>
+		<if test="CREATOR != null and CREATOR !=''">
+			AND A.CREATOR LIKE '%' || #{CREATOR} || '%'
+		</if>
+		<if test="CREATE_DATE_LIST != null and CREATE_DATE_LIST.size != 0">
+			AND (
+			<foreach collection="CREATE_DATE_LIST" item="CREATE_DATE" separator=" OR ">
+				<if test="CREATE_DATE.START != null and CREATE_DATE.START !='' and CREATE_DATE.END != null and CREATE_DATE.END !=''">
+					(A.CREATE_DATE >= #{CREATE_DATE.START} AND A.CREATE_DATE &lt;= #{CREATE_DATE.END})
+				</if>
+				<if test="CREATE_DATE.DATE != null and CREATE_DATE.DATE !=''">
+					<!-- 只比较年月日 -->
+					SUBSTR(A.CREATE_DATE,0,10) = #{CREATE_DATE.DATE}
+				</if>
+			</foreach>
+			)
+		</if>
+		<if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND A.CREATE_DATE&gt;= #{CREATE_DATE_START}
+		</if>
+		<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND A.CREATE_DATE&lt;= #{CREATE_DATE_END}
+		</if>
+
+		<if test="REQUIRED_DATE_LIST != null and REQUIRED_DATE_LIST.size != 0">
+			AND (
+			<foreach collection="REQUIRED_DATE_LIST" item="REQUIRED_DATE" separator=" OR ">
+				<if test="REQUIRED_DATE.START != null and REQUIRED_DATE.START !='' and REQUIRED_DATE.END != null and REQUIRED_DATE.END !=''">
+					(A.REQUIRED_DATE >= #{REQUIRED_DATE.START} AND A.REQUIRED_DATE &lt;= #{REQUIRED_DATE.END})
+				</if>
+				<if test="REQUIRED_DATE.DATE != null and REQUIRED_DATE.DATE !=''">
+					<!-- 只比较年月日 -->
+					SUBSTR(A.REQUIRED_DATE,0,10) = #{REQUIRED_DATE.DATE}
+				</if>
+			</foreach>
+			)
+		</if>
+	</select>
+
+    <!-- 查询需求明细行项目bug2019  -->
+	<select id="selectRequirementItemList" resultType="Map">
+		SELECT (SELECT C.value  FROM sys_dict C WHERE C.CODE = A.BUSINESS_NAME AND C.TYPE='BUSINESS_NAME') AS BUSINESS_NAME_Value,
+		(SELECT C.value  FROM sys_dict C WHERE C.CODE = A.BUSINESS_TYPE AND C.TYPE='BUSINESS_TYPE') AS BUSINESS_TYPE_Value,
+		A.*,B.WERKS,B.WH_NUMBER,B.REQUIRED_DATE,P.BUKRS_NAME,(SELECT NAME1 FROM WMS_SAP_VENDOR  V WHERE V.LIFNR = A.LIFNR )AS LIKTX
+		,ROWNUM,null as BATCH,B.RECEIVE_WERKS,B.RECEIVER,B.PURPOSE,Q.CONSIGNOR_TEL,Q.CONSIGNOR,Q.CONSIGNOR_ADRESS,Q.CONSIGNEE_TEL,Q.CONSIGNEE,
+        Q.CONSIGNEE_ADRESS,R.COMPANY_CODE,R.COMPANY_NAME,R.COMPANY_ENGLISH,R.TEL,R.FAX,R.ZIP_CODE,R.ADRESS,R.ADRESS_ENGLISH
+		FROM WMS_OUT_REQUIREMENT_ITEM A
+		LEFT JOIN WMS_OUT_REQUIREMENT_HEAD B
+		ON A.REQUIREMENT_NO = B.REQUIREMENT_NO
+		LEFT JOIN WMS_SAP_PLANT P
+		ON B.WERKS = P.WERKS
+		LEFT JOIN WMS_C_TIOF_CONFIG Q
+		ON B.WERKS = Q.WERKS
+		LEFT JOIN WMS_C_DELIVERY_HEAD R
+		ON B.WERKS = R.WORKS
+		WHERE 1 = 1
+		<if test="REQUIREMENT_NO != null and REQUIREMENT_NO !=''">
+			AND A.REQUIREMENT_NO = trim(#{REQUIREMENT_NO})
+		</if>
+		<if test="WERKS != null and WERKS !=''">
+			AND B.WERKS = #{WERKS}
+		</if>
+		<if test="WH_NUMBER != null and WH_NUMBER !=''">
+			AND B.WH_NUMBER = #{WH_NUMBER}
+		</if>
+		<if test="requireTypes != null and requireTypes !=''">
+			AND B.REQUIREMENT_TYPE = #{requireTypes}
+		</if>
+		<if test="REQUIREMENT_STATUS != null and REQUIREMENT_STATUS !=''">
+			AND B.REQUIREMENT_STATUS = #{REQUIREMENT_STATUS}
+		</if>
+		<if test="RECEIVE_WERKS != null and RECEIVE_WERKS !=''">
+			AND B.RECEIVE_WERKS = #{RECEIVE_WERKS}
+		</if>
+		<if test="COST_CENTER != null and COST_CENTER !=''">
+			AND B.COST_CENTER = #{COST_CENTER}
+		</if>
+		<if test="MO_NO != null and MO_NO !=''">
+			AND B.MO_NO = #{MO_NO}
+		</if>
+		<if test="SAP_OUT_NO != null and SAP_OUT_NO !=''">
+			AND B.SAP_OUT_NO = #{SAP_OUT_NO}
+		</if>
+		<if test="CREATOR != null and CREATOR !=''">
+			AND B.CREATOR = #{CREATOR}
+		</if>
+		<if test="WBS != null and WBS !=''">
+			AND B.WBS = #{WBS}
+		</if>
+		<if test="MATNR != null and MATNR.size >0">
+			AND A.MATNR IN
+			<foreach collection="MATNR" item="M" separator=","
+				open="(" close=")">
+				#{M}
+			</foreach>
+		</if>
+
+
+		<if test="CREATE_DATE_LIST != null and CREATE_DATE_LIST.size != 0">
+			AND (
+			<foreach collection="CREATE_DATE_LIST" item="CREATE_DATE"
+				separator=" OR ">
+				<if
+					test="CREATE_DATE.START != null and CREATE_DATE.START !='' and CREATE_DATE.END != null and CREATE_DATE.END !=''">
+					(B.CREATE_DATE >= #{CREATE_DATE.START} AND B.CREATE_DATE &lt;=
+					#{CREATE_DATE.END})
+				</if>
+				<if test="CREATE_DATE.DATE != null and CREATE_DATE.DATE !=''">
+					<!-- 只比较年月日 -->
+					SUBSTR(B.CREATE_DATE,0,10) = #{CREATE_DATE.DATE}
+				</if>
+			</foreach>
+			)
+		</if>
+
+		<if test="REQUIRED_DATE_LIST != null and REQUIRED_DATE_LIST.size != 0">
+			AND (
+			<foreach collection="REQUIRED_DATE_LIST" item="REQUIRED_DATE"
+				separator=" OR ">
+				<if
+					test="REQUIRED_DATE.START != null and REQUIRED_DATE.START !='' and REQUIRED_DATE.END != null and REQUIRED_DATE.END !=''">
+					(B.REQUIRED_DATE >= #{REQUIRED_DATE.START} AND B.REQUIRED_DATE
+					&lt;= #{REQUIRED_DATE.END})
+				</if>
+				<if test="REQUIRED_DATE.DATE != null and REQUIRED_DATE.DATE !=''">
+					<!-- 只比较年月日 -->
+					SUBSTR(B.REQUIRED_DATE,0,10) = #{REQUIRED_DATE.DATE}
+				</if>
+			</foreach>
+			)
+		</if>
+	</select>
+
+	<update id="updateRequirementStatus" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		UPDATE WMS_OUT_REQUIREMENT_HEAD SET
+		EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE}
+
+		<if test="s.REQUIREMENT_STATUS !=null and s.REQUIREMENT_STATUS !=''">
+			,REQUIREMENT_STATUS=
+			(
+		    CASE
+		      WHEN REQUIREMENT_STATUS ='00'
+		        THEN '02'
+		      WHEN #{s.REQUIREMENT_STATUS} != '02'
+		        THEN #{s.REQUIREMENT_STATUS}
+		      ELSE REQUIREMENT_STATUS END
+		    )
+		</if>
+		WHERE REQUIREMENT_NO=#{s.REQUIREMENT_NO}
+		</foreach>
+	</update>
+</mapper>

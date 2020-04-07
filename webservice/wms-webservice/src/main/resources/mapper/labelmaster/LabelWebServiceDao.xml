@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.webservice.labelmaster.dao.LabelWebServiceDao">
+	<!--条码数据查询-->
+	<select id="getLabelMaster" parameterType="Map"  resultType="Map">
+		select distinct
+		L.LABEL_NO,L.WERKS,L.WH_NUMBER,L.BATCH,L.F_BATCH,L.MATNR,L.MATNR,L.LIFNR,L.LIKTX,L.RECEIPT_NO,L.RECEIPT_ITEM_NO,
+		L.PO_NO,L.PO_ITEM_NO,L.INBOUND_NO,L.INBOUND_ITEM_NO,L.BOX_QTY,L.UNIT,L.PRODUCT_DATE,L.EFFECT_DATE,
+		L.QC_RESULT_CODE,L.F_LABEL_NO,L.LABEL_STATUS,L.REMARK,L.PACK_LABEL_NO,L.PALLET_LABEL_NO,
+		L.QC_PEOPLE,L.QC_DATE,L.RETURN_REASON_TYPE,L.CREATE_DATE,L.EDIT_DATE,
+		H.BSART,
+		I.PSTYP,
+		R.RECEIPT_DATE,R.BEDNR
+		from WMS_CORE_LABEL L
+		left join WMS_SAP_PO_HEAD H on H.EBELN = L.PO_NO
+		left join WMS_SAP_PO_ITEM I on I.EBELN = H.EBELN and L.PO_ITEM_NO = I.EBELP
+		left join WMS_IN_RECEIPT R on R.RECEIPT_NO = L.RECEIPT_NO and R.RECEIPT_ITEM_NO = L.RECEIPT_ITEM_NO
+		where L.DEL = '0' and
+		<foreach collection="map_list" item="m"  separator="or" open="(" close=")">
+
+			<if test="m.WERKS != null and m.WERKS !=''">
+				L.WERKS = #{m.WERKS}
+			</if>
+			<if test="m.LABEL_NO != null and m.LABEL_NO !=''">
+				and L.LABEL_NO = #{m.LABEL_NO}
+			</if>
+			<if test="m.BATCH != null and m.BATCH !=''">
+				and L.BATCH = #{m.BATCH}
+			</if>
+			<if test="m.LOG_DATE != null and m.LOG_DATE !='' and (m.LABEL_NO == null or m.LABEL_NO =='') and (m.BATCH == null or m.BATCH =='')">
+				and ((to_date(L.CREATE_DATE,'yyyy-mm-dd hh24:mi:ss') > to_date(#{m.LOG_DATE},'yyyy-mm-dd hh24:mi:ss')
+				and L.EDIT_DATE is null
+				) or
+				(to_date(L.EDIT_DATE,'yyyy-mm-dd hh24:mi:ss') > to_date(#{m.LOG_DATE},'yyyy-mm-dd hh24:mi:ss')
+				and L.EDIT_DATE is not null))
+			</if>
+
+		</foreach>
+	</select>
+
+	<!--查询返回日志表中该接口调用的最新时间-->
+	<select id="getLogDate" parameterType="Map"  resultType="String">
+		select max(L.CTDT) LOG_DATE
+		from WMS_LABELWEBSERVICE_LOG L
+		where  L.FROM_NO = 'WMS'
+		<if test="SYS_FLAG != null and SYS_FLAG !=''">
+			and L.TO_NO = #{SYS_FLAG}
+		</if>
+		<if test="WERKS != null and WERKS !=''">
+			and L.WERKS = #{WERKS}
+		</if>
+	</select>
+
+    <select id="getSysFlag" parameterType="Map"  resultType="int">
+        select count(*) from WMS_LABELWEBSERVICE_LOG L where
+             L.TO_NO = #{SYS_FLAG} and L.WERKS = #{WERKS}
+    </select>
+
+	<!--保存外部系统调用接口日志,此日志表会删除数据-->
+	<insert id="saveLog" parameterType="Map">
+		insert into WMS_WEBSERVICE_LOG (PK_LOG,BIZ_ID,FLOW_NO,FROM_NO,TO_NO,FROM_JSONDATA,
+		TO_JSONDATA,VSTATUS,CTURID,CTDT,UPURID,UPDT)
+		values (SEQ_WMS_WEBSERVICE_LOG_PKLOG.nextval,null,'LabelMasterApi','WMS',#{SYS_FLAG},#{FROM_JSON},null,#{STATUS},null,
+		to_CHAR(sysdate,'YYYY-MM-DD hh24:mi:ss'),null,null)
+	</insert>
+
+	<!--保存外部系统调用接口日志,此日志表不会删除数据-->
+	<update id="saveLog2" parameterType="Map">
+		merge into WMS_LABELWEBSERVICE_LOG L using(
+		select m.* from (
+			<foreach collection="map_list" item="detail" index="index" separator="UNION ALL">
+				select 'WMS' FROM_NO,#{detail.SYS_FLAG} TO_NO,to_CHAR(sysdate,'YYYY-MM-DD hh24:mi:ss') CTDT,#{detail.WERKS} WERKS
+				from DUAL
+			</foreach>
+			) m
+		) tmp on (L.FROM_NO = tmp.FROM_NO and L.TO_NO = tmp.TO_NO and L.WERKS = tmp.WERKS)
+		when matched then
+		update set L.CTDT = tmp.CTDT
+		when not matched then
+		insert (PK_LOG,FROM_NO,TO_NO,CTDT,WERKS)
+		values (SEQ_WMS_LABELWEBSERVICE_PKLOG.nextval ,tmp.FROM_NO,tmp.TO_NO,tmp.CTDT,tmp.WERKS)
+	</update>
+</mapper>

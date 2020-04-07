@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 需求拣配 mapper -->
+<mapper namespace="com.byd.wms.business.modules.out.dao.WmsOutPickingDao">
+
+	<select id="selectRequirement" parameterType="Map" resultType="Map">
+	    select item.id,
+		       item.requirement_no,
+		       item.requirement_item_no,
+		       item.business_name,
+		       item.business_type,
+		       item.hx_flag,
+		       item.req_item_status,
+		       item.matnr,
+		       item.maktx,
+		       item.unit,
+		       item.meins,
+		       item.umrez,
+		       item.umren,
+		       <!--item.qty,
+ 		       item.qty_xj, -->
+ 		       item.qty_xj xj, 
+ 		       item.qty,
+			   task.confirm_quantity as qty_xj,
+		       item.qty_real,
+		       item.qty_cancel,
+		       item.receive_lgort,
+		       item.box_count,
+		       item.sort_seq,
+		       item.model_group,
+		       item.station,
+		       item.po_no,
+		       item.po_item_no,
+		       item.mo_no,
+		       item.mo_item_no,
+		       item.rsnum,
+		       item.rspos,
+		       item.so_no,
+		       item.so_item_no,
+		       item.sap_out_no,
+		       item.sap_out_item_no,
+		       item.cost_center,
+		       item.io_no,
+		       item.wbs,
+		       item.customer,
+		       item.sakto,
+		       item.creator,
+		       item.create_date,
+		       item.editor,
+		       item.edit_date,
+		       item.sap_matdoc_no,
+		       item.sap_matdoc_item_no,
+		       <!-- item.lifnr, -->
+		       head.requirement_status,
+		       task.task_num,
+		       task.from_storage_area STORAGE_AREA_CODE,
+		       task.from_bin_code BIN_CODE,
+		       task.batch,
+		       task.quantity,
+		       task.confirm_quantity,
+		       (task.quantity-NVL(task.confirm_quantity,0)) RECOMMEND_QTY,
+		       (task.quantity-NVL(task.confirm_quantity,0)) RECOMMEND_QTY_H,
+		       task.sobkz,task.wt_status,task.verify,
+		       dict.value,head.required_date,head.required_time,head.required_model,
+		       case
+	             when task.lgort is null
+	               then item.lgort
+	             else task.lgort
+	            end lgort,
+	           case
+	             when task.lifnr is null
+	               then item.lifnr
+	             else task.lifnr
+	            end lifnr,
+	           item.lgort lgort_req,
+               item.lifnr lifnr_req,
+	           kpart.KEY_PARTS_NO keyPartsFlag
+		        from SYS_DICT dict,
+		        	 WMS_OUT_REQUIREMENT_HEAD head,
+		             WMS_OUT_REQUIREMENT_ITEM item
+		             left join WMS_CORE_WH_TASK task
+		             on item.requirement_no = task.reference_delivery_no
+		         	and item.requirement_item_no = task.reference_delivery_item
+		         	and task.wt_status != '03'
+		         	and task.del = 0
+		         	left join WMS_C_KEY_PARTS kpart 
+		         	 on item.matnr = kpart.matnr
+		         	and kpart.del = '0'
+		       where head.requirement_no = item.requirement_no
+		         and head.del = '0'
+		         and dict.type = 'BUSINESS_NAME'
+             	 and dict.code = item.business_name
+             	 and item.REQ_ITEM_STATUS not in ( '05','06','X')
+			   <if test="WH_NUMBER !=null and WH_NUMBER !=''">
+				   and head.WH_NUMBER = #{WH_NUMBER}
+			   </if>
+			   <if test="WERKS !=null and WERKS !=''">
+				   and head.WERKS = #{WERKS}
+			   </if>
+			   <if test="REQUIREMENT_NO !=null and REQUIREMENT_NO !=''">
+			  	   and head.REQUIREMENT_NO = #{REQUIREMENT_NO}
+			   </if>
+			   <if test="REQUIREMENT_STATUS !=null and REQUIREMENT_STATUS !=''">
+			  	   and head.REQUIREMENT_STATUS = #{REQUIREMENT_STATUS}
+			   </if>
+			   <if test="REQ_ITEM_STATUS !=null and REQ_ITEM_STATUS !='' and REQ_ITEM_STATUS == '00'">
+			  	   and item.REQ_ITEM_STATUS in ('00','01')
+			   </if>
+			   <if test="REQ_ITEM_STATUS !=null and REQ_ITEM_STATUS !='' and REQ_ITEM_STATUS != '00'">
+			  	   and item.REQ_ITEM_STATUS = #{REQ_ITEM_STATUS}
+			   </if>
+			   <if test="MATNR !=null and MATNR !=''">
+			  	   and item.matnr = #{MATNR}
+			   </if>
+			   <if test="LGORT !=null and LGORT !=''">
+			  	   and task.lgort = #{LGORT}
+			   </if>
+			   <if test="STATION !=null and STATION !=''">
+			  	   and item.station = #{STATION}
+			   </if>
+			   <if test="ORDER_NO !=null and ORDER_NO !=''">
+			  	   and item.mo_no = #{ORDER_NO}
+			   </if>
+			   <if test='CONDMG !=null and CONDMG=="1" '>
+				   and item.matnr in 
+	                (select a.matnr 
+	                from wms_c_mat_manager a
+	                 where a.authorize_code = #{MANAGER}
+	                   and a.WERKS = head.werks
+	                   and a.WH_NUMBER = head.wh_number)
+                </if>
+			   
+			  ORDER BY item.id
+	</select>
+	
+	<select id="selectRequirementCount" parameterType="Map" resultType="int">
+  	  select COUNT(1) from 
+  	   (select item.*,head.requirement_status
+		  from WMS_OUT_REQUIREMENT_HEAD head,
+		       WMS_OUT_REQUIREMENT_ITEM item
+		 where head.requirement_no = item.requirement_no
+		   and head.del = 0
+		   <if test="WH_NUMBER !=null and WH_NUMBER !=''">
+			   and head.WH_NUMBER = #{WH_NUMBER}
+		   </if>
+		   <if test="WERKS !=null and WERKS !=''">
+			   and head.WERKS = #{WERKS}
+		   </if>
+		   <if test="REQUIREMENT_NO !=null and REQUIREMENT_NO !=''">
+		  	   and head.REQUIREMENT_NO = #{REQUIREMENT_NO}
+		   </if>
+		   <if test="REQUIREMENT_STATUS !=null and REQUIREMENT_STATUS !=''">
+		  	   and head.REQUIREMENT_STATUS = #{REQUIREMENT_STATUS}
+		   </if>
+		   <if test="REQ_ITEM_STATUS !=null and REQ_ITEM_STATUS !=''">
+			   and item.REQ_ITEM_STATUS = #{REQ_ITEM_STATUS}
+		   </if>
+		) TMP 
+  </select>
+  
+  <select id="selectRequirementPda" parameterType="Map" resultType="Map">
+		select item.*,head.requirement_status
+			  from WMS_OUT_REQUIREMENT_HEAD head,
+			       WMS_OUT_REQUIREMENT_ITEM item
+			 where head.requirement_no = item.requirement_no
+			   and head.del = 0 
+			  	   and head.REQUIREMENT_NO = #{REQUIREMENT_NO}
+  </select>
+  
+  <update id="updateCallMaterial" parameterType="Map">
+		begin
+		    for aa in (select t.dispatching_no,t.dispatching_item_no, sum(t.qty_xj), t1.qty, 
+		    <![CDATA[
+		               (case
+		                 when sum(t.qty_xj) < t1.qty then '03'
+		                 else '04' end
+		               ) status
+		    ]]>
+		          from WMS_OUT_REQUIREMENT_ITEM t,
+		               WMS_WS_CALL_MATERIAL t1
+		         where t.dispatching_no = t1.delivery_no
+		           and t.dispatching_item_no = t1.dlv_item
+		           and t.requirement_no = #{REQUIREMENT_NO}
+		           group by t.dispatching_no,t.dispatching_item_no,t1.qty ) 
+		    loop
+		      update WMS_WS_CALL_MATERIAL set status = aa.status 
+		       where delivery_no = aa.dispatching_no
+		         and dlv_item = aa.dispatching_item_no;
+		    end loop;
+		end;
+  </update>
+
+	<select id="selectOutPicking" resultType="Map">
+		<!-- 查询需求拣配 -->
+		select * from WMS_OUT_PICKING t
+		where ref_business_item_no = #{REF_BUSINESS_NO}
+		and ref_business_no = #{REF_BUSINESS_ITEM_NO}
+	</select>
+	
+	<update id="deleteOutPickingById" parameterType="Long">
+		update WMS_OUT_PICKING set DEL = 'X'
+		where ID = #{ID}
+	</update>
+	
+	<update id="updateCoreStockQty">
+		update WMS_CORE_STOCK 
+		set STOCK_QTY = NVL(STOCK_QTY,0) + #{QTY},LOCK_QTY = NVL(LOCK_QTY,0) - #{QTY}
+		where WERKS = #{werks} and WH_NUMBER = #{whNumber} and MATNR = #{matnr} and LIFNR = #{lifnr} and LGORT = #{lgort}
+	</update>
+	
+	<select id="selectPickList" parameterType="Map" resultType="Map">
+		select rownum id, a.* from (
+			select distinct
+				   item.requirement_no,
+			       item.requirement_item_no,
+			       item.business_name,
+			       item.business_type,
+			       case
+			         when item.hx_flag is null then ''
+			         else 'A'
+			       end hx_flag,
+			       item.req_item_status,
+			       item.matnr,
+			       item.maktx,
+			       item.unit,
+			       item.meins,
+			       item.umrez,
+			       item.umren,
+			       item.qty_xj xj,
+			       item.qty,
+			       task.confirm_quantity as qty_xj,
+			       item.qty_real,
+			       item.qty_cancel,
+			       item.receive_lgort,
+			       item.box_count,
+			       item.sort_seq,
+			       item.model_group,
+			       item.station,
+			       item.po_no,
+			       item.PO_ITEM_NO,
+			       item.mo_no,
+			       item.mo_item_no,
+			       item.rsnum,
+			       item.rspos,
+			       item.so_no,
+			       item.so_item_no,
+			       item.sap_out_no,
+			       item.sap_out_item_no,
+			       item.cost_center,
+			       item.io_no,
+			       item.wbs,
+			       item.customer,
+			       item.sakto,
+			       item.creator,
+			       item.create_date,
+			       item.editor,
+			       item.edit_date,
+			       item.sap_matdoc_no,
+			       item.sap_matdoc_item_no,
+			       head.requirement_status,
+			       task.task_num,
+			       task.from_storage_area STORAGE_AREA_CODE,
+			       task.from_bin_code BIN_CODE,
+			       bin.bin_name,
+			       task.batch,
+			       task.quantity,
+			       task.confirm_quantity,
+			       (task.quantity - NVL(task.confirm_quantity, 0)) RECOMMEND_QTY,
+			       task.lgort,
+			       task.sobkz,
+			       task.lifnr,
+			       task.wt_status,
+			       dict.value,
+			       head.required_date,
+			       head.required_time,
+			       head.required_model
+			  from SYS_DICT                 dict,
+			       WMS_OUT_REQUIREMENT_HEAD head,
+			       WMS_OUT_REQUIREMENT_ITEM item,
+			       WMS_CORE_WH_TASK task,
+			       WMS_CORE_WH_BIN bin
+			 where item.requirement_no = task.reference_delivery_no
+			   and item.requirement_item_no = task.reference_delivery_item
+			   and task.wt_status != '03'
+			   and task.del = 0
+			   and head.requirement_no = item.requirement_no
+			   and head.del = 0
+			   and dict.type = 'BUSINESS_NAME'
+			   and dict.code = item.business_name
+			   and task.wh_number = bin.wh_number
+			   and task.from_bin_code = bin.bin_code
+			   <if test="whNumber !=null and whNumber !=''">
+				   and head.WH_NUMBER = #{whNumber}
+			   </if>
+			   <if test="werks !=null and werks !=''">
+				   and head.WERKS = #{werks}
+			   </if>
+			   <if test="requirementNo !=null and requirementNo !=''">
+			  	   and head.REQUIREMENT_NO = #{requirementNo}
+			   </if>
+			  ORDER BY item.requirement_no
+			  ) a
+	</select>
+	
+	
+</mapper>

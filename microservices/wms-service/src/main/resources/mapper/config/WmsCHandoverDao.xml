@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCHandoverDao">
+	 
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM ( SELECT D.ID,D.WERKS,D.WH_NUMBER,S.VALUE AS BUSINESS_NAME_DESC,
+		      D.BUSINESS_NAME,D.DEPARTMENT,DECODE(D.STATUS,'0','开通','X','锁定') STATUS,
+		      D.STAFF_NUMBER,D.USER_NAME,D.END_DATE,D.EDITOR,D.EDIT_DATE,D.CREATOR ,D.CREATE_DATE
+		       FROM WMS_C_HANDOVER D
+		       LEFT JOIN SYS_DICT S ON D.BUSINESS_NAME=S.CODE  AND S.TYPE='BUSINESS_NAME'
+		       WHERE  D.DEL='0'
+		        <if test="werks != null and werks !=''">
+		        AND D.WERKS=#{werks} 
+		      </if>
+              <if test="whNumber != null and whNumber !=''">
+		        AND D.WH_NUMBER = #{whNumber}
+		      </if>
+		      <if test="staffNumber != null and staffNumber !=''">
+		        AND D.STAFF_NUMBER  LIKE CONCAT(#{staffNumber},'%')
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM WMS_C_HANDOVER D WHERE  D.DEL='0'
+		      <if test="werks != null and werks !=''">
+		        AND D.WERKS=#{werks} 
+		      </if>
+              <if test="whNumber != null and whNumber !=''">
+		        AND D.WH_NUMBER = #{whNumber}
+		      </if>
+		      <if test="staffNumber != null and staffNumber !=''">
+		        AND D.STAFF_NUMBER  LIKE CONCAT(#{staffNumber},'%')
+		      </if>
+    </select>
+    <select id="getList" parameterType="Map" resultType="Map">
+          SELECT D.ID,D.WERKS,D.WH_NUMBER,S.VALUE AS BUSINESS_NAME,
+		      D.BUSINESS_NAME AS BUSINESS_CODE,D.HANDOVER_TYPE,D.EDITOR,D.EDIT_DATE,D.CREATOR ,D.CREATE_DATE
+		       FROM WMS_C_HANDOVER_TYPE D
+		       LEFT JOIN SYS_DICT S ON D.BUSINESS_NAME=S.CODE
+		       WHERE 1=1 AND D.DEL='0'
+		        <if test="WERKS != null and WERKS !=''">
+		        AND D.WERKS=#{WERKS} 
+		      </if>
+              <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+    </select>
+<!-- 	 <insert id="insert" parameterType="Map">  -->
+<!-- 		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer"> -->
+<!-- 			SELECT SEQ_WMS_C_HANDOVER_TYPE.NEXTVAL FROM dual -->
+<!-- 		</selectKey> -->
+<!-- 		insert into WMS_C_HANDOVER_TYPE (ID,WERKS,WH_NUMBER,BUSINESS_NAME,HANDOVER_TYPE,DEL, -->
+<!-- 	    CREATOR,CREATE_DATE) -->
+<!-- 		values (#{ID},#{WERKS},#{WH_NUMBER},#{BUSINESS_NAME},#{HANDOVER_TYPE},'0',#{CREATOR},#{CREATE_DATE}) -->
+<!-- 	</insert> -->
+<!-- 	<update id="update" parameterType="Map">	 -->
+<!-- 		UPDATE WMS_C_HANDOVER_TYPE SET  -->
+<!-- 		WERKS = #{WERKS} ,WH_NUMBER=#{WH_NUMBER},BUSINESS_NAME=#{BUSINESS_NAME}, -->
+<!-- 		HANDOVER_TYPE=#{HANDOVER_TYPE},EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE} WHERE ID=#{ID} -->
+<!-- 	</update> -->
+<!-- 	<update id="delete" parameterType="String">	 -->
+<!-- 		UPDATE WMS_C_HANDOVER_TYPE SET DEL='X' WHERE ID=#{ID} -->
+<!-- 	</update> -->
+
+	<select id="getCHandoverList" parameterType="Map" resultType="Map">
+          	SELECT * FROM WMS_C_HANDOVER C 
+			WHERE C.DEL='0' AND C.STATUS='0'
+			<![CDATA[
+			AND TO_CHAR(SYSDATE,'YYYY-MM-DD')<C.END_DATE
+			]]>
+		    <if test="WERKS != null and WERKS !=''">
+		        AND C.WERKS=#{WERKS} 
+		    </if>
+            <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND C.WH_NUMBER = #{WH_NUMBER}
+		    </if>
+		    <if test="BUSINESS_NAME != null and BUSINESS_NAME !=''">
+		        AND C.BUSINESS_NAME = #{BUSINESS_NAME}
+		    </if>
+		    <if test="STAFF_NUMBER != null and STAFF_NUMBER !=''">
+		        AND C.STAFF_NUMBER = #{STAFF_NUMBER}
+		    </if>
+		    
+    </select>
+</mapper>

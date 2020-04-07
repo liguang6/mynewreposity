@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>产品维护</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+					<tr>
+					<td>
+					
+					<div class="form-group" style="align:center">
+								<label class="control-label" style="width:80px" >
+								     <font style="color:red;font-weight:bold">*</font>产品类别
+								</label>
+							   	<div class="control-inline">
+									<select name="product_type_code" id="product_type_code" class="required"
+									style="width:200px;height:25px" v-model="product.product_type_code"> 
+										<#list tag.masterdataDictList('PRODUCT_TYPE') as dict>
+												<option value="${dict.code}">${dict.value}</option>
+										</#list>
+									</select>
+							    </div>
+					</div>
+					
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     产品代码
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" class=" required" id="product_code" style="width:200px;height:25px"
+									 name="product_code"   v-model="product.product_code" />
+							    </div>
+						</div>
+						
+						
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     产品名称
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" class=" required" id="product_name" style="width:200px;height:25px"
+									 name="product_name"  v-model="product.product_name" />
+							    </div>
+						</div>
+						
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     工位代码
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" class=" required" id="process_code" style="width:200px;height:25px"
+									 name="process_code" @click="getProcessNoFuzzy()"  v-model="product.process_code" />
+							    </div>
+						</div>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     工位名称
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text"  id="process_name" style="width:200px;height:25px"
+									 name="process_name"   v-model="product.process_name" readOnly="readonly"/>
+							    </div>
+						</div>
+						
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     加工流程
+								 </label>
+							   	<div class="control-inline">
+							   	    <select class="required" style="width:200px;height:25px" name="process_flow_code" id="process_flow_code"  v-model="product.process_flow_code">
+										<option v-for="w in processflowlist" :value="w.process_flow_code">{{ w.process_flow_name }}</option>
+									</select>
+							    </div>
+						</div>
+						<div class="form-group" style="align:center">
+	                            <label class="control-label" style="width:80px">
+								     状态
+								 </label>
+							   	<div class="control-inline">
+							   	    <select class="required" id="status" name="status" style="width:200px;height: 25px;" v-model="product.status" > 
+										   <option value='0'>正常</option>
+										   <option value='1'>停用</option>
+									</select>
+							    </div>
+						</div>
+					</td>
+					</tr>
+					
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/bjmes/config/product_edit.js?_${.now?long}"></script>
+</body>
+</html>

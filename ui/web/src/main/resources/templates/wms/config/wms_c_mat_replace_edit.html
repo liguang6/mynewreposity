@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${tag.getLocale("MATERIAL_SUBSTITUTION_DATA","M")}</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak style="width: 600px">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form class="form-horizontal" id="saveForm" action="#"
+						method="post">
+						<div class="form-group" style="align: center; margin-top: 15px">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 40%"
+									class="col-sm-3 control-label no-padding-right"> <font
+									style="color: red; font-weight: bold">*</font>${tag.getLocale("FACTORYCODE","M")}：
+								</label>
+								<div style="float: left; width: 50%" class="col-sm-8">
+									<input type="text" name="werks" class="form-control required"
+										v-model="matreplace.werks" id="werks"
+										@click="getPlantNoFuzzy()" placeholder="${tag.getLocale('FACTORYCODE','M')}"/>
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 40%"
+									class="col-sm-3 control-label no-padding-right"> <font
+									style="color: red; font-weight: bold">*</font>${tag.getLocale("MATNR","M")}：
+								</label>
+								<div style="float: left; width: 50%" class="col-sm-8">
+									<input type="text" id="matnr" name="matnr"
+										class="form-control required" v-model="matreplace.matnr"
+										placeholder='${tag.getLocale("MATNR","M")}'  @change="getMaterialNoFuzzy" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 40%"
+									class="col-sm-3 control-label no-padding-right">
+									${tag.getLocale("MATNR_DESC","M")}： </label>
+								<div style="float: left; width: 50%" class="col-sm-8">
+									<input type="text" id="maktx" name="maktx" class="form-control"
+										v-model="matreplace.maktx" placeholder='${tag.getLocale("MATNR_DESC","M")}' />
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 40%"
+									class="col-sm-3 control-label no-padding-right"><font
+									style="color: red; font-weight: bold">*</font>${tag.getLocale("CUSTOMER_MATNR","M")}：</label>
+								<div style="float: left; width: 50%" class="col-sm-8">
+									<input type="text" id="cMaterialCode" name="cMaterialCode"
+										class="form-control required"
+										v-model="matreplace.cMaterialCode"
+										placeholder='${tag.getLocale("CUSTOMER_MATNR","M")}'/>
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 40%"
+									class="col-sm-3 control-label no-padding-right">${tag.getLocale("CUSTOMER_MAKTX","M")}：</label>
+								<div style="float: left; width: 50%" class="col-sm-8">
+									<input type="text" id="cMaterielDesc" name="cMaterielDesc"
+										class="form-control" v-model="matreplace.cMaterielDesc"
+										placeholder='${tag.getLocale("CUSTOMER_MAKTX","M")}' />
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 40%"
+									class="col-sm-3 control-label no-padding-right">${tag.getLocale("REPLACEMENT_MATNR","M")}：</label>
+								<div style="float: left; width: 50%" class="col-sm-8">
+									<input type="text" id="innerlMaterialCode"
+										name="innerlMaterialCode" class="form-control"
+										v-model="matreplace.innerlMaterialCode"
+										placeholder='${tag.getLocale("REPLACEMENT_MATNR","M")}'/>
+								</div>
+							</div>
+						</div>
+						<div class="form-group" style="align: center">
+							<div style="float: left; width: 100%">
+								<label style="float: left; width: 40%"
+									class="col-sm-3 control-label no-padding-right">${tag.getLocale("REPLACEMENT_MAKTX","M")}：</label>
+								<div style="float: left; width: 50%" class="col-sm-8">
+									<input type="text" id="innerlMaterialDesc"
+										name="innerlMaterialDesc" class="form-control"
+										v-model="matreplace.innerlMaterialDesc"
+										placeholder='${tag.getLocale("REPLACEMENT_MAKTX","M")}'/>
+								</div>
+							</div>
+						</div>
+						<button id="btnSubmit" type="submit" hidden="true"></button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script
+		src="${request.contextPath}/statics/js/wms/config/wms_c_mat_replace_edit.js?_${.now?long}"></script>
+</body>
+</html>

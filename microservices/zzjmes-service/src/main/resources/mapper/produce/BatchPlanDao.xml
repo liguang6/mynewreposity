@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.produce.dao.BatchPlanDao">
+	
+	<select id="getOrderBatchList" parameterType="Map" resultType="Map">	
+		select p.*,CONCAT(f.order_name,f.bus_type_code,'  ',f.order_qty,'台') AS 'order_desc' ,f.bus_type_code,
+		f.order_qty as 'production_qty'
+		from ZZJ_PLAN p 
+		left join ZZJ_WERKS_ORDER f	on f.order_no = p.order_no AND f.werks = p.werks
+		where 1=1
+		<if test="order_no !=null and order_no !=''">
+			and p.order_no = #{order_no}
+		</if>
+		<if test="werks !=null and werks !=''">
+			and ( p.werks = #{werks} or p.werks_name = #{werks} )
+		</if>
+		<if test="workshop !=null and workshop !=''">
+			and ( p.workshop = #{workshop} or p.workshop_name = #{workshop} )
+		</if>
+		<if test="line !=null and line !=''">
+			and ( p.line = #{line} or p.line_name = #{line} )
+		</if>		
+		order by trim(replace(p.batch,'P',''))  
+	</select>
+	
+	<select id="getMachinePlanByBatch" parameterType="Map" resultType="Map">	
+		SELECT p.* FROM ZZJ_MACHINE_PLAN_HEAD p WHERE 1=1
+		<if test="order_no !=null and order_no !=''">
+			and p.order_no = #{order_no}
+		</if>
+		<if test="werks !=null and werks !=''">
+			and ( p.werks = #{werks} or p.werks_name = #{werks} )
+		</if>
+		<if test="workshop !=null and workshop !=''">
+			and ( p.workshop = #{workshop} or p.workshop_name = #{workshop} )
+		</if>
+		<if test="line !=null and line !=''">
+			and ( p.line = #{line} or p.line_name = #{line} )
+		</if>	
+		<if test="batch !=null and batch !=''">
+			and p.zzj_plan_batch = #{batch}
+		</if>
+	</select>
+	
+	<select id="getBacthPlanById" parameterType="String" resultType="Map">
+		select p.* from ZZJ_PLAN p where p.id = #{id} 
+	</select>
+	
+	
+	<select id="getBatchList" parameterType="Map" resultType="Map">
+		select p.*,CONCAT(f.order_name,f.bus_type_code,'  ',f.order_qty,'台') AS 'order_desc' ,f.bus_type_code,
+		f.order_qty as 'production_qty',p.order_no
+		from ZZJ_PLAN p 
+		left join ZZJ_WERKS_ORDER f	on f.order_no = p.order_no AND f.werks = p.werks
+		where 1=1 
+		<if test="search_order_no !=null and search_order_no !=''">
+			and p.order_no = #{search_order_no}
+		</if>
+		<if test="search_werks !=null and search_werks !=''">
+			and ( p.werks = #{search_werks} or p.werks_name = #{search_werks} )
+		</if>
+		<if test="search_workshop !=null and search_workshop !=''">
+			and ( p.workshop = #{search_workshop} or p.workshop_name = #{search_workshop} )
+		</if>
+		<if test="search_line !=null and search_line !=''">
+			and ( p.line = #{search_line} or p.line_name = #{search_line} )
+		</if>
+		order by trim(replace(p.batch,'P',''))  
+	</select>
+	
+	<insert id="addBatchPlan" parameterType="Map" useGeneratedKeys="true"  keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_PLAN (order_no,werks,werks_name,workshop,workshop_name,line,line_name,batch,quantity,
+		start_date,end_date,status,memo,editor,edit_date,from_no,to_no)
+		values (#{order_no},#{werks},#{werks_name},#{workshop},#{workshop_name},#{line},#{line_name},#{batch},
+		#{quantity},#{start_date},#{end_date},#{status},#{memo},#{editor},#{edit_date},#{from_no},#{to_no})
+	</insert>
+	
+	<delete id="deleteBatchPlan" parameterType="int">
+		delete from ZZJ_PLAN where id=#{id}
+	</delete>
+	
+	<update id="editBatchPlan" parameterType="Map">
+		update ZZJ_PLAN 
+		set quantity=#{quantity},start_date=#{start_date},end_date=#{end_date},memo=#{memo},editor=#{editor},edit_date=#{edit_date},change_reason=#{change_reason}
+		<if test="change_content !=null and change_content !=''">
+			,change_content=#{change_content}   
+		</if>
+		<if test="status !=null and status !=''">
+			,status=#{status}   
+		</if>
+		<if test="from_no !=null and from_no !=''">
+			,from_no=#{from_no}   
+		</if>
+		<if test="to_no !=null and to_no !=''">
+			,to_no=#{to_no}   
+		</if>
+		where id=#{id}
+	</update>
+	
+	
+</mapper>

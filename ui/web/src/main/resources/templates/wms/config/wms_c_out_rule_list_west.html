@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>${tag.getLocale("","M")}</title>
+	<#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+<div class="ui-layout-west">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-header">
+				<div class="box-title">
+					<i class="fa icon-grid"></i> ${tag.getLocale("OUT_RULES","M")}
+				</div>
+			</div>
+
+			<div class="box-body" v-show="showList">
+				<form id="searchForm" v-model="page.list"
+					  action="${request.contextPath}/config/outrule/list"
+					  method="post" class="form-inline ">
+					<div class="form-group">
+
+						<div class="control-inline">
+							<!--<input style="display:none" type="text" class="form-control" style="width:90px" size="6" id="flag" name = "flag" value="x">-->
+							<input type="text" class="form-control" style="width:90px" size="6" id="warehouseCode"
+								   name="warehouseCode" @click="getWhNoFuzzy()"
+								   placeholder="${tag.getLocale("WAREHOUSECODE","M")}">
+							<button type="submit" class="btn btn-primary btn-sm">${tag.getLocale("QUERY","M")}</button>
+							<button type="reset" class="btn btn-default btn-sm">${tag.getLocale("RESET","M")}</button>
+						</div>
+
+					</div>
+
+				</form>
+
+				<table id="dataGrid"></table>
+				<div id="dataGridPage">
+				</div>
+
+			</div>
+
+		</div>
+	</div>
+</div>
+<div class="ui-layout-center">
+	<iframe id="mainFrame" name="mainFrame" class="ui-layout-content p0"
+			src="${request.contextPath}/wms/config/wms_c_out_rule_detail_list.html"></iframe>
+</div>
+
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+<script type="text/javascript">
+
+	//国际化取值
+	var smallUtil=new smallTools();
+	var array = new Array("FACTORYCODE", "WAREHOUSECODE", "MAKE_SURE_DEL",
+			"DELETE_SUCCESS", "SELECT_DELETE", "PROMPT_MESSAGE", "CONFIRM", "ADD",
+			"CLOSE", "UPDATE", "SELECT_EDIT", "CREATOR", "CREATE_DATE", "EDITOR",
+			"EDIT_DATE","STATUS","DESCS","OUT_RULES");
+	var languageObj = smallUtil.loadlanguageByPKeyAndLKey(array, "M");
+
+	//初始化布局
+	$('body').layout({
+		west__size: 239
+
+	});
+
+	$(document).ready(function(){
+		$("#dataGrid").dataGrid({
+			searchForm: $("#searchForm"),
+			columnModel: [
+				{
+					label: languageObj.WAREHOUSECODE,
+					name: 'warehouseCode',
+					index: 'warehouseCode',
+					width: 80,
+					align: 'center'
+				},
+				{label: languageObj.OUT_RULES, name: 'outRule', index: 'outRule', width: 80, align: 'center'},
+				// {label: languageObj.DESCS, name: 'descs', index: 'descs', width: 80, align: 'center'},
+				// {label: languageObj.EDITOR, name: 'editor', index: 'editor', width: 80, align: 'center'},
+				// {label: languageObj.EDIT_DATE, name: 'editDate', index: 'editor', width: 80, align: 'center'},
+				{label: 'id', name: 'id', index: 'id', hidden: true},
+			],
+			rowNum: 15,
+			height: 470,
+			//scroll: true,
+			ajaxSuccess: function(data){
+				//bind();
+			},
+			onSelectRow: function (rowId,status, e) {
+				var id=$('#dataGrid').jqGrid('getGridParam','selrow');
+				var rowData = $("#dataGrid").jqGrid('getRowData',id);
+				var mainFrame = $(window.frames['mainFrame'].document);
+				mainFrame.find("#warehouseCode").val(rowData.warehouseCode);
+				mainFrame.find("#outRule").val(rowData.outRule);
+				mainFrame.find("#btn").click();
+
+			}
+		});
+	});
+
+</script>
+</body>
+
+
+
+
+

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.ReturngoodsQueryDao">
+<select id="getReceiveRoomOutList" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT DISTINCT S.ID,S.WERKS,S.WH_NUMBER,S.RETURN_NO,S.DEL,
+		      (SELECT VALUE FROM SYS_DICT WHERE TYPE='BUSINESS_NAME' 
+			  AND CODE = (SELECT BUSINESS_NAME FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = S.RETURN_NO AND ROWNUM = 1)) RETURN_TYPE,
+		      S.RETURN_STATUS,S.RETURN_TYPE BUSINESS_NAME,
+		      S.LIFNR,S.LIKTX,S.CREATOR,S.CREATE_DATE,
+		      S.RETURN_TYPE BUSINESS_CLASS	      
+		      FROM WMS_OUT_RETURN_HEAD S
+              LEFT JOIN WMS_OUT_RETURN_ITEM I ON S.RETURN_NO = I.RETURN_NO   		      
+               WHERE S.WERKS=#{WERKS} 
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND S.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="MATNR!= null and MATNR !=''">
+		        AND EXISTS (SELECT 1 FROM WMS_OUT_RETURN_ITEM D WHERE D.MATNR=#{MATNR} AND  D.RETURN_NO=S.RETURN_NO )
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND S.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="RETURN_DOC_TYPE != null and RETURN_DOC_TYPE !=''">
+		      	AND S.RETURN_TYPE = #{RETURN_DOC_TYPE}
+			  </if>
+		      <if test="RETURN_TYPE != null and RETURN_TYPE !=''">
+		        AND I.BUSINESS_NAME = #{RETURN_TYPE}
+		      </if>
+		      <if test="CREATOR != null and CREATOR !=''">
+		        AND S.CREATOR = #{CREATOR}
+		      </if>
+		      <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+				AND S.CREATE_DATE&gt;=#{CREATE_DATE_START}
+			  </if>
+			  <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+				AND S.CREATE_DATE&lt;= concat(#{CREATE_DATE_END},' 23:59:59')
+			  </if> 
+		      <if test="RETURN_NO != null and RETURN_NO !=''">
+		        AND S.RETURN_NO = #{RETURN_NO}
+		      </if>
+		      <if test="RETURN_STATUS == '00' or RETURN_STATUS == '01' or RETURN_STATUS == '02' or RETURN_STATUS == '03'">
+		       AND S.RETURN_STATUS = #{RETURN_STATUS} AND S.DEL != 'X'
+		      </if>
+		      <if test="RETURN_STATUS == '04'">
+		       AND S.DEL = 'X'
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getReceiveRoomOutCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_OUT_RETURN_HEAD S
+          WHERE 1=1 AND S.WERKS=#{WERKS} 
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND S.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="MATNR!= null and MATNR !=''">
+		        AND EXISTS (SELECT 1 FROM WMS_OUT_RETURN_ITEM D WHERE D.MATNR=#{MATNR} AND  D.RETURN_NO=S.RETURN_NO )
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND S.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="RETURN_DOC_TYPE != null and RETURN_DOC_TYPE !=''">
+		      	AND S.RETURN_TYPE = #{RETURN_DOC_TYPE}
+			  </if>
+		      <if test="RETURN_TYPE != null and RETURN_TYPE !=''">
+		        AND S.RETURN_TYPE = (SELECT BUSINESS_CLASS  FROM WMS_C_WMS_BUSINESS	WHERE BUSINESS_NAME = #{RETURN_TYPE} AND ROWNUM=1)
+		      </if>
+		      <if test="CREATOR != null and CREATOR !=''">
+		        AND S.CREATOR = #{CREATOR}
+		      </if>
+		      <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+				AND S.CREATE_DATE&gt;=#{CREATE_DATE_START}
+			  </if>
+			  <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+				AND S.CREATE_DATE&lt;=concat(#{CREATE_DATE_END},' 23:59:59')
+			  </if> 
+		      <if test="RETURN_NO != null and RETURN_NO !=''">
+		        AND S.RETURN_NO = #{RETURN_NO}
+		      </if>
+		      <if test="RETURN_STATUS == '00' or RETURN_STATUS == '01' or RETURN_STATUS == '02' or RETURN_STATUS == '03'">
+		       AND S.RETURN_STATUS = #{RETURN_STATUS} AND S.DEL != 'X'
+		      </if>
+		      <if test="RETURN_STATUS == '04'">
+		       AND S.DEL = 'X'
+		      </if>
+    </select>
+<!--      <select id="getReceiveRoomOutList" parameterType="Map" resultType="Map"> -->
+<!--      SELECT * FROM (  -->
+<!--          SELECT TMP.*, ROWNUM ROW_ID FROM ( -->
+<!-- 		      SELECT S.ID,S.WERKS,S.WH_NUMBER,S.RETURN_NO,D.VALUE RETURN_TYPE,S.RETURN_STATUS, -->
+<!-- 		      S.LIFNR,S.LIKTX,S.CREATOR,S.CREATE_DATE -->
+<!-- 		       FROM WMS_OUT_RETURN_HEAD S -->
+<!--                LEFT JOIN SYS_DICT D ON S.RETURN_TYPE = D.CODE AND D.TYPE='BUSINESS_NAME'		       -->
+<!--                WHERE 1=1 AND S.WERKS=#{WERKS}  -->
+<!-- 		      <if test="WH_NUMBER != null and WH_NUMBER !=''"> -->
+<!-- 		        AND S.WH_NUMBER = #{WH_NUMBER} -->
+<!-- 		      </if> -->
+<!-- 		      <if test="MATNR!= null and MATNR !=''"> -->
+<!-- 		        AND EXISTS (SELECT 1 FROM WMS_OUT_RETURN_ITEM D WHERE D.MATNR=#{MATNR} AND  D.RETURN_NO=S.RETURN_NO ) -->
+<!-- 		      </if> -->
+<!-- 		      <if test="LIFNR != null and LIFNR !=''"> -->
+<!-- 		        AND S.LIFNR = #{LIFNR} -->
+<!-- 		      </if> -->
+<!-- 		      <if test="RETURN_TYPE != null and RETURN_TYPE !=''"> -->
+<!-- 		        AND S.RETURN_TYPE = #{RETURN_TYPE} -->
+<!-- 		      </if> -->
+<!-- 		      <if test="CREATOR != null and CREATOR !=''"> -->
+<!-- 		        AND S.CREATOR = #{CREATOR} -->
+<!-- 		      </if> -->
+<!-- 		      <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' "> -->
+<!-- 				AND S.CREATE_DATE&gt;=#{CREATE_DATE_START} -->
+<!-- 			  </if> -->
+<!-- 			  <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' "> -->
+<!-- 				AND S.CREATE_DATE&lt;=#{CREATE_DATE_END} -->
+<!-- 			  </if>  -->
+<!-- 		      <if test="RETURN_NO != null and RETURN_NO !=''"> -->
+<!-- 		        AND S.RETURN_NO = #{RETURN_NO} -->
+<!-- 		      </if> -->
+<!--            ) TMP  -->
+<!-- 		 WHERE ROWNUM  &lt;=#{END})   -->
+<!-- 	  WHERE ROW_ID > #{START}  -->
+<!-- 	  <if test="orderBy !=null and orderBy !='' "> -->
+<!-- 		ORDER BY  ${orderBy} -->
+<!-- 	  </if> -->
+<!--     </select> -->
+<!--     <select id="getReceiveRoomOutCount" parameterType="Map" resultType="int"> -->
+<!--       SELECT COUNT(1)  FROM WMS_OUT_RETURN_HEAD S -->
+<!--           WHERE 1=1 AND S.WERKS=#{WERKS}  -->
+<!-- 		      <if test="WH_NUMBER != null and WH_NUMBER !=''"> -->
+<!-- 		        AND S.WH_NUMBER = #{WH_NUMBER} -->
+<!-- 		      </if> -->
+<!-- 		      <if test="MATNR!= null and MATNR !=''"> -->
+<!-- 		        AND EXISTS (SELECT 1 FROM WMS_OUT_RETURN_ITEM D WHERE D.MATNR=#{MATNR} AND  D.RETURN_NO=S.RETURN_NO ) -->
+<!-- 		      </if> -->
+<!-- 		      <if test="LIFNR != null and LIFNR !=''"> -->
+<!-- 		        AND S.LIFNR = #{LIFNR} -->
+<!-- 		      </if> -->
+<!-- 		      <if test="RETURN_TYPE != null and RETURN_TYPE !=''"> -->
+<!-- 		        AND S.RETURN_TYPE = #{RETURN_TYPE} -->
+<!-- 		      </if> -->
+<!-- 		      <if test="CREATOR != null and CREATOR !=''"> -->
+<!-- 		        AND S.CREATOR = #{CREATOR} -->
+<!-- 		      </if> -->
+<!-- 		      <if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' "> -->
+<!-- 				AND S.CREATE_DATE&gt;=#{CREATE_DATE_START} -->
+<!-- 			  </if> -->
+<!-- 			  <if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' "> -->
+<!-- 				AND S.CREATE_DATE&lt;=#{CREATE_DATE_END} -->
+<!-- 			  </if>  -->
+<!-- 		      <if test="RETURN_NO != null and RETURN_NO !=''"> -->
+<!-- 		        AND S.RETURN_NO = #{RETURN_NO} -->
+<!-- 		      </if> -->
+<!--     </select> -->
+    <select id="getReturngoodsItemList" parameterType="Map" resultType="Map">
+	SELECT H.RETURN_NO,D.RETURN_ITEM_NO,H.WERKS,H.WH_NUMBER,D.LGORT,D.MATNR,I.MAKTX,D.SOBKZ,I.TOTAL_RETURN_QTY,
+	D.REAL_QTY,I.UNIT,D.BATCH,D.F_BATCH,D.ITEM_TEXT,I.PO_NO,I.PO_ITEM_NO,I.RETURN_REASON_DESC,D.RETURN_PEOPLE,
+	I.MO_NO,I.MO_ITEM_NO,
+	I.SAP_OUT_NO,I.SAP_OUT_ITEM_NO,I.RSNUM,I.RSPOS,I.COST_CENTER,I.WBS,I.IO_NO,D.CREATOR,D.CREATE_DATE,D.MEMO,I.ITEM_STATUS
+	FROM WMS_OUT_RETURN_HEAD H 
+	LEFT JOIN WMS_OUT_RETURN_ITEM_D D ON D.RETURN_NO = H.RETURN_NO
+	LEFT JOIN WMS_OUT_RETURN_ITEM I ON I.RETURN_NO = D.RETURN_NO AND I.RETURN_ITEM_NO = D.RETURN_ITEM_NO
+	WHERE H.RETURN_NO = #{RETURN_NO} AND H.DEL != 'X'
+    <if test="WERKS != null and WERKS !=''">
+      AND H.WERKS = #{WERKS}
+    </if>
+    <if test="WH_NUMBER != null and WH_NUMBER !=''">
+      AND H.WH_NUMBER = #{WH_NUMBER}
+    </if>
+    </select>
+    <select id="getReturngoodsItemCount" parameterType="Map" resultType="int">
+		SELECT COUNT(1)
+		FROM WMS_OUT_RETURN_ITEM D WHERE D.DEL='0'
+		<if test="RETURN_NO!=null  and RETURN_NO!=''">
+		AND D.RETURN_NO=#{RETURN_NO}
+		</if>
+    </select>
+     <!-- 删除 ：更新del=’X‘ -->
+    <update id="updateHead" parameterType="Map">
+			UPDATE WMS_OUT_RETURN_HEAD SET DEL='X' ,EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE} WHERE RETURN_NO=#{RETURN_NO}
+	</update>
+	<update id="updateItem" parameterType="Map">
+			UPDATE WMS_OUT_RETURN_ITEM SET DEL='X' ,EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE} WHERE RETURN_NO=#{RETURN_NO}
+	</update>
+	<update id="updateOutPicking" parameterType="Map">
+			UPDATE WMS_OUT_PICKING SET DEL='X' ,EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE} WHERE REF_BUSINESS_NO=#{RETURN_NO}
+	</update>
+	<update id="updateItemDetail" parameterType="Map">
+		UPDATE WMS_OUT_RETURN_ITEM_D SET DEL='X' ,EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE} WHERE RETURN_NO=#{RETURN_NO}
+	</update>
+	 <!--库存表数据更新 -->
+    <update id="batchUpdateStock" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_CORE_STOCK SET 
+			  FREEZE_QTY=FREEZE_QTY+#{detail.QTY},XJ_QTY=XJ_QTY-#{detail.QTY},XJ_BIN_CODE=''
+			WHERE WERKS=#{detail.WERKS} AND WH_NUMBER=#{detail.WH_NUMBER} AND MATNR=#{detail.MATNR}
+			AND LIFNR=#{detail.LIFNR} AND XJ_BIN_CODE='BBBB' AND BATCH=#{detail.BATCH}
+		</foreach>
+	</update>
+    <!--退货单类型  -->
+    <select id="getReturnDocTypeList" parameterType="String" resultType="Map">
+		SELECT D.CODE,D.VALUE 
+		FROM SYS_DICT D
+		WHERE D.CODE IN ('04','05','06') AND TYPE= 'BUSINESS_CLASS' ORDER BY D.ID
+    </select>
+    <!--退货类型  -->
+    <select id="getReturnTypeList" parameterType="String" resultType="Map">
+		SELECT DISTINCT C.BUSINESS_NAME,D.VALUE BUSINESS_NAME_DESC
+		FROM WMS_C_WMS_BUSINESS C
+		LEFT JOIN SYS_DICT D ON C.BUSINESS_NAME = D.CODE AND D.TYPE='BUSINESS_NAME'
+		WHERE C.BUSINESS_CLASS=#{type} ORDER BY C.BUSINESS_NAME 
+    </select>
+    
+    <select id="getReturnItemDoneCount" parameterType="Map" resultType="int">
+    SELECT COUNT(*) AS DONE_COUNT FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND ITEM_STATUS = '03'
+    </select>
+    <select id="getReturnDetailList" parameterType="Map" resultType="Map">
+    SELECT * FROM WMS_OUT_RETURN_ITEM_D WHERE RETURN_NO = #{RETURN_NO} AND DEL != 'X'
+    </select>
+    <select id="getStockInfo" parameterType="Map" resultType="Map">
+    SELECT ID,WERKS,WH_NUMBER,MATNR,BATCH,NVL(FREEZE_QTY,0) FREEZE_QTY,NVL(XJ_QTY,0) XJ_QTY 
+    FROM WMS_CORE_STOCK WHERE MATNR = #{MATNR} AND BATCH = #{BATCH} 
+    AND LGORT = #{LGORT} AND LIFNR = #{LIFNR} AND SOBKZ = #{SOBKZ}
+    </select>
+    <update id="updateStockInfo" parameterType="Map">
+    UPDATE WMS_CORE_STOCK SET FREEZE_QTY = NVL(FREEZE_QTY,0) + ${XJ_QTY},XJ_QTY = XJ_QTY - ${XJ_QTY}
+    WHERE MATNR = #{MATNR} AND BATCH = #{BATCH} 
+    AND LGORT = #{LGORT} AND LIFNR = #{LIFNR} AND SOBKZ = #{SOBKZ}
+    </update>
+</mapper>

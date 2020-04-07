@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+    <title>JIS拣配单</title>
+    <style>
+        @page {
+            size: 210mm 297mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            /*margin: 0.15in; */
+            margin-top:230px;
+            padding: 0.1em;
+            @top-left{ content:element(header_left)};
+            @top-center{ content: element(header_center)};
+            @top-right{ content: element(header_right)};
+            @bottom-center{
+                content:"CSCC © 版权所有";
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            };
+            @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;
+            };
+        }
+        #page-header-left {
+		    position:running(header_left);
+		    margin-bottom:50px;
+     	}
+        
+	    #page-header-center {
+	    	position:running(header_center);
+	    }
+
+	   	#page-header-right {
+		    position:running(header_right);
+	    }
+	    
+	    
+    </style>
+</head>
+<body style="font-family: SimSun">
+	<div id="page-header-left">
+		<table style="width: 100%;">
+			
+			<tr style="width: 100%;height: 35px;font-size: 15px;" >
+				<td style="text-align: center;" >
+					<img src="${contextPath}/statics/images/byd_logo.png" ></img>
+				</td>
+				<td style="text-align: center;" colspan="5">
+					<label style="width: 100%;font-size: 18px;">JIS拣配单</label>
+				</td>
+				<td style="text-align: center;">
+					<label style="width: 100%;font-size: 18px;">${BUPRINT}</label>
+				</td>
+				<td style="text-align: center;">
+					NO:<label style="width: 100%;font-size: 18px;">${DISPATCHING_NO}</label>
+				</td>
+				
+				
+			</tr>
+			<tr style="width: 100%;height: 35px;font-size: 12px;" >
+				<td style="text-align: center;" >
+					<p style="text-align:center;border:solid 1px; ">${WERKS}</p>
+				</td>
+				<td style="text-align: center;" colspan="2">
+					<p style="text-align:center;border:solid 1px; ">${SORT_TYPE_NAME}</p>
+				</td>
+				<td style="text-align: center;" colspan="2">
+					<p style="text-align:center; border:solid 1px; ">${PACKAGE_MODEL}</p>
+				</td>
+				<td style="text-align: center;" colspan="2">
+					<p style="text-align:center; border:solid 1px; ">${HEDAN}</p>
+				</td>
+				<td style="text-align: right;" rowspan="2" >
+					<img src="${barCode}" style="witdh:80px;height:80px"></img>
+				</td>
+				
+			</tr>
+			 <tr style="width: 100%;height: 35px;font-size: 12px;" >
+				<td style="text-align: center;" >
+					<p style="border:solid 1px;">${WORKLOCATION}</p>
+				</td>
+				<td style="text-align: center;">
+					<p style="border:solid 1px;border-radius:50%;text-align:center;">${WAITING_LOCATION}</p>
+				</td>
+				<td style="text-align: center;">
+					<p style="border:solid 1px;border-radius:50%;text-align:center;">${ELEVATOR_CODE}</p>
+				</td>
+				<td style="text-align: center;" >
+					<p style="border:solid 1px; ">${JCQ}</p>
+				</td>
+				<td style="text-align: center;" >
+					<p style="border:solid 1px; ">${PICKING_USER_ID}</p>
+				</td>
+				<td style="text-align: center;" colspan="2">
+					<p style="border:solid 1px; ">${HANDOVER_DATE}</p>
+				</td>
+			</tr>
+			<tr style="width: 100%;height: 35px;font-size: 12px;" >
+				<td style="text-align: center;" >
+					<p style="border:solid 1px;text-align:center;">${LINE_CATEGORY}</p>
+				</td>
+				<td style="text-align: center;" colspan="3">
+					<p style="border:solid 1px; ">最晚交接时间:${HANDOVER_TIME}</p>
+				</td>
+				<td style="text-align: center;" colspan="4">
+					
+				</td>
+			</tr> 
+		</table>
+	</div>
+		<table style="border:solid #000000; border-width:1px 0px 0px 1px;width: 100%;">
+			<tr style="width: 100%;font-size: 12px;">
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">车位</td>
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">SPS号</td>
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">车辆VIN号</td>
+	            <td style="width: 4%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">车系</td>
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">物料号</td>
+	            <td style="width: 12%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">物料描述</td>
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">数量</td>
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">车型</td>
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">供应商简称</td>
+	            <td style="width: 6%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">拣配位</td>
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">备注</td>
+	        </tr>
+	        <#list itemList as item>
+		        <tr style="width: 100%;font-size: 11px;">
+		            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px;">${item.ITEM_NO}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.JIS_SEQUENCE}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.VIN}</td>
+		            <td style="width: 2%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.CAR_SERIES}</td>
+		            <td style="width: 10%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.MATERIAL_CODE}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.MATERIAL_DESC}</td>
+		            <td style="width: 2%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.QUANTITY}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.CAR_MODEL}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.VENDOR_NAME}</td>
+		            <td style="width: 5%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.PICKING_ADDRESS}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.REMARK}</td>
+		        </tr>
+	       </#list>
+	    </table>
+</body>
+</html>

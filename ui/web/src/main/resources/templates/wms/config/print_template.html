@@ -1,0 +1,192 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>模板配置</title>
+    <#include "/header.html">
+</head>
+<body class="hold-transition ">
+<div class="ui-layout-west" style="overflow-y: hidden">
+    <div class="main-content">
+        <div class="box box-main">
+            <div style="overflow-y: hidden" class="box-body" v-show="showList">
+                <form id="searchForm" action="${request.contextPath}/config/printTemplate/queryTemplate" method="post" class="form-inline " data-page-no="" data-page-size="" data-order-by="">
+                    <div class="form-group">
+
+                        <div class="control-inline">
+                            <input type="text" class="form-control" style="width:90px" id="TEMPLATE" name="TEMPLATE" value=""  size="6" placeholder="模板名称"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">${tag.getLocale("QUERY","M")}</button>
+                        <button type="reset" class="btn btn-default btn-sm">${tag.getLocale("RESET","M")}</button>
+                    </div>
+                </form>
+                <div id="pgtoolbar1">
+                    <div id="links" >
+                        <a href='#' class='btn' id='newOperation' title="新增"><i class='fa fa-plus' aria-hidden='true'></i> ${tag.getLocale("ADD","M")}</a>
+                        <a href='#' class='btn' id='editOperation' title="修改"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> ${tag.getLocale("UPDATE","M")}</a>
+                        <a href='#' class='btn' id='deleteOperation'  title="删除"><i class='fa fa-trash' aria-hidden='true'></i>${tag.getLocale("DELETE","M")}</a>
+                    </div>
+                </div>
+                <table id="dataGrid"></table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="ui-layout-center">
+    <iframe id="mainFrame" name="mainFrame" class="ui-layout-content p0"
+            src="${request.contextPath}/wms/config/print_template_cofing.html"></iframe>
+</div>
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+</body>
+<script type="text/javascript">
+
+    //初始化布局
+    $('body').layout({
+        west__size: 350
+
+    });
+
+    //加载模板列表
+    $(document).ready(function(){
+        $('#dataGrid').dataGrid({
+            searchForm: $("#searchForm"),
+            // datatype : "local",
+            columnModel: [
+                {header:"ID", name:'ID',index:"ID", hidden:true},
+                {header:"业务类型", name:'TEMP_TYPE',index:"TEMP_TYPE", hidden:true},
+                {header:"业务类型", name:'TEMP_TYPE_STR',index:"TEMP_TYPE_STR", width:100, align:"center"},
+                {header:"尺寸", name:'TEMP_SIZE',index:"TEMP_SIZE",width:150},
+                {header:"模板文件", name:'TEMP_NAME',index:"TEMP_NAME", width:200, align:"center"}
+
+            ],
+            rowNum: 300,
+            height: 470,
+            ajaxSuccess: function(data){},
+            onSelectRow: function (rowId,status, e) {
+                var id=$('#dataGrid').jqGrid('getGridParam','selrow');
+                var rowData = $("#dataGrid").jqGrid('getRowData',id);
+                var mainFrame = $(window.frames['mainFrame'].document);
+                mainFrame.find("#TEMPLATE_ID").val(rowData.ID);
+                mainFrame.find("#TEMP_TYPE").val(rowData.TEMP_TYPE_STR);
+                mainFrame.find("#TEMP_NAME").val(rowData.TEMP_NAME);
+                mainFrame.find("#btn").click();
+            }
+        });
+
+        //------删除操作---------
+        $("#deleteOperation").click(function(){
+            var gr = $("#dataGrid").jqGrid('getGridParam', 'selrow');//获取选中的行号
+            var grData = $("#dataGrid").jqGrid("getRowData",gr);//获取行数据
+            if (gr != null  && gr!==undefined) {
+                layer.confirm('确定删除选中的记录?', {icon: 3, title:'提示'}, function(index){
+                    $.ajax({
+                        type: "POST",
+                        url: baseURL + "config/printTemplate/deleteTemplate/"+grData.ID,
+                        async : false,
+                        success: function(r){
+                            if(r.code == 0){
+                                js.showMessage('删除成功!');
+                                reload();
+                            }else{
+                                js.showErrorMessage(r.msg);
+                            }
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+            else layer.msg("请选择要删除的行",{time:1000});
+        });
+
+        //------新增操作---------
+        $("#newOperation").click(function(){
+            var options = {
+                type: 2,
+                maxmin: true,
+                shadeClose: true,
+                title: '<i aria-hidden="true" class="fa fa-plus">&nbsp;</i>新增模板',
+                area: ["500px", "300px"],
+                content: "wms/config/print_template_edit.html",
+                btn: ['<i class="fa fa-check"></i> 确定'],
+                success: function (layero, index) {
+                },
+                btn1: function (index, layero) {
+                    var win = top[layero.find('iframe')[0]['name']];
+                    var btnSubmit = $("#btnSubmit", layero.find("iframe")[0].contentWindow.document);
+                    $(btnSubmit).click();
+                    if (typeof listselectCallback == 'function') {
+                        listselectCallback(index, win.vm.saveFlag);
+                    }
+                }
+            };
+            options.btn.push('<i class="fa fa-close"></i> 关闭');
+            options['btn' + options.btn.length] = function (index, layero) {
+            };
+            js.layer.open(options);
+
+        });
+        //-------编辑操作--------
+        $("#editOperation").click(function(){
+            var gr = $("#dataGrid").jqGrid('getGridParam', 'selrow');//获取选中的行号
+            if(gr !== null && gr!==undefined){
+                var grData = $("#dataGrid").jqGrid("getRowData",gr)//获取选中的行数据
+                var options = {
+                    type: 2,
+                    maxmin: true,
+                    shadeClose: true,
+                    title: '<i aria-hidden="true" class="fa fa-pencil-square-o">&nbsp;</i>修改模板',
+                    area: ["500px", "420px"],
+                    content: 'wms/config/print_template_edit.html',
+                    btn: ['<i class="fa fa-check"></i> 确定'],
+                    success:function(layero, index){
+
+                        var win = top[layero.find('iframe')[0]['name']];
+                        win.vm.getTemplate(grData.ID,grData.TEMP_TYPE,grData.TEMP_NAME,grData.TEMP_SIZE);
+
+                    },
+                    btn1:function(index,layero){
+                        var win = top[layero.find('iframe')[0]['name']];
+                        var btnSubmit= $("#btnSubmit", layero.find("iframe")[0].contentWindow.document);
+                        $(btnSubmit).click();
+                        if(typeof listselectCallback == 'function'){
+                            listselectCallback(index,win.vm.saveFlag);
+                        }
+                    }
+                };
+                options.btn.push('<i class="fa fa-close"></i> 关闭');
+                options['btn'+options.btn.length] = function(index, layero){
+                    if(typeof listselectCallback == 'function'){
+                    }
+                };
+                js.layer.open(options);
+            }else{
+                layer.msg("请选择要编辑的行",{time:1000});
+            }
+        });
+    });
+
+    var vm = new Vue({
+        el:'#rrapp',
+        data:{
+        },
+        methods: {
+
+            reload: function (event) {
+                $("#searchForm").submit();
+            }
+        }
+    });
+
+    function reload () {
+        $("#searchForm").submit();
+    }
+
+    function listselectCallback(index,rtn){
+        rtn = rtn ||false;
+        if(rtn){
+            //操作成功，刷新表格
+            vm.reload();
+//        parent.layer.close(index);
+            parent.parent.layer.close(index);
+        }
+    }
+</script>

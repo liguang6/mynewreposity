@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.in.dao.SCMDeliveryDao">
+
+	
+	
+	<select id="queryWin00anBySCM" parameterType="map" resultType="map">
+		select note.barcode asnno,note.state st,note.etd,note.eta,detail.providercode vdcd,detail.providername vdcn,note.deliverytype asntp,note.contact cnuid,
+		note.tel cnuph,note.whcode whno,item.bydfactory plcd,item.hubcode locd,note.usekittingflag kittingflag
+		 from 
+		(select * from TDELIVERYNOTE_V where barcode=#{ASNNO} ) note 
+		left join TDELIVERYROWITEM_V item  on note.idxid=item.deliverynoteid
+		left join TDELIVERYDETAIL_V detail on item.idxid=detail.deliveryinfoid
+		where rownum=1
+	</select>
+	
+	<select id="queryWin00an00BySCM" parameterType="map" resultType="map">
+		select distinct note.barcode asnno,item.rowno asnitm,item.bydfactory plcd,item.hubcode locd,item.materielno macd,item.materieldescription mads,
+		detail.providercode vdcd,detail.providername vdnm,item.quantity qty,item.unit,item.numberofpackages bxcnt,item.pono,item.rowitem poitm,
+		item.testmaterialflag testflag,item.state,item.spec
+		 from bydvmi.TDELIVERYROWITEM item,
+		(select * from bydvmi.tdeliverynote where barcode=#{ASNNO}) note,
+		bydvmi.TDELIVERYDETAIL detail
+		where item.deliverynoteid=note.idxid and item.idxid=detail.deliveryinfoid
+	</select>
+	
+	<select id="queryWin00skBySCM" parameterType="map" resultType="map">
+		select detail.barcode skuid,detail.providercode vdcd,detail.providername vdnm,detail.bydfactory plcd,detail.materielno macd,detail.materieldescription mads,
+		detail.BYDBATCH batch,detail.quantity boxqty,detail.spec fullboxqty,detail.unit,detail.productdate prddt,detail.containercode bxidx,detail.validdate,
+		note.barcode asnno,item.ROWNO asnitm,detail.ROWITEM PO_ITEM_NO,detail.PONO PO_NO
+		 from TDELIVERYDETAIL_V detail,(select * from TDELIVERYNOTE_V where barcode=#{ASNNO}) note,
+		TDELIVERYROWITEM_V item where item.deliverynoteid=note.idxid and item.idxid=detail.deliveryinfoid
+	</select>
+	
+	<select id="getMatBarcodeList" parameterType="map" resultType="map">
+	SELECT * FROM TDELIVERYDETAIL_V WHERE DELIVERYINFOID IN 
+	  (SELECT IDXID FROM TDELIVERYROWITEM_V WHERE DELIVERYNOTEID = 
+		(SELECT IDXID FROM TDELIVERYNOTE_V WHERE BARCODE= #{ASS_NO}) AND PONO = #{PO_NO} AND ROWITEM = #{ROWITEM})
+	AND MATERIELNO = #{MATNR}
+	</select>
+	<select id="getAllMatBarcodeList" parameterType="map" resultType="map">
+	SELECT DISTINCT BARCODE FROM TDELIVERYDETAIL_V WHERE DELIVERYINFOID IN 
+	  (SELECT IDXID FROM TDELIVERYROWITEM_V WHERE DELIVERYNOTEID = 
+		(SELECT IDXID FROM TDELIVERYNOTE_V WHERE BARCODE= #{ASS_NO}))
+	</select>
+	<select id="getScmBarCodeInfo" parameterType="map" resultType="map">
+	SELECT D.IDXID,I.IDXID,N.BARCODE ASSNO,D.DELIVERYINFOID,D.QUANTITY,D.UNIT,D.BARCODE,D.CONTAINERCODE,D.STATE,D.MATERIELNO,D.MATERIELDESCRIPTION,
+	D.PONO,D.ROWITEM,D.PROVIDERCODE,D.PROVIDERNAME,D.BYDFACTORY,D.SPEC,D.HUBCODE,D.BYDBATCH,
+	I.DELIVERYNOTEID
+	FROM TDELIVERYDETAIL_V D 
+	LEFT JOIN TDELIVERYROWITEM_V I ON I.IDXID = D.DELIVERYINFOID
+	LEFT JOIN TDELIVERYNOTE_V N ON N.IDXID = I.DELIVERYNOTEID
+	WHERE D.BARCODE = #{BARCODE}
+	</select>
+	<select id="getLabelsBySapMetDocNo" parameterType="map" resultType="map">
+	SELECT NVL(WMSYS.WM_CONCAT(TO_CHAR(LABEL_NO)),' ') LABEL_NOS FROM WMS_CORE_WMSDOC_ITEM WHERE 
+	WH_NUMBER = #{WH_NUMBER} AND SAP_MOVE_TYPE = 303 AND WMS_SAP_MAT_DOC LIKE '%' ||#{WMS_SAP_MAT_DOC}|| '%' 
+	</select>
+	
+	<select id="querytpo" parameterType="map" resultType="map">
+		select * from cs_po where idxpono=#{pono} and rowitem=#{poitm}
+	</select>
+	
+	<update id="updateTPO" parameterType="List">
+	      <!--  UPDATE cs_po SET DELIVERYAMOUNT=#{deliveryamount} WHERE IDXPONO=#{pono} and ROWITEM=#{poitm}-->
+	    <![CDATA[
+	    update tpo_v 
+	    ]]>
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="DELIVERYAMOUNT =DELIVERYAMOUNT+case" suffix="end,">
+                <foreach collection="list" item="it" index="index">
+                     when IDXPONO=#{it.PO_NO} and ROWITEM=substr(#{it.PO_ITEM_NO},-4) then #{it.DELIVERYAMOUNT}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="it" separator="or" open="(" close=")">
+            IDXPONO=#{it.PO_NO} and ROWITEM=substr(#{it.PO_ITEM_NO},-4)
+        </foreach>
+	</update>
+	
+	<update id="updateTPO_onWayAmount" parameterType="List">
+		update tpo_v 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="ONWAYAMOUNT =ONWAYAMOUNT-case" suffix="end,">
+                <foreach collection="list" item="it" index="index">
+                     when IDXPONO=#{it.PO_NO} and ROWITEM=substr(#{it.PO_ITEM_NO},-4) then #{it.ONWAYQTY}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="it" separator="or" open="(" close=")">
+            IDXPONO=#{it.PO_NO} and ROWITEM=substr(#{it.PO_ITEM_NO},-4)
+        </foreach>
+	</update>
+	
+	
+	<update id="updateTDELIVERYDETAIL" parameterType="List">
+	      <!--  update TDELIVERYDETAIL_V set state=#{state} where barcode=#{barcode}-->
+	      
+	    <!-- update TDELIVERYDETAIL_V  -->
+	    update bydvmi.tdeliverydetail
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="STATE =case" suffix="end,">
+                <foreach collection="list" item="it" index="index">
+                     when BARCODE=#{it.BARCODE} then #{it.STATE}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="it" separator="or" open="(" close=")">
+            BARCODE=#{it.BARCODE}
+        </foreach>
+	</update>
+	
+	<update id="updateTDELIVERYROWITEM" parameterType="map">
+	      <!--  update TDELIVERYROWITEM_V a set state=#{state} 
+	      where exists (select note.barcode,item.ROWNO,item.STATE from (select * from TDELIVERYNOTE_V where barcode=#{barcode}) note,
+		  TDELIVERYROWITEM_V item where item.deliverynoteid=note.idxid 
+		  <if test="rowno !=null and rowno !='' ">
+		  and item.ROWNO=#{rowno} 
+		  </if>
+		  and a.idxid=item.IDXID)-->
+		  
+		  
+<!-- 		update TDELIVERYROWITEM_V a  -->
+		update bydvmi.TDELIVERYROWITEM a 
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="STATE =case" suffix="end,">
+                <foreach collection="list" item="it" index="index">
+                     when
+                      
+                     exists (select note.barcode,item.ROWNO,item.STATE from (select * from TDELIVERYNOTE_V 
+                     where BARCODE=#{it.BARCODE}) note,
+					  TDELIVERYROWITEM_V item where item.deliverynoteid=note.idxid 
+					  <if test="it.ROWNO !=null and it.ROWNO !='' ">
+					  and item.ROWNO=#{it.ROWNO} 
+					  </if>
+					  and a.idxid=item.IDXID) 
+                     
+                     then #{it.STATE}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="it" separator="or" open="(" close=")">
+            exists (select note.barcode,item.ROWNO,item.STATE from (select * from TDELIVERYNOTE_V 
+                     where BARCODE=#{it.BARCODE}) note,
+					  TDELIVERYROWITEM_V item where item.deliverynoteid=note.idxid 
+					  <if test="it.ROWNO !=null and it.ROWNO !='' ">
+					  and item.ROWNO=#{it.ROWNO} 
+					  </if>
+					  and a.idxid=item.IDXID) 
+        </foreach>
+		  
+	</update>
+	
+	<update id="updateTDELIVERYNOTE" parameterType="List">
+	      <!--  update TDELIVERYNOTE_V set state=#{state} where barcode=#{barcode}-->
+	      
+	    <!-- update TDELIVERYNOTE_V  -->
+	    update bydvmi.tdeliverynote
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="STATE =case" suffix="end,">
+                <foreach collection="list" item="it" index="index">
+                     when BARCODE=#{it.BARCODE} then #{it.STATE}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="it" separator="or" open="(" close=")">
+            BARCODE=#{it.BARCODE}
+        </foreach>
+	</update>
+	
+	<select id="queryHeadBySCM" parameterType="map" resultType="map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		select distinct note.barcode        asnno,
+       	note.state          st,
+       	to_char(note.eta,'yyyy-mm-dd HH24:MI:SS') eta,
+       	detail.providercode vdcd,
+       	detail.providername vdcn,
+       	note.deliverytype   asntp,
+       	note.whcode         whno,
+       	item.bydfactory     plcd
+		from TDELIVERYNOTE_V note,TDELIVERYROWITEM_V item,TDELIVERYDETAIL_V detail
+		where note.idxid = item.deliverynoteid and item.idxid = detail.deliveryinfoid
+		<if test="ASNNO !=null and ASNNO !='' ">
+		and note.barcode=#{ASNNO}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+		and item.BYDFACTORY=#{WERKS}
+		</if> 
+		<if test="WHNUMBER !=null and WHNUMBER !='' ">
+		and note.whcode=#{WHNUMBER}
+		</if>
+		<if test="STATUS !=null and STATUS !='' ">
+		and note.state=#{STATUS}
+		</if>
+		<if test="VDCD !=null and VDCD !='' ">
+		and detail.providercode=#{VDCD}
+		</if>
+		<if test="ETA_DATE_START !=null and ETA_DATE_START !='' ">
+			<![CDATA[
+			AND note.eta>=to_date(#{ETA_DATE_START},'yyyy-mm-dd')
+			]]>
+		</if>
+		<if test="ETA_DATE_END !=null and ETA_DATE_END !='' ">
+			<![CDATA[
+			AND note.eta<=to_date(#{ETA_DATE_END},'yyyy-mm-dd')
+			]]>
+		</if>
+		<if test="PONO !=null and PONO !='' ">
+		and item.pono=#{PONO}
+		</if>
+		<if test="MACD !=null and MACD !='' ">
+		and item.MATERIELNO=#{MACD}
+		</if>
+		) TMP
+		<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+		order by eta asc
+	</select>
+	
+	<select id="queryHeadBySCMCount"  parameterType="Map" resultType="int">
+	select count(*) cnt from
+	(
+		select distinct note.barcode        asnno,
+       	note.state          st,
+       	to_char(note.eta,'yyyy-mm-dd HH24:MI:SS') eta,
+       	detail.providercode vdcd,
+       	detail.providername vdcn,
+       	note.deliverytype   asntp,
+       	note.whcode         whno,
+       	item.bydfactory     plcd
+		from TDELIVERYNOTE_V note,TDELIVERYROWITEM_V item,TDELIVERYDETAIL_V detail
+		where note.idxid = item.deliverynoteid and item.idxid = detail.deliveryinfoid
+		<if test="ASNNO !=null and ASNNO !='' ">
+		and note.barcode=#{ASNNO}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+		and item.BYDFACTORY=#{WERKS}
+		</if> 
+		<if test="WHNUMBER !=null and WHNUMBER !='' ">
+		and note.whcode=#{WHNUMBER}
+		</if>
+		<if test="STATUS !=null and STATUS !='' ">
+		and note.state=#{STATUS}
+		</if>
+		<if test="VDCD !=null and VDCD !='' ">
+		and detail.providercode=#{VDCD}
+		</if>
+		<if test="ETA_DATE_START !=null and ETA_DATE_START !='' ">
+			<![CDATA[
+			AND note.eta>=to_date(#{ETA_DATE_START},'yyyy-mm-dd')
+			]]>
+		</if>
+		<if test="ETA_DATE_END !=null and ETA_DATE_END !='' ">
+			<![CDATA[
+			AND note.eta<=to_date(#{ETA_DATE_END},'yyyy-mm-dd')
+			]]>
+		</if>
+		<if test="PONO !=null and PONO !='' ">
+		and item.pono=#{PONO}
+		</if>
+		<if test="MACD !=null and MACD !='' ">
+		and item.MATERIELNO=#{MACD}
+		</if>
+		)
+	</select>
+	
+	<select id="queryItemBySCM" parameterType="map" resultType="map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		select * from (
+		select  distinct note.barcode            asnno,
+                item.rowno               asnitm,
+                item.bydfactory          plcd,
+                note.whcode              whcode,
+                item.materielno          macd,
+                item.materieldescription mads,
+                detail.providercode      vdcd,
+                detail.providername      vdnm,
+                item.quantity            qty,
+                item.unit,
+                item.numberofpackages    bxcnt,
+                item.pono,
+                item.rowitem             poitm,
+                item.testmaterialflag    testflag,
+                item.state
+  		from TDELIVERYROWITEM_V item,
+        TDELIVERYNOTE_V note,
+        TDELIVERYDETAIL_V detail
+ 		where item.deliverynoteid = note.idxid
+		   and item.idxid = detail.deliveryinfoid
+		   ) where asnno =#{ASNNO}
+		   ) TMP
+		<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+	</select>
+	<select id="queryAllItemBySCM" parameterType="map" resultType="map">
+		select * from (
+		select  distinct note.barcode            asnno,
+                item.rowno               asnitm,
+                item.bydfactory          plcd,
+                note.whcode              whcode,
+                item.materielno          macd,
+                item.materieldescription mads,
+                detail.providercode      vdcd,
+                detail.providername      vdnm,
+                item.quantity            qty,
+                item.unit,
+                item.numberofpackages    bxcnt,
+                item.pono,
+                item.rowitem             poitm,
+                item.testmaterialflag    testflag,
+                item.state
+  		from TDELIVERYROWITEM_V item,
+        TDELIVERYNOTE_V note,
+        TDELIVERYDETAIL_V detail
+ 		where item.deliverynoteid = note.idxid
+		   and item.idxid = detail.deliveryinfoid
+		   ) where asnno in 
+		<foreach collection="list" index="index" item="d" separator="," open="(" close=")">
+            #{d.ASNNO}
+        </foreach>
+	</select>
+	
+	<select id="queryItemBySCMCount"  parameterType="Map" resultType="int">
+		select count(*) cnt from (
+		select * from (
+		select  distinct note.barcode            asnno,
+                item.rowno               asnitm,
+                item.bydfactory          plcd,
+                note.whcode              whcode,
+                item.materielno          macd,
+                item.materieldescription mads,
+                detail.providercode      vdcd,
+                detail.providername      vdnm,
+                item.quantity            qty,
+                item.unit,
+                item.numberofpackages    bxcnt,
+                item.pono,
+                item.rowitem             poitm,
+                item.testmaterialflag    testflag,
+                item.state
+  		from TDELIVERYROWITEM_V item,
+        TDELIVERYNOTE_V note,
+        TDELIVERYDETAIL_V detail
+ 		where item.deliverynoteid = note.idxid
+		   and item.idxid = detail.deliveryinfoid
+		   ) where asnno =#{ASNNO}
+		   )
+	</select>
+	
+	<update id="updateHEAD" parameterType="List">
+		UPDATE TDELIVERYNOTE_V SET STATE='9' 
+        where barcode IN 
+        <foreach collection="list" index="index" item="d" separator="," open="(" close=")">
+            #{d.ASNNO}
+        </foreach>
+	</update>
+	
+	<update id="updateITEM" parameterType="List">
+		update TDELIVERYROWITEM_V
+		   set state = '9'
+		 where idxid in (select item.idxid
+                   from TDELIVERYROWITEM_V item,
+                        (select *
+                           from TDELIVERYNOTE_V
+                          where barcode in 
+                          <foreach collection="list" index="index" item="d" separator="," open="(" close=")">
+					         #{d.ASNNO}
+					      </foreach>
+                          ) note
+                  where item.deliverynoteid = note.idxid)
+	</update>
+	
+	<update id="updateDETAIL" parameterType="List">
+		update TDELIVERYDETAIL_V
+		   set state = '9'
+		 where idxid in (select detail.IDXID
+                   from TDELIVERYDETAIL_V detail,
+                        (select *
+                           from TDELIVERYNOTE_V
+                          where barcode in 
+                          <foreach collection="list" index="index" item="d" separator="," open="(" close=")">
+					         #{d.ASNNO}
+					      </foreach>
+                          ) note,
+                        TDELIVERYROWITEM_V item
+                  where item.deliverynoteid = note.idxid
+                    and item.idxid = detail.deliveryinfoid)
+
+	</update>
+
+</mapper>

@@ -1,0 +1,10 @@
+#for tests only !
+#Fri Jan 17 17:29:00 GMT+08:00 2020
+jco.client.lang=zh
+jco.destination.peak_limit=40
+jco.client.client=800
+jco.client.passwd=20200101
+jco.client.user=tanmeirong
+jco.client.sysnr=00
+jco.destination.pool_capacity=20
+jco.client.ashost=192.168.100.23

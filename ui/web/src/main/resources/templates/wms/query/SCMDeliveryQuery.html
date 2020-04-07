@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SCM送货单查询</title>
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+
+</head>
+<body>
+	<div class="wrapper" id="vue-app">
+		<div class="main-content" id="vue-app">
+			<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/scmquery/list" >
+						<table border="0">
+						<tr>
+							<td>
+								<div class="form-group">
+								<label class="control-label" >工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select style="width: 100%;" class="form-control" name="WERKS" id="WERKS" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("QUERY_SCM_DELIVERY") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							
+								<label class="control-label">送达仓库：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select  class="input-medium" v-model="whNumber" name="WHNUMBER" id="WHNUMBER" style="height: 28px;width: 100%;">
+									 <option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							
+								<label class="control-label">送货单号：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:100px">
+									<input type="text" id="ASNNO" name="ASNNO" style="width: 100px;" class="form-control width" />
+									</div>
+								</div>
+							
+								<label class="control-label">状态：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									<select name="STATUS" id="STATUS" style="height: 28px;">	
+										<option value=''>全部</option>
+										<option value='1'>已创建</option>
+										<option value='2'>送货中</option>
+										<option value='3'>已收货</option>
+										<option value='4'>取消</option>
+										<option value='5'>删除</option>
+										<option value='8'>部分收货</option>
+										<option value='9'>关闭</option>
+									</select>
+									</div>
+								</div>
+							
+	                           <label class="control-label">供应商：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   	<input type="text" id="VDCD" name="VDCD" style="width: 100px;" class="form-control width-200" />
+									</div>
+								</div>
+							
+									<label class="control-label" style="width: 60px">交货计划：</label>
+									
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+			                                    <input type="text" id="ETA_DATE_START" name="ETA_DATE_START" 
+												class="form-control width-300" style="width: 100px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>-
+											<div class="input-group" style="width:80px">
+											    <input type="text" id="ETA_DATE_END" name="ETA_DATE_END"
+												class="form-control width-300" style="width: 100px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+							</td>
+					</tr>
+					<tr>
+						<td>
+						    <div class="form-group">
+								<label class="control-label">采购订单：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									<input type="text" id="PONO" name="PONO" style="width: 100px;" class="form-control width-200" />
+									</div>
+								</div>
+							
+								<label class="control-label">物料号：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   <input type="text" id="MACD" name="MACD" style="width: 100px;" class="form-control width-300" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<button type="submit" id="queryscm" name="queryscm"  class="btn btn-primary btn-sm">查询</button>
+								<input type="button" id="updatestate" @click="update" class="btn btn-primary btn-sm " value="关闭送货单"/>
+								<button type="reset" class="btn btn-primary btn-sm">重置</button>
+							</div>
+						</td>	
+						</tr>
+						</table>
+					</form>
+						
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+					
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/SCMDeliveryQuery.js?_${.now?long}"></script>
+</body>
+</html>

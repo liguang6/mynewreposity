@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>扫描条码记录报表</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<style type="text/css">
+	.SelectBG{
+       background-color:red;
+    }
+</style>
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm"  method="post" class="form-inline"  action="${request.contextPath}/report/wmsReportBarcodeLog/list" >
+						<div class="row">					
+							<div class="form-group">
+								<label class="control-label" style="width: 45px">工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select name="WERKS" id="werks" v-model="werks" class="input-medium" style="width:100%;height:25px">
+									   <#list tag.getUserAuthWerks("STOCK_COMPARE") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;">仓库号：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select class="form-control" v-model="whNumber" name="WH_NUMBER" id="whNumber" style="height: 28px;width: 60px;">
+										 <option v-for="w in wh_list" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>
+							
+						    <div class="form-group">
+								<label class="control-label" ></span>库位：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+										<input type="text" id="LGORT" name="LGORT" style="width: 80px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							
+							
+							<div class="form-group">
+								<label class="control-label" style="width:40px">料号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									<input type="text" id="matnr" name="MATNR" style="width: 80px;" class="form-control" />
+									<input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#matnr'))" style="width: 15px;"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">时间：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:170px">
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+												<input type="text" id="createDateStart" name="CREATE_DATE_START" value=""
+													   class="form-control" style="width: 80px;"
+													   onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />
+											</div>
+											<div class="input-group" style="width:80px">
+												<input type="text" id="createDateEnd" name="CREATE_DATE_END" value=""
+													   class="form-control" style="width: 80px;"
+													   onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" @click="query">查询</button>
+								<button type="reset" class="btn btn-primary btn-sm">重置</button>
+							</div>
+							
+					</div>
+
+					</form>
+						<!-- <div id="divDataGrid" style="width:100%;overflow:auto;"> -->
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						<!-- </div>	 -->
+						<table id="tb_excel" style="display:none"></table>
+					</div>
+				</div>
+					
+				<div id="layer_more" style="display:none;height:300px">
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#' class='btn' id='newOperation' onclick="addMore()"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a> 
+							<a href='#' class='btn' id='btn_refresh' onclick="refreshMore()"><i class='fa fa-refresh' aria-hidden='true'></i> 清空</a> 
+							<a href='#' class='btn' id='btn_delete' onclick="delMore()"><i class='fa fa-trash' aria-hidden='true'></i> 删除</a> 
+						</div>
+						<table id="moreGrid" class="table table-bordered"  style="text-align:center"> </table>
+					</div>
+				</div>
+					
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/report/wmsReportBarcodeLog.js?_${.now?long}"></script>
+</body>
+</html>

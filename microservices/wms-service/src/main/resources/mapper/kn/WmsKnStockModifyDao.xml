@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.kn.dao.WmsKnStockModifyDao">
+	<resultMap type="Map" id="labelStrDataMap">
+		<result property="LABEL_NOS"  column="LABEL_NOS" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap>
+	<select id="getStockList" parameterType="Map" resultType="Map">
+		SELECT S.ID,S.WERKS,S.WH_NUMBER,S.MATNR,S.MAKTX,S.LIFNR,S.LIKTX,S.BATCH,S.BIN_CODE,
+		S.LGORT,S.SOBKZ,S.STOCK_QTY,S.FREEZE_QTY,S.MEINS
+		FROM WMS_CORE_STOCK S WHERE
+		S.WERKS=#{WERKS}  AND  S.WH_NUMBER = #{WH_NUMBER}  AND  S.BIN_CODE=#{BIN_CODE}
+		<if test="SOBKZ!=null and SOBKZ!=''">
+			AND S.SOBKZ=#{SOBKZ}
+		</if>
+		<if test="SOBKZ==null or SOBKZ==''">
+			AND SOBKZ IS NULL
+		</if>
+		<if test="LGORT!=null and LGORT!=''">
+			AND LGORT=#{LGORT}
+		</if>
+		<if test="LGORT==null or LGORT==''">
+			AND LGORT IS NULL
+		</if>
+		<if test="LIFNR!=null and LIFNR!=''">
+			AND S.LIFNR=#{LIFNR}
+		</if>
+		<if test="LIFNR==null or LIFNR==''">
+			AND S.LIFNR  IS NULL
+		</if>
+		<if test="SO_NO !=null and SO_NO !=''">
+			AND S.SO_NO=#{SO_NO}
+		</if>
+		<if test="SO_ITEM_NO !=null and SO_ITEM_NO !=''">
+			AND S.SO_ITEM_NO=#{SO_ITEM_NO}
+		</if>
+		AND  S.MATNR=#{MATNR}  AND S.BATCH=#{BATCH}
+	</select>
+
+	<select id="getStockBatchCount" parameterType="String" resultType="int">
+		    SELECT COUNT(1) FROM WMS_CORE_STOCK S WHERE S.BATCH=#{BATCH} and s.WERKS=#{WERKS} and s.MATNR = #{MATNR}
+    </select>
+
+	<select id="getMatBatchCount" parameterType="String" resultType="int">
+		    SELECT COUNT(1) FROM WMS_CORE_MAT_BATCH S WHERE S.BATCH=#{BATCH} and s.WERKS=#{WERKS} and s.MATNR = #{MATNR}
+    </select>
+
+	<select id="getMatBatchId" parameterType="String" resultType="int">
+		    SELECT MAX(ID) ID FROM WMS_CORE_MAT_BATCH
+    </select>
+
+	<update id="updateInboundDate" parameterType="String" >
+		    update WMS_CORE_MAT_BATCH S set S.LAST_INBOUND_DATE = to_CHAR(sysdate,'YYYY-MM-DD hh24:mi:ss')  WHERE S.BATCH=#{BATCH} and s.WERKS=#{WERKS} and s.MATNR = #{MATNR}
+    </update>
+
+	<insert id="insertMatBatch" parameterType="Map" >
+		insert into WMS_CORE_MAT_BATCH
+		( ID,BATCH,MATNR,LIFNR,WERKS,EFFECT_DATE,PRODUCT_DATE,LAST_INBOUND_DATE,GENERATOR,GENERATE_DATE )
+		values
+		<!--SELECT m.* FROM (
+		<foreach collection="list" item="d" index="index">-->
+		( #{maxId},#{BATCH},#{MATNR},#{LIFNR},#{WERKS},#{EFFECT_DATE},#{PRODUCTION_DATE},to_CHAR(sysdate,'YYYY-MM-DD hh24:mi:ss'),#{EDITOR},#{EDIT_DATE})
+		<!--FROM DUAL
+		</foreach>
+		)m-->
+	</insert>
+
+	<select id="checkLabelList" parameterType="List" resultType="Map">
+		SELECT S.LABEL_NO LABEL_NOS FROM WMS_CORE_LABEL S WHERE S.LABEL_NO IN
+		<!-- <foreach item="detail" index="index" collection="list" open="(" close=")" separator=",">
+          #{detail}
+      </foreach>-->
+		<trim suffixOverrides=" OR S.LABEL_NO IN ()">
+			<foreach item="detail" index="index" collection="list"
+					 open="(" close=")">
+				<if test="index != 0">
+					<choose>
+						<when test="index % 1000 == 999">) OR S.LABEL_NO IN (</when>
+						<otherwise>,</otherwise>
+					</choose>
+				</if>
+				#{detail}
+			</foreach>
+		</trim>
+	</select>
+	<insert id="saveStockByBatch" parameterType="List" >
+		INSERT INTO WMS_CORE_STOCK
+		(ID,WERKS,WH_NUMBER,MATNR,MAKTX,LIFNR,LIKTX,LGORT,BATCH,BIN_CODE,BIN_NAME,SOBKZ,STOCK_QTY,MEINS,FREEZE_QTY,
+		SO_NO,SO_ITEM_NO,EDITOR,EDIT_DATE)
+		SELECT SEQ_WMS_CORE_STOCK.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="detail" index="index" separator="UNION ALL">
+			SELECT  #{detail.WERKS},#{detail.WH_NUMBER},
+			#{detail.MATNR},#{detail.MAKTX},#{detail.LIFNR},#{detail.LIKTX},#{detail.LGORT},#{detail.BATCH},#{detail.BIN_CODE},
+			#{detail.BIN_NAME},#{detail.SOBKZ},#{detail.STOCK_QTY},
+			#{detail.MEINS},#{detail.FREEZE_QTY},#{detail.SO_NO},#{detail.SO_ITEM_NO},#{detail.CREATOR},#{detail.CREATE_DATE}
+			FROM DUAL
+		</foreach>
+		) m
+	</insert>
+	<insert id="saveCoreLabel" parameterType="List">
+		insert into WMS_CORE_LABEL (ID,LABEL_NO,RECEIPT_NO,RECEIPT_ITEM_NO,LABEL_STATUS,BOX_SN,
+		FULL_BOX_QTY,BOX_QTY,END_FLAG,WERKS,MATNR,MAKTX,F_UNIT,F_BATCH,PRODUCT_DATE,LIFNR,LIKTX,EFFECT_DATE,
+		BATCH,SOBKZ,DEL,CREATOR,CREATE_DATE,WH_NUMBER,LGORT,BIN_CODE,UNIT,INBOUND_NO,INBOUND_ITEM_NO,WMS_NO
+		)
+		select SEQ_WMS_CORE_LABEL.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select  #{d.LABEL_NO},#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.LABEL_STATUS},#{d.BOX_SN},
+			cast(nvl(#{d.FULL_BOX_QTY},0) as number),cast(nvl(#{d.BOX_QTY},0) as number),#{d.END_FLAG},#{d.WERKS},
+			#{d.MATNR},#{d.MAKTX},#{d.F_UNIT},#{d.F_BATCH},#{d.PRODUCTION_DATE},#{d.LIFNR},#{d.LIKTX},
+			#{d.EFFECT_DATE},#{d.BATCH},#{d.SOBKZ},'0',#{d.EDITOR},#{d.EDIT_DATE},
+			#{d.WH_NUMBER},#{d.LGORT},#{d.BIN_CODE},#{d.MEINS},#{d.INBOUND_NO},#{d.INBOUND_ITEM_NO},#{d.WMS_NO}
+			from dual
+		</foreach>
+		) m
+
+	</insert>
+
+	<!-- 库存调整：批量更新库存修改-->
+	<update id="batchUpdateStock" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			UPDATE WMS_CORE_STOCK SET EDITOR=#{detail.CREATOR},EDIT_DATE=#{detail.CREATE_DATE}
+			<if test="detail.STOCK_QTY!=null and detail.STOCK_QTY!=''">
+				,STOCK_QTY=STOCK_QTY+to_number(#{detail.STOCK_QTY})
+			</if>
+			<if test="detail.FREEZE_QTY!=null and detail.FREEZE_QTY!=''">
+				,FREEZE_QTY=FREEZE_QTY+to_number(#{detail.FREEZE_QTY})
+			</if>
+			WHERE ID=#{detail.ID}
+		</foreach>
+	</update>
+
+	<select id="getBusinessCode" parameterType="String" resultType="Map">
+		      SELECT PB.BUSINESS_CODE,WB.BUSINESS_NAME,WB.BUSINESS_TYPE,WB.WMS_MOVE_TYPE,WB.SAP_MOVE_TYPE
+		       ,WB.BUSINESS_CLASS,WB.SOBKZ FROM WMS_C_PLANT_BUSINESS PB
+		       LEFT JOIN WMS_C_WMS_BUSINESS WB ON  PB.BUSINESS_CODE=WB.BUSINESS_CODE
+		      WHERE PB.WERKS=#{WERKS}  AND WB.BUSINESS_NAME IN ('65','66')
+    </select>
+	<select id="getTxtList" parameterType="String" resultType="Map">
+		SELECT PB.BUSINESS_CODE,WB.BUSINESS_NAME,T.TXT_RULE,T.TXT_RULE_ITEM
+		FROM WMS_C_PLANT_BUSINESS PB
+		LEFT JOIN WMS_C_WMS_BUSINESS WB ON  PB.BUSINESS_CODE=WB.BUSINESS_CODE
+		LEFT JOIN WMS_C_TXT T ON  T.BUSINESS_NAME=WB.BUSINESS_NAME
+		WHERE  WB.BUSINESS_NAME IN ('65','66')
+		<if test="WERKS!=null and WERKS!=''">
+			AND PB.WERKS=#{WERKS}
+		</if>
+		<if test="WERKS==''">
+			AND PB.WERKS IS NULL
+		</if>
+	</select>
+	<insert id="insertWmsCoreStockLabel" parameterType="List">
+		insert into WMS_CORE_STOCK_LABEL (ID,WERKS,WH_NUMBER,MATNR,BATCH,LABEL_NO,BIN_CODE,BIN_NAME,EDITOR,EDIT_DATE)
+		select SEQ_WMS_CORE_STOCK_LABEL.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.WERKS},#{d.WH_NUMBER},#{d.MATNR},#{d.BATCH},#{d.LABEL_NO}
+			,#{d.BIN_CODE},#{d.BIN_NAME},#{d.EDITOR},#{d.EDIT_DATE}
+			from dual
+		</foreach>
+		) m
+	</insert>
+	<select id="getCoreStockLabelList" parameterType="Map" resultType="Map">
+		SELECT s.*  FROM   WMS_CORE_STOCK_LABEL t
+		LEFT JOIN WMS_CORE_LABEL s  ON s.LABEL_NO=t.LABEL_NO
+		WHERE s.WERKS=#{WERKS} AND s.WH_NUMBER=#{WH_NUMBER}
+		<!-- 				 AND s.LGORT=#{LGORT} -->
+		<!-- 				 AND s.LIFNR=#{LIFNR}  -->
+		<if test="LGORT!=null and LGORT!=''">
+			AND s.LGORT=#{LGORT}
+		</if>
+		<if test="LGORT==null or LGORT==''">
+			AND s.LGORT IS NULL
+		</if>
+		<if test="LIFNR!=null and LIFNR!=''">
+			AND s.LIFNR=#{LIFNR}
+		</if>
+		<if test="LIFNR==null or LIFNR==''">
+			AND s.LIFNR  IS NULL
+		</if>
+		AND s.MATNR=#{MATNR}  AND s.BIN_CODE=#{BIN_CODE} AND s.BATCH=#{BATCH}
+	</select>
+	<select id="getCoreLabelList" parameterType="Map" resultType="Map">
+		SELECT s.*  FROM  WMS_CORE_LABEL s
+		WHERE s.WERKS=#{WERKS} AND s.WH_NUMBER=#{WH_NUMBER}
+		<!-- 				 AND s.LGORT=#{LGORT} AND s.LIFNR=#{LIFNR} AND s.SOBKZ=#{SOBKZ} -->
+		<if test="SOBKZ!=null and SOBKZ!=''">
+			AND S.SOBKZ=#{SOBKZ}
+		</if>
+		<if test="SOBKZ==null or SOBKZ==''">
+			AND SOBKZ IS NULL
+		</if>
+		<if test="LGORT!=null and LGORT!=''">
+			AND LGORT=#{LGORT}
+		</if>
+		<if test="LGORT==null or LGORT==''">
+			AND LGORT IS NULL
+		</if>
+		<if test="LIFNR!=null and LIFNR!=''">
+			AND S.LIFNR=#{LIFNR}
+		</if>
+		<if test="LIFNR==null or LIFNR==''">
+			AND S.LIFNR  IS NULL
+		</if>
+		AND s.MATNR=#{MATNR}  AND s.BIN_CODE=#{BIN_CODE} AND s.BATCH=#{BATCH}
+	</select>
+	<!-- 库存调整：批量更新标签-->
+	<update id="batchUpdateLabel" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			UPDATE WMS_CORE_LABEL SET EDITOR=#{detail.EDITOR},EDIT_DATE=#{detail.EDIT_DATE}
+			,BOX_QTY=BOX_QTY+to_number(#{detail.BOX_QTY}) WHERE LABEL_NO=#{detail.LABEL_NO}
+		</foreach>
+	</update>
+	<select id="checkMaterialList" parameterType="Map" resultType="Map">
+		SELECT s.MATNR,s.MAKTX,s.MEINS FROM  WMS_SAP_MATERIAL s
+		WHERE s.WERKS=#{werks} AND (s.MATNR IN
+		<!--<foreach item="detail" index="index" collection="entityList" open="(" close=")" separator=",">
+             #{detail.MATNR}
+        </foreach>-->
+		<trim suffixOverrides=" OR s.MATNR IN ()">
+			<foreach item="detail" index="index" collection="entityList"
+					 open="(" close=")">
+				<if test="index != 0">
+					<choose>
+						<when test="index % 1000 == 999">) OR s.MATNR IN (</when>
+						<otherwise>,</otherwise>
+					</choose>
+				</if>
+				#{detail.MATNR}
+			</foreach>
+		</trim>
+		)
+	</select>
+	<select id="checkVendorList" parameterType="Map" resultType="Map">
+		SELECT s.LIFNR,s.NAME1  FROM  WMS_SAP_VENDOR s
+		WHERE
+		<if test="LIFNR==null or LIFNR==''">
+		</if>
+		1=1 AND (s.LIFNR IN
+		<!--<foreach item="detail" index="index" collection="vnedorParamList" open="(" close=")" separator=",">
+                 #{detail}
+        </foreach>-->
+		<trim suffixOverrides=" OR s.LIFNR IN ()">
+			<foreach item="detail" index="index" collection="vnedorParamList"
+					 open="(" close=")">
+				<if test="index != 0">
+					<choose>
+						<when test="index % 1000 == 999">) OR s.LIFNR IN (</when>
+						<otherwise>,</otherwise>
+					</choose>
+				</if>
+				#{detail}
+			</foreach>
+		</trim>
+		)
+	</select>
+	<select id="checkLgortList" parameterType="Map" resultType="Map">
+		SELECT s.LGORT  FROM  WMS_SAP_PLANT_LGORT s
+		WHERE s.DEL='0' AND  s.WERKS=#{werks}  AND( s.LGORT IN
+		<!-- <foreach item="detail" index="index" collection="entityList" open="(" close=")" separator=",">
+              <if test="detail.LGORT!=null and detail.LGORT!=''">
+                  #{detail.LGORT}
+              </if>
+         </foreach>-->
+		<trim suffixOverrides=" OR s.LGORT IN ()">
+			<foreach item="detail" index="index" collection="entityList"
+					 open="(" close=")" >
+				<if test="index != 0">
+					<choose>
+						<when test="index % 1000 == 999">) OR s.LGORT IN (</when>
+						<otherwise>,</otherwise>
+					</choose>
+				</if>
+				<!--<if test="detail.LGORT!=null and detail.LGORT!=''">-->
+				#{detail.LGORT}
+			</foreach>
+		</trim>
+		)
+	</select>
+	<select id="checkBinList" parameterType="Map" resultType="Map">
+		SELECT s.BIN_CODE,s.BIN_NAME  FROM  WMS_CORE_WH_BIN s
+		WHERE s.DEL='0' AND s.WH_NUMBER=#{whNumber}  AND( s.BIN_CODE IN
+		<!-- <foreach item="detail" index="index" collection="entityList" open="(" close=")" separator=",">
+              <if test="detail.BIN_CODE!=null and detail.BIN_CODE!=''">
+                  #{detail.BIN_CODE}
+              </if>
+         </foreach>-->
+		<trim suffixOverrides=" OR s.BIN_CODE IN ()">
+			<foreach item="detail" index="index" collection="entityList"
+					 open="(" close=")">
+				<if test="index != 0">
+					<choose>
+						<when test="index % 1000 == 999">) OR s.BIN_CODE IN (</when>
+						<otherwise>,</otherwise>
+					</choose>
+				</if>
+				<!--<if test="detail.BIN_CODE!=null and detail.BIN_CODE!=''">-->
+				#{detail.BIN_CODE}
+			</foreach>
+		</trim>
+		)
+	</select>
+	<!-- 校验库存是否已存在 -->
+	<select id="checkStockList" parameterType="Map" resultType="Map">
+		SELECT S.ID,S.WERKS,S.WH_NUMBER,S.MATNR,S.MAKTX,S.LIFNR,S.LIKTX,S.BATCH,S.BIN_CODE,
+		S.LGORT,S.SOBKZ,S.STOCK_QTY,S.FREEZE_QTY,S.MEINS
+		FROM WMS_CORE_STOCK S WHERE 1=1
+		<foreach collection="entityList" item="d" open=" and (" close=")"  separator=" or ">
+			(S.BIN_CODE=#{d.BIN_CODE}
+			<if test="d.SOBKZ!=null and d.SOBKZ!=''">
+				AND SOBKZ=#{d.SOBKZ}
+			</if>
+			<if test="d.SOBKZ==null or d.SOBKZ==''">
+				AND SOBKZ IS NULL
+			</if>
+			<if test="d.LGORT!=null and d.LGORT!=''">
+				AND LGORT=#{d.LGORT}
+			</if>
+			<if test="d.LGORT==null or d.LGORT==''">
+				AND LGORT IS NULL
+			</if>
+			<if test="d.LIFNR!=null and d.LIFNR!=''">
+				AND S.LIFNR=#{d.LIFNR}
+			</if>
+			<if test="d.LIFNR==null or d.LIFNR==''">
+				AND S.LIFNR  IS NULL
+			</if>
+			<if test="d.SO_NO !=null and d.SO_NO !=''">
+				AND S.SO_NO=#{d.SO_NO}
+			</if>
+			<if test="d.SO_ITEM_NO !=null and d.SO_ITEM_NO !=''">
+				AND S.SO_ITEM_NO=#{d.SO_ITEM_NO}
+			</if>
+			AND  S.MATNR=#{d.MATNR}  AND S.BATCH=#{d.BATCH}
+			)
+		</foreach>
+		AND  S.WERKS=#{werks}  AND  S.WH_NUMBER = #{whNumber}
+	</select>
+
+	<insert id="insertWMSDocHead" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_CORE_WMSDOC_HEAD.nextval FROM dual
+		</selectKey>
+		insert into WMS_CORE_WMSDOC_HEAD (ID,PZ_DATE,PZ_YEAR,JZ_DATE,WMS_NO,HEADER_TXT,TYPE,CREATOR,CREATE_DATE)
+		values (#{ID},#{PZ_DATE},#{PZ_YEAR},#{JZ_DATE},#{WMS_NO},#{HEADER_TXT},#{TYPE},#{CREATOR},#{CREATE_DATE})
+	</insert>
+
+	<insert id="insertWMSDocDetail" parameterType="List">
+		insert into WMS_CORE_WMSDOC_ITEM (ID,WMS_NO,WMS_ITEM_NO,ITEM_TEXT,BUSINESS_NAME,BUSINESS_TYPE,BUSINESS_CLASS,
+		WMS_MOVE_TYPE,SAP_FLAG,SAP_MOVE_TYPE,REVERSAL_FLAG,CANCEL_FLAG,SOBKZ,F_WERKS,
+		F_WH_NUMBER,F_LGORT,MATNR,MAKTX,F_BATCH,WERKS,WH_NUMBER,LGORT,
+		BIN_CODE,UNIT,QTY_WMS,QTY_SAP,QTY_CANCEL,BATCH,BATCH_SAP,BEDNR,HANDOVER,
+		RECEIPT_NO,RECEIPT_ITEM_NO,ASNNO,ASNITM,PO_NO,PO_ITEM_NO,
+		LIFNR,LIKTX,COST_CENTER,IO_NO,WBS,SAKTO,ANLN1,PARTNER,RECEIVER,
+		MO_NO,MO_ITEM_NO,RSNUM,RSPOS,SO_NO,SO_ITEM_NO,
+		SAP_OUT_NO,SAP_OUT_ITEM_NO,SAP_MATDOC_NO,SAP_MATDOC_ITEM_NO,REF_WMS_NO,
+		REF_WMS_ITEM_NO,DISTRIBUTION_NO,DISTRIBUTION_ITEM_NO,INSPECTION_NO,
+		INSPECTION_ITEM_NO,RETURN_NO,RETURN_ITEM_NO,INBOUND_NO,
+		INBOUND_ITEM_NO,REQUIREMENT_NO,REQUIREMENT_ITEM_NO,PICK_NO,PICK_ITEM_NO,CREATOR,CREATE_DATE,LABEL_NO,CUSTOMER,MOVE_PLANT,MOVE_STLOC,MOVE_BATCH)
+		select SEQ_WMS_CORE_WMSDOC_ITEM.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.WMS_NO},#{d.WMS_ITEM_NO},#{d.ITEM_TEXT},#{d.BUSINESS_NAME},#{d.BUSINESS_TYPE},#{d.BUSINESS_CLASS},
+			#{d.WMS_MOVE_TYPE},#{d.SAP_FLAG},#{d.SAP_MOVE_TYPE},#{d.REVERSAL_FLAG},#{d.CANCEL_FLAG},#{d.SOBKZ},#{d.F_WERKS},
+			#{d.F_WH_NUMBER},#{d.F_LGORT},#{d.MATNR},#{d.MAKTX},#{d.F_BATCH},#{d.WERKS},#{d.WH_NUMBER},#{d.LGORT},
+			#{d.BIN_CODE},#{d.UNIT},#{d.QTY_WMS},#{d.QTY_SAP},#{d.QTY_CANCEL},#{d.BATCH},#{d.BATCH_SAP},#{d.BEDNR},#{d.HANDOVER},
+			#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.ASNNO},#{d.ASNITM},#{d.PO_NO},#{d.PO_ITEM_NO},
+			#{d.LIFNR},#{d.LIKTX},#{d.COST_CENTER},#{d.IO_NO},#{d.WBS},#{d.SAKTO},#{d.ANLN1},#{d.PARTNER},#{d.RECEIVER},
+			#{d.MO_NO},#{d.MO_ITEM_NO},#{d.RSNUM},#{d.RSPOS},#{d.SO_NO},#{d.SO_ITEM_NO},
+			#{d.SAP_OUT_NO},#{d.SAP_OUT_ITEM_NO},#{d.SAP_MATDOC_NO},#{d.SAP_MATDOC_ITEM_NO},#{d.REF_WMS_NO},
+			#{d.REF_WMS_ITEM_NO},#{d.DISTRIBUTION_NO},#{d.DISTRIBUTION_ITEM_NO},#{d.INSPECTION_NO},
+			#{d.INSPECTION_ITEM_NO},#{d.RETURN_NO},#{d.RETURN_ITEM_NO},#{d.INBOUND_NO},
+			#{d.INBOUND_ITEM_NO},#{d.REQUIREMENT_NO},#{d.REQUIREMENT_ITEM_NO},#{d.PICK_NO},#{d.PICK_ITEM_NO},#{d.CREATOR},#{d.CREATE_DATE},#{d.LABEL_NO,jdbcType=CLOB},
+			#{d.CUSTOMER},#{d.MOVE_PLANT},#{d.MOVE_STLOC},#{d.MOVE_BATCH}
+			from dual
+		</foreach>
+		) m
+		<!--begin
+		<foreach collection="list" item="d" index="index" separator=";">
+			insert into WMS_CORE_WMSDOC_ITEM (ID,WMS_NO,WMS_ITEM_NO,ITEM_TEXT,BUSINESS_NAME,BUSINESS_TYPE,BUSINESS_CLASS,
+			WMS_MOVE_TYPE,SAP_FLAG,SAP_MOVE_TYPE,REVERSAL_FLAG,CANCEL_FLAG,SOBKZ,F_WERKS,
+			F_WH_NUMBER,F_LGORT,MATNR,MAKTX,F_BATCH,WERKS,WH_NUMBER,LGORT,
+			BIN_CODE,UNIT,QTY_WMS,QTY_SAP,QTY_CANCEL,BATCH,BATCH_SAP,BEDNR,HANDOVER,
+			RECEIPT_NO,RECEIPT_ITEM_NO,ASNNO,ASNITM,PO_NO,PO_ITEM_NO,
+			LIFNR,LIKTX,COST_CENTER,IO_NO,WBS,SAKTO,ANLN1,PARTNER,RECEIVER,
+			MO_NO,MO_ITEM_NO,RSNUM,RSPOS,SO_NO,SO_ITEM_NO,
+			SAP_OUT_NO,SAP_OUT_ITEM_NO,SAP_MATDOC_NO,SAP_MATDOC_ITEM_NO,REF_WMS_NO,
+			REF_WMS_ITEM_NO,DISTRIBUTION_NO,DISTRIBUTION_ITEM_NO,INSPECTION_NO,
+			INSPECTION_ITEM_NO,RETURN_NO,RETURN_ITEM_NO,INBOUND_NO,
+			INBOUND_ITEM_NO,REQUIREMENT_NO,REQUIREMENT_ITEM_NO,PICK_NO,PICK_ITEM_NO,CREATOR,CREATE_DATE,LABEL_NO,CUSTOMER,MOVE_PLANT,MOVE_STLOC,MOVE_BATCH)
+			values (SEQ_WMS_CORE_WMSDOC_ITEM.nextval,#{d.WMS_NO},#{d.WMS_ITEM_NO},#{d.ITEM_TEXT},#{d.BUSINESS_NAME},#{d.BUSINESS_TYPE},#{d.BUSINESS_CLASS},
+			#{d.WMS_MOVE_TYPE},#{d.SAP_FLAG},#{d.SAP_MOVE_TYPE},#{d.REVERSAL_FLAG},#{d.CANCEL_FLAG},#{d.SOBKZ},#{d.F_WERKS},
+			#{d.F_WH_NUMBER},#{d.F_LGORT},#{d.MATNR},#{d.MAKTX},#{d.F_BATCH},#{d.WERKS},#{d.WH_NUMBER},#{d.LGORT},
+			#{d.BIN_CODE},#{d.UNIT},#{d.QTY_WMS},#{d.QTY_SAP},#{d.QTY_CANCEL},#{d.BATCH},#{d.BATCH_SAP},#{d.BEDNR},#{d.HANDOVER},
+			#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.ASNNO},#{d.ASNITM},#{d.PO_NO},#{d.PO_ITEM_NO},
+			#{d.LIFNR},#{d.LIKTX},#{d.COST_CENTER},#{d.IO_NO},#{d.WBS},#{d.SAKTO},#{d.ANLN1},#{d.PARTNER},#{d.RECEIVER},
+			#{d.MO_NO},#{d.MO_ITEM_NO},#{d.RSNUM},#{d.RSPOS},#{d.SO_NO},#{d.SO_ITEM_NO},
+			#{d.SAP_OUT_NO},#{d.SAP_OUT_ITEM_NO},#{d.SAP_MATDOC_NO},#{d.SAP_MATDOC_ITEM_NO},#{d.REF_WMS_NO},
+			#{d.REF_WMS_ITEM_NO},#{d.DISTRIBUTION_NO},#{d.DISTRIBUTION_ITEM_NO},#{d.INSPECTION_NO},
+			#{d.INSPECTION_ITEM_NO},#{d.RETURN_NO},#{d.RETURN_ITEM_NO},#{d.INBOUND_NO},
+			#{d.INBOUND_ITEM_NO},#{d.REQUIREMENT_NO},#{d.REQUIREMENT_ITEM_NO},#{d.PICK_NO},#{d.PICK_ITEM_NO},#{d.CREATOR},#{d.CREATE_DATE},#{d.LABEL_NO,jdbcType=CLOB},
+			#{d.CUSTOMER},#{d.MOVE_PLANT},#{d.MOVE_STLOC},#{d.MOVE_BATCH})
+		</foreach>
+		;end;-->
+	</insert>
+</mapper>

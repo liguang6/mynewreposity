@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>账务任务处理</title>
+<#include "/web_header.html">
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition " style="overflow: hidden;">
+	<div id="rrapp" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+						<form id="searchForm" class="form-inline" :action="formUrl">
+						<input type="hidden" value="100000" id="pageSize" name="pageSize"/>
+										<div class="form-group">
+											<label class="control-label"><span style="color:red">*</span>工厂：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:60px" id="parentDiv">
+												<select name="WERKS" id="WERKS" v-model="WERKS" style="height: 28px;width:100%">
+												   <#list tag.getUserAuthWerks("ACCOUNT_POST_JOB") as factory>
+												      <option value="${factory.code}">${factory.code}</option>
+												   </#list>
+												</select>
+												</div>
+											</div>										
+											<label class="control-label"><span style="color:red">*</span>仓库号：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:60px;" id="parentDiv" >
+												<select name="WH_NUMBER" id="WH_NUMBER" v-model="WH_NUMBER" style="height: 28px;width:100%">
+													<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+												</select>
+												</div>
+											</div>
+											<label class="control-label">过账标识：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:90px" id="parentDiv">
+													<select name="JOB_FLAG" id="JOB_FLAG" v-model="JOB_FLAG" style="height: 28px;width:100%">
+														<option value="01">未过账</option>
+														<option value="05">部分过账</option>
+														<option value="02">已过账</option>
+														<option value="03">过账失败</option>
+														<option value="04">屏蔽过账</option>
+													</select>
+												</div>
+											</div>
+											<label class="control-label">参考WMS凭证：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:120px" id="parentDiv">
+													<input type="text" id="REF_WMS_NO" name="REF_WMS_NO" value="" v-model="REF_WMS_NO" style="width: 120px;" class="form-control width-100" />
+												</div>
+											</div>
+											<label class="control-label">WMS过账日期：</label>
+											<div class="control-inline" style="width:80px;">
+												<input id="CREATE_DATE_S" name="CREATE_DATE_S" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+											</div>
+											<label class="control-label">-</label>
+											<div class="control-inline"  style="width:80px;">
+												<input id="CREATE_DATE_E" name="CREATE_DATE_E"  onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+											</div>	
+										</div>
+										<div class="form-group">
+										<label class="control-label">&nbsp;料号：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:100px" id="parentDiv">
+												<input type="text" id="MATNR" name="MATNR" value="" v-model="MATNR" style="width: 100px;" class="form-control width-100" />
+												</div>
+											</div>
+										</div>									
+										<div class="form-group">
+											<label class="control-label">移动类型(SAP)：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:50px" id="parentDiv">
+												<input type="text" id="SAP_MOVE_TYPE" name="SAP_MOVE_TYPE" value="" v-model="SAP_MOVE_TYPE" style="width: 70px;" class="form-control" />
+												</div>
+											</div>
+										</div>
+										<div class="form-group">
+										<label class="control-label">参考单据号：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:110px" id="parentDiv">
+												<input type="text" id="REF_DOC_NO" name="REF_DOC_NO" value="" v-model="REF_DOC_NO" style="width: 110px;" class="form-control width-100" />
+												</div>
+											</div>
+										</div>		
+										<div class="form-group">
+										<label class="control-label">WMS操作人：</label>
+											<div class="control-inline">
+												<div class="input-group treeselect" style="width:110px" id="parentDiv">
+												<input type="text" id="WMS_CREATOR" name="WMS_CREATOR" value="" v-model="WMS_CREATOR" style="width: 110px;" class="form-control width-100" />
+												</div>
+											</div>
+										</div>																			
+									
+										<div class="form-group">
+											<input type="button" id="btnSearchData" class="btn btn-primary btn-sm" value="查询" @click="query" />
+										</div>
+										
+										<div v-if="JOB_FLAG=='03'||JOB_FLAG=='05'" class="form-group" style="float: right;">
+											<label class="control-label"><span style="color:red">*</span>凭证日期：</label>
+											<div class="control-inline" style="width:80px;">
+												<input id="PZ_DATE" name="PZ_DATE"  onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+											</div>
+										</div>
+										<div v-if="JOB_FLAG=='03'||JOB_FLAG=='05'" class="form-group" style="float: right;">
+											<label class="control-label"><span style="color:red">*</span>记账日期：</label>
+											<div class="control-inline"  style="width:80px;">
+												<input id="JZ_DATE" name="JZ_DATE"  onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+											</div>														
+										</div>
+										<div v-if="JOB_FLAG=='03'||JOB_FLAG=='05'" class="form-group">
+											<input type="button" @click="post" id="btnConfirm" class="btn btn-success btn-sm" value="过账"/>
+										</div>									
+										<div v-if="JOB_FLAG=='03'||JOB_FLAG=='05'" class="form-group">
+											<input type="button" @click="cancel" id="btnCancel" class="btn btn-info btn-sm" value="屏蔽"/>
+										</div>
+						</form>
+						<div id="divDataGrid" style="width:100%;overflow:auto;">
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><span id="rtnMst">-</span></h4>
+		<br/>
+		<input type="button" id="btnPrint1" class="btn btn-info btn-sm" value="大letter打印"/>
+		<input type="button" id="btnPrint2" class="btn btn-info btn-sm" value="小letter打印"/>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/wms/account/wms_post_job.js?_${.now?long}"></script>
+</body>
+</html>

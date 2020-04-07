@@ -1,0 +1,727 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.cswlms.dao.DispatchingJISBillPickingDAO">
+	<select id="selectDispatchingJISBillPicking" resultType="Map">
+		SELECT T.FROM_PLANT_CODE,T.PLANT_CODE,T.STATUS,I.CAR_SERIES,I.CAR_MODEL,H.JIS_SERIAL_NUMBER,T.BATCH,I.JIS_SEQUENCE,I.UNIQUE_IDENTIFY_CODE,T.PICKING_ADDRESS,I.REMARK,
+		to_char(I.HANDOVER_DATE,'yyyy-MM-dd HH24:mi') HANDOVER_DATE,H.SORT_TYPE,T.MATERIAL_CODE,T.MATERIAL_DESC,T.DISPATCHING_NO,T.ITEM_NO,T.COMPONENT_NO,T.VENDOR_CODE,T.VENDOR_NAME,T.QUANTITY,H.TYPE,H.LINE_CATEGORY,
+		ROUND((I.PRINT_DATE - sysdate) * 24 * 60) LEFT_PRINT_TIMES,ROUND((I.HANDOVER_DATE - sysdate) * 24 * 60) LEFT_HANDOVER_TIMES,T.PACKAGE_MODEL,H.HEDAN_QUANTITY,H.WORKING_LOCATION,H.WAITING_LOCATION,H.ELEVATOR_CODE
+		,T.PICKING_USER_ID
+		FROM T_DISPATCHING_COMPONENT T,T_DISPATCHING_HEADER H,T_DISPATCHING_ITEM I 
+		WHERE H.DISPATCHING_NO = I.DISPATCHING_NO AND I.DISPATCHING_NO = T.DISPATCHING_NO AND I.ITEM_NO = T.ITEM_NO AND T.DEL='0'
+		AND H.TYPE='02' AND T.STATUS IN ('01','02') AND 
+		<![CDATA[
+		I.PRE_PRINT_DATE<sysdate
+		]]>
+		
+		<if test="fromPlantCodelist !=null and fromPlantCodelist.size>0">
+			AND H.FROM_PLANT_CODE IN 
+			<foreach collection="fromPlantCodelist" item="i" open="(" close=")" separator=",">
+					#{i}
+			</foreach>
+		</if>
+		
+		<if test="SORT_TYPE !=null and SORT_TYPE !=''">
+			AND H.SORT_TYPE=#{SORT_TYPE}
+		</if>
+		<if test="LINE_CATEGORY !=null and LINE_CATEGORY !=''">
+			AND H.LINE_CATEGORY=#{LINE_CATEGORY}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND H.DISPATCHING_NO=#{DISPATCHING_NO}
+		</if>
+		<if test="PLANT_CODE !=null and PLANT_CODE !=''">
+			AND H.PLANT_CODE=#{PLANT_CODE}
+		</if>
+		<if test="STATUS !=null and STATUS !=''">
+			AND H.STATUS=#{STATUS}
+		</if>
+	</select>
+	
+	<select id="selectDispatchingBillPickingByPrint" resultType="Map">
+		SELECT T.FROM_PLANT_CODE,T.PLANT_CODE,T.STATUS,I.CAR_SERIES,I.CAR_MODEL,H.JIS_SERIAL_NUMBER,T.BATCH,I.JIS_SEQUENCE,I.UNIQUE_IDENTIFY_CODE,T.PICKING_ADDRESS,I.REMARK,
+		to_char(I.HANDOVER_DATE,'yyyy-MM-dd HH24:mi') HANDOVER_DATE,H.SORT_TYPE,T.MATERIAL_CODE,T.MATERIAL_DESC,T.DISPATCHING_NO,T.ITEM_NO,T.COMPONENT_NO,T.VENDOR_CODE,T.VENDOR_NAME,T.QUANTITY,H.TYPE,H.LINE_CATEGORY,
+		ROUND((I.PRINT_DATE - sysdate) * 24 * 60) LEFT_PRINT_TIMES,ROUND((I.HANDOVER_DATE - sysdate) * 24 * 60) LEFT_HANDOVER_TIMES,T.PACKAGE_MODEL,H.HEDAN_QUANTITY,H.WORKING_LOCATION,H.WAITING_LOCATION,H.ELEVATOR_CODE
+		,T.PICKING_USER_ID,I.DISPATCHING_ADDRESS,T.BARCODE,T.PICKING_USER_NAME
+		FROM T_DISPATCHING_COMPONENT T,T_DISPATCHING_HEADER H,T_DISPATCHING_ITEM I 
+		WHERE H.DISPATCHING_NO = I.DISPATCHING_NO AND I.DISPATCHING_NO = T.DISPATCHING_NO AND I.ITEM_NO = T.ITEM_NO AND T.DEL='0'
+		AND 
+		<![CDATA[
+		I.PRE_PRINT_DATE<sysdate
+		]]>
+		
+		<if test="typelist !=null and typelist.size>0">
+			AND H.TYPE IN 
+			<foreach collection="typelist" item="i" open="(" close=")" separator=",">
+							#{i}
+			</foreach>
+		</if>
+		<if test="FROM_PLANT_CODE !=null and FROM_PLANT_CODE !=''">
+			AND H.FROM_PLANT_CODE =#{FROM_PLANT_CODE}
+		</if>
+		<if test="SORT_TYPE !=null and SORT_TYPE !=''">
+			AND H.SORT_TYPE=#{SORT_TYPE}
+		</if>
+		<if test="LINE_CATEGORY !=null and LINE_CATEGORY !=''">
+			AND H.LINE_CATEGORY=#{LINE_CATEGORY}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND H.DISPATCHING_NO=#{DISPATCHING_NO}
+		</if>
+		<if test="PLANT_CODE !=null and PLANT_CODE !=''">
+			AND H.PLANT_CODE=#{PLANT_CODE}
+		</if>
+		<if test="STATUS !=null and STATUS !=''">
+			AND T.STATUS=#{STATUS}
+		</if>
+		<if test="BARCODE !=null and BARCODE !=''">
+			AND T.BARCODE=#{BARCODE}
+		</if>
+		<if test="barcodelist !=null and barcodelist !=''">
+			AND T.BARCODE IN 
+			<foreach collection="barcodelist" item="i" open="(" close=")" separator=",">
+							#{i}
+			</foreach>
+		</if>
+	</select>
+	
+	<select id="selectDispatchingJISBillPickingByDispatcingNo" resultType="Map">
+		SELECT T.FROM_PLANT_CODE,T.PLANT_CODE,T.STATUS,I.CAR_SERIES,I.CAR_MODEL,H.JIS_SERIAL_NUMBER,T.BATCH,I.JIS_SEQUENCE,
+		to_char(I.HANDOVER_DATE,'yyyy-MM-dd HH24:mi') HANDOVER_DATE,H.SORT_TYPE,T.MATERIAL_CODE,T.MATERIAL_DESC,T.DISPATCHING_NO,T.VENDOR_CODE,T.VENDOR_NAME,T.QUANTITY,H.TYPE,H.LINE_CATEGORY,
+		ROUND((I.PRINT_DATE - sysdate) * 24 * 60) LEFT_PRINT_TIMES,ROUND((I.HANDOVER_DATE - sysdate) * 24 * 60) LEFT_HANDOVER_TIMES,T.ITEM_NO,T.COMPONENT_NO,T.ID
+		FROM T_DISPATCHING_COMPONENT T,T_DISPATCHING_HEADER H,T_DISPATCHING_ITEM I 
+		WHERE H.DISPATCHING_NO = I.DISPATCHING_NO AND I.DISPATCHING_NO = T.DISPATCHING_NO AND I.ITEM_NO = T.ITEM_NO AND T.DEL='0'
+		
+		AND H.DISPATCHING_NO in 
+		<foreach collection="DISPATCHINGNOList" item="i" open="(" close=")" separator=",">
+						#{i}
+		</foreach>
+	</select>
+	
+	<select id="selectAssemblySortType" resultType="Map">
+		SELECT T.* FROM WMS_C_ASSEMBLY_SORTTYPE T WHERE DEL='0'
+		<if test="F_WERKS !=null and F_WERKS !=''">
+			AND F_WERKS=#{F_WERKS}
+		</if>
+		<if test="SORT_NUM !=null and SORT_NUM !=''">
+			AND SORT_NUM=#{SORT_NUM}
+		</if>
+	</select>
+	
+	<select id="selectAssemblyLogistics" resultType="Map">
+		SELECT T.* FROM WMS_C_ASSEMBLY_LOGISTICS T WHERE DEL='0'
+		<if test="WERKS_F !=null and WERKS_F !=''">
+			AND WERKS_F=#{WERKS_F}
+		</if>
+		
+	</select>
+	
+	<select id="selectCoreWhBin" resultType="Map">
+		select * from WMS_CORE_WH_BIN where  del='0'
+		<if test="WH_NUMBER !=null and WH_NUMBER !=''">
+			AND WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="BIN_STATUS !=null and BIN_STATUS !=''">
+			AND BIN_STATUS=#{BIN_STATUS}
+		</if>
+		<if test="BIN_TYPE !=null and BIN_TYPE !=''">
+			AND BIN_TYPE=#{BIN_TYPE}
+		</if>
+		<if test="BIN_CODE !=null and BIN_CODE !=''">
+			AND BIN_CODE=#{BIN_CODE}
+		</if>
+	</select>
+	
+	<update id="updateStockQtyByDispatching" parameterType="Map">
+		UPDATE WMS_CORE_STOCK SET STOCK_QTY = STOCK_QTY - ${QTY} ,XJ_QTY = NVL(XJ_QTY,0) + ${QTY},
+		XJ_BIN_CODE = #{XJ_BIN_CODE} WHERE ID = #{S_ID}
+	</update>
+	
+	<update id="updateDispatchingComponent" parameterType="Map">
+		 UPDATE T_DISPATCHING_COMPONENT SET BATCH=#{BATCH},VENDOR_CODE=#{VENDOR_CODE},VENDOR_NAME=#{VENDOR_NAME},
+		 PICKING_ADDRESS=#{PICKING_ADDRESS},UPDATE_USER_ID=#{UPDATE_USER_ID},UPDATE_USER_NAME=#{UPDATE_USER_NAME},
+		 PICKING_USER_ID=#{PICKING_USER_ID},PICKING_USER_NAME=#{PICKING_USER_NAME},UPDATE_DATE=to_date(#{UPDATE_DATE},'yyyy-MM-dd HH24:mi:ss'),
+		 QUANTITY=#{QUANTITY},STATUS=#{STATUS} WHERE ID=#{ID}
+	</update>
+	
+	<insert id="insertDispatchingComponent" parameterType="Map"> 
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_T_DISPATCHING_COMPONENT.NEXTVAL FROM dual
+		</selectKey>
+		insert into T_DISPATCHING_COMPONENT (ID,PLANT_CODE,FROM_PLANT_CODE,FROM_WAREHOUSING_CODE,BARCODE,DISPATCHING_NO,
+		ITEM_NO,COMPONENT_NO,STATUS,VENDOR_CODE,VENDOR_NAME,PICKING_ADDRESS,MATERIAL_CODE,MATERIAL_DESC,UNIT,QUANTITY,PACKAGE_MODEL,
+		PACKAGE_TYPE,DEL,VERIFY,CREATE_DATE,CREATE_USER_ID,CREATE_USER_NAME,UPDATE_DATE,UPDATE_USER_ID,UPDATE_USER_NAME,
+		PICKING_USER_ID,PICKING_USER_NAME,BATCH,AUTO_FLAG,PACKAGE_QTY,ACTUAL_PRINT_DATE,ACTUAL_HANDOVER_DATE,DELETE_REMARK,
+		HANDOVER_USER_ID,REQUIREMENT_TYPE,COMFIRM_DATE,MATERIAL_ATTRE
+		)
+		values (#{ID},#{PLANT_CODE},#{FROM_PLANT_CODE},#{FROM_WAREHOUSING_CODE},#{BARCODE},#{DISPATCHING_NO},#{ITEM_NO},
+		#{COMPONENT_NO},#{STATUS},#{VENDOR_CODE},#{VENDOR_NAME},#{PICKING_ADDRESS},#{MATERIAL_CODE},#{MATERIAL_DESC},
+		#{UNIT},#{QUANTITY},#{PACKAGE_MODEL},#{PACKAGE_TYPE},#{DEL},#{VERIFY},to_date(#{CREATE_DATE},'yyyy-MM-dd HH24:mi:ss'),#{CREATE_USER_ID},
+		#{CREATE_USER_NAME},#{UPDATE_DATE},#{UPDATE_USER_ID},#{UPDATE_USER_NAME},#{PICKING_USER_ID},
+		#{PICKING_USER_NAME},#{BATCH},#{AUTO_FLAG},#{PACKAGE_QTY},#{ACTUAL_PRINT_DATE},#{ACTUAL_HANDOVER_DATE},#{DELETE_REMARK},
+		#{HANDOVER_USER_ID},#{REQUIREMENT_TYPE},#{COMFIRM_DATE},#{MATERIAL_ATTRE}
+		)
+	</insert>
+	
+	<select id="selectDispatchingComponent" resultType="Map">
+		select * from T_DISPATCHING_COMPONENT where del='0'
+		<if test="ID !=null and ID !=''">
+			AND ID=#{ID}
+		</if>
+		<if test="BARCODE !=null and BARCODE !=''">
+			AND BARCODE=#{BARCODE}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND DISPATCHING_NO=#{DISPATCHING_NO}
+		</if>
+		<if test="ITEM_NO !=null and ITEM_NO !=''">
+			AND ITEM_NO=#{ITEM_NO}
+		</if>
+		<if test="COMPONENT_NO !=null and COMPONENT_NO !=''">
+			AND COMPONENT_NO=#{COMPONENT_NO}
+		</if>
+	</select>
+	
+	<select id="selectDispatchingItem" resultType="Map">
+		select * from T_DISPATCHING_ITEM where del='0'
+		<if test="ID !=null and ID !=''">
+			AND ID=#{ID}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND DISPATCHING_NO=#{DISPATCHING_NO}
+		</if>
+		<if test="ITEM_NO !=null and ITEM_NO !=''">
+			AND ITEM_NO=#{ITEM_NO}
+		</if>
+		
+	</select>
+	
+	<select id="selectDispatchingHeader" resultType="Map">
+		select * from T_DISPATCHING_HEADER where del='0'
+		<if test="ID !=null and ID !=''">
+			AND ID=#{ID}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND DISPATCHING_NO=#{DISPATCHING_NO}
+		</if>
+	</select>
+	
+	<select id="nextComponentNo" resultType="int">
+		SELECT nvl(max(to_number(COMPONENT_NO)),1)+1
+        FROM T_DISPATCHING_COMPONENT T where del='0' and dispatching_no=#{DISPATCHING_NO} and item_no=#{ITEM_NO} 
+	</select>
+	
+	<select id="ifWholeComponentChangedStatus" resultType="int">
+		select count(ID) from T_DISPATCHING_COMPONENT  T where t.del = '0' 
+        and   t.DISPATCHING_NO = #{DISPATCHING_NO}
+        and   t.ITEM_NO = #{ITEM_NO}
+        and   t.STATUS != #{STATUS}
+	</select>
+	
+	<select id="ifWholeItemChangedStatus" resultType="int">
+		 select count(ID) from T_DISPATCHING_ITEM  T where t.del = '0' 
+        and   t.DISPATCHING_NO =#{DISPATCHING_NO}
+        and   t.STATUS !=#{STATUS}
+	</select>
+	
+	<update id="updateDispatchingStatusItem" parameterType="Map">
+		 UPDATE T_DISPATCHING_ITEM SET STATUS=#{STATUS} WHERE DISPATCHING_NO=#{DISPATCHING_NO}
+		 <if test="ITEM_NO !=null and ITEM_NO !=''">
+			AND ITEM_NO =#{ITEM_NO}
+		 </if>
+	</update>
+	
+	<update id="updateDispatchingStatusItemByList" parameterType="Map">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		 UPDATE T_DISPATCHING_ITEM SET STATUS=#{d.STATUS} WHERE DISPATCHING_NO=#{d.DISPATCHING_NO}
+		 <if test="d.ITEM_NO !=null and d.ITEM_NO !=''">
+		 AND ITEM_NO =#{d.ITEM_NO}
+		 </if>
+		</foreach>
+	</update>
+	
+	<update id="updateDispatchingStatusHeader" parameterType="Map">
+		 UPDATE T_DISPATCHING_HEADER SET STATUS=#{STATUS} WHERE DISPATCHING_NO=#{DISPATCHING_NO}
+	</update>
+	
+	<update id="updateDispatchingStatusHeaderByList" parameterType="Map">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		 UPDATE T_DISPATCHING_HEADER SET STATUS=#{d.STATUS} WHERE DISPATCHING_NO=#{d.DISPATCHING_NO}
+		</foreach>
+	</update>
+	
+	<update id="updateDispatchingStatusComponent" parameterType="Map">
+		 UPDATE T_DISPATCHING_COMPONENT SET STATUS=#{STATUS} WHERE DISPATCHING_NO=#{DISPATCHING_NO}
+		 <if test="ITEM_NO !=null and ITEM_NO !=''">
+			AND ITEM_NO =#{ITEM_NO}
+		 </if>
+		 <if test="COMPONENT_NO !=null and COMPONENT_NO !=''">
+			AND COMPONENT_NO =#{COMPONENT_NO}
+		 </if>
+	</update>
+	
+	<update id="updateDispatchingStatusComponentByList" parameterType="List">
+	  <foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		 UPDATE T_DISPATCHING_COMPONENT SET STATUS=#{d.STATUS} WHERE DISPATCHING_NO=#{d.DISPATCHING_NO}
+		 <if test="d.ITEM_NO !=null and d.ITEM_NO !=''">
+		 AND ITEM_NO =#{d.ITEM_NO} 
+		 </if>
+		 <if test="d.COMPONENT_NO !=null and d.COMPONENT_NO !=''">
+		 AND COMPONENT_NO =#{d.COMPONENT_NO}
+		 </if>
+	  </foreach>
+	</update>
+	
+	<update id="updateDispatchingPickRecordNoComponent" parameterType="Map">
+		 UPDATE T_DISPATCHING_COMPONENT SET PICK_RECORD_NO=#{PICK_RECORD_NO},
+		 PICK_RECORD_USER_ID=#{PICK_RECORD_USER_ID}
+		 WHERE DISPATCHING_NO=#{DISPATCHING_NO}
+		 <if test="ITEM_NO !=null and ITEM_NO !=''">
+			AND ITEM_NO =#{ITEM_NO}
+		 </if>
+		 <if test="COMPONENT_NO !=null and COMPONENT_NO !=''">
+			AND COMPONENT_NO =#{COMPONENT_NO}
+		 </if>
+	</update>
+	
+	<insert id="insertTPicking" parameterType="List">
+		INSERT INTO T_PICKING (ID,PICK_NO,PICK_ITEM_NO,DISPATCHING_NO,DISPATCHING_ITEM_NO,BARCODE,BUSINESS_CLASS,BUSINESS_NAME
+		,BUSINESS_TYPE,WERKS,WH_NUMBER,ITEM_STATUS,ITEM_TEXT,DEL,MATNR,MAKTX,UNIT,LIFNR,LIKTX,BIN_CODE,LGORT,BIN_CODE_XJ
+		,QTY,BATCH,SOBKZ,HANDOVER_QTY,CONFIRM,CONFIRM_DATE,LGORT_RECEIVE,HANDOVER,HANDOVER_DATE,CREATOR,CREATE_DATE
+		,EDITOR,EDIT_DATE)
+		select SEQ_T_PICKING.NEXTVAL,m.* from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.PICK_NO},#{d.PICK_ITEM_NO},#{d.DISPATCHING_NO},#{d.DISPATCHING_ITEM_NO},#{d.BARCODE},#{d.BUSINESS_CLASS},#{d.BUSINESS_NAME},
+		#{d.BUSINESS_TYPE},#{d.WERKS},#{d.WH_NUMBER},#{d.ITEM_STATUS},#{d.ITEM_TEXT},#{d.DEL},#{d.MATNR},#{d.MAKTX},#{d.UNIT},#{d.LIFNR},#{d.LIKTX},#{d.BIN_CODE},
+		#{d.LGORT},#{d.BIN_CODE_XJ},#{d.QTY},#{d.BATCH},#{d.SOBKZ},#{d.HANDOVER_QTY},#{d.CONFIRM},#{d.CONFIRM_DATE},#{d.LGORT_RECEIVE},#{d.HANDOVER},
+		#{d.HANDOVER_DATE},#{d.CREATOR},#{d.CREATE_DATE},#{d.EDITOR},#{d.EDIT_DATE}
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<select id="selectDispatchingFeiJISBillPicking" resultType="Map">
+		SELECT M.*,N.MANAGER FROM (
+		SELECT T.FROM_PLANT_CODE,T.PLANT_CODE,T.STATUS,T.BATCH,I.TRIAL_FLAG,
+		to_char(I.HANDOVER_DATE,'yyyy-MM-dd HH24:mi') HANDOVER_DATE,H.SORT_TYPE,T.MATERIAL_CODE,T.MATERIAL_DESC,T.DISPATCHING_NO,T.VENDOR_CODE,T.VENDOR_NAME,T.QUANTITY,H.TYPE,H.LINE_CATEGORY,
+		ROUND((I.PRINT_DATE - sysdate) * 24 * 60) LEFT_PRINT_TIMES,ROUND((I.HANDOVER_DATE - sysdate) * 24 * 60) LEFT_HANDOVER_TIMES ,
+		H.WAITING_LOCATION,T.BARCODE,T.PICKING_ADDRESS,T.ID,T.ITEM_NO,T.COMPONENT_NO
+		FROM T_DISPATCHING_COMPONENT T,T_DISPATCHING_HEADER H,T_DISPATCHING_ITEM I 
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+		,(select * from WMS_C_MAT_MANAGER_TYPE WHERE AUTHORIZE_CODE=#{AUTHORIZE_CODE}) M
+		</if>
+		WHERE H.DISPATCHING_NO = I.DISPATCHING_NO AND I.DISPATCHING_NO = T.DISPATCHING_NO AND I.ITEM_NO = T.ITEM_NO AND T.DEL='0'
+		<![CDATA[
+		AND H.TYPE<>'02' AND T.STATUS IN ('01','02') AND 
+		I.PRE_PRINT_DATE<sysdate
+		]]>
+		
+		<if test="fromPlantCodelist !=null and fromPlantCodelist.size>0">
+			AND H.FROM_PLANT_CODE IN 
+			<foreach collection="fromPlantCodelist" item="i" open="(" close=")" separator=",">
+					#{i}
+			</foreach>
+		</if>
+		
+		<if test="SORT_TYPE !=null and SORT_TYPE !=''">
+			AND H.SORT_TYPE=#{SORT_TYPE}
+		</if>
+		<if test="LINE_CATEGORY !=null and LINE_CATEGORY !=''">
+			AND H.LINE_CATEGORY=#{LINE_CATEGORY}
+		</if>
+		<if test="WAITING_LOCATION !=null and WAITING_LOCATION !=''">
+			AND H.WAITING_LOCATION=#{WAITING_LOCATION}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND H.DISPATCHING_NO=#{DISPATCHING_NO}
+		</if>
+		<if test="PLANT_CODE !=null and PLANT_CODE !=''">
+			AND H.PLANT_CODE=#{PLANT_CODE}
+		</if>
+		<if test="STATUS !=null and STATUS !=''">
+			AND H.STATUS=#{STATUS}
+		</if>
+		<if test="MATERIAL_CODE !=null and MATERIAL_CODE !=''">
+			AND T.MATERIAL_CODE=#{MATERIAL_CODE}
+		</if>
+		) M
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+		 ,(
+			 select matManager.Werks,matManager.Wh_Number,matManager.Matnr,matType.Manager from WMS_C_MAT_MANAGER_TYPE matType,WMS_C_MAT_MANAGER matManager 
+			where matType.Werks=matManager.Werks and matType.Wh_Number=matManager.Wh_Number and matType.Authorize_Code=matManager.Authorize_Code
+			and matType.del='0' and matManager.del='0'
+			and  INSTR(','||#{AUTHORIZE_CODE}||',',','||matType.AUTHORIZE_CODE||',')>0
+			 ) N
+         WHERE N.Werks=M.FROM_PLANT_CODE  and N.Matnr=M.MATERIAL_CODE 
+		</if>
+		
+		<if test="AUTHORIZE_CODE =='' ">
+			left join 
+			 (
+			 select matManager.Werks,matManager.Wh_Number,matManager.Matnr,matType.Manager from WMS_C_MAT_MANAGER_TYPE matType,WMS_C_MAT_MANAGER matManager 
+			where matType.Werks=matManager.Werks and matType.Wh_Number=matManager.Wh_Number and matType.Authorize_Code=matManager.Authorize_Code
+			and matType.del='0' and matManager.del='0'
+			 ) N
+			 on N.Werks=M.FROM_PLANT_CODE  and N.Matnr=M.MATERIAL_CODE
+		</if>
+	</select>
+	
+	<select id="selectDispatchingQueRen" resultType="Map">
+		SELECT T.FROM_PLANT_CODE,T.PLANT_CODE,T.STATUS,T.BATCH,I.TRIAL_FLAG,T.UNIT,
+		to_char(I.HANDOVER_DATE,'yyyy-MM-dd HH24:mi') HANDOVER_DATE,H.SORT_TYPE,T.MATERIAL_CODE,T.MATERIAL_DESC,T.DISPATCHING_NO,T.VENDOR_CODE,T.VENDOR_NAME,T.QUANTITY,H.TYPE,H.LINE_CATEGORY,
+		ROUND((I.PRINT_DATE - sysdate) * 24 * 60) LEFT_PRINT_TIMES,ROUND((I.HANDOVER_DATE - sysdate) * 24 * 60) LEFT_HANDOVER_TIMES ,
+		H.WAITING_LOCATION,T.BARCODE,T.PICKING_ADDRESS,T.ID,T.ITEM_NO,T.COMPONENT_NO,T.HANDOVER_USER_ID,T.PICK_RECORD_NO,T.PICK_RECORD_USER_ID
+		FROM T_DISPATCHING_COMPONENT T,T_DISPATCHING_HEADER H,T_DISPATCHING_ITEM I 
+		WHERE H.DISPATCHING_NO = I.DISPATCHING_NO AND I.DISPATCHING_NO = T.DISPATCHING_NO AND I.ITEM_NO = T.ITEM_NO AND T.DEL='0'
+		 
+		<if test="STATUS !=null and STATUS !=''">
+			AND T.STATUS =#{STATUS}
+		</if>
+		<if test="fromPlantCodelist !=null and fromPlantCodelist.size>0">
+			AND H.FROM_PLANT_CODE IN 
+			<foreach collection="fromPlantCodelist" item="i" open="(" close=")" separator=",">
+					#{i}
+			</foreach>
+		</if>
+		
+		<if test="SORT_TYPE !=null and SORT_TYPE !=''">
+			AND H.SORT_TYPE=#{SORT_TYPE}
+		</if>
+		<if test="LINE_CATEGORY !=null and LINE_CATEGORY !=''">
+			AND H.LINE_CATEGORY=#{LINE_CATEGORY}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND H.DISPATCHING_NO=#{DISPATCHING_NO}
+		</if>
+		<if test="PLANT_CODE !=null and PLANT_CODE !=''">
+			AND H.PLANT_CODE=#{PLANT_CODE}
+		</if>
+		<if test="MATERIAL_CODE !=null and MATERIAL_CODE !=''">
+			AND T.MATERIAL_CODE=#{MATERIAL_CODE}
+		</if>
+		<if test="BARCODE !=null and BARCODE !=''">
+			AND T.BARCODE=#{BARCODE}
+		</if>
+	</select>
+	
+	<update id="updateDispatchingConformDate" parameterType="Map">
+		 UPDATE T_DISPATCHING_COMPONENT SET COMFIRM_DATE=sysdate WHERE DISPATCHING_NO=#{DISPATCHING_NO}
+		 <if test="ITEM_NO !=null and ITEM_NO !=''">
+			AND ITEM_NO =#{ITEM_NO}
+		 </if>
+		 <if test="COMPONENT_NO !=null and COMPONENT_NO !=''">
+			AND COMPONENT_NO =#{COMPONENT_NO}
+		 </if>
+	</update>
+	
+	<update id="updateDispatchingConformDateByList" parameterType="Map">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		 UPDATE T_DISPATCHING_COMPONENT SET COMFIRM_DATE=#{d.COMFIRM_DATE} WHERE DISPATCHING_NO=#{d.DISPATCHING_NO}
+		 AND ITEM_NO =#{d.ITEM_NO}
+		 AND COMPONENT_NO =#{d.COMPONENT_NO}
+		 </foreach>
+	</update>
+	
+	<update id="updateDispatchingHandoverDate" parameterType="Map">
+		 UPDATE T_DISPATCHING_COMPONENT SET ACTUAL_HANDOVER_DATE=sysdate 
+		 , HANDOVER_USER_ID=#{HANDOVER_USER_ID}
+		 WHERE DISPATCHING_NO=#{DISPATCHING_NO}
+		 <if test="ITEM_NO !=null and ITEM_NO !=''">
+			AND ITEM_NO =#{ITEM_NO}
+		 </if>
+		 <if test="COMPONENT_NO !=null and COMPONENT_NO !=''">
+			AND COMPONENT_NO =#{COMPONENT_NO}
+		 </if>
+	</update>
+	
+	<update id="updateDispatchingHandoverDateByList" parameterType="Map">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			 UPDATE T_DISPATCHING_COMPONENT SET ACTUAL_HANDOVER_DATE=#{d.ACTUAL_HANDOVER_DATE}
+			 , HANDOVER_USER_ID=#{d.HANDOVER_USER_ID}
+			 WHERE DISPATCHING_NO=#{d.DISPATCHING_NO}
+			 AND ITEM_NO =#{d.ITEM_NO}
+			 AND COMPONENT_NO =#{d.COMPONENT_NO}
+		 </foreach>
+	</update>
+	
+	<select id="selectDispatchingByfabu" resultType="Map">
+		SELECT T.FROM_PLANT_CODE,T.PLANT_CODE,T.STATUS,T.BATCH,I.TRIAL_FLAG,
+		to_char(I.HANDOVER_DATE,'yyyy-MM-dd HH24:mi') HANDOVER_DATE,H.SORT_TYPE,T.MATERIAL_CODE,T.MATERIAL_DESC,T.DISPATCHING_NO,T.VENDOR_CODE,T.VENDOR_NAME,T.QUANTITY,H.TYPE,H.LINE_CATEGORY,
+		ROUND((I.PRINT_DATE - sysdate) * 24 * 60) LEFT_PRINT_TIMES,ROUND((I.HANDOVER_DATE - sysdate) * 24 * 60) LEFT_HANDOVER_TIMES ,
+		H.WAITING_LOCATION,T.BARCODE,T.PICKING_ADDRESS,T.ID,T.ITEM_NO,T.COMPONENT_NO
+		FROM T_DISPATCHING_COMPONENT T,T_DISPATCHING_HEADER H,T_DISPATCHING_ITEM I 
+		WHERE H.DISPATCHING_NO = I.DISPATCHING_NO AND I.DISPATCHING_NO = T.DISPATCHING_NO AND I.ITEM_NO = T.ITEM_NO AND T.DEL='0'
+		 
+		<if test="STATUS !=null and STATUS !=''">
+			AND T.STATUS =#{STATUS}
+		</if>
+		
+		<if test="fromPlantCodelist !=null and fromPlantCodelist.size>0">
+			AND H.FROM_PLANT_CODE IN 
+			<foreach collection="fromPlantCodelist" item="i" open="(" close=")" separator=",">
+					#{i}
+			</foreach>
+		</if>
+		
+		<if test="SORT_TYPE !=null and SORT_TYPE !=''">
+			AND H.SORT_TYPE=#{SORT_TYPE}
+		</if>
+		<if test="LINE_CATEGORY !=null and LINE_CATEGORY !=''">
+			AND H.LINE_CATEGORY=#{LINE_CATEGORY}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND H.DISPATCHING_NO=#{DISPATCHING_NO}
+		</if>
+		<if test="PLANT_CODE !=null and PLANT_CODE !=''">
+			AND H.PLANT_CODE=#{PLANT_CODE}
+		</if>
+		<if test="TYPE !=null and TYPE !=''">
+			AND H.TYPE=#{TYPE}
+		</if>
+		<if test="MATERIAL_CODE !=null and MATERIAL_CODE !=''">
+			AND T.MATERIAL_CODE=#{MATERIAL_CODE}
+		</if>
+		<if test="BARCODE !=null and BARCODE !=''">
+			AND T.BARCODE=#{BARCODE}
+		</if>
+	</select>
+	
+	<insert id="insertComponent" parameterType="List">
+		insert into T_DISPATCHING_COMPONENT (ID,PLANT_CODE,FROM_PLANT_CODE,FROM_WAREHOUSING_CODE,BARCODE,DISPATCHING_NO,
+		ITEM_NO,COMPONENT_NO,STATUS,VENDOR_CODE,VENDOR_NAME,PICKING_ADDRESS,MATERIAL_CODE,MATERIAL_DESC,UNIT,QUANTITY,PACKAGE_MODEL,
+		PACKAGE_TYPE,DEL,VERIFY,CREATE_DATE,CREATE_USER_ID,CREATE_USER_NAME,UPDATE_DATE,UPDATE_USER_ID,UPDATE_USER_NAME,
+		PICKING_USER_ID,PICKING_USER_NAME,BATCH,AUTO_FLAG,PACKAGE_QTY,ACTUAL_PRINT_DATE,ACTUAL_HANDOVER_DATE,DELETE_REMARK,
+		HANDOVER_USER_ID,REQUIREMENT_TYPE,COMFIRM_DATE,MATERIAL_ATTRE
+		)
+		select SEQ_T_DISPATCHING_COMPONENT.NEXTVAL,m.* from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.PLANT_CODE},#{d.FROM_PLANT_CODE},#{d.FROM_WAREHOUSING_CODE},#{d.BARCODE},#{d.DISPATCHING_NO},#{d.ITEM_NO},
+		#{d.COMPONENT_NO},#{d.STATUS},#{d.VENDOR_CODE},#{d.VENDOR_NAME},#{d.PICKING_ADDRESS},#{d.MATERIAL_CODE},#{d.MATERIAL_DESC},
+		#{d.UNIT},#{d.QUANTITY},#{d.PACKAGE_MODEL},#{d.PACKAGE_TYPE},#{d.DEL},#{d.VERIFY},to_date(#{d.CREATE_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.CREATE_USER_ID},
+		#{d.CREATE_USER_NAME},to_date(#{d.UPDATE_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.UPDATE_USER_ID},#{d.UPDATE_USER_NAME},#{d.PICKING_USER_ID},
+		#{d.PICKING_USER_NAME},#{d.BATCH},#{d.AUTO_FLAG},#{d.PACKAGE_QTY},to_date(#{d.ACTUAL_PRINT_DATE},'yyyy-MM-dd HH24:mi:ss'),to_date(#{d.ACTUAL_HANDOVER_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.DELETE_REMARK},
+		#{d.HANDOVER_USER_ID},#{d.REQUIREMENT_TYPE},to_date(#{d.COMFIRM_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.MATERIAL_ATTRE}
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<insert id="insertItem" parameterType="List">
+		insert into T_DISPATCHING_ITEM (ID,PLANT_CODE,FROM_PLANT_CODE,FROM_WAREHOUSING_CODE,STATUS,DISPATCHING_NO,
+		ITEM_NO,PICKING_ADDRESS,UNIQUE_IDENTIFY_CODE,LINE_CATEGORY,MATERIAL_CODE,MATERIAL_DESC,CAR_MODEL,CAR_COLOR,
+		UNIT,QUANTITY,REQUIREMENT_NO,HANDOVER_QUANTITY,PRINT_DATE,HANDOVER_DATE,REQUIRING_DATE,LINE_REQUIREMENT_DATE,TRIAL_FLAG,
+		DEL,VERIFY,CREATE_DATE,CREATE_USER_ID,CREATE_USER_NAME,UPDATE_DATE,UPDATE_USER_ID,UPDATE_USER_NAME,DISPATCHING_ADDRESS,
+		CAR_SERIES,JIS_SEQUENCE,RELATED_GROUP,REMARK,ACTUAL_PRINT_DATE,ACTUAL_HANDOVER_DATE,PRE_PRINT_DATE
+		)
+		select SEQ_T_DISPATCHING_ITEM.NEXTVAL,m.* from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.PLANT_CODE},#{d.FROM_PLANT_CODE},#{d.FROM_WAREHOUSING_CODE},#{d.STATUS},#{d.DISPATCHING_NO},#{d.ITEM_NO},
+		#{d.PICKING_ADDRESS},#{d.UNIQUE_IDENTIFY_CODE},#{d.LINE_CATEGORY},#{d.MATERIAL_CODE},#{d.MATERIAL_DESC},#{d.CAR_MODEL},#{d.CAR_COLOR},
+		#{d.UNIT},#{d.QUANTITY},#{d.REQUIREMENT_NO},#{d.HANDOVER_QUANTITY},to_date(#{d.PRINT_DATE},'yyyy-MM-dd HH24:mi:ss'),to_date(#{d.HANDOVER_DATE},'yyyy-MM-dd HH24:mi:ss'),to_date(#{d.REQUIRING_DATE},'yyyy-MM-dd HH24:mi:ss'),to_date(#{d.LINE_REQUIREMENT_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.TRIAL_FLAG},
+		#{d.DEL},#{d.VERIFY},to_date(#{d.CREATE_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.CREATE_USER_ID},#{d.CREATE_USER_NAME},to_date(#{d.UPDATE_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.UPDATE_USER_ID},#{d.UPDATE_USER_NAME},#{d.DISPATCHING_ADDRESS},
+		#{d.CAR_SERIES},#{d.JIS_SEQUENCE},#{d.RELATED_GROUP},#{d.REMARK},to_date(#{d.ACTUAL_PRINT_DATE},'yyyy-MM-dd HH24:mi:ss'),to_date(#{d.ACTUAL_HANDOVER_DATE},'yyyy-MM-dd HH24:mi:ss'),to_date(#{d.PRE_PRINT_DATE},'yyyy-MM-dd HH24:mi:ss')
+		
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<insert id="insertHeader" parameterType="List">
+		insert into T_DISPATCHING_HEADER (ID,PLANT_CODE,FROM_PLANT_CODE,DISPATCHING_NO,STATUS,TYPE,
+		SORT_TYPE,SORT_MODEL,LAST_LINE_NUMBER,JIS_SERIAL_NUMBER,WAITING_LOCATION,LINE_CATEGORY,ELEVATOR_CODE,WORKING_LOCATION,
+		PRINT_DATE,HANDOVER_DATE,RECEIVING_DATE,DEL,VERIFY,CREATE_DATE,CREATE_USER_ID,CREATE_USER_NAME,UPDATE_DATE,
+		UPDATE_USER_ID,UPDATE_USER_NAME,HEDAN_QUANTITY
+		)
+		select SEQ_T_DISPATCHING_HEADER.NEXTVAL,m.* from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.PLANT_CODE},#{d.FROM_PLANT_CODE},#{d.DISPATCHING_NO},#{d.STATUS},#{d.TYPE},#{d.SORT_TYPE},
+		#{d.SORT_MODEL},#{d.LAST_LINE_NUMBER},#{d.JIS_SERIAL_NUMBER},#{d.WAITING_LOCATION},#{d.LINE_CATEGORY},#{d.ELEVATOR_CODE},#{d.WORKING_LOCATION},
+		to_date(#{d.PRINT_DATE},'yyyy-MM-dd HH24:mi:ss'),to_date(#{d.HANDOVER_DATE},'yyyy-MM-dd HH24:mi:ss'),to_date(#{d.RECEIVING_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.DEL},#{d.VERIFY},to_date(#{d.CREATE_DATE},'yyyy-MM-dd HH24:mi:ss'),#{d.CREATE_USER_ID},#{d.CREATE_USER_NAME},to_date(#{d.UPDATE_DATE},'yyyy-MM-dd HH24:mi:ss'),
+		#{d.UPDATE_USER_ID},#{d.UPDATE_USER_NAME},#{d.HEDAN_QUANTITY}
+		
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<update id="deleteComponentByID" parameterType="Map">	
+		update T_DISPATCHING_COMPONENT
+        SET   DEL = '1'
+            <if test="UPDATE_USER_ID !=null and UPDATE_USER_ID !=''">
+                ,UPDATE_USER_ID = #{UPDATE_USER_ID}
+            </if>
+            <if test="UPDATE_USER_NAME !=null and UPDATE_USER_NAME !=''">
+                ,UPDATE_USER_NAME = #{UPDATE_USER_NAME}
+            </if>
+            <if test="UPDATE_DATE !=null and UPDATE_DATE !=''">
+                ,UPDATE_DATE =to_date(#{UPDATE_DATE},'yyyy-MM-dd HH24:mi:ss')
+            </if>
+            <if test="DELETE_REMARK !=null and DELETE_REMARK !=''">
+                ,DELETE_REMARK = #{DELETE_REMARK}
+            </if>
+        where ID = #{ID}
+	</update>
+	
+	<select id="countOfComponentByItem" parameterType="Map" resultType="int">
+      select count(ID)
+        from T_DISPATCHING_COMPONENT t
+        where 
+        t.DISPATCHING_NO = #{DISPATCHING_NO}
+        and t.ITEM_NO= #{ITEM_NO}
+        and t.del='0'
+    </select>
+    
+    <update id="deleteItem" parameterType="Map">	
+		update t_dispatching_item
+         set  DEL = '1'
+            <if test="UPDATE_USER_ID !=null and UPDATE_USER_ID !=''">
+                ,UPDATE_USER_ID = #{UPDATE_USER_ID}
+            </if>
+            <if test="UPDATE_USER_NAME !=null and UPDATE_USER_NAME !=''">
+                ,UPDATE_USER_NAME = #{UPDATE_USER_NAME}
+            </if>
+            <if test="UPDATE_DATE !=null and UPDATE_DATE !=''">
+                ,UPDATE_DATE =to_date(#{UPDATE_DATE},'yyyy-MM-dd HH24:mi:ss')
+            </if>
+            <if test="DELETE_REMARK !=null and DELETE_REMARK !=''">
+                ,DELETE_REMARK = #{DELETE_REMARK}
+            </if>
+        where DISPATCHING_NO = #{DISPATCHING_NO}
+        and ITEM_NO= #{ITEM_NO}
+	</update>
+	
+	<select id="selectCountHeaderByBillNo" parameterType="Map" resultType="int">
+      select count(ID)
+        from t_dispatching_item t
+        where 
+        t.DISPATCHING_NO = #{DISPATCHING_NO}
+        and t.del='0'
+    </select>
+    
+    <update id="deleteHeader" parameterType="Map">	
+		update t_dispatching_header
+        SET  DEL = '1'
+        <if test="UPDATE_USER_ID !=null and UPDATE_USER_ID !=''">
+                ,UPDATE_USER_ID = #{UPDATE_USER_ID}
+            </if>
+            <if test="UPDATE_USER_NAME !=null and UPDATE_USER_NAME !=''">
+                ,UPDATE_USER_NAME = #{UPDATE_USER_NAME}
+            </if>
+            <if test="UPDATE_DATE !=null and UPDATE_DATE !=''">
+                ,UPDATE_DATE =to_date(#{UPDATE_DATE},'yyyy-MM-dd HH24:mi:ss')
+            </if>
+            <if test="DELETE_REMARK !=null and DELETE_REMARK !=''">
+                ,DELETE_REMARK = #{DELETE_REMARK}
+            </if>
+        where DISPATCHING_NO = #{DISPATCHING_NO}
+	</update>
+	
+	<select id="selectComponentByBarcode" resultType="Map">
+		SELECT * FROM T_DISPATCHING_COMPONENT T
+        where T.DEL='0' and T.BARCODE =#{BARCODE}
+	</select>
+	
+	<update id="updateDispatchingStatusByBarcode" parameterType="Map">
+		 UPDATE T_DISPATCHING_COMPONENT SET STATUS=#{STATUS} 
+		 WHERE DEL='0'
+		 <if test="BARCODE !=null and BARCODE !=''">
+			AND BARCODE =#{BARCODE}
+		 </if>
+		 
+	</update>
+	
+	<select id="selectTPicking" resultType="Map">
+	SELECT * FROM T_PICKING WHERE DEL='0'
+		<if test="BARCODE !=null and BARCODE !=''">
+			AND BARCODE =#{BARCODE}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND DISPATCHING_NO =#{DISPATCHING_NO}
+		</if>
+		<if test="DISPATCHING_ITEM_NO !=null and DISPATCHING_ITEM_NO !=''">
+			AND DISPATCHING_ITEM_NO =#{DISPATCHING_ITEM_NO}
+		</if>
+	</select>
+	
+	<update id="updateStockQtyByBatch" parameterType="Map">
+		UPDATE WMS_CORE_STOCK SET STOCK_QTY = NVL(STOCK_QTY,0) + ${QTY} ,XJ_QTY = NVL(XJ_QTY,0) - ${QTY}
+		 WHERE WERKS = #{WERKS} AND WH_NUMBER=#{WH_NUMBER} AND BATCH=#{BATCH} AND BIN_CODE=#{BIN_CODE}
+		 AND LIFNR=#{LIFNR} AND SOBKZ=#{SOBKZ}
+	</update>
+	
+	<update id="updateDispatchingPickingInfoByBarcode" parameterType="Map">
+		 UPDATE T_DISPATCHING_COMPONENT SET PICKING_USER_ID='',PICKING_USER_NAME='',
+		 BATCH='',PICKING_ADDRESS='',VENDOR_CODE='',VENDOR_NAME=''
+		 WHERE DEL='0'
+		 <if test="BARCODE !=null and BARCODE !=''">
+			AND BARCODE =#{BARCODE}
+		 </if>
+	</update>
+	
+	<update id="delTPickingByBarcode" parameterType="Map">
+		UPDATE T_PICKING SET DEL = 'X'
+		WHERE BARCODE =#{BARCODE}
+		
+	</update>
+	
+	<update id="updateTPickingByBarcodeByList" parameterType="Map">
+	 <foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		UPDATE T_PICKING SET ITEM_STATUS =#{d.ITEM_STATUS}
+		WHERE BARCODE =#{d.BARCODE}
+	 </foreach>
+	</update>
+	
+	<insert id="insertToWlmsException" parameterType="Map"> 
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_T_TOWLMS_EXCEPTION.NEXTVAL FROM dual
+		</selectKey>
+		insert into T_TOWLMS_EXCEPTION (ID,BARCODE,DISPATCHING_NO,ITEM_NO,COMPONENT_NO,
+		CREATE_DATE,CREATE_USER_ID,ISSUBMIT,TYPE,BARCODE1,DISPATCHINGNO1,BARCODE2,DISPATCHINGNO2
+		)
+		values (#{ID},#{BARCODE},#{DISPATCHING_NO},#{ITEM_NO},#{COMPONENT_NO},
+		#{CREATE_DATE},#{CREATE_USER_ID},#{ISSUBMIT},#{TYPE},#{BARCODE1},#{DISPATCHINGNO1},#{BARCODE2},#{DISPATCHINGNO2}
+		
+		)
+	</insert>
+	
+	<select id="selectToWlmsException" resultType="Map">
+		SELECT ID,BARCODE,DISPATCHING_NO,ITEM_NO,COMPONENT_NO,to_char(CREATE_DATE,'yyyy-MM-dd HH24:mi:ss') CREATE_DATE,
+		CREATE_USER_ID,ISSUBMIT,TYPE,BARCODE1,DISPATCHINGNO1,BARCODE2,DISPATCHINGNO2
+		 FROM T_TOWLMS_EXCEPTION WHERE 1=1
+		<if test="BARCODE !=null and BARCODE !=''">
+			AND BARCODE =#{BARCODE}
+		</if>
+		<if test="DISPATCHING_NO !=null and DISPATCHING_NO !=''">
+			AND DISPATCHING_NO =#{DISPATCHING_NO}
+		</if>
+		<if test="ISSUBMIT !=null and ISSUBMIT !=''">
+			AND ISSUBMIT =#{ISSUBMIT}
+		</if>
+		<if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			<![CDATA[
+			AND CREATE_DATE>=to_date(#{CREATE_DATE_START},'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			<![CDATA[
+			AND CREATE_DATE<=to_date(#{CREATE_DATE_END},'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		
+	</select>
+	
+	<select id="selectPickRecordNoCount" resultType="Map">
+	select pick_record_no,count(*) cnt from t_dispatching_component t where del='0' and pick_record_no=
+	(select pick_record_no from t_dispatching_component where del='0'
+	<if test="BARCODE !=null and BARCODE !=''">
+			AND BARCODE =#{BARCODE}
+	</if>
+	)
+	group by pick_record_no
+	</select>
+
+</mapper>

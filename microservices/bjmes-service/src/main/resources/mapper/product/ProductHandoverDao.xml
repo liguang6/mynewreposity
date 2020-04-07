@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.bjmes.modules.product.dao.ProductHandoverDao">
+	
+	<select id="getProductInfo" parameterType="Map" resultType="Map">	
+		SELECT p.werks,p.werks_name,p.workshop,p.workshop_name,p.order_no,p.product_code,
+		   c.product_name,c.product_type_code,c.product_type_name,h.id,p.product_no
+		FROM BJMES_PD_PRODUCTS p
+		LEFT JOIN BJMES_C_PRODUCTS c on c.product_code=p.product_code
+		LEFT JOIN BJMES_PRODUCT_HANDOVER h on h.product_no=p.product_no  
+		WHERE p.werks=#{werks} and p.workshop=#{workshop}
+		and p.product_no=#{product_no}  <!--p.order_no=#{order_no} -->
+	</select>
+	
+	<insert id="save" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into BJMES_PRODUCT_HANDOVER
+		(werks,werks_name,workshop,workshop_name,order_no,product_type_code,product_type_name,
+		    product_no,product_name,handover_type,deliver_user,
+			deliver_date,deliver_workgroup,deliver_workgroup_name,receive_workshop,receive_workshop_name,
+			receive_workgroup,receive_workgroup_name,receive_user,creator,create_date)
+		values
+		<trim >
+		<foreach collection="detail_list" item="detail" index="index" separator="," >
+			(
+			#{werks},#{werks_name},#{workshop},#{workshop_name},#{detail.order_no},
+			#{detail.product_type_code},#{detail.product_type_name},#{detail.product_no},#{detail.product_name},
+			#{handover_type},#{detail.deliver_user},#{detail.deliver_date},#{detail.deliver_workgroup},
+			#{detail.deliver_workgroup_name},#{detail.receive_workshop},#{detail.receive_workshop_name},
+			#{detail.receive_workgroup},#{detail.receive_workgroup_name},#{detail.receive_user},#{editor},#{edit_date}
+			)
+		</foreach>	
+		</trim>	
+	</insert>
+	
+	<update id="updateItems" parameterType="List" >
+		update BJMES_WORKSHOPSUPPLY set
+		deliver_qty=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.deliver_qty} then #{detail.deliver_qty}
+		</foreach>
+		where id in
+		<foreach collection="detail_list" item="detail" index="index" separator="," open=" (" close=")">
+			#{detail.id}
+		</foreach>
+	</update>
+	<update id="deleteItems" parameterType="List" >
+		delete from ZZJ_WORKSHOPSUPPLY where id in
+		<foreach collection="detail_list" item="detail" index="index" separator="," open=" (" close=")">
+			#{detail.id}
+		</foreach>
+	</update>
+	<select id="getHandoverList" resultType="Map" parameterType="Map">
+		select p.*,
+		    (case p.handover_type when '1' then p.deliver_workgroup_name when '2' then p.workshop_name  end) deliver,
+		     (case p.handover_type when '1' then p.receive_workgroup_name when '2' then p.receive_workshop_name end) receive,
+		    (case p.handover_type when '1' then '班组交接'  when '2' then '车间交接' end) handover_type_desc
+		from BJMES_PRODUCT_HANDOVER p
+		where 1=1
+		<if test="handover_type != null and handover_type !=''">
+			and p.handover_type = #{handover_type}
+		</if>
+		<if test="werks != null and werks != ''">
+			and p.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and p.workshop = #{workshop}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and p.order_no = #{order_no}
+		</if>
+		<if test="product_type != null and product_type != ''">
+            and (p.product_type_code like concat('%',#{product_type},'%') or p.product_type_name like concat('%',#{product_type},'%')  )
+		</if>
+		<if test="product_no != null and product_no != ''">
+		  <if test="product_no.indexOf(',')==-1">
+               and p.product_no like concat('%',#{product_no},'%')  
+          </if>
+          <if test="product_no.indexOf(',')!=-1">
+               and find_in_set(p.product_no,#{product_no})	  
+          </if>
+		</if>
+		<if test="receive_user != null and receive_user !=''">
+			and p.receive_user like concat('%',#{receive_user},'%') 
+		</if>
+		<if test="deliver_user != null and deliver_user !=''">
+			and p.deliver_user like concat('%',#{deliver_user},'%') 
+		</if>
+		<if test="start_date != null and start_date != ''">
+			and p.deliver_date &gt;= #{start_date}
+		</if>
+		<if test="end_date != null and end_date !=''">
+			and p.deliver_date &lt;= #{end_date}
+		</if>
+		<if test="limit != null and limit !=''">
+		   LIMIT #{start},#{limit}
+		</if>
+	</select>
+	 <select id="getHandoverCount" resultType="int" parameterType="Map">
+	 select count(1) from BJMES_PRODUCT_HANDOVER p where 1=1
+		<if test="handover_type != null and handover_type !=''">
+			and p.handover_type = #{handover_type}
+		</if>
+		<if test="werks != null and werks != ''">
+			and p.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and p.workshop = #{workshop}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and p.order_no = #{order_no}
+		</if>
+		<if test="product_type != null and product_type != ''">
+            and (p.product_type_code like concat('%',#{product_type},'%') or p.product_type_name like concat('%',#{product_type},'%')  )
+		</if>
+		<if test="product_no != null and product_no != ''">
+		  <if test="product_no.indexOf(',')==-1">
+               and p.product_no like concat('%',#{product_no},'%')  
+          </if>
+          <if test="product_no.indexOf(',')!=-1">
+               and find_in_set(p.product_no,#{product_no})	  
+          </if>
+		</if>
+		<if test="receive_user != null and receive_user !=''">
+			and p.receive_user like concat('%', #{receive_user},'%') 
+		</if>
+		<if test="deliver_user != null and deliver_user !=''">
+			and p.deliver_user like concat('%', #{deliver_user},'%') 
+		</if>
+		<if test="start_date != null and start_date != ''">
+			and p.deliver_date &gt;= #{start_date}
+		</if>
+		<if test="end_date != null and end_date !=''">
+			and p.deliver_date &lt;= #{end_date}
+		</if>
+	</select>
+	
+</mapper>

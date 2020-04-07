@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>仓库信息编辑</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+					<div class="form-group" style="align:center;margin-top:15px">
+                         <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>工厂代码：
+								</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+							      <input type="text" name="werks"  class="form-control required" v-model="wh.werks"  id="werks" @click="getPlantNoFuzzy()"  placeholder="工厂代码"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                         <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>仓库代码：
+								</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="whNumber" name="whNumber" class="form-control required"  v-model="wh.whNumber" placeholder="仓库代码"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								<font style="color:red;font-weight:bold">*</font>库位：
+							</label>
+							<div style="float:left;width:60%" class="col-sm-8">
+								<input type="text"  id="lgortNo" name="lgortNo"   v-model="wh.lgortNo" placeholder="库位"/>
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+					 <div  style="float:left;width:100%">
+                          <label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+                          	<font style="color:red;font-weight:bold">*</font>语言：
+                          </label>
+							
+						  <div style="float:left;width:60%" class="col-sm-8">
+									<select id="language" name="language" v-model="wh.language" style="width: 100%;"> 
+											<#list tag.wmsDictList('LANGUAGE') as d> 
+											<option value="${d.code}">${d.value}</option> 
+										</#list>
+								    </select>
+						  </div>
+							
+					</div>		
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >仓库名称：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="whName" name="whName" class="form-control"  v-model="wh.whName" placeholder="仓库名称"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >国家：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="country" name="country" class="form-control"  v-model="wh.country" placeholder="国家"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >省份：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="province" name="province" class="form-control"  v-model="wh.province" placeholder="省份"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >城市：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="city" name="city" class="form-control"  v-model="wh.city" placeholder="城市"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >区/县：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="region" name="region" class="form-control"  v-model="wh.region" placeholder="区/县"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >街道：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="street" name="street" class="form-control"  v-model="wh.street" placeholder="街道"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >联系人：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="contacts" name="contacts" class="form-control"  v-model="wh.contacts" placeholder="联系人"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >联系电话：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="tel" name="tel" class="form-control"  v-model="wh.tel" placeholder="联系电话"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >备注：</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <input type="text"  id="memo" name="memo" class="form-control"  v-model="wh.memo" placeholder="备注"/>
+							    </div>
+						</div>
+					</div>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_core_wh_edit.js?_${.now?long}"></script>
+</body>
+</html>

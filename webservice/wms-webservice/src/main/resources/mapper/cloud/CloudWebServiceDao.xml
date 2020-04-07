@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.webservice.cloud.dao.CloudWebServiceDao">
+
+
+<!--    <select id="queryStockQty" resultType="Map">
+        select stock_qty from WMS_CORE_STOCK
+        where WERKS = #{WERKS} and WH_NUMBER = #{WH_NUMBER}
+        and MATNR = #{MATNR} and BATCH = #{BATCH}
+        and BIN_CODE=#{BIN_CODE}
+
+    </select>-->
+
+
+    <insert id="insertWmsCloudDelivery" parameterType="Map">
+        INSERT INTO WMS_IN_DELIVERY
+        (DELIVERY_NO,DELIVERY_TYPE ,STATUS_RMK ,FACT_NO ,LGORT_NO,BOOKING_DATE,BOOKING_TIME,
+        PROVIDER_CODE,PROVIDER_NAME,WHCD_NO,CTURID,CTDT,UPURID,UPDT,ID)
+        values (
+        #{DELIVERY_NO},#{DELIVERY_TYPE},#{STATUS_RMK},#{FACT_NO} ,#{LGORT_NO},#{BOOKING_DATE} ,#{BOOKING_TIME},
+        #{PROVIDER_CODE} ,#{PROVIDER_NAME} ,#{WHCD_NO},#{CTURID} ,#{CTDT},#{UPURID},#{UPDT},SEQ_WEBSERVICE_DELIVERY.nextval
+        )
+    </insert>
+
+    <insert id="insertWmsCloudDeliveryItem" parameterType="Map">
+        INSERT INTO WMS_IN_DELIVERY_ITEM
+        (DELIVERY_NO,ITEM_NO ,ITEM_QTY ,PO_NO,PO_ITEM,FACT_NO,LGORT_NO,
+        PROVIDER_CODE,PROVIDER_NAME,MAT_NO,MAT_DESC,UNIT_NO,
+        TESTMATERIAL_QTY,RCQTY,QCQTY_FH,RCQTY_FH,UPURID,CTURID,CTDT,UPDT,DEL,ID)
+        values (
+        #{DELIVERY_NO},#{ITEM_NO} ,#{ITEM_QTY},#{PO_NO} ,#{PO_ITEM},
+        #{FACT_NO} ,#{LGORT_NO} ,#{PROVIDER_CODE} ,#{PROVIDER_NAME},#{MAT_NO},
+        #{MAT_DESC},#{UNIT_NO} ,#{TESTMATERIAL_QTY} ,#{RCQTY} ,#{QCQTY_FH},
+        #{RCQTY_FH},#{UPURID} ,#{CTURID} ,#{CTDT},#{UPDT},
+        '0',SEQ_WEBSERVICE_DELIVERY_ITEM.nextval
+        )
+    </insert>
+
+
+    <insert id="insertWmsCloudDeliveryItem" parameterType="List" >
+        INSERT INTO WMS_IN_DELIVERY_ITEM
+        (ID,DELIVERY_NO,ITEM_NO ,ITEM_QTY ,PO_NO,PO_ITEM,FACT_NO,LGORT_NO,
+        PROVIDER_CODE,PROVIDER_NAME,MAT_NO,MAT_DESC,UNIT_NO,
+        TESTMATERIAL_QTY,RCQTY,QCQTY_FH,RCQTY_FH,UPURID,CTURID,CTDT,UPDT,DEL)
+        select SEQ_WMS_IN_RECEIPT.nextval,m.* from(
+        <foreach collection="list" item="d" index="index" separator="union all">
+          select
+            #{d.DELIVERY_NO},#{d.ITEM_NO} ,#{d.ITEM_QTY},#{d.PO_NO} ,#{d.PO_ITEM},
+            #{d.FACT_NO} ,#{d.LGORT_NO} ,#{d.PROVIDER_CODE} ,#{d.PROVIDER_NAME},#{d.MAT_NO},
+            #{d.MAT_DESC},#{d.UNIT_NO} ,#{d.TESTMATERIAL_QTY} ,#{d.RCQTY} ,#{d.QCQTY_FH},
+            #{d.RCQTY_FH},#{d.UPURID} ,#{d.CTURID} ,#{d.CTDT},#{d.UPDT},
+            '0'
+          from dual
+        </foreach>
+        ) m
+    </insert>
+
+
+
+
+    <insert id="insertWmsCloudPacking" parameterType="Map">
+        INSERT INTO WMS_IN_DELIVERY_PACKING
+        (BARCODE_NO,PARENT_BARCODE_NO,TYPE_NO,CTURID,CTDT,ID)
+        values (
+        #{BARCODE_NO},#{PARENT_BARCODE_NO},#{TYPE_NO},#{CTURID},#{CTDT},
+        SEQ_WEBSERVICE_PACKING.nextval
+        )
+    </insert>
+
+    <update id="updateWmsCloudPacking" parameterType="Map">
+        update WMS_IN_DELIVERY_PACKING
+        set LGORT_NO =#{LGORT_NO},FACT_NO=#{FACT_NO},
+        DELIVERY_NO = #{DELIVERY_NO},ITEM_NO =#{DELIVERY_ITEM},MAT_NO=#{MAT_NO} ,MAT_DESC=#{MAT_DESC},
+        VERSION_NO= #{VERSION_NO},PRODUCTION_QTY=#{PRODUCTION_QTY},UNIT_NO=#{UNIT_NO},BUNIT=#{BUNIT},
+        BUNIT_QTY=#{BUNIT_QTY},BATCH_NO=#{BATCH_NO},BYD_BATCH=#{BYD_BATCH},PO_NO=#{PO_NO} ,PO_TYPE=#{PO_TYPE},
+        PO_ITEM=#{PO_ITEM},TESTMATERIAL_FLAG=#{TESTMATERIAL_FLAG},
+        SPEC_QTY=#{SPEC_QTY},CONTAINERCODE=#{CONTAINERCODE},
+        END_FLAG=#{END_FLAG},PROD_DATE=#{PROD_DATE},EXPIRY_DATE=#{EXPIRY_DATE},
+        CTDT=#{CREATE_DATE},REMARK=#{MEMO},UPDT=#{LAST_UPDATE},CTURID=#{CTURID},UPURID=#{UPURID},
+        DELIVERY_ORDER_NO=#{DELIVERY_ORDER_NO}
+        where BARCODE_NO = #{BARCODE_NO}
+    </update>
+
+    <select id="queryWhDetail" resultType="Map">
+        select LGORT_NO,WH_NUMBER,WH_NAME,COUNTRY || PROVINCE || CITY || REGION || STREET as ADDRESS,CONTACTS,TEL,WERKS  
+        from wms_core_wh_address
+        where
+        1=1
+        AND del = '0'
+        <if test="WERKS != '' and WERKS != null">
+            and WERKS= #{WERKS}
+        </if>
+        <if test="LGORT_NO != '' and LGORT_NO != null">
+            and LGORT_NO= #{LGORT_NO}
+        </if>
+    </select>
+
+
+</mapper>

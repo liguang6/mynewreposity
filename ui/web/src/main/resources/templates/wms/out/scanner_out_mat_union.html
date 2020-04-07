@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>料号汇总</title><#include "/web_header.html">
+</head>
+<body>
+	<div class="wrapper" id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+			    <div class="container">
+				    <table id="dataGrid"></table>
+				</div>
+			</div>
+		</div>
+</div>
+</body>
+<script type="text/javascript">
+		var vm = new Vue(
+				{
+					el : "#vue-app",
+					data : {
+						items : [],
+					},
+					created : function() {
+						$(function(){
+							//需要等页面加载完后，再初始化
+							vm.initJqGrid();
+						})
+					},
+					methods : {
+						init : function(items) {
+							this.items = items;
+							this.refresh();
+						},
+						 refresh : function() {
+								// 刷新表单
+								$("#dataGrid").dataGrid("clearGridData");
+								for (var i = 0; i < this.items.length; i++) {
+									$("#dataGrid").dataGrid("addRowData", i, this.items[i]);
+								}
+						},
+						initJqGrid : function() {
+							$("#dataGrid").dataGrid({
+								datatype : "local",
+								colNames:['料号','描述','交接数量',"供应商名称"],
+								colModel : [{
+									name:"MATNR",
+									index:"MATNR",
+									align:"center"
+								},{
+									name:"MAKTX",
+									index:"MAKTX",
+									align:"center"
+								},{
+									name:"TOTAOL_QTY",
+									index:"TOTAOL_QTY",
+									align:"center",
+								},{
+									name:"LIKTX",
+									index:"LIKTX",
+									align:"center",
+								}],
+								multiselect : false
+							}); 
+						}
+					}
+				});
+	</script>
+</html>

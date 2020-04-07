@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>盘点表结果录入</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/kn/inventory/list" v-model="page.list">
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select  name="werks" id="werks"
+										 v-model="WERKS" style="width: 100%;height: 26px;" > 
+										<#list tag.getUserAuthWerks("INVENTORY_CREATE") as factory> 
+										 <#if params?? && params.werks?? && params.werks == factory.code>
+										   <option value="${factory.code}" selected="selected">${factory.code}</option>
+										   <#else>
+										   <option value="${factory.code}">${factory.code}</option>
+										 </#if> 
+										</#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">&nbsp;&nbsp;&nbsp; 仓库号：</label>
+								<div class="control-inline" style="width: 60px;">
+	                                <select v-model="whNumber" class="" style="width: 100%;height: 26px;" name="whNumber" id="whNumber" >
+ 									 	<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+ 									</select>
+								</div>
+							</div>
+							<div class="form-group">
+							<label class="control-label"><span style="color:red">*</span>盘点任务号：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:120px">
+									<span class="input-icon input-icon-right" style="width: 120px;">
+                                     <input type="text"  id="inventoryNo"  name="inventoryNo" v-on:keyup.enter="enter()"  class="form-control"/>	
+                                     <i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('inventoryNo')"> </i>
+                                  	 </span>				    
+								 </div>
+							</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" style="width: 90px"><span style="color:red">*</span>录入结果类型：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									<select class="form-control" name="type" id="type">
+					                   <option value='00'>初盘</option>
+					                   <option value='01'>复盘</option>
+									  </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" id="btnQuery">查询</button>
+								<button type="button" class="btn btn-primary btn-sm" id="btnAdd" @click="saveResult">保存</button>
+								<button type="button" class="btn btn-primary btn-sm" id="btnImp">导入</button>
+								<button type="button" class="btn btn-default btn-sm" id="reset">重置</button>
+							</div>
+						</div>
+						</form>
+<!-- 						<div id="divDataGrid" style="width:100%;overflow:auto;"> -->
+							<table id="dataGrid"></table>
+<!-- 							<div id="dataGridPage"></div> -->
+<!-- 						</div>	 -->
+                            <table id="tb_excel" style="display:none"></table>	
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/kn/inventoryResult.js?_${.now?long}"></script>
+</body>
+</html>

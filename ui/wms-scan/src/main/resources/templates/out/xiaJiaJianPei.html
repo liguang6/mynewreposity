@@ -1,0 +1,145 @@
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+            	width: 228px;
+                border:1px solid #6FACEF;
+            }
+            .btn{
+                border:1px solid #1271EF;background:transparent url(${request.contextPath}/statics/ins/btn_bg.jpg) repeat-x;/**/
+                padding:0 3px;line-height:22px;color: #fff; font-weight:bold;
+            }
+            
+            body{text-align:center}
+        </style>
+        
+        <title>收料</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+<body>
+	<div id="global_content_smq">
+		<div class="smq_test">
+			<h2 id="title">拣配</h2>
+			<div id="divInfo"
+				style="color: red; text-align: center; visibility: hidden;">error</div>
+			<div id="page_1">
+				<div id="div1">
+					<div class="box">
+						<label id="reqNoLabel">需求号</label>
+						<div>
+							<input id="REQUIREMENT_NO" name="REQUIREMENT_NO" type="text"
+								onClick="select(this);" />
+							<button id="tuiJian" onclick="tuiJian();changeBtn(this);">推荐</button>
+						</div>
+					</div>
+					<div class="box">
+						<label id="barcodeLabel">标签</label>
+						<div>
+							<input id="DINGWEI_LABLE" name="DINGWEI_LABLE" type="text"/>
+						</div>
+					</div>
+				</div>
+				
+				</div>
+				<div id="page_2"  style="display: none;">
+				<div id="div3">
+					<table id="dataGrid"></table>
+					<div id='pager'></div>
+				</div>
+
+<!-- 				<div style="text-align: center;"> -->
+<!-- 					<button id="rback" type="reset" class="btn" onClick="rback();">返回</button> -->
+<!-- 					<button id="confirm" class="btn" onClick="confirm();">确认</button> -->
+<!-- 					<button id="cxgh" class="btn" onClick="cxgh();" -->
+<!-- 						style="display: none;">重新规划</button> -->
+<!-- 					<button id="ksxj" class="btn" onClick="ksxj();" -->
+<!-- 						style="display: none;">开始下架</button> -->
+<!-- 				</div> -->
+			</div>
+			
+			<div id="page_3" style="display: none;">
+				<div class="box">
+					<label id="JLHCBQ_L" style="width:72px;">截料后出标签</label> 
+					<input id="JLHCBQ" name="JLHCBQ" type="text"/>
+				</div>
+				<div class="box">
+					<label id="TASK_NUM_L">任务:</label>
+					<label id="TASK_NUM"></label>
+				</div>
+				<div class="box">
+					<label id="MATNR_L">物料号:</label>
+					<label id="MATNR" style="width:75px;"></label>
+				</div>
+				<div class="box">
+					<label id="MAKTX_L">物料描述:</label>
+					<label id="MAKTX" style="width:135px;"></label>
+				</div>
+				<div class="box">
+					<label id="STORAGE_AREA_CODE_L">推荐储位:</label>
+					<label id="STORAGE_AREA_CODE"></label>
+				</div>
+				<div class="box">
+					<label id="X_L">需求类型:</label>
+					<label id="X"></label>
+				</div>
+				<div class="box">
+					<label id="X_L" style="width:80px;">容器类型/型号:</label>
+					<label id="X"></label>
+				</div>
+				<div class="box">
+					<label id="BATCH_L">批次:</label>
+					<label id="BATCH"></label>
+				</div>
+				<div class="box">
+					<label id="QUANTITY_L">推荐数量:</label>
+					<label id="QUANTITY" style="width:30px;"></label>
+					<label id="CONFIRM_QUANTITY_L" style="width:52px;">实拣数量:</label>
+					<input id="CONFIRM_QUANTITY" type="text" style="width:30px;" value="0"/>
+				</div>
+				<div class="box">
+					<label id="GWLHBQ_L" style="width:76px;">工位料盒标签:</label>
+					<input id="GWLHBQ" name="GWLHBQ" type="text"  style="width:140px;"/>
+				</div>
+				<div class="box">
+					<label id="X_L">位置号:</label>
+					<label id="X"></label>
+				</div>
+				<div class="box">
+					<label id="SYGTM_L">上个条码:</label>
+					<label id="SYGTM"></label>
+				</div>
+				<div class="box">
+					<label id="BARCODE_L">条码:</label>
+					<input id="BARCODE" name="BARCODE" type="text"/>
+				</div>
+				<div class="box">
+					<label id="X_L">显示例外:</label>
+					<input id="X" name="X" type="text"/>
+				</div>				
+			</div>
+			<div id="page_4"  style="display: none;">
+				<table id="dataGrid_barcode"></table>
+				<div id='pager_barcode'></div>
+			</div>
+			<div style="text-align: center;">
+				<button id="sy" class="btn" onClick="sy();">首页</button>
+				<button id="rback" type="reset" class="btn" onClick="changeBtn(this);">返回</button>
+				<button id="confirm" class="btn" onClick="confirm();">确认</button>
+				<button id="cxgh" class="btn" onClick="cxgh();changeBtn(this);" style="display: none;">重新规划</button>
+				<button id="ksxj" class="btn" onClick="ksxj();changeBtn(this);" style="display: none;">开始下架</button>
+				<button id="bdwlqj" class="btn" onClick="bdwlqj();" style="display: none;">绑定物流器具</button>
+				<button id="gg" class="btn" onClick="gg();" style="display: none;">更改</button>
+				<button id="xyg" class="btn" onClick="xyg();" style="display: none;">下一个</button>
+				<button id="qr" class="btn" onClick="qr();" style="display: none;">确认</button>					
+				<button id="sjb" class="btn" onClick="changeBtn(this);" style="display: none;">数据表</button>
+				<button id="sc" class="btn" onClick="del_shujubiao_row();" style="display: none;">删除</button>
+			</div>
+		</div>
+	</div>
+	<script
+		src="${request.contextPath}/statics/js/out/xiaJiaJianPei.js?_${.now?long}"></script>
+</body>
+</html>

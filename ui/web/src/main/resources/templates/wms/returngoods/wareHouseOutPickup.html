@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库房退货捡配</title>
+<#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+	<div id="rrapp" v-cloak>
+		<div class="wrapper">
+			<div class="main-content">
+				<div class="box box-main">
+					<div id="bodyDiv" class="box-body">
+						<form id="searchForm" class="form-inline" action="#">
+							<table>
+							<tr>
+								<td id="searchForm" width="55%">
+									<div class="form-group">
+										<label class="control-label"><span style="color:red">*</span>工厂：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:75px" id="parentDiv">
+											<select class="form-control" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+											   <#list tag.getUserAuthWerks("RG_WHOP") as factory> 
+											      <option value="${factory.code}">${factory.code}</option>
+											   </#list>
+											</select>
+											</div>
+										</div>
+										<label class="control-label"><span style="color:red">*</span>仓库号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:70px" id="parentDiv">
+											<select class="form-control" name="wh" id="wh">
+												<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+											</select>
+											</div>
+										</div>
+										<label id="lable1" class="control-label"><span style="color:red">*</span>退货单号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:85px" id="parentDiv">
+											<input type="text" id="out_no" name="out_no" value="" style="width: 85px;" class="form-control width-300" />
+											</div>
+										</div>
+										<label class="control-label">状态：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width:70px" id="parentDiv">
+											<select class="form-control" name="status" id="status">
+												<option value="">全部</option>
+												<option value="00">创建</option>
+												<option value="02">下架</option>
+												<option value="03">完成</option>
+											</select>
+											</div>
+										</div>
+									</div>
+								</td>
+								<td id="searchForm" width="45%">
+									<div class="form-group">
+										<input type="button" id="btnSearchData" class="btn btn-primary btn-sm" value="查询"/>
+										<input type="button" id="btnReset" class="btn btn-info btn-sm" value="重置"/>
+										<input type="button" id="btnCreate" class="btn btn-success btn-sm" value="拣配下架"/>
+										<!-- <input type="button" id="btnPrint" class="btn btn-success btn-sm" value="打印"/> -->
+										<input type="button" id="btnCancel" class="btn btn-success btn-sm" value="取消下架"/>
+									</div>
+								</td>
+							</tr>				
+							</table>
+
+						</form>
+						<div id="tab1" class="table-responsive table2excel" data-tablename="Test Table 1">
+						<table id="dataGrid"></table>
+						</div>
+						<!-- <div id="dataGridPage"></div> -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4>操作成功！</h4>
+		<!-- <br/>
+		<input type="button" id="btnPrint1" class="btn btn-info btn-sm" value="大letter打印"/>
+		<input type="button" id="btnPrint2" class="btn btn-info btn-sm" value="小letter打印"/> -->
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/wms/returngoods/wareHouseOutPickup.js?_${.now?long}"></script>
+</body>
+</html>

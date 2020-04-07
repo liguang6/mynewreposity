@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>物料质检抽样配置</title>  
+<#include "/web_header.html">
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/config/wms_config_commom.js"></script>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline"
+						action="${request.contextPath}/config/wmscqcmatsample/list">
+						<!-- 查询条件 -->
+						<div class="form-group" style="width:160px">
+							<label class="control-label">工厂代码：</label>
+							<div class="control-inline" style="width:90px">
+                                    <select  id="werks" name="werks" class="form-control">
+                                        <#list tag.getUserAuthWerks("WMS_C_QC_MAT_SAMPLE") as factory> 
+                                            <option value="${factory.code}">${factory.code}</option>
+                                        </#list>
+                                    </select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">物料号：</label>
+							<div class="control-inline">
+								<input type="text" id="matnr" name="matnr" value=""
+									class="form-control width-400" />
+							</div>
+						</div>
+						<div class="form-group">
+							<button type="submit" class="btn btn-primary btn-sm">查询</button>
+							<button type="reset" class="btn btn-default btn-sm">重置</button>
+						</div>
+					</form>
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#' class='btn' id='newOperation'><i
+								class='fa fa-plus' aria-hidden='true'></i> 新增</a> <a href='#'
+								class='btn' id='editOperation'><i
+								class='fa fa-pencil-square-o' aria-hidden='true'></i> 修改</a> <a
+								href='#' class='btn' id='deleteOperation'><i
+								class='fa fa-trash' aria-hidden='true'></i> 删除</a> <a href='#'
+								class='btn' id='importOperation'><i class='fa fa-upload'
+								aria-hidden='true'></i> 导入</a>
+								<a href='#' class='btn' id='exportOperation' onclick="export2Excel()"><i class='fa fa-download' aria-hidden='true'></i> 导出</a> <a href="#" class="btn"
+								id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a>
+						</div>
+					</div>
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+					<table id="tb_excel" style="display:none"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script
+		src="${request.contextPath}/statics/js/wms/config/wms_c_qc_mat_sample.js?_${.now?long}"></script>
+</body>
+</html>

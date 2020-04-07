@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>图纸库检索</title>
+	<#include "/header.html">
+	<style type="text/css">
+	  .btnList {
+	     padding:3px;
+	  }
+	  [v-cloak] { display: none }
+	</style>
+</head>
+<body>
+<div id="rrapp" v-cloak>
+    <div v-show="showList" v-cloak>
+			<div class="wrapper">
+				<div class="main-content">
+					<div class="box box-main">
+						<div class="box-body">
+							<form id="searchForm" 
+								class="form-inline" data-page-no=""
+								data-page-size="" data-order-by="" action="${request.contextPath}/masterdata/pmdMapQuery">
+								
+								<div class="form-group">
+									<label class="control-label">图号：</label>
+									<div class="control-inline">
+										<input name="MAP_NO" id="MAP_NO" type="text" class="form-control"  placeholder=" "/>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">名称：</label>
+									<div class="control-inline">
+										<input name="MAP_NAME" id="MAP_NAME" type="text" class="form-control" />
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">图纸接收时间：</label> 
+									<div class="control-inline"><input type="text" id="start_date" name="start_date" value="" onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" class="form-control width-400" autocomplete="off" style="width: 85px;"></div>
+									-
+									<div class="control-inline"><input type="text" id="end_date" name="end_date" value="" onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" class="form-control width-500" autocomplete="off" style="width: 85px;"></div>
+								</div>								
+								
+								<div class="form-group">
+									<button type="button" @click="query" class="btn btn-primary btn-sm">查询</button>
+									<button style="display: none;" type="button" class="btn btn-primary btn-sm" id="btnExport" @click="exp">导出</button>
+									<button type="reset" class="btn btn-default btn-sm">重置</button>
+								</div>
+							</form>
+							
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+</div>
+
+<script type="text/javascript">
+var baseUrl = "${request.contextPath}/";
+</script>
+<script src="${request.contextPath}/statics/js/sys/masterdata/pmdMapQuery.js?_${.now?long}"></script>
+</body>
+</html>

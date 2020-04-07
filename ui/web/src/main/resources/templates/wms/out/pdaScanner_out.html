@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>pda扫描出库</title><#include "/web_header.html">
+	<style type="text/css">
+		select {
+			height: 25px;
+			border-radius:0px;
+			border:1px solid #d2d6de;
+			padding:0 6px;
+		}
+		.box-btn {
+			background-color: orange;
+			padding: 8px;
+			font-size: 25px;
+			font-family: '微软雅黑';
+			text-align: center;
+			color: white;
+			width: 100px;
+			margin: 16px;
+			border-radius:5px;
+		}
+	</style>
+</head>
+<body>
+<div id="vue-app">
+	<div class="wrapper" >
+		<div class="main-content col-md-9" id="vue">
+			<div class="box box-main ">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline">
+				
+						<div class="form-group">
+							<label class="control-label"  style="width: 65px;"><span
+									class="required"> *</span>工厂：</label>
+							<div class="control-inline">
+								<select style="width: 80px;height: 28px;" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+									<#list tag.getUserAuthWerks("A70") as factory>
+									<option value="${factory.code}">${factory.code}</option>
+								</#list>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label"><span
+									class="required"> *</span>仓库号：</label>
+							<div class="control-inline">
+								<select style="width: 80px;height: 28px;" v-model="whNumber" name="whNumber" id="whNumber" >
+									<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label" style="width: 70px;"><span
+									class="required"> *</span>类型：</label>
+							<div class="control-inline">
+								<select style="width: 150px;height: 28px;" v-model="type" name="type" id="type" onchange="vm.queryBarcode()">
+									<option value="">请选择</option>
+									<option v-for="w in scanerTypes" :value="w.CODE" :key="w.CODE">{{ w.VALUE }}</option>
+								</select>
+							</div>
+						</div>
+
+							<div class="form-group" v-if="type === '47'|| type ==='48'|| type ==='54' || type ==='53' || type === '46' ">
+							<label class="control-label" style="width: 70px;">发出库位：</label>
+							<div class="control-inline">
+								<input class="form-control" style="width: 100px;"  v-model="sendLgort" placeholder=""  @click="openLgort()" />
+							</div>
+						</div>
+						
+						
+						<div class="form-group">
+							<label class="control-label" style="width: 80px;" ><span class="required"> *</span>凭证日期：</label>
+							<div class="control-inline">
+								<input class="form-control" style="width: 168px;"
+									   v-model="certificateDate" placeholder=""
+									   onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){vm.certificateDate = pd.cal.getDateStr();}});"/>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label" style="width: 70px;"><span class="required"> *</span>过账日期：</label>
+							<div class="control-inline">
+								<input class="form-control" style="width: 100px;"
+									   v-model="postingDate" placeholder=""
+									   onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){vm.postingDate = pd.cal.getDateStr();}});"/>
+							</div>
+						</div>
+						
+						<div class="form-group" v-if="type === '44'">
+									<label class="control-label" style="width: 70px;">成本中心：</label>
+									<div class="control-inline">
+										<input class="form-control" style="width: 100px;"  v-model="cbzx" placeholder=""  />
+									</div>
+						</div>						
+						
+						<div class="form-group" v-if="type === '47'|| type ==='48'|| type ==='54' || type === '44' || type === '43'">
+									<label class="control-label"  style="width: 65px;"><span
+									></span>接收方：</label>
+									<div class="control-inline">
+										<input class="form-control" style="width: 100px;"  v-model="jsf" placeholder=""  />
+									</div>
+						</div>
+
+						<div class="form-group" v-if="type === '53' || type === '46' ">
+							<label class="control-label" style="width: 70px;">接收工厂：</label>
+							<div class="control-inline">
+								<input class="form-control" style="width: 100px;"  v-model="jsgc" placeholder=""  />
+							</div>
+						</div>
+						
+						<div class="form-group" v-if="type === '43' ">
+									<label class="control-label" style="width: 70px;">内部订单：</label>
+									<div class="control-inline">
+										<input class="form-control" style="width: 100px;"  v-model="nbdd" placeholder=""  />
+									</div>
+						</div>
+							
+						<div class="form-group" v-if="type === '47'|| type ==='48'|| type ==='54' || type ==='53' || type === '46' || type === '44' || type === '43'">
+							<label class="control-label" style="width: 65px;">接收库位：</label>
+							<div class="control-inline">
+								<input class="form-control" style="width: 100px;"  v-model="reciveLgort" placeholder=""  />
+							</div>
+						</div>
+						
+						<div class="form-group" v-if="type === '47'|| type ==='48'|| type ==='54' || type === '44' || type === '43'">
+
+								<label class="control-label" style="width: 70px;">总账科目：</label>
+								<div class="control-inline">
+									<input class="form-control" style="width: 100px;"  v-model="zzkm"   />
+								</div>
+						</div>
+						
+							<div class="form-group">
+								<div class="control-inline">
+								<!--	<a href="#" class="btn btn-success" @click="handoverComfirm()">交接确认</a>
+									<a href="#" class="btn btn-success" @click="queryBarcode">查询</a>-->	
+								</div>
+							</div>
+							<!--<div class="form-group">
+							         <div class="control-inline">
+                                    <a href="#" @click="matUnion()" class="btn btn-info" style="font-weight: bold;text-decoration: underline;">料号汇总</a>
+                                </div>
+                            </div>-->
+					</form>
+				</div>
+			</div>
+		</div>
+		<!--  <div class="col-md-3">
+			<div class="box-btn">{{qty}}</div>
+		</div>-->	
+	</div>
+	<div id="links">
+		<a href='#' class='btn' @click="remove()"><i class='fa fa-times' title="删除" aria-hidden='true'></i> 删除</a>
+		<a href="#" class="btn" @click="handoverComfirm()" title="交接确认"><i class="fa fa-check"></i>交接确认</a>
+		<a href="#" class="btn" @click="queryBarcode()" title="查询"><i class="fa fa-search"></i>查询</a>
+	</div>
+</div>
+<div id="dataGridDiv">
+	<table id="dataGrid"></table>
+</div>
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/out/pdaScanner_out.js?_${.now?long}"></script>
+</body>
+</html>

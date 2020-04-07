@@ -1,0 +1,280 @@
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+                border:1px solid #6FACEF;
+            }
+           
+            .btn{
+                border:1px solid #1271EF;background:transparent url(${request.contextPath}/statics/ins/btn_bg.jpg) repeat-x;/**/
+                padding:0 8px;line-height:22px;color: #fff; font-weight:bold;
+            }
+            
+            body{text-align:center}
+            table { border-collapse: collapse; border-spacing: 0; margin-right: auto; margin-left: auto;
+            } th, td { border: 1px solid #b5d6e6; font-weight: normal; text-align: center; vertical-align: middle;
+              } th { background-color: Gray;
+                }
+        </style>
+
+        <title>出库过账</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body>
+
+        <div id="global_content_smq">
+            <div class="smq_test" >
+                <h2>出库过账</h2>
+
+                <div id="divSysInfo"></div>
+                <div id="divSysError" style="color:red ;text-align:center;"></div>
+
+                <div id="inputDiv">
+                    <div class="box" style="height: 200px">
+                        <label id="stoNoLabel" style="padding-top:70px">出库需求号:</label>
+                        <div style="padding-top:70px">
+                            <input id="REQUIREMENT_NO" name="REQUIREMENT_NO" type="text"/>
+                        </div>
+                    </div>
+                    <div id="inputDivButton" style="text-align:center;">
+                        <button class="btn"  type="reset" onClick='window.location.replace("${request.contextPath}/account/postAccount.html")' >返回</button>
+                        <button type="submit"  class="btn" onclick="showDataDiv();"> 确认</button>
+                    </div>
+                </div>
+
+                <div id="dataTableDiv" style="display:none;">
+                    <!--行项目信息-->
+                    <div id="dataGridDiv" style="height: 200px">
+                        <table id="dataGrid"></table>
+                        <div id='pager'></div>
+                    </div>
+                    <div id="dataTableButton" style="text-align:center;">
+                        <button type="reset" class="btn" onclick="showInputDiv();"> 返回</button>
+                        <button type="submit" class="btn" onclick="showHeaderDiv();"> 过账</button>
+                    </div>
+                </div>
+                <div id="headerDiv" class="shortcuts" style="display:none;">
+                    <div style="height: 200px">
+                        <div class="box" style="padding-top:30px">
+                            <label >凭证日期</label>
+                            <input id="PZ_DATE" name="PZ_DATE"  type="date" />
+                        </div>
+                        <div class="box" style="padding-top:30px">
+                            <label >记账日期</label>
+                            <input id="JZ_DATE" name="JZ_DATE"  type="date" />
+                        </div>
+                    </div>
+                    <div id="headerDivButton" style="text-align:center;">
+                        <button type="reset" class="btn" onclick="showDataDiv();"> 返回</button>
+                        <button id="submit" type="submit" class="btn" onclick="postAccount();"> 确认</button>
+                    </div>
+                </div>
+                <div id="resultDiv" class="shortcuts" style="display:none;">
+                    <div style="height: 200px">
+                        <div class="box" style="padding-top:30px">
+                            <label style="width: 100px" >WMS凭证：</label>
+                            <label id="WMS_NO"></label>
+                        </div>
+                        <div class="box" style="padding-top:30px">
+                            <label style="width: 100px" >SAP凭证：</label>
+                            <label id="MAT_DOC"></label>
+                        </div>
+                    </div>
+                    <div id="back" style="text-align:center;">
+                        <button class="btn"  type="reset" onClick='window.location.replace("${request.contextPath}/account/postAccount.html")' >返回主过账页面</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </body>
+</html>
+<script type="text/javascript">
+
+    //需求单加载控制
+    var valideFlag = false;
+
+
+    function scan(requirementNo){
+        if(!valideFlag){
+            var now = new Date(); //当前日期
+            var pzDate=new Date(now.getTime());
+            $("#PZ_DATE").val(pzDate.Format("yyyy-MM-dd"));
+            $("#JZ_DATE").val(pzDate.Format("yyyy-MM-dd"));
+            $("#dataGrid").jqGrid('clearGridData');
+            $("#dataGrid").jqGrid('GridUnload');
+            $("#dataGrid").jqGrid({
+                url : baseUrl + "acPda/accout/whTask?REQUIREMENT_NO="+requirementNo,
+                datatype: "json",
+                jsonReader :jsonreader,
+                colNames:['物料','批次','实发数量','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','',''],
+                colModel:[
+                    {name:'MATNR',index:'MATNR', width:80, align:'center'},
+                    {name:'BATCH',index:'COUNT', width:60, align:'center'},
+                    {name:'QTY_REAL',index:'QTY_REAL', width:60, align:'center'},
+                    {name:'REFERENCE_DELIVERY_ITEM',REFERENCE_DELIVERY_ITEM:'QTY_REAL',width:0, hidden:true},
+                    {name:'QTY',index:'QTY', width:0, hidden:true},
+                    {name:'MAKTX',index:'MAKTX', width:0, hidden:true},
+                    {name:'GZ_QTY',index:'GZ_QTY', width:0, hidden:true},
+                    {name:'UNIT',index:'UNIT', width:0, hidden:true},
+                    {name:'LGORT',index:'LGORT', width:0, hidden:true},
+                    {name:'LIFNR',index:'LIFNR', width:0, hidden:true},
+                    {name:'LIKTX',index:'LIKTX', width:0, hidden:true},
+                    {name:'MO_NO',index:'MO_NO', width:0, hidden:true},
+                    {name:'SOBKZ',index:'SOBKZ', width:0, hidden:true},
+                    {name:'RECEIVE_WERKS',index:'RECEIVE_WERKS', width:0, hidden:true},
+
+                    {name:'RECEIVE_LGORT',index:'RECEIVE_LGORT', width:0, hidden:true},
+                    {name:'RECEIVER',index:'RECEIVER', width:0, hidden:true},
+                    {name:'STATION',index:'STATION', width:0, hidden:true},
+                    {name:'WH_MANAGER',index:'WH_MANAGER', width:0, hidden:true},
+                    {name:'ITEM_TEXT',index:'ITEM_TEXT',width:0, hidden:true},
+                    {name:'INDX',index:'INDX', width:0, hidden:true},
+                    {name:'ID',index:'ID', width:0, hidden:true},
+                    {name:'CONFIRM_QUANTITY',index:'CONFIRM_QUANTITY', width:0, hidden:true},
+                    {name:'GZ_QTY_HIDDEN',index:'GZ_QTY_HIDDEN', width:0, hidden:true},
+                    {name:'WERKS',index:'WERKS', width:0, hidden:true},
+
+                    {name:'WH_NUMBER',index:'WH_NUMBER', width:0, hidden:true},
+                    {name:'TASK_NUM',index:'TASK_NUM', width:0, hidden:true},
+                    {name:'FROM_BIN_CODE',index:'FROM_BIN_CODE', width:0, hidden:true},
+                    {name:'REFERENCE_DELIVERY_NO',index:'REFERENCE_DELIVERY_NO', width:0, hidden:true},
+                    {name:'BUSINESS_TYPE',index:'BUSINESS_TYPE', width:0, hidden:true},
+                    {name:'BUSINESS_NAME',index:'BUSINESS_NAME', width:0, hidden:true},
+                    {name:'MO_NO',index:'MO_NO', width:0, hidden:true},
+                    {name:'MO_ITEM_NO',index:'MO_ITEM_NO', width:0, hidden:true},
+                    {name:'SO_NO',index:'SO_NO', width:0, hidden:true},
+                    {name:'SO_ITEM_NO',index:'SO_ITEM_NO', width:0, hidden:true},
+
+                    {name:'PO_NO',index:'PO_NO', width:0, hidden:true},
+                    {name:'PO_ITEM_NO',index:'PO_ITEM_NO', width:0, hidden:true},
+                    {name:'SAP_OUT_NO',index:'SAP_OUT_NO', width:0, hidden:true},
+                    {name:'SAP_OUT_ITEM_NO',index:'SAP_OUT_ITEM_NO', width:0, hidden:true},
+                    {name:'IO_NO',index:'IO_NO', width:0, hidden:true},
+                    {name:'WBS',index:'WBS', width:0, hidden:true},
+                    {name:'CUSTOMER',index:'CUSTOMER', width:0, hidden:true},
+                    {name:'SAP_MATDOC_NO',index:'SAP_MATDOC_NO', width:0, hidden:true},
+                    {name:'SAP_MATDOC_ITEM_NO',index:'SAP_MATDOC_ITEM_NO', width:0, hidden:true},
+                    {name:'TXTRULE',index:'TXTRULE', width:0, hidden:true},
+
+                    {name:'RSNUM',index:'RSNUM', width:0, hidden:true},
+                    {name:'RSPOS',index:'RSPOS', width:0, hidden:true},
+                    {name:'AUTYP',index:'AUTYP', width:0, hidden:true},
+                ],
+                gridComplete: function(){
+                    valideFlag = true;
+                },
+                width: 226,
+                multiselect: true,
+                shrinkToFit:true,
+                rowNum: 10,
+                pager:"#pager"
+            });
+
+        }
+
+    }
+
+    function showInputDiv(){
+        $("#inputDiv").attr('style','display:block');
+        $("#dataTableDiv").attr('style','display:none');
+        $("#headerDiv").attr('style','display:none');
+        $("#resultDiv").attr('style','display:none');
+    }
+
+    function showDataDiv(){
+        $('#divSysError').html("");
+        var requirementNo = $("#REQUIREMENT_NO").val().trim();
+        if(requirementNo){
+            scan(requirementNo);
+
+            $("#inputDiv").attr('style','display:none');
+            $("#dataTableDiv").attr('style','display:block');
+            $("#headerDiv").attr('style','display:none');
+            $("#resultDiv").attr('style','display:none');
+        }else{
+            $('#divSysError').html("请输入需求号！");
+            return;
+        }
+
+    }
+
+    function showHeaderDiv(){
+        $('#divSysError').html("");
+        var ids = $("#dataGrid").jqGrid('getGridParam','selarrrow');
+        if(ids.length==0){
+            $('#divSysError').html("请选择要过账的数据!");
+            $("#submit").attr("disabled", false);
+            return;
+        }
+        $("#inputDiv").attr('style','display:none');
+        $("#dataTableDiv").attr('style','display:none');
+        $("#headerDiv").attr('style','display:block');
+        $("#resultDiv").attr('style','display:none');
+    }
+
+    function showResult(){
+        $("#inputDiv").attr('style','display:none');
+        $("#dataTableDiv").attr('style','display:none');
+        $("#headerDiv").attr('style','display:none');
+        $("#resultDiv").attr('style','display:block');
+
+    }
+
+    function postAccount(){
+
+        $('#divSysError').html("");
+        $("#submit").attr("disabled", true);
+        //从jqGrid获取选中的行数据
+        var ids = $("#dataGrid").jqGrid('getGridParam','selarrrow');
+
+        if(ids.length==0){
+            $('#divSysError').html("请选择要提交的数据!");
+            $("#submit").attr("disabled", false);
+            return;
+        }
+        var rows = [];
+        for(var i=0;i<ids.length;i++){
+            var rowData = $("#dataGrid").jqGrid('getRowData',ids[i]);
+            rowData.GZ_QTY = rowData.QTY_REAL;
+            rows.push(rowData);
+        }
+
+        $.ajax({
+            url:baseUrl + "acPda/accout/posttingAc",
+            dataType : "json",
+            type : "post",
+            data : {
+                PZDDT: $("#PZ_DATE").val(),
+                JZDDT: $("#JZ_DATE").val(),
+                HANDOVER:"",// 需交接过账的记录交接人员信息
+                REQUIREMENT_NO:$("#REQUIREMENT_NO").val(),
+                ARRLIST:JSON.stringify(rows)
+            },
+            async: true,
+            success:function(resp){
+                if(resp.code == '0'){
+                    $('#WMS_NO').html(resp.wmsNo);
+                    $('#MAT_DOC').html(resp.sapNo);
+                    showResult();
+                }else{
+                    $('#divSysError').html(resp.msg);
+                    $("#submit").attr("disabled", false);
+                }
+            }
+        });
+
+    }
+
+    document.onkeydown = function(){
+
+        if(window.event.keyCode == 13 && document.activeElement.id == 'BARCODE_NO'){
+            scan();
+        }
+    }
+</script>

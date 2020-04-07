@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.qc.dao.WmsQcResultDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+	<resultMap type="com.byd.wms.business.modules.qc.entity.WmsQcResultEntity"
+		id="wmsQcResultMap">
+		<result property="editor" column="EDITOR" />
+		<result property="editDate" column="EDIT_DATE" />
+		<result property="id" column="ID" />
+		<result property="qcResultNo" column="QC_RESULT_NO" />
+		<result property="qcResultItemNo" column="QC_RESULT_ITEM_NO" />
+		<result property="inspectionNo" column="INSPECTION_NO" />
+		<result property="inspectionItemNo" column="INSPECTION_ITEM_NO" />
+		<result property="qcRecordType" column="QC_RECORD_TYPE" />
+		<result property="stockSource" column="STOCK_SOURCE" />
+		<result property="werks" column="WERKS" />
+		<result property="whNumber" column="WH_NUMBER" />
+		<result property="lgort" column="LGORT" />
+		<result property="matnr" column="MATNR" />
+		<result property="maktx" column="MAKTX" />
+		<result property="unit" column="UNIT" />
+		<result property="resultQty" column="RESULT_QTY" />
+		<result property="batch" column="BATCH" />
+		<result property="qcDate" column="QC_DATE" />
+		<result property="qcResultCode" column="QC_RESULT_CODE" />
+		<result property="qcResultText" column="QC_RESULT_TEXT" />
+		<result property="qcResult" column="QC_RESULT" />
+		<result property="destroyQty" column="DESTROY_QTY" />
+		<result property="iqcCostCenter" column="IQC_COST_CENTER" />
+		<result property="qcPeople" column="QC_PEOPLE" />
+		<result property="del" column="DEL" />
+		<result property="creator" column="CREATOR" />
+		<result property="createDate" column="CREATE_DATE" />
+	</resultMap>
+
+	<!-- 查询 已质检改判数据 -->
+	<select id="selectRejuedgeResultItems" resultMap="wmsQcResultMap">
+		SELECT r.*
+		from
+		WMS_QC_RESULT r
+		inner join WMS_QC_INSPECTION_ITEM i
+		on r.Inspection_No =
+		i.Inspection_No and r.Inspection_Item_No = i.Inspection_Item_No
+		and
+		i.receipt_no = #{params.receiptNo} and i.receipt_item_no =
+		#{params.receiptItemNo}
+		where r.del = '0'
+	</select>
+
+	<select id="selectResultList" parameterType="Map" resultType="Map">
+		select
+		t.*,i.BIN_CODE,i.RECEIPT_DATE,i.RECEIPT_NO,i.Liktx,i.INSPECTION_QTY,i.BEDNR,h.memo,d.VALUE RETURN_REASON_TYPE_NAME 
+		from WMS_QC_RESULT t
+		LEFT JOIN SYS_DICT d ON t.RETURN_REASON_TYPE = d.CODE AND d.TYPE = 'QC_RETURN_REASONS_TYPE' 
+		left join wms_qc_inspection_item i on t.inspection_no = i.inspection_no
+		and t.inspection_item_no = i.inspection_item_no and i.batch = t.batch
+		left join wms_qc_inspection_head h on t.inspection_no = h.inspection_no
+		where t.del = '0'
+		<if test="params.werks != null and params.werks != ''">
+			and t.werks = #{params.werks}
+		</if>
+		<if test="params.whNumber != null and params.whNumber !=''">
+			and t.WH_NUMBER = #{params.whNumber}
+		</if>
+		<if test="params.INSPECTION_NO != null and params.INSPECTION_NO !=''">
+			and t.INSPECTION_NO = #{params.INSPECTION_NO}
+		</if>
+		<if test="params.qcResultCode != null and params.qcResultCode !=''">
+			and t.QC_RESULT_CODE = #{params.qcResultCode}
+		</if>		
+		<if test="params.lifnr != null and params.lifnr != ''">
+			and i.lifnr like '%' || #{params.lifnr} || '%'
+		</if>
+		<if test="params.dateStart != null and params.dateStart != ''">
+			and substr(t.qc_date,0,10) &gt;= #{params.dateStart}
+		</if>
+		<if test="params.dateEnd != null and params.dateEnd !=''">
+			and substr(t.qc_date,0,10) &lt;= #{params.dateEnd}
+		</if>
+		<if test="params.batch !=null and params.batch !=''">
+			and t.batch like '%' || #{params.batch} || '%'
+		</if>
+		<if test="params.matnr !=null and params.matnr !=''">
+			and t.matnr like '%' || #{params.matnr} || '%'
+		</if>
+		<if test="params.stockSource != null and params.stockSource !=''">
+			and t.stock_source = #{params.stockSource}
+		</if>
+		<if test="params.binCode != null and params.binCode !=''">
+			and i.BIN_CODE = #{params.binCode}
+		</if>
+		
+		order by i.receipt_date desc,t.matnr,i.lifnr
+	</select>
+
+	<select id="selectDestroyQtyList" resultType="Map"
+		parameterType="Map">
+		select t.*,c.DESTROY_GZ_QTY as in_destroy_qty from
+		(
+		select
+		r.*,i.inspection_qty,i.liktx,i.receipt_no,i.receipt_item_no
+		from wms_qc_result r
+		left join wms_qc_inspection_item i on
+		r.inspection_no = i.inspection_no
+		and r.inspection_item_no = i.
+		inspection_item_no and r.batch = i.batch
+		where r.destroy_qty > 0 and
+		(r.del = '0' or r.del is null)
+		<if test="params.werks != null and params.werks !=''">
+			and r.WERKS = #{params.werks}
+		</if>
+		<if test="params.batch != null and params.batch !=''">
+			and r.BATCH like '%' || #{params.batch} || '%'
+		</if>
+		<if test="params.lifnr != null and params.lifnr !=''">
+			and i.lifnr like '%' || #{params.lifnr} || '%'
+		</if>
+		<if test="params.matnr != null and params.matnr !=''">
+			and r.matnr like '%' || #{params.matnr} || '%'
+		</if>
+		<if test="params.qcPeople != null and params.qcPeople !=''">
+			and r.qc_people like '%' || #{params.qcPeople} || '%'
+		</if>
+		<if test="params.iqcCostCenter != null and params.iqcCostCenter !=''">
+			and r.iqc_cost_center like '%' || #{params.iqcCostCenter} || '%'
+		</if>
+		<if test="params.dateStart !=null and params.dateStart !=''">
+			and substr(r.qc_date,0,10) &gt;= #{params.dateStart}
+		</if>
+		<if test="params.dateEnd != null and params.dateEnd !=''">
+			and substr(r.qc_date,0,10) &lt;= #{params.dateEnd}
+		</if>
+		order by r.qc_date desc ,r.matnr,i.lifnr
+		) t left join wms_in_receipt c
+		on t.receipt_no = c.receipt_no and
+		t.receipt_item_no =
+		c.receipt_item_no
+	</select>
+
+
+	<!-- 查询质检结果 -->
+	<select id="queryQcResult" resultMap="wmsQcResultMap">
+		select * from wms_qc_result
+		where 1 = 1
+		<if test="LABEL_NO != null and LABEL_NO !=''">
+			AND LABEL_NO like '%' || #{LABEL_NO} || '%'
+		</if>
+		<if test="INSPECTION_NO != null and INSPECTION_NO != ''">
+			AND INSPECTION_NO = #{INSPECTION_NO}
+		</if>
+		and del != 'X'
+	</select>
+
+	<select id="queryOutReturnByQcResult" resultType="Map">
+		select 
+		a.qc_result_no,a.qc_result_item_no,c.return_no,c.return_item_no
+		from wms_qc_result a
+		left join wms_qc_inspection_item b
+		on a.inspection_no = b.inspection_no and a.inspection_item_no =
+		b.inspection_item_no
+		left join wms_out_return_item c
+		on c.receipt_no = b.receipt_no and c.receipt_item_no = b.receipt_item_no and c.del = '0'
+		and c.matnr = a.matnr
+		where a.qc_result_no = #{qcResultNo} and a.qc_result_item_no = #{qcResultItemNo}
+	</select>
+
+	<select id="queryInInboundByQcResult" resultType="Map">
+		select
+		a.qc_result_no,a.qc_result_item_no,c.inbound_no,c.inbound_item_no from
+		wms_qc_result a
+		left join wms_qc_inspection_item b
+		on a.inspection_no = b.inspection_no and a.inspection_item_no =
+		b.inspection_item_no
+		left join wms_in_inbound_item c
+		on c.receipt_no = b.receipt_no and c.receipt_item_no = b.receipt_item_no and c.del = '0'
+		and c.matnr = a.matnr and c.ITEM_STATUS not in ('02','04') 
+		where a.qc_result_no = #{qcResultNo} and a.qc_result_item_no = #{qcResultItemNo}
+	</select>
+</mapper>

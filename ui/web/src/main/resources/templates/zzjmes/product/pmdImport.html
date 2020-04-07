@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>下料明细导入</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="uploadForm" method="post" class="form-inline" action="#">
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;"><span style="color:red">*</span>工厂：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+										<select v-model="werks" name="werks" id="werks" style="width: 60px;height: 28px;">
+											<!-- <option value="0">全部</option> -->
+											<#list tag.getUserAuthWerks("ZZJMES_PMD_IMPORT") as factory>
+												<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+										<input type="text" style="display: none;" name="werks_name" id="werks_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" ><span style="color:red">*</span>车间：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 70px" id="parentDiv">
+										<select v-model="workshop" name="workshop" id="workshop" style="width: 70px;height: 28px;">
+											<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+										<input type="text" style="display: none;" name="workshop_name" id="workshop_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>线别：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+										<select v-model="line" name="line" id="line" style="width: 60px;height: 28px;">
+											<option v-for="w in linelist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+										<input type="text" style="display: none;" name="line_name" id="line_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+										<input v-model="order_no" type="text" name="order_no" id="order_no" class="form-control" @click="getOrderNoFuzzy()" @keyup.enter="query" placeholder="订单编号">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">文件：</label>
+								<div class="control-inline" >
+									<input type="file" id="excel" name="excel" class="form-control width-300"/>
+								</div>
+							</div>
+							<div class="form-group">
+                                 <label class="control-label" style="width: 50px">
+								    <a href="${request.contextPath}/statics/excel/zzjmes/import-pmd.xlsx" id='template'>下载模板</a>
+						         </label>
+							</div>
+							<div class="form-group">
+									<input type="button" id="btnImport" @click="importPmd" class="btn btn-info btn-sm" value="导入" /> 
+									<input type="button" id="btnClear" @click="clearTable"  class="btn btn-success btn-sm" value="清空" />
+									<button type="button" id="btnExport" @click="exportExcel"  class="btn btn-primary btn-sm"  >错误导出</button>
+							</div>
+						</div>
+					</form>	
+					<form id="exportForm"  method="post" action="${request.contextPath}/zzjmes/pmdImport/exportExcel" style="display:none">
+						<input name="entityList" id="entityList" type="text" hidden="hidden">
+					</form>
+ 					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+					</div>
+<!-- 					<table style="width:1400px;overflow: scoll;text-align: center;table-layout: fixed; white-space: normal; word-break: break-all;" class="table table-bordered responsive-utilities ui-jqgrid-table" >
+						<thead>
+							<tr>
+								<th style="width: 50px;"><span style="color:red">*</span><span style="color:blue"><b>序号</b></span></th>
+								<th style="width: 100px;">SAP码</th>
+								<th style="width: 150px;"><span style="color:red">*</span><span style="color:blue"><b>物料描述</b></span></th>
+								<th style="width: 80px;"><span style="color:red">*</span><span style="color:blue"><b>物料类型</b></span></th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>材料/规格</b></span></th>
+								<th style="width: 70px;">单位</th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>单车损耗%</b></span></th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>单车用量</b></span></th>
+								<th style="width: 70px;">单重</th>
+								<th style="width: 90px;">总重含损耗</th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>使用车间</b></span></th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>工序</b></span></th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>装配位置</b></span></th>
+								<th style="width: 120px;"><span style="color:red">*</span><span style="color:blue"><b>工艺标识</b></span></th>
+								<th style="width: 90px;">下料尺寸</th>
+								<th style="width: 90px;">精度要求</th>
+								<th style="width: 90px;">表面处理</th>
+								<th style="width: 90px;">备注</th>
+								<th style="width: 90px;">工艺备注</th>
+								<th style="width: 90px;">变更说明</th>
+								<th style="width: 90px;">变更主体</th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>材料类型</b></span></th>
+								<th style="width: 120px;"><span style="color:red">*</span><span style="color:blue"><b>图号</b></span></th>
+								<th style="width: 150px;"><span style="color:red">*</span><span style="color:blue"><b>名称</b></span></th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>分包类型</b></span></th>
+								<th style="width: 90px;">加工顺序</th>
+								<th style="width: 180px;"><span style="color:red">*</span><span style="color:blue"><b>工艺流程</b></span></th>
+								<th style="width: 150px;">加工工时</th>
+								<th style="width: 180px;">加工设备</th>
+								<th style="width: 90px;"><span style="color:red">*</span><span style="color:blue"><b>工段</b></span></th>
+								<th style="width: 90px;">孔特征</th>
+								<th style="width: 90px;">埋板</th>
+								<th style="width: 90px;">板厚</th>
+								<th style="width: 90px;">特殊大尺寸</th>
+								<th style="width: 200px;">错误消息</th>											
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="data in table_items">
+								<td style="widtd: 50px;">{{data.no}}</td>
+								<td style="widtd: 100px;">{{data.sap_mat}}</td>
+								<td style="widtd: 150px;">{{data.mat_description}}</td>
+								<td style="widtd: 80px;">{{data.mat_type}}</td>
+								<td style="widtd: 90px;">{{data.specification}}</td>
+								<td style="widtd: 70px;">{{data.unit}}</td>
+								<td style="widtd: 90px;">{{data.loss}}</span></td>
+								<td style="widtd: 90px;">{{data.quantity}}</td>
+								<td style="widtd: 70px;">{{data.weight}}</td>
+								<td style="widtd: 90px;">{{data.total_weight}}</td>
+								<td style="widtd: 90px;"><span style="color:red">*</span><span style="color:blue"><b>使用车间</b></span></td>
+								<td style="widtd: 90px;"><span style="color:red">*</span><span style="color:blue"><b>工序</b></span></td>
+								<td style="widtd: 90px;"><span style="color:red">*</span><span style="color:blue"><b>装配位置</b></span></td>
+								<td style="widtd: 120px;"><span style="color:red">*</span><span style="color:blue"><b>工艺标识</b></span></td>
+								<td style="widtd: 90px;">下料尺寸</td>
+								<td style="widtd: 90px;">精度要求</td>
+								<td style="widtd: 90px;">表面处理</td>
+								<td style="widtd: 90px;">备注</td>
+								<td style="widtd: 90px;">工艺备注</td>
+								<td style="widtd: 90px;">变更说明</td>
+								<td style="widtd: 90px;">变更主体</td>
+								<td style="widtd: 90px;"><span style="color:red">*</span><span style="color:blue"><b>材料类型</b></span></td>
+								<td style="widtd: 120px;"><span style="color:red">*</span><span style="color:blue"><b>图号</b></span></td>
+								<td style="widtd: 150px;"><span style="color:red">*</span><span style="color:blue"><b>名称</b></span></td>
+								<td style="widtd: 90px;"><span style="color:red">*</span><span style="color:blue"><b>分包类型</b></span></td>
+								<td style="widtd: 90px;">加工顺序</td>
+								<td style="widtd: 180px;"><span style="color:red">*</span><span style="color:blue"><b>工艺流程</b></span></td>
+								<td style="widtd: 150px;">加工工时</td>
+								<td style="widtd: 180px;">加工设备</td>
+								<td style="widtd: 90px;"><span style="color:red">*</span><span style="color:blue"><b>工段</b></span></td>
+								<td style="widtd: 90px;">孔特征</td>
+								<td style="widtd: 90px;">埋板</td>
+								<td style="widtd: 90px;">板厚</td>
+								<td style="widtd: 90px;">特殊大尺寸</td>
+								<td style="widtd: 200px;">错误消息</td>
+							</tr>
+						</tbody> 
+					</table> -->
+					
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/pmdImport.js?_${.now?long}"></script>
+</body>
+</html>

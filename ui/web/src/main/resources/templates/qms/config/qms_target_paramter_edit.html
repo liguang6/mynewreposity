@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>质量目标参数</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+				    <div class="form-group" style="align:center;margin-top:15px">
+                         <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>工厂：
+								</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+							      <select  name="werks" id="werks" style="width:100%;height:25px">
+							        <option value=''>请选择</option>
+	                                <#list tag.getUserAuthWerks("QMS_PATROL_RECORD") as factory> 
+	                                    <option value="${factory.code}">${factory.code}</option>
+	                                </#list>
+	                              </select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center;margin-top:15px">
+                         <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>订单类型：
+								</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+							      <select  name="testType" id="testType" class="required" @change="getTestNodeList()"
+							         style="width:100%;height:26px" v-model="targetParam.testType">
+										  <option value=''>请选择</option>
+										   <#list tag.qmsDictList('order_type') as d> 
+										     <option value="${d.code}">${d.value}</option> 
+										   </#list>
+									</select>	
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                         <div  style="float:left;width:100%">
+								<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>检验节点：
+								</label>
+							   	<div style="float:left;width:60%" class="col-sm-8">
+					                <select v-model="targetParam.testNode" name="testNode" id="testNode" style="width:100%;height:25px">
+		                                <option value=''>全部</option>
+		                                <option v-for="w in testNodeList" :value="w.testNode" :key="w.testNode">{{ w.testNode }}</option>
+		                             </select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								目标类型：
+							</label>
+							<div style="float:left;width:60%" class="col-sm-8">
+								<select  v-model="targetParam.targetType" id="targetType" name="targetType" style="width: 100%;height:26px" @change="targetTypeChange"> 
+                                      <option value=''>请选择</option>
+									   <#list tag.qmsDictList('target_type') as d> 
+									     <option value="${d.code}">${d.value}</option> 
+									   </#list>
+								  </select>	
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								目标值：
+							</label>
+							<div style="float:left;width:60%" class="col-sm-8">
+									<input type="text"  id="targetValue" name="targetValue" class="form-control required"  v-model="targetParam.targetValue"/>
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								有效开始日期：
+							</label>
+							<div style="float:left;width:60%" class="col-sm-8">
+								<input type="text" id="startDate" name="startDate" 
+											class="form-control" style="width: 100%;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />	
+							</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+								有效结束日期：
+							</label>
+							<div style="float:left;width:60%" class="col-sm-8">
+								<input type="text" id="endDate" name="endDate" 
+											class="form-control" style="width: 100%;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />			
+							</div>
+						</div>
+					</div>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/qms/config/qms_target_paramter_edit.js?_${.now?long}"></script>
+</body>
+</html>

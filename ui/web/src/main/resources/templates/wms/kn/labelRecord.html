@@ -1,0 +1,194 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+	<title>条码查询</title>
+	<#include "/web_header.html">
+</head>
+<body >
+<div id="rrapp" v-cloak>
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/kn/labelRecord/list">
+					<div class="row">
+						<div class="form-group">
+							<label class="control-label" style="width: 50px">工厂：</label>
+							<div class="control-inline" style="width: 70px;">
+
+								<select style="width: 80px;height: 28px;" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+									<#list tag.getUserAuthWerks("A70") as factory>
+									<option value="${factory.code}">${factory.code}</option>
+									</#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">&nbsp;&nbsp;&nbsp; 仓库号：</label>
+							<div class="control-inline" style="width: 60px;">
+								<select style="width: 80px;height: 28px;" v-model="whNumber" name="whNumber" id="whNumber" >
+									<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+						</div>
+						<div class="form-group">
+							<label class="control-label">订单号：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+									<input type="text" id="poNo" name="PO_NO" style="width: 100px;" class="form-control width-300" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+								<label class="control-label">物料号：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:120px">
+	                                     <input type="text"  id="MATNR"  name="MATNR"   class="form-control"/>						    
+									 </div>
+								</div>
+						</div>
+						<div class="form-group">
+								<label class="control-label">批次：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:120px">
+	                                     <input type="text"  id="BATCH"  name="BATCH"   class="form-control"/>						    
+									 </div>
+								</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="form-group">
+							<label class="control-label">行项目号：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+									<input type="text" id="poItemNo" name="PO_ITEM_NO" style="width: 80px;" class="form-control" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">条码号：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+									<input type="text" id="labelNo" name="LABEL_NO"  style="width: 100px;" class="form-control width-300" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">配送单号：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+									<input type="text" id="deliveryNo" name="DELIVERY_NO"  style="width: 100px;" class="form-control width-300" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">wms凭证号：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+									<input type="text" id="wmsNo" name="wmsNo"  style="width: 100px;" class="form-control width-300" />
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<button id = "btn" type="submit" class="btn btn-primary btn-sm" @click="query">${tag.getLocale("QUERY","M")}</button>
+							<button type="reset" class="btn btn-default btn-sm">${tag.getLocale("RESET","M")}</button>
+							<!--<button type="button" class="btn btn-primary btn-sm" id="btnAdd" @click="add">创建移储</button>-->
+						</div>
+					</div>
+					<div id="pgtoolbar1">
+						<div id="links" >
+							<a href='#' class='btn' id='newOperation' title="新增"><i class='fa fa-plus' aria-hidden='true'></i> ${tag.getLocale("ADD","M")}</a>
+
+							<a href='#' class='btn' id='editOperation' title="修改"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> ${tag.getLocale("UPDATE","M")}</a>
+
+							<a href='#' class='btn' id='deleteOperation'  title="删除"><i class='fa fa-trash' aria-hidden='true'></i>${tag.getLocale("DELETE","M")}</a>
+
+							<a href="#" class="btn" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a>
+
+							<button type="button" class="btn btn-primary btn-sm" @click="print()">标签条码打印</button>
+							<!--<button type="button" class="btn btn-primary btn-sm" @click="printA4()">标签A4纸打印</button>-->
+							<button type="button" class="btn btn-primary btn-sm" @click="barcodeCf()">标签条码拆分</button>
+							<button type="button" class="btn btn-primary btn-sm" @click="transfer()">标签条码转换</button>
+							<button type="button" class="btn btn-primary btn-sm" @click="printAgain()">标签条码重复打印</button>
+						</div>
+					</div>
+				</form>
+
+				<form id="print" target="_blank" method="post" action="${request.contextPath}/docPrint/labelLabelPreview" >
+					<button hidden="hidden" id="printButton" type="submit"></button>
+					<input name="labelList" id="labelList" type="text" hidden="hidden">
+					<input name="labelSize" id="labelSize" type="text" hidden="hidden">
+					<input name="labelType" id="labelType" type="text" hidden="hidden">
+					<input name="LIKTX" id="LIKTX" type="text" value="" hidden="hidden">
+				</form>
+				<form id="printA4" target="_blank" method="post" action="${request.contextPath}/docPrint/labelPreview_A4" >
+					<button hidden="hidden" id="printButtonA4" type="submit"></button>
+					<input name="labelListA4" id="labelListA4" type="text" hidden="hidden">
+					<input name="labelSizeA4" id="labelSizeA4" type="text" hidden="hidden">
+					<input name="labelTypeA4" id="labelTypeA4" type="text" hidden="hidden">
+					<input name="LIKTXA4" id="LIKTXA4" type="text" value="" hidden="hidden">
+				</form>
+				<form id="transferForm" target="_blank" method="post" action="${request.contextPath}/docPrint/transferlabel" >
+					<button hidden="hidden" id="transfer" type="submit"></button>
+					<input name="transferlabel" id="transferlabel" type="text" hidden="hidden">
+				</form>
+				<form id="printAgain" target="_blank" method="post" action="${request.contextPath}/docPrint/labelPrintAgain" >
+					<button hidden="hidden" id="printAgainButton" type="submit"></button>
+					<input name="labelListBD" id="labelListBD" type="text" hidden="hidden">
+					<input name="labelSizeBD" id="labelSizeBD" type="text" hidden="hidden">
+					<input name="labelTypeBD" id="labelTypeBD" type="text" hidden="hidden">
+					<input name="LIKTX" id="LIKTX" type="text" value="" hidden="hidden">
+				</form>
+
+				<table id="dataGrid"></table>
+				<div id="dataGridPage"></div>
+			</div>
+		</div>
+	</div>
+
+	<div id="select_template" style="display:none;height:100px">
+
+			<div class="form-group" style="align:center;margin-top:15px">
+				<div  style="float:left;width:100%">
+					<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+						<font style="color:red;font-weight:bold">*</font>业务类型
+					</label>
+
+					<div class="col-sm-8">
+
+						<div v-for="(item, index) in tempTypeList" :key="index">
+							<label><input type="radio" name="temp_type" :value="item.CODE"  />
+								<span style="font-size:16px">{{item.VALUE}}</span>
+							</label>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+
+		<div class="form-group" style="align:center;margin-top:15px">
+			<div  style="float:left;width:100%">
+				<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+					<font style="color:red;font-weight:bold">*</font>模板尺寸
+				</label>
+
+				<div class="col-sm-8">
+
+					<div v-for="(item, index) in tempSizeList" :key="index">
+						<label><input type="radio" name="temp_size" :value="item.CODE"  />
+							<span style="font-size:16px">{{item.CODE}}</span>
+						</label>
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+	</div>
+</div>
+
+
+</body>
+<script src="${request.contextPath}/statics/js/wms/kn/labelRecord.js?_${.now?long}"></script>

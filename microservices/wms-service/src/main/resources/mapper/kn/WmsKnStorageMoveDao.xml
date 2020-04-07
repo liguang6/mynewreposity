@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.kn.dao.WmsKnStorageMoveDao">
+     <select id="getStorageMoveList" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT ID,WERKS,WH_NUMBER,MATNR ,MAKTX,BATCH,LGORT,MEINS,
+		      SOBKZ,LIFNR,LIKTX,F_BIN_CODE,F_BIN_NAME,BIN_CODE,BIN_NAME,
+		      MOVE_QTY,EDITOR,EDIT_DATE
+		       FROM WMS_KN_MOVE_STORAGE s
+		      WHERE 1=1
+		      <if test="LGORT != null and LGORT !=''">
+		        AND s.LGORT = #{LGORT}
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND s.BATCH = #{BATCH}
+		      </if>
+		      <if test="MATNR!= null and MATNR !=''">
+		        AND s.MATNR = #{MATNR}
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND s.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="BIN_CODE != null and BIN_CODE !=''">
+		        AND s.BIN_CODE = #{BIN_CODE}
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND s.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      AND s.WERKS=#{WERKS} 
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{end})  
+	  WHERE ROW_ID > #{start} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getStorageMoveCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_KN_MOVE_STORAGE s
+      WHERE 1=1
+		      <if test="LGORT != null and LGORT !=''">
+		        AND s.LGORT = #{lgort}
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND s.BATCH = #{BATCH}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND s.MATNR = #{MATNR}
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND s.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="BIN_CODE != null and BIN_CODE !=''">
+		        AND s.BIN_CODE = #{BIN_CODE}
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND s.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      AND s.WERKS=#{WERKS} 
+    </select>
+     <select id="getStockInfoList" parameterType="Map" resultType="Map">
+        SELECT s.ID,s.WERKS,s.WH_NUMBER,MATNR ,MAKTX,BATCH,LGORT,BIN_CODE,MEINS,
+		      SOBKZ,LIFNR,LIKTX,STOCK_QTY,FREEZE_QTY,LOCK_QTY,wh.BARCODE_FLAG
+		       FROM WMS_CORE_STOCK s
+		        LEFT JOIN WMS_C_WH wh ON s.WERKS=wh.WERKS AND s.WH_NUMBER=wh.WH_NUMBER AND wh.DEL_FLAG='0'
+		        WHERE STOCK_QTY>0
+		      <if test="LGORT != null and LGORT !=''">
+		        AND s.LGORT = #{LGORT}
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND s.BATCH = #{BATCH}
+		      </if>
+		      <if test="MATNRS!=null and MATNRS.size>0">
+		           AND s.MATNR IN
+			       <foreach collection="MATNRS" item="detail" index="index" open="(" close=")" separator=",">
+			            #{detail}
+			       </foreach>
+		       </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND s.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="BIN_CODE != null and BIN_CODE !=''">
+		        AND s.BIN_CODE = #{BIN_CODE}
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND s.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      AND s.WERKS=#{WERKS} 
+    </select>
+  
+	<insert id="saveStorageMove" parameterType="List" >
+		INSERT INTO WMS_KN_MOVE_STORAGE
+		(ID,WERKS,WH_NUMBER,MATNR,MAKTX,BATCH,LGORT,F_BIN_CODE,F_BIN_NAME,
+		BIN_CODE,LIFNR,LIKTX,SOBKZ,MEINS,MOVE_QTY,EDITOR,EDIT_DATE) 
+		SELECT SEQ_WMS_KN_MOVE_STORAGE.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="detail" index="index" separator="UNION ALL">
+		SELECT 
+		    #{detail.WERKS},#{detail.WH_NUMBER},#{detail.MATNR},#{detail.MAKTX},#{detail.BATCH},#{detail.LGORT},
+			#{detail.BIN_CODE},#{detail.BIN_NAME},#{detail.TARGET_BIN_CODE},#{detail.LIFNR},#{detail.LIKTX},#{detail.SOBKZ},#{detail.MEINS},
+			#{detail.STOCK_QTY},#{detail.EDITOR},#{detail.EDIT_DATE}
+		FROM DUAL
+		</foreach>
+		) m
+	</insert>
+	<!-- 更新或插入库存 -->
+	<update id="mergeWmsStock" parameterType="List">
+		merge into WMS_CORE_STOCK s using(
+		select m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,
+		m.BATCH,m.BIN_CODE,m.BIN_NAME,m.MEINS,sum(cast(nvl(m.STOCK_QTY,0) as number)) STOCK_QTY,sum(cast(nvl(m.VIRTUAL_QTY,0) as number)) VIRTUAL_QTY,
+		sum(cast(nvl(m.LOCK_QTY,0) as number)) LOCK_QTY,sum(cast(nvl(m.VIRTUAL_LOCK_QTY,0) as number)) VIRTUAL_LOCK_QTY,
+		sum(cast(nvl(m.FREEZE_QTY,0) as number)) FREEZE_QTY,sum(cast(nvl(m.XJ_QTY,0) as number)) XJ_QTY,
+		m.SOBKZ,m.LIFNR,m.LIKTX,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.BATCH} BATCH,#{d.TARGET_BIN_CODE} BIN_CODE,#{d.TARGET_BIN_NAME} BIN_NAME,#{d.MEINS} MEINS,#{d.STOCK_QTY} STOCK_QTY,#{d.VIRTUAL_QTY} VIRTUAL_QTY,#{d.LOCK_QTY} LOCK_QTY,
+		#{d.VIRTUAL_LOCK_QTY} VIRTUAL_LOCK_QTY,#{d.FREEZE_QTY} FREEZE_QTY,#{d.XJ_QTY} XJ_QTY,
+		#{d.SOBKZ} SOBKZ,#{d.LIFNR} LIFNR,#{d.LIKTX} LIKTX,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE
+		from dual
+		</foreach>
+		) m 
+		 group by m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.BATCH,m.BIN_CODE,m.BIN_NAME,m.MEINS,m.STOCK_QTY,m.VIRTUAL_QTY,m.LOCK_QTY,m.VIRTUAL_LOCK_QTY,m.FREEZE_QTY,m.XJ_QTY,m.SOBKZ,m.LIFNR,m.LIKTX,m.EDITOR,m.EDIT_DATE
+		) tmp 
+		on (tmp.WERKS=s.WERKS and tmp.WH_NUMBER=s.WH_NUMBER and NVL(tmp.LGORT,'-')=NVL(s.LGORT,'-') and tmp.BIN_CODE = s.BIN_CODE 
+		and tmp.MATNR=s.MATNR  and tmp.BATCH=s.BATCH and NVL(tmp.SOBKZ,'-')=NVL(s.SOBKZ,'-') and NVL(tmp.LIFNR,'-')=NVL(s.LIFNR,'-'))
+		when matched then 
+			update  set s.STOCK_QTY=s.STOCK_QTY+tmp.STOCK_QTY,s.VIRTUAL_QTY=s.VIRTUAL_QTY+tmp.VIRTUAL_QTY,
+			s.LOCK_QTY=s.LOCK_QTY+tmp.LOCK_QTY,s.VIRTUAL_LOCK_QTY=s.VIRTUAL_LOCK_QTY+tmp.VIRTUAL_LOCK_QTY,
+			s.FREEZE_QTY=s.FREEZE_QTY+tmp.FREEZE_QTY,s.XJ_QTY=s.XJ_QTY+tmp.XJ_QTY,
+			s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then 
+			insert (ID,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,BATCH,BIN_CODE,BIN_NAME,MEINS,STOCK_QTY,VIRTUAL_QTY,LOCK_QTY,VIRTUAL_LOCK_QTY,FREEZE_QTY,XJ_QTY,SOBKZ,LIFNR,
+		LIKTX,EDITOR,EDIT_DATE) 
+		VALUES (SEQ_WMS_CORE_STOCK.nextval,tmp.WERKS,tmp.WH_NUMBER,tmp.LGORT,tmp.MATNR,tmp.MAKTX,
+		tmp.BATCH,tmp.BIN_CODE,tmp.BIN_NAME,tmp.MEINS,tmp.STOCK_QTY,tmp.VIRTUAL_QTY,tmp.LOCK_QTY,tmp.VIRTUAL_LOCK_QTY,tmp.FREEZE_QTY,tmp.XJ_QTY,
+		tmp.SOBKZ,tmp.LIFNR,tmp.LIKTX,tmp.EDITOR,tmp.EDIT_DATE
+		)
+	</update>
+	<update id="updateWmsStock" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_CORE_STOCK SET 
+		         STOCK_QTY=STOCK_QTY-to_number(#{detail.STOCK_QTY}),EDITOR=#{detail.EDITOR},EDIT_DATE=#{detail.EDIT_DATE}
+			WHERE ID=#{detail.ID}
+		</foreach>
+	</update>
+	<update id="updateWmsCoreLabel" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_CORE_LABEL s SET 
+		         BIN_CODE=#{detail.BIN_CODE},EDITOR=#{detail.EDITOR},EDIT_DATE=#{detail.EDIT_DATE}
+			WHERE s.LABEL_NO=#{detail.LABEL_NO}
+		</foreach>
+	</update>
+	<update id="updateWmsCoreStockLabel" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_CORE_STOCK_LABEL s SET 
+		         BIN_CODE=#{detail.BIN_CODE},BIN_NAME=#{detail.BIN_NAME},EDITOR=#{detail.EDITOR},EDIT_DATE=#{detail.EDIT_DATE}
+			WHERE s.LABEL_NO=#{detail.LABEL_NO}
+		</foreach>
+	</update>
+	<select id="getAutoPutawayFlagList" parameterType="Map" resultType="Map">
+        SELECT b.STORAGE_AREA_CODE ,b.BIN_CODE,s. AUTO_PUTAWAY_FLAG
+		       FROM  WMS_CORE_WH_BIN b
+		        LEFT JOIN  WMS_CORE_WH_AREA s ON  s.WH_NUMBER=b.WH_NUMBER AND
+		           b.STORAGE_AREA_CODE=s.STORAGE_AREA_CODE AND s.DEL='0'
+		        WHERE 1=1
+		        AND b.WH_NUMBER = #{WH_NUMBER}
+		      <if test="BINCODES!=null and BINCODES.size>0">
+		           AND b.BIN_CODE IN
+			       <foreach collection="BINCODES" item="detail" index="index" open="(" close=")" separator=",">
+			            #{detail.TARGET_BIN_CODE}
+			       </foreach>
+		       </if>
+    </select>
+    <select id="getCoreLabelList" parameterType="Map" resultType="Map">
+		    SELECT s.*  FROM  WMS_CORE_LABEL s  
+				 WHERE s.WERKS=#{WERKS} AND s.WH_NUMBER=#{WH_NUMBER} 
+             <if test="SOBKZ!=null and SOBKZ!=''">
+		            AND S.SOBKZ=#{SOBKZ}  
+		      </if>
+		      <if test="SOBKZ==null or SOBKZ==''">
+		            AND SOBKZ IS NULL
+		      </if>
+		      <if test="LGORT!=null and LGORT!=''">
+		            AND LGORT=#{LGORT}
+		      </if>
+		      <if test="LGORT==null or LGORT==''">
+		            AND LGORT IS NULL
+		      </if>
+		      <if test="LIFNR!=null and LIFNR!=''">
+		         	AND S.LIFNR=#{LIFNR}
+		      </if>
+		      <if test="LIFNR==null or LIFNR==''">
+		         	AND S.LIFNR  IS NULL
+		      </if>
+				 AND s.MATNR=#{MATNR}  AND s.BIN_CODE=#{BIN_CODE} AND s.BATCH=#{BATCH}
+    </select>
+    <select id="getWhTaskList" parameterType="Map" resultType="int">
+		      SELECT NVL(SUM(QUANTITY-NVL(CONFIRM_QUANTITY,0)) ,0)
+		       FROM WMS_CORE_WH_TASK S WHERE S.WT_STATUS IN ('00','01') AND
+		       S.WERKS=#{WERKS}  AND  S.WH_NUMBER = #{WH_NUMBER}  AND  S.FROM_BIN_CODE=#{BIN_CODE}  
+		      <if test="SOBKZ!=null and SOBKZ!=''">
+		            AND S.SOBKZ=#{SOBKZ}  
+		      </if>
+		      <if test="SOBKZ==null or SOBKZ==''">
+		            AND SOBKZ IS NULL
+		      </if>
+		      <if test="LGORT!=null and LGORT!=''">
+		            AND LGORT=#{LGORT}
+		      </if>
+		      <if test="LGORT==null or LGORT==''">
+		            AND LGORT IS NULL
+		      </if>
+		      <if test="LIFNR!=null and LIFNR!=''">
+		         	AND S.LIFNR=#{LIFNR}
+		      </if>
+		      <if test="LIFNR==null or LIFNR==''">
+		         	AND S.LIFNR  IS NULL
+		      </if>
+		      AND  S.MATNR=#{MATNR}  AND S.BATCH=#{BATCH} 
+    </select>
+</mapper>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html >
+<head>
+    <meta charset="UTF-8">
+    <title>一步联动单据打印配置</title><#include "/web_header.html">
+    <style>
+        select {
+            height: 25px;
+            border-radius:0px;
+            border:1px solid #d2d6de;
+            padding:0 6px;
+        }
+        [v-cloak] { display: none }
+    </style>
+</head>
+<body>
+<div class="wrapper" id="vue-app">
+    <div class="main-content" id="vue">
+        <div class="box box-main">
+            <div class="box-body">
+                <form id="searchForm" class="form-inline" action="${request.contextPath}/in/sto/query">
+                    <div class="form-group">
+                        <label class="control-label"><span
+                                class="required"> *</span>工厂：</label>
+                        <div class="control-inline" style="width: 75px;">
+                            <select class="form-control"  name="WERKS" id="WERKS" >
+                                <#list tag.getUserAuthWerks("A91") as factory>
+                                <option value="${factory.code}">${factory.code}</option>
+                            </#list>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                <div id="resultLayer" style="display: none; padding: 10px;">
+                    <h4>创建需求成功！需求号：<a id="reqDetail" class="toNewPage" title="需求明细"><span id="outreqNoLayer">-</span></a></h4>
+                    <br/>
+                </div>
+
+
+                    <div  id="links" >
+                        <a  href="#" class="btn" title="需求创建" @click="query()"><i class="fa fa-search"></i> 查询</a>
+                        <a  class="btn" id="a" @click="add()"><i class="fa fa-plus" aria-add="true"></i> 增加新项</a>
+                        <a   class="btn" @click="edit()"><i class="fa fa-edit" aria-hidden="true"></i> 编辑</a>
+                        <a  class="btn" href='#'  class='btn' @click="remove()"><i class='fa fa-remove' title="删除" aria-hidden='true'></i> 删除</a>
+
+                    </div>
+                <div id="dataGridDiv">
+                    <table id="dataGrid"></table>
+                    <div id="psetcols"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/in/wms_sto_printconfig.js?_${.now?long}"></script>
+</html>

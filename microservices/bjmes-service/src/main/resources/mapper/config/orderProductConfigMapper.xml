@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.bjmes.modules.config.dao.BjMesOrderProductsDao">
+	 
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+        select * from BJMES_ORDER_PRODUCTS t where 1=1
+		<if test="order_no != null and order_no !=''">
+			AND t.order_no=#{order_no} 
+		</if>
+		<if test="werks != null and werks !=''">
+			AND t.werks=#{werks} 
+		</if>
+		<if test="workshop != null and workshop !=''">
+			AND t.workshop=#{workshop} 
+		</if>
+		<if test="status != null and status !=''">
+			AND t.status = #{status}
+		</if>
+		
+		ORDER BY edit_date DESC
+        LIMIT #{start},#{limit}            
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+        select count(*) from BJMES_ORDER_PRODUCTS t where 1=1
+		<if test="order_no != null and order_no !=''">
+			AND t.order_no=#{order_no} 
+		</if>
+		<if test="werks != null and werks !=''">
+			AND t.werks=#{werks} 
+		</if>
+		<if test="workshop != null and workshop !=''">
+			AND t.workshop=#{workshop} 
+		</if>
+		<if test="status != null and status !=''">
+			AND t.status = #{status}
+		</if>
+    </select>
+
+	<select id="getList" parameterType="Map" resultType="Map">
+        select t.*,c.id product_id,c.product_code product_code_a from BJMES_ORDER_PRODUCTS t,BJMES_C_PRODUCTS c where t.product_code=c.product_code
+		<if test="order_no != null and order_no !=''">
+			AND t.order_no=#{order_no} 
+		</if>
+		<if test="werks != null and werks !=''">
+			AND t.werks=#{werks} 
+		</if>
+		<if test="workshop != null and workshop !=''">
+			AND t.workshop=#{workshop} 
+		</if>
+		<if test="status != null and status !=''">
+			AND t.status = #{status}
+		</if>
+		<if test="product_code != null and product_code !=''">
+			AND t.product_code = #{product_code}
+		</if>
+		<if test="product_type_code != null and product_type_code !=''">
+			AND t.product_type_code = #{product_type_code}
+		</if>
+		
+		ORDER BY edit_date DESC     
+    </select>
+    
+    
+    <select id="getById" parameterType="Long" resultType="Map">
+      SELECT D.ID id,NAME name,TYPE type,CODE code,VALUE value,REMARK remark,
+          D.CREATOR creator ,D.CREATE_DATE createDate
+		       FROM QMS_C_DICT D  WHERE ID=#{id}
+    </select>
+    
+    <insert id="save" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into BJMES_ORDER_PRODUCTS (werks,werks_name,workshop,workshop_name,order_no,product_type_code,product_code,
+		sap_no,single_qty,standard_hours,status,editor,edit_date) values
+		<foreach collection="list" item="d" open=" " close=" " separator=" ,">
+			(#{d.werks},#{d.werks_name},#{d.workshop},#{d.workshop_name},#{d.order_no},#{d.product_type_code},#{d.product_code},#{d.sap_no},
+			#{d.single_qty},#{d.standard_hours},#{d.status},#{d.editor},#{d.edit_date})
+		</foreach>
+	</insert>
+
+	<update id="update" parameterType="Map">
+			update BJMES_ORDER_PRODUCTS set 
+			werks=#{werks},werks_name=#{werks_name},
+			workshop= #{workshop},workshop_name=#{workshop_name},order_no=#{order_no},product_type_code=#{product_type_code},
+			product_code= #{product_code},sap_no=#{sap_no},single_qty=#{single_qty},
+			standard_hours= #{standard_hours},status=#{status},editor=#{editor},edit_date=#{edit_date}
+			where werks=#{werks} and order_no=#{order_no} and product_code=#{product_code}
+	</update> 
+
+	<update id="delete" parameterType="Long">
+			delete from BJMES_ORDER_PRODUCTS  where id=#{id}
+	</update>
+
+
+	<select id="getOrderMapListByPage" parameterType="Map" resultType="Map">
+        select O.werks,O.werks_name,O.workshop,O.workshop_name,O.order_no,O.product_type_code,O.editor,O.edit_date,C.product_type_name from BJMES_ORDER_PRODUCTS O,BJMES_C_PRODUCTS C
+		where O.product_type_code=C.product_type_code
+		<if test="order_no != null and order_no !=''">
+			AND O.order_no=#{order_no} 
+		</if>
+		<if test="werks != null and werks !=''">
+			AND O.werks=#{werks} 
+		</if>
+		<if test="workshop != null and workshop !=''">
+			AND O.workshop=#{workshop} 
+		</if>
+		<if test="product_type_code != null and product_type_code !=''">
+			AND O.product_type_code = #{product_type_code}
+		</if>
+		
+		group by O.werks,O.workshop,O.order_no,O.product_type_code
+        LIMIT #{start},#{limit}            
+    </select>
+
+	<select id="getOrderMapListCount" parameterType="Map" resultType="int">
+	select count(*) from (
+        select O.* from BJMES_ORDER_PRODUCTS O,BJMES_C_PRODUCTS C
+		where O.product_type_code=C.product_type_code
+		<if test="order_no != null and order_no !=''">
+			AND O.order_no=#{order_no} 
+		</if>
+		<if test="werks != null and werks !=''">
+			AND O.werks=#{werks} 
+		</if>
+		<if test="workshop != null and workshop !=''">
+			AND O.workshop=#{workshop} 
+		</if>
+		<if test="product_type_code != null and product_type_code !=''">
+			AND O.product_type_code = #{product_type_code}
+		</if>
+		
+		group by O.werks,O.workshop,O.order_no,O.product_type_code
+             ) m
+    </select>
+
+	<insert id="saveOrderMap" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into BJMES_ORDER_PRODUCTS_MAP (werks,werks_name,workshop,workshop_name,order_no,product_type_code,map_no,
+		map_name,memo,editor,edit_date) values
+		<foreach collection="list" item="d" open=" " close=" " separator=" ,">
+			(#{d.werks},#{d.werks_name},#{d.workshop},#{d.workshop_name},#{d.order_no},#{d.product_type_code},#{d.map_no},#{d.map_name},
+			#{d.memo},#{d.editor},#{d.edit_date})
+		</foreach>
+	</insert>
+
+	<update id="updateOrderMap" parameterType="Map">
+			update BJMES_ORDER_PRODUCTS_MAP set 
+			werks=#{werks},werks_name=#{werks_name},
+			workshop= #{workshop},workshop_name=#{workshop_name},order_no=#{order_no},product_type_code=#{product_type_code},
+			map_no= #{map_no},map_name=#{map_name},memo=#{memo},
+			editor=#{editor},edit_date=#{edit_date}
+			where werks=#{werks} and order_no=#{order_no} and workshop=#{workshop} and product_type_code=#{product_type_code}
+	</update> 
+
+	<update id="deleteOrderMap" parameterType="Map">
+			delete from BJMES_ORDER_PRODUCTS_MAP  where 
+			werks=#{werks} and order_no=#{order_no} and workshop=#{workshop} and product_type_code=#{product_type_code}
+	</update>
+
+	<select id="getOrderMapList" parameterType="Map" resultType="Map">
+        select * from BJMES_ORDER_PRODUCTS_MAP where 1=1
+		<if test="order_no != null and order_no !=''">
+			AND order_no=#{order_no} 
+		</if>
+		<if test="werks != null and werks !=''">
+			AND werks=#{werks} 
+		</if>
+		<if test="workshop != null and workshop !=''">
+			AND workshop=#{workshop} 
+		</if>
+		<if test="product_type_code != null and product_type_code !=''">
+			AND product_type_code = #{product_type_code}
+		</if>
+		
+		ORDER BY edit_date DESC     
+    </select>
+	
+</mapper>

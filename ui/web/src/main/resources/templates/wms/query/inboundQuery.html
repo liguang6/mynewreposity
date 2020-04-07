@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>进仓单查询</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/inboundQuery/list" >
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">工厂：</label>
+								<div class="control-inline" style="width: 80px;">
+									<select class="form-control" name="WERKS" id="werks" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("QUERY_INBOUND") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+						   <div class="form-group">
+	                           <label class="control-label"  style="width: 60px">单据类型：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   	<select class="form-control" name="INBOUND_TYPE" id="inboundType" >
+									   	    <option value="">全部</option>
+									   	    <option value="00">外购进仓单</option>
+									   	    <option value="01">自制进仓单</option>
+									    </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+	                          <label class="control-label" style="width: 80px">进仓单号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   	<input type="text" id="inboundNo" name="INBOUND_NO" style="width: 150px;" class="form-control" />
+									   	<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#inboundNo'))" style="width: 10px;"/> 
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+	                          <label class="control-label" style="width: 40px">料号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									<span class="input-icon input-icon-right" style="width: 120px;">
+									   	<input type="text" id="MATNR" name="MATNR" style="width: 120px;" class="form-control" />
+									   	<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('MATNR')"> </i>
+									</span>   	
+									</div>
+								</div>
+							</div>
+						    <div class="form-group">
+									<label class="control-label" style="width: 60px">创建日期：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width:200px">
+										<div class="control-inline">
+											<div class="input-group" style="width:90px">
+			                                    <input type="text" id="createDateStart" name="CREATE_DATE_START" 
+												class="form-control width-300" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>
+											<div class="input-group" style="width:90px">
+											    <input type="text" id="createDateEnd" name="CREATE_DATE_END"
+												class="form-control width-300" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+					</div>
+					<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 60px;">仓库号：</label>
+								<div class="control-inline" style="width: 80px;">
+									<select class="form-control" name="WH_NUMBER" id="wh">
+									</select>
+								</div>
+							</div>
+						   <div class="form-group">
+	                           <label class="control-label"  style="width: 60px">状态：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   	<select class="form-control" name="INBOUN_STATUS" id="inbounStatus" >
+									   	    <option value="">全部</option>
+									   	    <option value="00">创建</option>
+									   	    <option value="01">部分进仓</option>
+									   	    <option value="02">已完成</option>
+									   	    <option value="04">关闭</option>
+									    </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+	                           <label class="control-label"  style="width: 80px">进仓单类型：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:150px">
+									   	<select id="businessName"  name="BUSINESS_NAME" style="width:100%;height: 25px;">
+									   	   <option value=''>请选择</option>
+											<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE" >
+												{{t.BUSINESS_NAME}}
+											</option>
+										</select>
+									</div>
+								</div>
+							</div>
+						<div class="form-group">
+							<button type="submit" class="btn btn-primary btn-sm">查询</button>
+<!-- 							<button type="button" id="btnDelete" class="btn btn-primary btn-sm" @click="del">关闭/删除</button> -->
+						</div>
+					</div>
+				</form>
+<!-- 					<div id="divDataGrid" style="width:100%;overflow:auto;"> -->
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+<!-- 					</div>	 -->
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/inboundQuery.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>检验单查询</title> <#include "/web_header.html">
+</head>
+
+<body>
+	<div class="wrapper">
+		<div class="main-content" id="vue">
+			<div class="box box-main">
+
+				<div class="box-body">
+
+					<form id="searchForm" class="form-inline"
+						action="${request.contextPath}/qcQuery/inspectionList">
+
+						<div class="form-group">
+							<label class="control-label">送检单号：</label>
+							<div class="control-inline" style="width: 100px;">
+								<input class="form-control" name="inspectionNo"
+									style="width: 100px;" />
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">供应商：</label>
+							<div class="control-inline" style="width: 100px;">
+								<input class="form-control" name="lifnr" style="width: 100px;" />
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">工厂：</label>
+							<div class="control-inline" style="width: 100px;">
+								<select class="form-control" name="werks" id="werks"> 
+									<#list tag.getUserAuthWerks("QUERY_QC_INSPECTION") as factory> 
+									<#if params?? &&
+									params.werks?? && params.werks == factory.code>
+									<option value="${factory.code}" selected="selected">${factory.code}</option>
+									<#else>
+									<option value="${factory.code}">${factory.code}</option> </#if>
+									</#list>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">送检单类型：</label>
+							<div class="control-inline" style="width: 100px;">
+								<select name="inspectionType" class="form-control">
+									<option value="" selected="selected">全部</option>
+									<option value="01">来料质检</option>
+									<option value="02">库存复检</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">送检单状态：</label>
+							<div class="control-inline" style="width: 100px;">
+								<select name="inspectionStatus" class="form-control">
+									<option value="00" selected="selected">创建</option>
+									<option value="01">部分完成</option>
+									<option value="02">全部完成</option>
+									<option value="03">关闭</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">创建人：</label>
+							<div class="control-inline" style="width: 100px;">
+								<input class="form-control" name="creator" style="width: 100px;" />
+							</div>
+						</div>
+						<a href="#" class="btn btn-primary" id="query">查询</a>
+						
+						<div class="form-group">
+							<div class="control-inline" >
+								<button type="reset" class="btn btn-default">重置</button>
+							</div>
+						</div>
+
+					</form>			
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+	
+		<script src="${request.contextPath}/statics/js/wms/qc/wms_qc_query_inspection_list.js?_${.now?long}"></script>
+</html>

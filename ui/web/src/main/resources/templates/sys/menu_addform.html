@@ -1,0 +1,159 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>新增菜单</title>
+<#include "/header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/fonts/font-icons.min.css">
+</head>
+<body style="height:100%">
+	<div class="wrapper">
+		<div class="main-content">
+			<div id="rrapp" class="box box-main">
+				<div class="box-header">
+					<div class="box-title">
+						<i class="fa icon-plus"></i> {{type}}菜单
+					</div>
+				</div>
+				
+				<div class="row box-body">
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							上级菜单：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<div class="input-group treeselect" id="parentDiv" data-url="/js/a/sys/office/treeData?excludeCode=">
+									<input id="parent_name" name="parentName" value="" v-model="menu.parentName" class="form-control" @click="menuTree" readonly="readonly" aria-invalid="false" type="text">
+									<span class="input-group-btn">
+									<a id="parentButton" @click="menuTree" class="btn btn-default "><i class="fa fa-search"></i></a>
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title="">
+								<span class="required " aria-required="true">*</span>菜单编码：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<input id="menuKey" name="menuKey" value="" v-model="menu.menuKey" maxlength="100" class="form-control required " aria-required="true" type="text">
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row box-body">
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							 菜单名称：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<input id="name" name="name" value="" v-model="menu.name" maxlength="100" class="form-control required " aria-required="true" type="text">
+							</div>
+						</div>
+					</div>
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							<span class="required " aria-required="true"></span> 菜单类型：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<select id="menuType" name="menuType" class="form-control">
+								<option value="1">菜单</option><option value="2">按钮</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					
+				</div>
+				
+				<div class="row box-body">
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							<span class="required " aria-required="true">*</span>排序：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<input id="orderNum" name="orderNum" value="" v-model="menu.orderNum" maxlength="100" class="form-control required " aria-required="true" type="text">
+							</div>
+						</div>
+					</div>
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							<span class="required " aria-required="true">*</span>节点排序：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<input id="treeSort" name="treeSort" value="" v-model="menu.treeSort" maxlength="100" class="form-control required " aria-required="true" type="text">
+							</div>
+						</div>
+					</div>
+					
+				</div>
+				
+				<div class="row box-body">
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							<span class="required " aria-required="true">*</span>是否叶子节点：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+							<select id="treeLeaf" name="treeLeaf" class="form-control">
+								<option value="1">是</option><option value="0">否</option>
+						    </select>
+						    </div>
+						</div>
+					</div>
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							<span class="required " aria-required="true">*</span>层级：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<input id="treeLevel" name="treeLevel" value="" v-model="menu.treeLevel" maxlength="100" class="form-control required " aria-required="true" type="text">
+							</div>
+						</div>
+					</div>
+					
+				</div>
+				<div class="row box-body">
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							菜单url：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<input id="url" name="url" value="" v-model="menu.url" maxlength="100" class="form-control required " aria-required="true" type="text">
+							</div>
+						</div>
+					</div>
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							授权：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<input id="perms" name="perms" value="" v-model="menu.perms" maxlength="100" class="form-control required " aria-required="true" type="text">
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row box-body">
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label class="control-label col-sm-4" title=""> 
+							<span class="required " aria-required="true"></span>菜单图标：<i class="fa icon-question hide"></i></label>
+							<div class="col-sm-8">
+								<input id="icon" name="icon" value="" v-model="menu.icon" maxlength="100" class="form-control required "  type="text">
+							</div>
+						</div>
+					</div>
+					
+				</div>
+				
+				<div class="row box-body">
+				<center>
+					<button type="button" @click="saveOrUpdate" class="btn btn-success"><i class="fa fa-check"></i> 确认</button>
+					<button type="reset" @click="reset"  class="btn btn-info"><i class="fa fa-reply-all"></i> 重置</button>
+					<button type="button" class="btn btn-default" id="btnCancel" onclick="js.closeCurrentTabPage()"><i class="fa fa-close"></i> 关 闭</button>
+				</center>
+				</div>
+				
+			</div>
+		</div>
+		
+	</div>
+	<div id="menuLayer" style="display: none;padding:10px;">
+		<ul id="menuTree" class="ztree"></ul>
+	</div>
+	<script src="${request.contextPath}/statics/js/sys/menu_addform.js?_${.now?long}"></script>
+</body>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+    <title>退货单</title>
+    <style>
+        @page {
+            size: 210mm 297mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            margin: 0.15in;
+            padding: 0.1em;
+/*             @bottom-center{
+                content:"CSCC © 版权所有";
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            }; */
+            @top-center { content: element(header) };
+            /* @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;
+            }; */
+        }
+    </style>
+    <link rel="stylesheet" href="http://localhost:8889/wms/statics/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="http://localhost:8889/wms/statics/css/wms.css" />
+</head>
+<body style="font-family: SimSun">
+	<div class="main-content">
+		<div class="row">
+			<div class="col-xs-12">
+				<table style="width: 100%;">
+					<tr style="width: 100%;">
+						<td style="width: 33%;" rowspan="2">
+							<img src="http://localhost:8889/wms/statics/images/byd_logo.png" style="height: 42px;"></img>
+						</td>
+						<td style="width: 33%;text-align: center;" rowspan="2">
+							<label class="control-label" style="border-bottom: 1px solid #000000;font-size: 22px;width: 100%;">退货单</label>
+						</td>
+						<td style="width: 33%;text-align: right;padding-right: 80px;" >
+							<label class="control-label" title="" style="width: 100%;">签单时间：</label>
+						</td>
+					</tr>
+					<tr style="width: 100%;">
+						<td style="width: 33%;text-align: right;" >
+							<label class="control-label" title="" style="width: 100%;">退货单号：</label>
+						</td>
+					</tr>
+					
+					<tr style="width: 100%;margin-top: 18px;">
+						<td style="width: 33%;">
+							<label class="control-label" title="" style="width: 100%;">公司：长沙市比亚迪汽车（十三部）</label>
+						</td>
+						<td style="width: 33%;">
+							<label class="control-label" title="" style="width: 100%;">事业部：十三部</label>
+						</td>
+						<td style="width: 33%;">
+							<label class="control-label" title="" style="width: 100%;text-align: right;">创建时间：2018-09-03 10:31</label>
+						</td>
+					</tr>	
+					<tr style="width: 100%;">
+						<td style="width: 33%;" rowspan="2">
+							<label class="control-label" title="" style="width: 100%;">工厂：C131</label>
+						</td>
+						<td style="width: 33%;" rowspan="2">
+							<label class="control-label" title="" style="width: 100%;"></label>
+						</td>
+						<td style="width: 33%;">
+							<label class="control-label" title="" style="width: 100%;text-align: right;">WMS凭证：12838844</label>
+						</td>
+					</tr>	
+					<tr style="width: 100%;">
+						<td style="width: 33%;" >
+							<label class="control-label" title="" style="width: 100%;text-align: right;">SAP凭证：12838844</label>
+						</td>
+					</tr>
+					<tr style="width: 100%;">
+						<td style="width: 33%;">
+							<label class="control-label" title="" style="width: 100%;">供应商：11087</label>
+						</td>
+						<td style="width: 33%;" colspan="2">
+							<label class="control-label" title="" style="width: 100%;">深圳市XXX股份有限公司</label>
+						</td>
+					</tr>						
+				</table>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-12">
+		    	<table style="border:solid #000000; border-width:1px 0px 0px 1px;width: 100%;min-height: 230mm;max-height: 230mm;">
+			        <tr>
+			            <td colspan="8" style="border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;">抬头文本：质量问题需退货</td>
+			        </tr>
+			        <tr>
+			            <td style="width: 30px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;"></td>
+			            <td style="width: 80px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;font-weight: bold;">物料编码</td>
+			            <td style="width: 250px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;font-weight: bold;">物料描述</td>
+			            <td style="width: 40px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;font-weight: bold;">单位</td>
+			            <td style="width: 50px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;font-weight: bold;">金额</td>
+			            <td style="width: 70px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;font-weight: bold;">批次</td>
+			            <td style="width: 70px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;font-weight: bold;">退货数量</td>
+			            <td style="border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;font-weight: bold;">退货原因</td>
+			        </tr>
+			        <tr>
+			            <td style="width: 30px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;">1</td>
+			            <td style="width: 80px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;">10191212-00</td>
+			            <td style="width: 250px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;">483QB-9-1000010_发动机总成_M00000</td>
+			            <td style="width: 40px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;">PCS</td>
+			            <td style="width: 50px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;"></td>
+			            <td style="width: 70px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;">1234444DL</td>
+			            <td style="width: 70px;border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;">10</td>
+			            <td style="border:solid #000000; border-width:0px 1px 1px 0px; padding:10px 0px;">包装损坏</td>
+			        </tr>
+		    	</table>
+			</div>
+		</div>
+		
+		<div class="row">
+			<div class="form-group">
+				<div class="col-xs-2">
+					<label class="control-label" title="" >制单：132094</label>
+				</div>	
+				<div class="col-xs-2">
+					<label class="control-label" title="" >主管：</label>
+				</div>
+				<div class="col-xs-2">
+					<label class="control-label" title="" >仓管：</label>
+				</div>
+				<div class="col-xs-2">
+					<label class="control-label" title="" >采购：</label>
+				</div>
+				<div class="col-xs-2">
+					<label class="control-label" title="" >发料：</label>
+				</div>	
+				<div class="col-xs-2">
+					<label class="control-label" title="" >供应商：</label>
+				</div>	
+			</div>								
+		</div>
+		
+		<div class="row">
+			<div class="form-group">
+				<div class="col-xs-8">
+					<label class="control-label" title="" style="width: 100%;text-align: left;">存根联(白) 仓管联(率) 财务联(红) 采购联(黄) 供应商联(蓝)</label>
+				</div>	
+				<div class="col-xs-4">
+					<label class="control-label" title="" style="width: 100%;text-align: left;">交单时间：</label>
+				</div>									
+			</div>
+		</div>
+		
+	</div>
+</body>
+</html>

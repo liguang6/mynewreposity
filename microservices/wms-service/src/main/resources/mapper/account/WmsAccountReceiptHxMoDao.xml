@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.account.dao.WmsAccountReceiptHxMoDao">
+
+	<select id="getMoHeadInfoByMoNo" parameterType="List" resultType="Map">
+		SELECT m.*,p.HX_FLAG
+			FROM WMS_SAP_MO_HEAD m
+			LEFT JOIN WMS_C_WH p ON m.WERKS = p.WERKS
+			WHERE m.WERKS = #{WERKS} AND 
+			<foreach collection="moList" index="index" item="a" separator="or" open="(" close=")">
+			      m.AUFNR = #{a}
+			</foreach>
+			
+	</select>
+	
+	<select id="getMoItemInfoByMoNo" parameterType="List" resultType="Map">
+		SELECT i.*,m.WERKS,h.ID AS HX_MO_ITEM_ID,h.XS101M,h.XS102M,h.SS101M,h.SS102M,h.HX_QTY
+			FROM WMS_SAP_MO_ITEM i
+			LEFT JOIN WMS_SAP_MO_HEAD m ON m.AUFNR = i.AUFNR AND m.WERKS = #{WERKS}
+			LEFT JOIN WMS_HX_MO_ITEM h ON i.AUFNR = h.AUFNR AND i.POSNR = h.POSNR AND h.WERKS = #{WERKS}
+			WHERE 1=1 AND 
+			<foreach collection="moList" index="index" item="a" separator="or" open="(" close=")">
+			      i.AUFNR = #{a}
+			</foreach>
+			
+	</select>
+
+	<select id="getMoByComponentInfoByMoNo" parameterType="List" resultType="Map">
+		SELECT m.*,h.ID AS HX_MO_COMPONENT_ID,h.XF261,h.XF262,h.SF261,h.SF262,h.HX_QTY,l.MAKTX,
+			h.XS531,h.XS532,h.SS531,h.SS532,h.HX_QTY_BY,h.CANCEL_FLAG,h.DEL AS HX_MO_COMPONENT_DEL
+			FROM WMS_SAP_MO_COMPONENT m
+			LEFT JOIN WMS_HX_MO_COMPONENT h ON m.AUFNR = h.AUFNR AND m.WERKS = h.WERKS AND m.RSNUM = h.RSNUM AND m.RSPOS = h.RSPOS
+			LEFT JOIN WMS_SAP_MATERIAL l ON l.MATNR = m.MATNR AND l.WERKS = m.WERKS
+			WHERE m.WERKS = #{WERKS} AND m.BWART = '531' AND nvl(m.XLOEK,'0')!='X' AND
+			<foreach collection="moList" index="index" item="a" separator="or" open="(" close=")">
+			      m.AUFNR = #{a}
+			</foreach>
+			ORDER BY m.RSPOS
+	</select>
+	
+	<select id="getMoComponentInfoByMoNo" parameterType="List" resultType="Map">
+		SELECT m.*,h.ID AS HX_MO_COMPONENT_ID,h.XF261,h.XF262,h.SF261,h.SF262,h.HX_QTY,l.MAKTX,l.XCHPF,
+			h.XS531,h.XS532,h.SS531,h.SS532,h.HX_QTY_BY,h.CANCEL_FLAG,h.DEL AS HX_MO_COMPONENT_DEL
+			FROM WMS_SAP_MO_COMPONENT m
+			LEFT JOIN WMS_HX_MO_COMPONENT h ON m.AUFNR = h.AUFNR AND m.WERKS = h.WERKS AND m.RSNUM = h.RSNUM AND m.RSPOS = h.RSPOS
+			LEFT JOIN WMS_SAP_MATERIAL l ON l.MATNR = m.MATNR AND l.WERKS = m.WERKS
+			WHERE m.WERKS = #{WERKS} AND m.BWART = #{BWART} AND nvl(m.XLOEK,'0')!='X' AND
+			<foreach collection="moList" index="index" item="a" separator="or" open="(" close=")">
+			      m.AUFNR = #{a}
+			</foreach>
+			ORDER BY m.RSPOS
+	</select>
+	
+	<select id="getMoComponentVirtualStock" parameterType="List" resultType="Map">
+		<foreach collection="moComponentList" index="index" item="a" separator="UNION ALL" open="(" close=")">
+			SELECT SUM(cast(nvl(c.VIRTUAL_QTY,0) as number)) VIRTUAL_QTY,SUM(cast(nvl(c.STOCK_QTY,0) as number)) STOCK_QTY,#{a.RSPOS} RSPOS
+					FROM WMS_CORE_STOCK c WHERE  c.MATNR = #{a.MATNR}
+					GROUP BY c.MATNR
+		</foreach>
+	</select>
+	
+	<select id="getPlantBusinessInfo" parameterType="Map" resultType="Map">
+		SELECT pb.* FROM WMS_C_PLANT_BUSINESS pb 
+			INNER JOIN WMS_C_WMS_BUSINESS wb ON PB.BUSINESS_CODE = WB.BUSINESS_CODE
+			WHERE PB.WERKS = #{WERKS} AND WB.BUSINESS_NAME = #{BUSINESS_NAME} AND 
+			WB.BUSINESS_TYPE = #{BUSINESS_TYPE} AND wb.BUSINESS_CLASS = #{BUSINESS_CLASS}
+	</select>
+	
+	<update id="insertOrUpdateMoItemHxInfo" parameterType="List">
+		merge into WMS_HX_MO_ITEM s using(
+		select m.WERKS,m.WH_NUMBER,m.AUFNR,m.POSNR,m.MATNR,m.MAKTX,
+		m.PSMNG,m.MEINS,sum(cast(nvl(m.XS101M,0) as number)) XS101M,sum(cast(nvl(m.XS102M,0) as number)) XS102M,
+		sum(cast(nvl(m.SS101M,0) as number)) SS101M,sum(cast(nvl(m.SS102M,0) as number)) SS102M,
+		sum(cast(nvl(m.HX_QTY,0) as number)) HX_QTY,
+		m.CREATOR,m.CREATE_DATE,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="matList" item="d" index="index" separator="union all">
+		select 
+		#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.AUFNR} AUFNR,#{d.POSNR} POSNR, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.PSMNG} PSMNG,#{d.MEINS} MEINS,#{d.XS101M} XS101M,#{d.XS102M} XS102M,#{d.SS101M} SS101M,#{d.SS102M} SS102M,#{d.HX_QTY} HX_QTY,
+		#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE
+		from dual
+		</foreach>
+		) m 
+		 group by m.WERKS,m.WH_NUMBER,m.AUFNR,m.POSNR,m.MATNR,m.MAKTX,m.PSMNG,m.MEINS,m.XS101M,m.XS102M,m.SS101M,m.SS102M,m.HX_QTY,m.CREATOR,m.CREATE_DATE,m.EDITOR,m.EDIT_DATE
+		) tmp 
+		on (tmp.WERKS=s.WERKS and tmp.WH_NUMBER=s.WH_NUMBER and tmp.AUFNR=s.AUFNR and tmp.POSNR = s.POSNR 
+		and tmp.MATNR=s.MATNR )
+		when matched then 
+			update  set s.XS101M=s.XS101M+tmp.XS101M,s.XS102M=s.XS102M+tmp.XS102M,
+			s.SS101M=s.SS101M+tmp.SS101M,s.SS102M=s.SS102M+tmp.SS102M,
+			s.HX_QTY=tmp.HX_QTY,
+			s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then 
+			insert (ID,WERKS,WH_NUMBER,AUFNR,POSNR,MATNR,MAKTX,PSMNG,MEINS,XS101M,XS102M,SS101M,SS102M,HX_QTY,
+		CREATOR,CREATE_DATE) 
+		VALUES (SEQ_WMS_HX_MO_ITEM.nextval,tmp.WERKS,tmp.WH_NUMBER,tmp.AUFNR,tmp.POSNR,tmp.MATNR,tmp.MAKTX,
+		tmp.PSMNG,tmp.MEINS,tmp.XS101M,tmp.XS102M,tmp.SS101M,tmp.SS102M,tmp.HX_QTY,
+		tmp.CREATOR,tmp.CREATE_DATE
+		
+		)
+		
+	</update>
+	
+	<update id="insertOrUpdateMoComponentHxInfo" parameterType="List">
+		merge into WMS_HX_MO_COMPONENT s using(
+		select m.WERKS,m.AUFNR,m.RSNUM,m.RSPOS,m.MATNR,m.BDMNG,m.MEINS,m.RGEKZ,
+		sum(cast(nvl(m.XF261,0) as number)) XF261,sum(cast(nvl(m.XF262,0) as number)) XF262,
+		sum(cast(nvl(m.SF261,0) as number)) SF261,sum(cast(nvl(m.SF262,0) as number)) SF262,
+		sum(cast(nvl(m.HX_QTY,0) as number)) HX_QTY,
+		sum(cast(nvl(m.XS531,0) as number)) XS531,sum(cast(nvl(m.XS532,0) as number)) XS532,
+		sum(cast(nvl(m.SS531,0) as number)) SS531,sum(cast(nvl(m.SS532,0) as number)) SS532,
+		sum(cast(nvl(m.HX_QTY_BY,0) as number)) HX_QTY_BY,
+		m.CANCEL_FLAG,m.DEL,m.CREATOR,m.CREATE_DATE,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="matList" item="d" index="index" separator="union all">
+		select 
+		#{d.WERKS} WERKS,#{d.AUFNR} AUFNR,#{d.RSNUM} RSNUM,#{d.RSPOS} RSPOS, #{d.MATNR} MATNR,#{d.BDMNG} BDMNG,
+		#{d.MEINS} MEINS,#{d.RGEKZ} RGEKZ,#{d.XF261} XF261,#{d.XF262} XF262,#{d.SF261} SF261,#{d.SF262} SF262,#{d.HX_QTY} HX_QTY,
+		#{d.XS531} XS531,#{d.XS532} XS532,#{d.SS531} SS531,#{d.SS532} SS532,#{d.HX_QTY_BY} HX_QTY_BY,#{d.CANCEL_FLAG} CANCEL_FLAG,#{d.DEL} DEL,
+		#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE
+		from dual
+		</foreach>
+		) m 
+		 group by m.WERKS,m.AUFNR,m.RSNUM,m.RSPOS,m.MATNR,m.BDMNG,m.MEINS,m.RGEKZ,m.XF261,m.XF262,m.SF261,m.SF262,m.HX_QTY,m.XS531,m.XS532,m.SS531,m.SS532,m.HX_QTY_BY,m.CANCEL_FLAG,m.DEL,m.CREATOR,m.CREATE_DATE,m.EDITOR,m.EDIT_DATE
+		) tmp 
+		on (tmp.WERKS=s.WERKS and tmp.AUFNR=s.AUFNR and tmp.RSNUM = s.RSNUM and tmp.RSPOS=s.RSPOS 
+		and tmp.MATNR=s.MATNR )
+		when matched then 
+			update  set s.XF261=s.XF261+tmp.XF261,s.XF262=s.XF262+tmp.XF262,
+			s.SF261=s.SF261+tmp.SF261,s.SF262=s.SF262+tmp.SF262,
+			s.HX_QTY=tmp.HX_QTY,
+			s.XS531=s.XS531+tmp.XS531,s.XS532=s.XS532+tmp.XS532,
+			s.SS531=s.SS531+tmp.SS531,s.SS532=s.SS532+tmp.SS532,
+			s.HX_QTY_BY=tmp.HX_QTY_BY,s.CANCEL_FLAG=tmp.CANCEL_FLAG,s.DEL=tmp.DEL,
+			s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then 
+			insert (ID,WERKS,AUFNR,RSNUM,RSPOS,MATNR,BDMNG,MEINS,RGEKZ,XF261,XF262,SF261,SF262,HX_QTY,
+		XS531,XS532,SS531,SS532,HX_QTY_BY,CREATOR,CREATE_DATE) 
+		VALUES (SEQ_WMS_HX_MO_COMPONENT.nextval,tmp.WERKS,tmp.AUFNR,tmp.RSNUM,tmp.RSPOS,tmp.MATNR,tmp.BDMNG,
+		tmp.MEINS,tmp.RGEKZ,tmp.XF261,tmp.XF262,tmp.SF261,tmp.SF262,tmp.HX_QTY,
+		tmp.XS531,tmp.XS532,tmp.SS531,tmp.SS532,tmp.HX_QTY_BY,
+		tmp.CREATOR,tmp.CREATE_DATE
+		
+		)
+		
+	</update>
+	
+	<select id="getHxMoItemById" parameterType="String" resultType="Map">
+		SELECT * FROM WMS_HX_MO_ITEM WHERE ID = #{hxMoItemId}
+	</select>
+	
+	<select id="getHxMoComponentById" parameterType="String" resultType="Map">
+		SELECT * FROM WMS_HX_MO_COMPONENT WHERE ID = #{hxMoComponentId}
+	</select>
+	
+	<update id="updateSapMoComponentTLInfo" parameterType="List">
+		update WMS_SAP_MO_COMPONENT 
+		 <trim prefix="set" suffixOverrides=",">
+            <trim prefix="TL_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WERKS=#{d.WERKS} and AUFNR=#{d.AUFNR} 
+                     and POSNR=#{d.POSNR} and MATNR=#{d.MATNR} and BWART='261'
+                     then cast(#{d.QTY} as decimal(10,3))+ NVL(TL_QTY,0)
+                </foreach>
+            </trim>
+		</trim>
+		WHERE 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WERKS=#{d.WERKS} and AUFNR=#{d.AUFNR} 
+              and POSNR=#{d.POSNR} and MATNR=#{d.MATNR} and BWART='261'
+        </foreach>
+	</update>
+	
+	<select id="getMatListByMATNR" parameterType="Map" resultType="Map">
+		SELECT m.MAKTX,m.MEINS,m.XCHPF,s.*
+		FROM WMS_SAP_MATERIAL m
+		LEFT JOIN(
+		SELECT s.MATNR,sum(s.VIRTUAL_QTY) VIRTUAL_QTY,sum(s.STOCK_QTY) STOCK_QTY,
+		s.WERKS F_WERKS,s.WH_NUMBER F_WH_NUMBER
+		FROM WMS_CORE_STOCK s 
+		WHERE s.MATNR in 
+		<foreach collection="matnr_list" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+		</foreach>		
+		AND s.WERKS=#{WERKS} AND s.WH_NUMBER=#{WH_NUMBER}
+		group by s.MATNR,s.WERKS,s.WH_NUMBER) s
+		ON s.MATNR=m.MATNR AND s.F_WERKS=m.WERKS 
+		WHERE m.MATNR in 
+		<foreach collection="matnr_list" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+		</foreach>	 
+		AND s.F_WERKS=#{WERKS}
+	</select>
+	
+	<update id="saveHXTO" parameterType="List">
+		merge into WMS_HX_TO t using(
+			select tmp.* from  (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.F_WERKS} F_WERKS,#{d.F_WH_NUMBER} F_WH_NUMBER,#{d.WERKS} WERKS, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.QTY} XF_QTY,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE
+		from dual
+		</foreach>
+		) tmp
+		) m on (t.F_WERKS=m.F_WERKS and t.F_WH_NUMBER=m.F_WH_NUMBER and t.MATNR=m.MATNR)
+		when matched then
+			update set t.XF303=t.XF303+m.XF_QTY,t.HX_QTY_XF=t.HX_QTY_XF+m.XF_QTY
+		when not matched then
+			insert (ID,F_WERKS,WERKS,F_WH_NUMBER,MATNR,MAKTX,XF303,HX_QTY_XF,EDITOR,EDIT_DATE,CREATOR,CREATE_DATE)
+			values (SEQ_WMS_HX_TO.nextval,m.F_WERKS,m.WERKS,m.F_WH_NUMBER,m.MATNR,m.MAKTX,
+			m.XF_QTY,m.XF_QTY,m.EDITOR,m.EDIT_DATE,m.CREATOR,m.CREATE_DATE) 
+	</update>
+	
+</mapper>

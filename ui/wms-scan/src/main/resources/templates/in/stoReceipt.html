@@ -1,0 +1,485 @@
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+                border:1px solid #1d7bd3;
+            }
+
+            body{text-align:center}
+            table { border-collapse: collapse; border-spacing: 0; margin-right: auto; margin-left: auto;
+            } th, td { border: 1px solid #1d7bd3; font-weight: normal; text-align: center; vertical-align: middle;
+              } th { background-color: Gray;
+                }
+            .topBtn{
+                background-color:#1d7bd3;
+                color:white;
+                display: inline-block;
+                border: none;
+                padding: 5px 5px;
+                margin:2px 2px ;
+                text-align: center;
+            }
+            .inputBox{
+                padding:5px 2px 5px 2px;
+            }
+            .scan{
+                background-color:#1d7bd3;
+                color:white;
+                display: inline-block;
+                border: none;
+                padding: 2px 2px;
+                margin:2px 2px ;
+                text-align: center;
+            }
+
+
+        </style>
+
+        <title>STO交货单收货</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+
+    <div id="global_content_smq">
+            <div class="smq_test" >
+                <div style="background-color:#1d7bd3;color:white;height:30px;">
+                    <h2 style="font-size:16px;">
+                        <button style="float:left;" class="topBtn" onclick='window.location.replace("${request.contextPath}/index.html?m=1")'>首页</button>
+                        STO交货单收货
+                        <button style="float:right;" class="topBtn" onclick='window.location.replace("${request.contextPath}/logout")'>注销</button></h2>
+                </div>
+                <div style="padding: 4px 10px 2px 10px">
+                    <button class="topBtn" id = "input" onclick="showInputDiv()" >录入</button>
+                    <button class="topBtn" id = "dataTable" onclick="showDataDiv()">数据表</button>
+                    <button class="topBtn" id = "header" onclick="showHeaderDiv()">抬头</button>
+                </div>
+                <div id="divSysError" style=" display:block;background-color:beige;color:red ;text-align:center;"></div>
+                <div id="inputDiv">
+                    <div>
+                        <div class="box inputBox">
+                            <label id="stoNoLabel" >交货单号</label>
+                            <input id="SAP_OUT_NO" style="border-bottom:1px solid #1d7bd3;" name="SAP_OUT_NO" onblur="validateSapOutNo()" type="text"/>
+                        </div>
+
+                        <div class="box inputBox">
+
+                            <label id="barCodeLabel" >条形码(箱)</label>
+                            <div style="display: inline-block;margin-right:20px;z-index: 1;">
+                                <input style="border-bottom:1px solid #1d7bd3;z-index: 1;" id="BARCODE_NO" name="BARCODE_NO"  type="text"/>
+                            </div>
+                            <span style="margin-left: -24px;z-index: 2;">
+                                <button class="scan" id="scan" onclick="scan();" >扫描</button>
+                            </span>
+
+                        </div>
+                        <div class="box inputBox">
+                            <label >储位</label>
+                            <input style="border-bottom:1px solid #1d7bd3;" id="AREA_CODE" name="AREA_CODE"  onblur="validateStorage()" type="text"/>
+                        </div>
+                    </div>
+                    <div style="color:#1d7bd3; border:solid #1d7bd3; border-width:1px 0px 0px 0px;" >
+                        <div class="box inputBox">
+                            <label>条码ID</label>
+                            <input readonly style="border-bottom:none;" id="LABEL_NO" name="LABEL_NO" type="text" />
+                        </div>
+                        <div class="box inputBox">
+                            <label >已扫入箱数</label>
+                            <input readonly style="border-bottom:none;" id="REC_QTY" name="REC_QTY" type="text" />
+                        </div>
+                        <div class="box inputBox">
+                            <label >物料号</label>
+                            <input readonly style="border-bottom:none;" id="MATNR" name="MATNR" type="text" />
+                        </div>
+                        <div class="box inputBox">
+                            <label >物料描述</label>
+                            <input readonly style="border-bottom:none;" id="MAKTX" name="MAKTX" type="text" />
+                        </div>
+                        <div class="box inputBox">
+                            <label >数量</label>
+                            <input readonly style="border-bottom:none;" id="QTY" name="QTY" type="text" />
+                        </div>
+                        <div class="box inputBox">
+                            <label >批次</label>
+                            <input readonly style="border-bottom:none;" id="BATCH" name="BATCH" type="text" />
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dataTableDiv" style="display:none;">
+                    <!--行项目信息-->
+                    <div id="dataGrid1Div">
+                        <table id="dataGrid1"></table>
+                        <div id="dataTable1Button" style="text-align:center;">
+                            <button type="reset" class="topBtn" onclick="back();"> 返回</button>
+                        </div>
+                    </div>
+                    <!--标签信息-->
+                    <div id="dataGrid2Div" class="" style="display:none;">
+                        <table id="dataGrid2"></table>
+                        <div id='pager2'></div>
+
+                        <div id="dataTableButton" style="text-align:center;">
+                            <button id="jqGridBtnS" type="submit" class="btn" onclick="deleteRow();"> 删除</button>
+                            <button id="jqGridBtnR" type="reset"  class="btn" onclick="back();"> 返回</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="headerDiv" class="shortcuts" style="display:none;">
+                    <div style="height: 230px">
+                        <div class="box" style="padding-top:30px">
+                            <label >凭证日期</label>
+                            <input id="PZ_DATE" name="PZ_DATE"  type="date" />
+                        </div>
+                        <div class="box" style="padding-top:30px">
+                            <label >记账日期</label>
+                            <input id="JZ_DATE" name="JZ_DATE"  type="date" />
+                        </div>
+                        <div class="box" style="padding-top:30px">
+                            <label >抬头文本</label>
+                            <input id="HEADER_TXT" name="HEADER_TXT" type="text" />
+                        </div>
+                    </div>
+                </div>
+                <div id="resultDiv" style="display:none;">
+                    <div class="box">
+                        <label >WMS凭证号：</label>
+                        <label id="WMS_NO"></label>
+                    </div>
+                    <div class="box">
+                        <label >SAP凭证号：</label>
+                        <label id="MAT_DOC"></label>
+                    </div>
+                    <div class="box">
+                        <label >收货单号：</label>
+                        <label id="RECEIPT_NO"></label>
+                    </div>
+                    <div class="box">
+                        <label >送检单号：</label>
+                        <label id="INSPECTION_NO"></label>
+                    </div>
+                    <div class="box">
+                        <label >作业时长：</label>
+                        <label id="OPERATION_TIME"></label>
+                    </div>
+                    <div id="back" style="text-align:center;">
+                        <button class="topBtn"  type="reset" onClick='window.location.replace("${request.contextPath}/in/stoReceipt.html")' >返回</button>
+                    </div>
+                </div>
+                <div id="button" style="text-align:center;">
+					<button class="topBtn" id="submit" type="submit"> 保存</button>
+                    <button class="topBtn" id="reset" type="reset" onClick='window.location.replace("${request.contextPath}/index2.html?m=1")' >取消</button>
+				</div>
+				<!-- <div>&nbsp;</div> -->
+            </div>
+        </div>
+
+    </body>
+</html>
+<script type="text/javascript">
+
+    //交货单明细
+    var matList;
+    //交货单总数量
+    var account=0;
+    //交货单只需验证一次
+    var valideFlag = false;
+    //标签层级:同一次收货，只能扫描同一个层级的标签做收货
+    var type_no='';
+    $(function () {
+        var now = new Date(); //当前日期
+        var pzDate=new Date(now.getTime());
+        $("#PZ_DATE").val(pzDate.Format("yyyy-MM-dd"));
+        $("#JZ_DATE").val(pzDate.Format("yyyy-MM-dd"));
+
+        laddLabelInfo1();
+
+        $("#submit").click(function(){
+            $('#divSysError').html('');
+            //校验交货单数量和已收数量是否一致
+            var rows = $('#dataGrid1').jqGrid('getRowData');
+            if(rows.length ==0){
+                $('#divSysError').html("未找到要收货的条目!");
+                return;
+            }else{
+
+                var realQty = [];
+                for(var i=0;i<rows.length;i++){
+                    var data = rows[i];
+                    realQty = Number(realQty) + Number(data.QTY);
+                }
+                if(account != realQty){
+                    $('#divSysError').html("收货数量与交货单数量不一致!");
+                    return;
+                }
+            }
+            //收货
+            $.ajax({
+                url: baseUrl + "inPda/sto/boundIn",
+                type: "post",
+                async: true,
+                dataType: "json",
+                data: {
+                    PZ_DATE: $("#PZ_DATE").val(),
+                    JZ_DATE: $("#JZ_DATE").val(),
+                    matList: JSON.stringify(matList)
+                },
+                success: function (response) {
+                    if (response.code == 500) {
+                        $('#divSysError').html(response.msg);
+                        return false;
+                    }else{
+                        $('#divSysError').html('');
+                        $('#WMS_NO').html(response.WMS_NO);
+                        $('#MAT_DOC').html(response.MAT_DOC);
+                        $('#RECEIPT_NO').html(response.RECEIPT_NO);
+                        $('#INSPECTION_NO').html(response.INSPECTION_NO);
+                        $('#OPERATION_TIME').html(response.OPERATION_TIME);
+                        showResult();
+                    }
+                }
+            })
+        });
+    });
+
+
+    function showInputDiv(){
+        $("#inputDiv").attr('style','display:block');
+        $("#dataTableDiv").attr('style','display:none');
+        $("#headerDiv").attr('style','display:none');
+        $("#resultDiv").attr('style','display:none');
+
+        $("#button").attr('style','display:block');
+
+    }
+
+    function showDataDiv(){
+        $("#inputDiv").attr('style','display:none');
+        $("#dataTableDiv").attr('style','display:block');
+        $("#headerDiv").attr('style','display:none');
+        $("#resultDiv").attr('style','display:none');
+
+        $("#button").attr('style','display:none');
+
+    }
+
+    function showHeaderDiv(){
+        $("#inputDiv").attr('style','display:none');
+        $("#dataTableDiv").attr('style','display:none');
+        $("#headerDiv").attr('style','display:block');
+        $("#resultDiv").attr('style','display:none');
+        $("#button").attr('style','display:block');
+
+    }
+
+    function showResult(){
+        $("#inputDiv").attr('style','display:none');
+        $("#dataTableDiv").attr('style','display:none');
+        $("#headerDiv").attr('style','display:none');
+        $("#resultDiv").attr('style','display:block');
+        $("#dataTableButton").attr('style','display:none');
+        $("#button").attr('style','display:none');
+    }
+
+    function back(){
+        if($("#dataGrid1Div").css('display') == 'none'){
+            $("#dataGrid1Div").attr('style','display:block');
+            $("#dataGrid2Div").attr('style','display:none');
+            $("#dataGrid1").jqGrid('clearGridData');
+            $("#dataGrid1").trigger("reloadGrid");
+
+        }else{
+            showInputDiv();
+        }
+
+    }
+
+    function validateSapOutNo(){
+
+        if(valideFlag) return;
+        var SAP_OUT_NO = $("#SAP_OUT_NO").val();
+        if(SAP_OUT_NO.trim() =="") return;
+        $('#divSysError').html('');
+        $.ajax({
+            url: baseUrl + "inPda/sto/validateSapOutNo",
+            dataType : "json",
+            type : "post",
+            data : {"SAP_OUT_NO": SAP_OUT_NO,"JZ_DATE":$("#JZ_DATE").val(),"PZ_DATE":$("#PZ_DATE").val()},
+            success:function(resp){
+                if(resp.code == '500'){
+                    $('#divSysError').html(resp.msg);
+                    return;
+                }else{
+                    $("#SAP_OUT_NO").attr("readonly","readonly")
+                    var sto = resp.sto;
+                    account = sto.ACCOUNT;
+                    $('#HEADER_TXT').val(sto.HEADER_TXT);
+                    matList = sto.data;
+                    validateStorage();
+                }
+
+            }
+        })
+    }
+
+    function validateStorage(){
+        $('#divSysError').html('');
+        var area_code = $("#AREA_CODE").val();
+        $.ajax({
+            url: baseUrl + "inPda/sto/validateStorage",
+            dataType : "json",
+            type : "post",
+            data : {"AREA_CODE":area_code},
+            success:function(resp){
+                if(resp.code == '500'){
+                    $('#divSysError').html(resp.msg);
+                }else{
+                    if(area_code == ""){
+                        $('#AREA_CODE').val(resp.AREA_CODE);
+                    }
+                }
+
+            }
+        })
+    }
+
+    function scan(){
+        $('#divSysError').html("");
+        var barcode = $("#BARCODE_NO").val();
+        var SAP_OUT_NO = $("#SAP_OUT_NO").val();
+        if(SAP_OUT_NO.trim() ==""){
+            $('#divSysError').html("请输入交货单号");
+            return;
+        }
+        if(barcode){
+            $.ajax({
+                url: baseUrl + "inPda/sto/scan",
+                dataType : "json",
+                type : "post",
+                data : {"BARCODE_NO":barcode,"SAP_OUT_NO":$("#SAP_OUT_NO").val(),"ACCOUNT":account,"TYPE_NO":type_no},
+                success:function(resp){
+
+                    if(resp.code == '500'){
+                        $('#divSysError').html(resp.msg);
+
+                    }else{
+                        var data = resp.data;
+                        $('#LABEL_NO').val(data.LABEL_NO);
+                        $('#MATNR').val(data.MATNR);
+                        $('#MAKTX').val(data.MAKTX);
+                        $('#QTY').val(data.QTY);
+                        $('#BATCH').val(data.BATCH);
+                        $("#BARCODE_NO").val();
+
+                        laddLabelInfo1();
+                        $("#BARCODE_NO").val("");
+                        $('#REC_QTY').val(Number($('#REC_QTY').val()) + 1);
+                    }
+                }
+            })
+        }
+    }
+
+    function laddLabelInfo1(){
+        $("#dataGrid1").jqGrid('clearGridData');
+        $("#dataGrid1").jqGrid('GridUnload');
+        $("#dataGrid1").jqGrid({
+            url : baseUrl + "inPda/sto/defaultSTOCache",
+            datatype: "json",
+            jsonReader :jsonreader,
+            colNames:['行号','订单号','工厂','物料','总数量','箱数',''],
+            colModel:[
+                {name:'SAP_OUT_ITEM_NO',index:'SAP_OUT_ITEM_NO', width:40, align:'center'},
+                {name:'SAP_OUT_NO',index:'SAP_OUT_NO', width:80, align:'center'},
+                {name:'WERKS',index:'WERKS', width:40, align:'center'},
+                {name:'MATNR',index:'MATNR', width:80, align:'center'},
+                {name:'QTY',index:'QTY', width:40, align:'center'},
+                {name:'COUNT',index:'COUNT', width:40, align:'center'},
+                {name:'REC_QTY',index:'REC_QTY', width:0, align:'center',hidden:true}
+            ],
+            onSelectRow: function(rowid,status){
+                var id=$('#dataGrid1').jqGrid('getGridParam','selrow');
+                var rowData = $("#dataGrid1").jqGrid('getRowData',id);
+                loadLabelInfo2(rowData.MATNR, rowData.SAP_OUT_NO);
+            },
+            gridComplete: function(){
+                if($('#dataGrid1').jqGrid('getGridParam', 'records') != 0){
+                    var rowData = $("#dataGrid1").jqGrid('getRowData',1);
+                    $('#SAP_OUT_NO').val(rowData.SAP_OUT_NO);
+                    $('#SAP_OUT_NO').attr("readonly","readonly");
+                    $('#REC_QTY').val(rowData.REC_QTY);
+                    type_no = rowData.TYPE_NO;
+                    validateSapOutNo();
+                    valideFlag = true;
+                }
+            },
+            width: 225
+        });
+    }
+
+    function loadLabelInfo2(matnr, sap_out_no){
+        $("#dataGrid2").jqGrid('clearGridData');
+        $("#dataGrid2").jqGrid('GridUnload');
+        $("#dataGrid2").jqGrid({
+            url : baseUrl + "inPda/sto/defaultLabelCache?MATNR="+matnr+"&SAP_OUT_NO="+sap_out_no,
+            datatype: "json",
+            jsonReader :jsonreader,
+            colNames:['条形码','数量'],
+            colModel:[
+                {name:'LABEL_NO',index:'LABEL_NO', width:150, align:'center'},
+                {name:'QTY',index:'QTY', width:50, align:'center'}
+            ],
+            width: 226,
+            multiselect: true,
+            shrinkToFit:true,
+            rowNum: 10,
+            pager:"#pager2"
+        });
+        $("#dataGrid1Div").attr('style','display:none');
+        $("#dataGrid2Div").attr('style','display:block');
+
+    }
+
+    function deleteRow(){
+        $('#divSysError').html('');
+        var labelArr = [];
+        var ids = $("#dataGrid2").jqGrid('getGridParam', 'selarrrow');
+        $.each(ids,function(i,id){
+            var data = $("#dataGrid2").jqGrid("getRowData",id);
+            labelArr.push(data.LABEL_NO);
+        });
+        if (labelArr.length != 0) {
+            $.ajax({
+                type: "POST",
+                url : baseUrl + "inPda/sto/deleteLabelCacheInfo",
+                async:false,
+                dataType:"json",
+                data:{
+                    deleteList: JSON.stringify(labelArr)
+                },
+                success: function(r){
+                    if(r.code == 0){
+                        $("#dataGrid2").jqGrid('clearGridData');
+                        $("#dataGrid2").trigger("reloadGrid");
+                        $('#REC_QTY').val(Number($('#REC_QTY').val()) - labelArr.length);
+                    }else{
+
+                    }
+                }
+            });
+        }
+        else $('#divSysError').html("请选择要删除的标签!");
+
+    }
+
+
+
+    document.onkeydown = function(){
+
+        if(window.event.keyCode == 13 && document.activeElement.id == 'BARCODE_NO'){
+            scan();
+        }
+    }
+</script>

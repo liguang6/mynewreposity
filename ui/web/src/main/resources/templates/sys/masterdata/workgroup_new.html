@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>新增工序</title> <#include "/header.html">
+</head>
+<body>
+
+	<div id="processInfo" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="processNewForm">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label">工厂</label>
+									<div class="col-xs-8">
+										<div  style="padding-top:3px;">
+											<input disabled="disabled" class="form-control required" id="werksName" />
+										</div>
+										<input style="display: none;" id="werksName_" name="werksName"/>
+										<input style="display: none;" id="werks" name="werks"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+
+								
+								<div class="form-group">
+									<div class="col-sm-4 control-label">车间
+									</div>
+									<div class="col-sm-8">
+										<div style="padding-top:3px;">
+											<input disabled="disabled" class="form-control required" id="workshopName" />
+										</div>
+										<input id="workshopName_" style="display: none;" name="workshopName"/>
+										<input id="workshop" style="display: none;" name="workshop"/>
+									</div>
+								</div>
+								
+							</div>
+
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required">*</span>线别
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="deptSel" class="form-control required"
+											name="lineName" readonly="readonly" placeholder="线别" style="background-color: white;"/> 
+											<input style="display: none;" type="text" name="deptId" />
+											<input id="line" style="display: none;" name="line"/>
+									</div>
+								</div>
+
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required">*</span>所属工段
+									</div>
+									<div class="col-sm-8">
+										<select name="sectionCode" class="form-control required"> 
+											<option value="">请选择</option>
+											<#list tag.masterdataDictList('SECTION') as dict>
+												<option value="${dict.code}">${dict.value}</option> 
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required">*</span>工序编号
+									</div>
+									<div class="col-sm-8">
+										<input type="text" class="form-control required" name="processCode" id="processCode"
+											placeholder="工序代码" />
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-sm-4 control-label">计划节点</label>
+									<div class="col-sm-8">
+
+										<select name="planNodeCode" class="form-control"> 
+										<option value="">请选择</option>
+											<#list tag.masterdataDictList('PLAN_NODE') as dict>
+												<option value="${dict.code}">${dict.value}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required">*</span>工序名称
+									</div>
+									<div class="col-sm-8">
+										<input type="text" name="processName" class="form-control required" id="processName"
+											placeholder="工序名称" />
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4"></div>
+									<label class="col-sm-8"> <input type="checkbox"
+										name="monitoryPointFlag" /> 生产监控点
+									</label>
+								</div>
+							</div>
+						</div>
+
+
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="form-group">
+									<label class="col-sm-2 control-label">备注</label>
+									<div class="col-sm-10">
+										<textarea rows="3" class="form-control" name="memo" id="memo"
+											placeholder="备注"></textarea>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+
+							<div class="col-sm-offset-2 col-sm-10">
+							    <button class="btn btn-sm btn-primary" id="btnSaveAndAdd"
+									type="button">
+									<i class="fa fa-check"></i> 保存并新增
+								</button>
+								<button class="btn btn-sm btn-primary" id="btnSave"
+									type="button">
+									<i class="fa fa-check"></i> 保 存
+								</button>
+                         
+								<button type="button" class="btn btn-sm btn-default"
+									id="btnCancel" type="reset" >
+									<i class="fa fa-reply-all"></i> 关 闭
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+
+
+	<div id="menuContent" class="menuContent"
+		style="display: none; position: absolute; z-index =999; background-color: #eee; border: 1px solid">
+		<ul id="treeDemo" class="ztree" style="margin-top: 0; width: 200px;"></ul>
+	</div>
+	<script type="text/javascript">
+		var setting = {
+			view : {
+				dblClickExpand : false
+			},
+			data : {
+				simpleData : {
+					enable : true,
+					idKey : "deptId",
+					pIdKey : "parentId",
+					rootPId : "0"
+				}
+			},
+			callback : {
+				beforeClick : beforeClick,
+				onClick : onClick
+			}
+		};
+
+		var zNodes = [];
+
+		function beforeClick(treeId, treeNode) {
+			console.info(treeNode);
+			var check = (treeNode && treeNode.deptType=='LINE');
+			if (!check)
+				alert("只能选择生产线...");
+			return check;
+			return true;
+		}
+
+		function onClick(e, treeId, treeNode) {
+			var zTree = $.fn.zTree.getZTreeObj("treeDemo"), nodes = zTree
+					.getSelectedNodes(), v = "";
+			nodes.sort(function compare(a, b) {
+				return a.id - b.id;
+			});
+			for (var i = 0, l = nodes.length; i < l; i++) {
+				v += nodes[i].name + ",";
+			}
+			if (v.length > 0)
+				v = v.substring(0, v.length - 1);
+			var cityObj = $("#deptSel");
+			cityObj.attr("value", v);
+			//线别Id
+			$("input[name='deptId']").val(nodes[0].deptId);
+			$("#line").val(nodes[0].code);
+			//车间名
+			var workShopDeptId = nodes[0].parentId;
+			var workShopNode = zTree.getNodeByParam("deptId", workShopDeptId,
+					null);
+			$("#workshopName").val(workShopNode.name);
+			$("#workshopName_").val(workShopNode.name);
+			$("#workshop").val(workShopNode.code);
+			//工厂名
+			var factoryDeptId = workShopNode.parentId;
+			//console.log(workShopDeptId+" __ "+factoryDeptId);
+			var factoryNode = zTree.getNodeByParam("deptId", factoryDeptId,
+					null);
+			$("#werks").val(factoryNode.code);
+			$("#werksName").val(factoryNode.name);
+			$("#werksName_").val(factoryNode.name);
+			hideMenu();
+		}
+
+		function showMenu() {
+			var cityObj = $("#deptSel");
+			var cityOffset = $("#deptSel").offset();
+			$("#menuContent").css({
+				left : cityOffset.left + "px",
+				top : cityOffset.top + cityObj.outerHeight() + "px"
+			}).slideDown("fast");
+
+			$("body").bind("mousedown", onBodyDown);
+		}
+		function hideMenu() {
+			$("#menuContent").fadeOut("fast");
+			$("body").unbind("mousedown", onBodyDown);
+		}
+		function onBodyDown(event) {
+			if (!(event.target.id == "menuBtn"
+					|| event.target.id == "menuContent" || $(event.target)
+					.parents("#menuContent").length > 0)) {
+				hideMenu();
+			}
+		}
+
+		function close() {
+			var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+			parent.layer.close(index); //再执行关闭 
+		}
+
+		$(document).ready(
+				function() {
+					$.ajax({
+						url : baseURL + "masterdata/dept/ztreeDepts",
+						success : function(data) {
+							zNodes = data;
+							$.fn.zTree.init($("#treeDemo"), setting, zNodes);
+						}
+					});
+
+					$("#deptSel").click(function() {
+						showMenu();
+					});
+					$("#processCode").change(function(){
+						$("#processCode").val($(this).val().toUpperCase())
+					})
+					
+                    $("#btnSaveAndAdd").click(function(){
+                    	 if(validform().form()) {
+	                    	$.ajax({
+								url : baseURL + "masterdata/process/save",
+								type : "POST",
+								contentType : "application/json",
+								data : JSON.stringify($("#processNewForm")
+										.serializeObject()),
+								success : function(rep) {
+									if (rep.code === 0) {
+										js.showMessage('保存成功');
+										$("#processCode").val("");
+										$("#processName").val("");
+										$("#memo").val("");
+									} else {
+										js.showMessage(rep.msg);
+									}
+								}
+							});
+                    	 }
+                    });
+                    $("#btnSave").click(function(){
+                   	 if(validform().form()) {
+                   		$.ajax({
+							url : baseURL + "masterdata/process/save",
+							type : "POST",
+							contentType : "application/json",
+							data : JSON.stringify($("#processNewForm")
+									.serializeObject()),
+							success : function(rep) {
+								if (rep.code === 0) {
+									js.showMessage('保存成功');
+									close();
+								} else {
+									js.showErrorMessage(rep.msg);
+								}
+							}
+						})
+                   	 }
+                   });
+                    function validform(){
+                   	  /*关键在此增加了一个return，返回的是一个validate对象，这个对象有一个form方法，返回的是是否通过验证*/
+                   	  return $("#processNewForm").validate({
+                   	  });
+                   	}
+                   	//注册表单验证
+                   	$(validform());
+					
+					$("#btnCancel").click(function(){close();})
+
+				});
+	</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.DeviceDao">
+	
+	
+	<!-- 模糊查找设备类型 -->
+	<select id="getDeviceTypeList" parameterType="string" resultType="Map">
+		select device_type_code devicecode,device_type_name devicename from masterdata_device_type 
+		where del='0' 
+		and (device_type_code like '%' ||  #{code} || '%' or device_type_name like '%' ||  #{code} || '%')
+		
+	</select>
+	
+	<select id="getDeviceTypeListByCode" parameterType="Map" resultType="Map">
+		select device_type_code devicecode,device_type_name devicename from masterdata_device_type 
+		where del='0' 
+		<if test="DEVICE_CODE != '' and DEVICE_CODE != null">
+			AND device_type_code = #{DEVICE_CODE}
+		</if>
+	</select>
+	
+	<select id="getDeviceList" resultType="Map" parameterType="Map">
+		select * from MASTERDATA_DEVICE 
+		where del='0'
+		<if test="WERKS_MACHINE != '' and WERKS_MACHINE != null">
+			AND MACHINE_CODE like '%' ||#{WERKS_MACHINE}|| '%'
+		</if>
+		<if test="WERKS != '' and WERKS != null">
+			AND WERKS = #{WERKS}
+		</if>
+		<if test="DEVICE_CODE != '' and DEVICE_CODE != null">
+			AND DEVICE_CODE = #{DEVICE_CODE}
+		</if>
+		<if test="DEVICE_NAME != '' and DEVICE_NAME != null">
+			AND DEVICE_NAME = #{DEVICE_NAME}
+		</if>
+		<if test="STATUS != '' and STATUS != null">
+			AND STATUS = #{STATUS}
+		</if>
+		
+		
+	</select>
+	
+</mapper>

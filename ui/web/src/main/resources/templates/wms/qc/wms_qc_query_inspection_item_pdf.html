@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>打印质检单</title> <#include "/web_header.html">
+<script type="text/javascript"
+	src="${request.contextPath}/statics/plugins/jspdf/jspdf.min.js"></script>
+
+<style>
+#printContent {
+  background:#fff;
+   padding-left:10%;
+   padding-right:10%;
+   padding-top:10%;
+}
+</style>
+</head>
+
+<body onload="pdfPreview()">
+
+	<div class="container" id="printContent">
+		<div class="row">
+			<div class="col-md-5">
+				<img style="padding: 8px"
+					src="${request.contextPath}/statics/images/byd_logo.png" />
+			</div>
+			<div class="col-md-7">
+				<h1>检验通知单</h1>
+			</div>
+
+		</div>
+
+		<div class="row">
+			<h5 style="float: right">送检单类型：
+			  <#if head.stockSource == '01'>
+			          来料质检
+			     <#else>
+			         库存复检
+			  </#if>
+			</h5>
+		</div>
+		<div class="row">
+			<h5 class="col-md-3">送检单: ${head.inspectionNo}</h5>
+			<h5 class="col-md-9">供应商: ${head.lifnr} ${head.liktx}</h5>
+		</div>
+
+		<div class="row">
+			<h5 class="col-md-3">工厂: ${head.werks}</h5>
+			<h5 class="col-md-3">创建时间: ${head.createDate}</h5>
+			<h5 class="col-md-3">创建人: ${head.creator}</h5>
+			<h5 class="col-md-3">接单人: ${head.receiver!''}</h5>
+		</div>
+		<div class="row">
+			<table class="table table-bordered" style="margin-top: 32px;">
+				<tr>
+					<th></th>
+					<th>批次</th>
+					<th>料号</th>
+					<th>物料描述</th>
+					<th>单位</th>
+					<th>送检数量</th>
+					<th>供应商代码</th>
+					<th>供应商名称</th>
+					<th>需求跟踪号</th>
+				</tr>
+				<#list items as item>
+				<tr v-for="(item,index) in inspectionItems">
+					<td>${item_index + 1}</td>
+					<td>${item.batch}</td>
+					<td>${item.matnr}</td>
+					<td>${item.maktx}</td>
+					<td>${item.unit}</td>
+					<td>${item.inspectionQty}</td>
+					<td>${item.lifnr}</td>
+					<td>${item.liktx}</td>
+					<td>${item.bednr}</td>
+				</tr>
+               </#list>
+			</table>
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+	var pdf = new jsPDF('p', 'mm', 'a4')
+	var print_content = $("#printContent")
+	var filename = "hello.pdf";
+
+	function pdfPreview() {
+		pdf.addHTML($("#printContent"), function() {
+			pdf.output('datauri');
+		})
+	}
+</script>
+</html>

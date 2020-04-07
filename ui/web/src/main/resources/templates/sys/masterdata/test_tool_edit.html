@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>检具维护</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+				
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+                        
+								<label class="control-label" style="width:80px">
+								<font style="color:red;font-weight:bold">*</font>
+								     工厂
+								</label>
+							   	<div  class="control-inline">
+									<select  name="werks" id="werks"  style="width:200px;height:25px" v-model="tool.werks">
+		                                <#list tag.getUserAuthWerks("MASTERDATA_TEST_TOOL") as factory> 
+		                                    <option value="${factory.code}">${factory.code}</option>
+		                                </#list>
+		                            </select>
+							    </div>
+							   
+						
+					</div>
+					</td>
+					</tr>
+				
+				
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+								<label class="control-label" style="width:80px" >
+								<font style="color:red;font-weight:bold">*</font>
+								     检具编码
+								</label>
+							   	<div class="control-inline">
+									<input type="text" style="width:200px;height:25px" class="required" name="test_tool_no" id="test_tool_no" v-model="tool.test_tool_no">
+							    </div>
+					</div>
+					
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+                        
+								<label class="control-label" style="width:80px">
+								     检具名称
+								 </label>
+							   	<div  class="control-inline">
+							   	    <input type="text" style="width:200px;height:25px"  name="test_tool_name" id="test_tool_name" v-model="tool.test_tool_name">
+							    </div>
+						
+					</div>
+					</td>
+					</tr>
+					
+					
+					
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+								<label class="control-label" style="width:80px">
+								<font style="color:red;font-weight:bold">*</font>
+								     规格
+								</label>
+							   	<div class="control-inline">
+									<input type="text" style="width:200px;height:25px" class="required" name="specification" id="specification" v-model="tool.specification">
+							    </div>
+						</div>
+					</div>
+					</td>
+					</tr>
+					
+					<tr>
+					<td>
+					<div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+								<label class="control-label" style="width:80px">
+								     备注
+								 </label>
+							   	<div class="control-inline">
+							   	    <input type="text" style="width:200px;height:25px" name="memo" id="memo" v-model="tool.memo">
+							    </div>
+						</div>
+					</div>
+					</td>
+					</tr>
+					
+					
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/sys/masterdata/test_tool_edit.js?_${.now?long}"></script>
+</body>
+</html>

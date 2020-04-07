@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>单据明细</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/receivelogs/listitem">
+						
+	                        <input type="text" v-model="receiptno" id="receiptno" name="receiptno" style="width: 100px;display:none;" class="form-control width-300" />
+	                        <input type="text" v-model="itemno" id="itemno" name="itemno" style="width: 100px;display:none;" class="form-control width-300" />
+							
+						</form>
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/receiveLogDetail.js?_${.now?long}"></script>
+</body>
+</html>

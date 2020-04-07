@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>工厂质检配置</title>  
+<#include "/web_header.html">
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/config/wms_config_commom.js"></script>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+
+					<form id="searchForm" class="form-inline"
+						action="${request.contextPath}/config/wmscqcplant/list">
+						<!-- 查询条件 -->
+						<div class="form-group">
+							<label class="control-label">工厂代码：</label>
+							<div class="control-inline">
+								<!-- <input type="text" id="werks" name="werks" onclick="getPlantNoSelect('#werks',null,null)" value=""
+									class="form-control width-400" /> -->
+								<select  name="werks" id="werks"  style="width:100%;height:25px">
+									<#list tag.getUserAuthWerks("WMS_C_QC_PLANT") as factory> 
+										<option value="${factory.code}">${factory.code}</option>
+									</#list>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<button type="submit" class="btn btn-primary btn-sm">查询</button>
+							<button type="reset" class="btn btn-default btn-sm">重置</button>
+						</div>
+					</form>
+
+
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#' class='btn' id='newOperation'><i
+								class='fa fa-plus' aria-hidden='true'></i> 新增</a> <a href='#'
+								class='btn' id='editOperation'><i
+								class='fa fa-pencil-square-o' aria-hidden='true'></i> 修改</a> <a
+								href='#' class='btn' id='deleteOperation'><i
+								class='fa fa-trash' aria-hidden='true'></i> 删除</a> <!-- <a href='#'
+								class='btn' id='importOperation'><i class='fa fa-upload'
+								aria-hidden='true'></i> 导入</a>  --><a href="#" class="btn"
+								id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a>
+						</div>
+					</div>
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+	<script
+		src="${request.contextPath}/statics/js/wms/config/wms_c_qc_plant.js?_${.now?long}"></script>
+</body>
+</html>

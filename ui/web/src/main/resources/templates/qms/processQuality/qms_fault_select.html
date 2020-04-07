@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>故障选择</title>  
+<#include "/web_header.html">
+<style type="text/css">
+
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper" id="page_div">
+		<div class="main-content">
+			<div  id="layer_fault" >	
+					<div class="form-inline" >
+					<div class="form-group" style="padding-left:150px;">
+							<label class="control-label">故障搜索：</label>
+							<div class="control-inline" style="width:150px;">
+							<input type="text" id="faultNameSearch" name="faultNameSearch"  v-bind:disabled="TYPE=='other'"
+							class="input-medium" style="width: 150px; height: 28px;" />
+							</div>
+					</div>
+					<div class="form-group"  v-cloak>
+							<label class="control-label">故障等级：</label>
+							<div class="control-inline" >
+							<select style="height: 28px;width:90px;" class="input-medium"  id="SERIOUS_LEVEL"  v-bind:disabled="TYPE=='other'">
+									<option value=''  v-if="SERIOUS_LEVEL_LIST.length>1">请选择</option>		
+									<option v-for="S in SERIOUS_LEVEL_LIST"  :key="S.FAULT_CODE" :value="S.FAULT_CODE" >
+										{{S.SERIOUS_LEVEL}}
+									</option>								
+								</select>
+							</div>
+					</div>
+					<label class="control-label" id="C_FAULT_TYPE"></label>
+					</div>				
+					<div class="row">
+				        <ul class="nav nav-pills nav-stacked col-xs-2" role="tablist" style="padding-left:20px;width:180px;height: 350px;overflow-y: scroll;" id="fault_tab" >
+				        <li @click="setFaultType('')" class="active"><a :href="'#tab_content_全部'" role="tab" data-toggle="tab" >全部</a></li>
+				        <li @click="setFaultType('')" v-for="(fault,index) in FAULT_TYPE_LIST"  ><a :href="'#tab_content_'+fault"  role="tab" data-toggle="tab">{{fault}}</a></li>
+				        <li @click="setFaultType('other')"><a :href="'#tab_content_其他'" role="tab" data-toggle="tab">其他</a></li>
+					  </ul>
+					  <div class="tab-content col-xs-10" style="height:350px;padding-right: 20px;padding-left:0px;width:600px; " v-cloak>
+					  		<div  :class="'tags-input tab-pane active' "  :id="'tab_content_全部'"  style="height:100%;" role="tabpanel">
+							<span v-for="(fault,j) in FAULT_LIST_ALL"  class="tag" ><span><input type="radio" name="fault_radio"  :value="fault.FAULT_NAME" :fault_type="fault.FAULT_TYPE"
+							@click="setSeriousLevel(fault)">{{fault.FAULT_NAME}} </span></span>		
+					 		</div> 
+					  		<div  v-for="(type,index) in FAULT_TYPE_LIST"  class='tab-pane tags-input'  :id="'tab_content_'+type"  style="height:100%;" role="tabpanel">
+							<span v-for="(fault,j) in FAULT_LIST" v-if="fault.FAULT_TYPE==type" class="tag" :id="'tag_input_'+j" >
+							<span><input type="radio" name="fault_radio" @click="setSeriousLevel(fault)" :value="fault.FAULT_NAME"  :fault_type="fault.FAULT_TYPE">{{fault.FAULT_NAME}} </span></span>		
+					 		</div> 
+					 		<div  :class="'tab-pane tags-input' "  :id="'tab_content_其他'"  style="height:100%;" role="tabpanel" >
+							<textarea id="fault_other"  class="input-large"  style="width:100%" rows=2>	 </textarea>
+					 		</div>
+					  </div>			
+					</div>
+					
+					</div>
+		</div>
+	</div>		
+<script src="${request.contextPath}/statics/js/qms/processQuality/qms_fault_select.js?_${.now?long}"></script>
+</body>
+</html>

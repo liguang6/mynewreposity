@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>编辑车型工序</title>
+<#include "/header.html">
+</head>
+<body>
+    <input id="deptId" style="display: none;" value="${deptId}">
+    <input id="busTypeCode" style="display: none;" value="${busTypeCode}"/>
+    <input id="vehicleType" style="display: none;" value="${vehicleType}"/>
+	<div class="wrapper" id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+				<form id="inputForm"  method="post"
+					class="form-horizontal">
+					<div class="box-body">
+						<br /> <input type="hidden" id="id" name="id"
+							value="1004197236652892160" />
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 工厂：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<input type="text" id="logTitle" name="logTitle"
+											v-model="factoryName" maxlength="500"
+											class="form-control required " readonly="readonly"/>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 车间：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+
+                                          <input type="text" id="logTitle" name="logTitle"
+											v-model="workshopName" maxlength="500"
+											class="form-control required " readonly="readonly" />     
+										
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 车型：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										
+									    <select class="required"  maxlength="100" v-model="busTypeCode"> 
+									        <option value="">请选择</option>
+									        <#list tag.busTypeList() as busType>
+									           <option value="${busType.busTypeCode}">${busType.internalName}</option>
+									        </#list>
+									    </select>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 车辆类型：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										
+										<select class="required"  maxlength="100"  v-model="vehicleType">
+										  <#list tag.wmsDictList('vehicle_type') as vehicle>
+										     <option value="${vehicle.value}">${vehicle.value}</option>
+										  </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required hide">*</span> 线别：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<input type="text" id="bizType" name="bizType" v-model="lineName"
+											maxlength="64" class="form-control " readonly="readonly"/>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								
+							</div>
+						</div>
+
+						<div class="row">
+							<div class='col-xs-2'></div>
+							<div class="col-xs-10">
+								<table class='table table-bordered'>
+									<tr style="background-color: #eee">
+										<th>序号</th>
+										<th>工序名称</th>
+										<th>工段</th>
+										<th>生产监控点</th>
+										<th>计划节点</th>
+									</tr>
+									<tr v-for="process in processList" :key="process.sortNo">
+										<td>{{process.sortNo + 1 }}</td>
+										<td>{{process.processCode}} {{process.processName}}</td>
+										<td>{{process.sectionName}}</td>
+										<td>{{process.monitoryPointFlag==='1'?'是':'否'}}</td>
+										<td>{{process.planNodeName}}</td>
+									</tr>
+								</table>
+							</div>
+						</div>
+
+					</div>
+					
+					<div class="box-footer">
+						<div class="row">
+							<div class="col-sm-offset-5 col-sm-10">
+								<button type="button" class="btn btn-sm btn-default"
+									id="btnCancel" @click="close">
+									<i class="fa fa-reply-all"></i> 关 闭
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	
+	 <script src="${request.contextPath}/statics/js/modules/setting/settingprocessflow_info.js?_${.now?long}"></script>
+</body>
+</html>

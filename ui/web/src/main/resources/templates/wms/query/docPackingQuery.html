@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>发料包装查询</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<script type="text/javascript" src="${request.contextPath}/statics/js/dynamicColum.js"></script>
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/docPackingQuery/list">
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">工厂：</label>
+								<div class="control-inline" style="width: 80px;">
+									<select class="form-control" name="WERKS" id="werks"
+										onchange="vm.onPlantChange(event)"> 
+										<#list tag.getUserAuthWerks("QUERY_WMS_DOC") as factory>
+										 <#if params?? && params.werks?? && params.werks == factory.code>
+										   <option value="${factory.code}" selected="selected">${factory.code}</option>
+										   <#else>
+										   <option value="${factory.code}">${factory.code}</option>
+										 </#if> 
+										</#list>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 60px"> 仓库：</label>
+								<div class="control-inline" style="width: 80px;">
+									<select class="form-control" name="WH_NUMBER" id="whNumber">
+										<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>       
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">料号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="matnr" name="MATNR"  style="width: 80px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#matnr'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 70px">WMS凭证：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   <input type="text" id="wmsNo" name="WMS_NO" style="width: 100px;" class="form-control" />
+									   <input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#wmsNo'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">操作时间：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:170px">
+									<div class="control-inline">
+										<div class="input-group" style="width:80px">
+		                                    <input type="text" id="createDateStart" name="CREATE_DATE_START" value=""
+											class="form-control" style="width: 80px;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+										 </div>
+										<div class="input-group" style="width:80px">
+										    <input type="text" id="createDateEnd" name="CREATE_DATE_END" value=""
+											class="form-control" style="width: 80px;"
+											onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+										 </div>
+									</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+							    <div class="control-inline">
+									<div class="input-group" style="margin-left:-12px">
+										<button type="submit" class="btn btn-primary btn-sm">查询</button>
+<!-- 										<button type="button" class="btn btn-primary btn-sm" @click="exp">导出</button> -->
+		<!-- 								<button type="reset" class="btn btn-default btn-sm">重置</button> -->
+										<button type="button" class="btn btn-primary btn-sm" @click="show">更多..</button>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   <select id="example-getting-started" multiple="multiple" style="display: none;">
+											<option value="COST_CENTER">成本中心</option>
+											<option value="WBS">WBS</option>
+<!-- 											<option value="WERKS">接收工厂</option> -->
+<!-- 											<option value="LGORT">接收库位</option> -->
+											<option value="HEADER_TXT">抬头文本</option>
+											<option value="RSNUM">预留编号</option>
+											<option value="RECEIPT_NO">收货单号</option>
+											<option value="RECEIPT_ITEM_NO">收货单行项目</option>
+											<option value="ASNNO">SCM送货单号</option>
+											<option value="ASNITM">SCM送货单行项目</option>
+											<option value="PO_NO">采购订单号</option>
+											<option value="PO_ITEM_NO">采购订单行项目</option>
+											<option value="SAP_OUT_NO">SAP交货单号</option>
+											<option value="SAP_OUT_ITEM_NO">SAP交货单行项目</option>
+											<option value="RETURN_NO">退货单号</option>
+											<option value="RETURN_ITEM_NO">退货单行项目</option>
+										</select> 
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row" v-show="showDiv">
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">库位：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+										<select class="form-control" name="LGORT" id="lgort">
+									    	<option value="">全部</option>
+											<option v-for="w in lgort" :value="w.LGORT" :key="w.LGORT">{{ w.LGORT }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">成本中心：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									    <input type="text" id="costCenter" name="COST_CENTER" style="width: 80px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;font-size:8pt">供应商：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="lifnr" name="LIFNR" style="width: 80px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#lifnr'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 70px">采购订单：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="poNo" name="PO_NO" style="width: 100px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#poNo'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+									<label class="control-label" style="width: 60px">过账时间：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width:180px">
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+			                                    <input type="text" id="jzDateStart" name="JZ_DATE_START" 
+												class="form-control" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>
+											<div class="input-group" style="width:80px">
+											    <input type="text" id="jzDateEnd" name="JZ_DATE_END"
+												class="form-control" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group" style="margin-left:-15px">
+								<label class="control-label" style="width: 85px">需求跟踪号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="bednr" name="BEDNR" style="width: 100px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#bednr'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row" v-show="showDiv">
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;font-size:8pt">操作人：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									    <input type="text" id="create" name="CREATOR"  style="width: 80px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">移动类型：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									    <input type="text" id="wmsMoveType" name="WMS_MOVE_TYPE" style="width: 80px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">批次：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="batch" name="BATCH" style="width: 80px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#batch'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 70px">收货单号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									<input type="text" id="receiptNo" name="RECEIPT_NO" style="width: 100px;" class="form-control" />
+									<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#receiptNo'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+									<label class="control-label" style="width: 60px">凭证日期：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width:180px">
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+			                                    <input type="text" id="pzDateStart" name="PZ_DATE_START" 
+												class="form-control" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>
+											<div class="input-group" style="width:80px">
+											    <input type="text" id="pzDateEnd" name="PZ_DATE_END"
+												class="form-control" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group" style="margin-left:-15px">
+								<label class="control-label" style="width: 85px">SAP交货单号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="sapOutNo" name="SAP_OUT_NO" style="width: 100px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#sapOutNo'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						</form>
+						<div id="divDataGrid" style="width:100%;overflow:auto;">
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>	
+						<table id="tb_excel" style="display:none"></table>
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/docPackingQuery.js?_${.now?long}"></script>
+</body>
+</html>

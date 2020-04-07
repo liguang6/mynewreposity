@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>巡检记录查看</title> 
+<#include "/header.html">
+<style>
+.post-msg {
+	color: red;
+	font-weigth: small
+}
+</style>
+</head>
+<body>
+
+	<div class="wrapper" id="app-vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" method="post" action="${request.contextPath}/qms/patrolRecord/queryDetail">
+						<div class="form-group">
+							<label class="control-label">工厂：</label>
+							<div class="control-inline">
+								<input type="text" id="werks" readonly="readonly" 
+									  style="width:60px" class="form-control" />
+							</div>
+						</div>
+<!-- 						<div class="form-group"> -->
+<!-- 							<label class="control-label">检验类别：</label> -->
+<!-- 							<div class="control-inline"> -->
+<!-- 								<input type="text" id="testType" readonly="readonly"  -->
+<!-- 									 class="form-control" style="width:60px" /> -->
+<!-- 							</div> -->
+<!-- 						</div> -->
+						<div class="form-group">
+							<label class="control-label">订单：</label>
+							<div class="control-inline">
+								<input type="text" id="orderNo" readonly="readonly" 
+									  style="width:80px" class="form-control" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">检验节点：</label>
+							<div class="control-inline">
+								<input type="text" id="testNode" readonly="readonly"  
+									  style="width:80px" class="form-control" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">巡检编号：</label>
+							<div class="control-inline">
+								<input type="text" id="patrolRecordNo" readonly="readonly"  name="patrolRecordNo"
+									 style="width:140px" class="form-control" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">检验员：</label>
+							<div class="control-inline">
+								<input type="text" id="testor" readonly="readonly" 
+									 style="width:70px" class="form-control" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">检验时间：</label>
+							<div class="control-inline">
+								<input type="text" id="testDate" readonly="readonly" 
+									 style="width:150px" class="form-control width-120" />
+							</div>
+						</div>
+                       <div class="form-group" v-show="!showList">
+							  &nbsp;  &nbsp;&nbsp; 
+							  <input id="btnSave"  type="button" class="btn btn-primary btn-sm" @click="saveOrUpdate" value="保存"/>
+						</div>
+						<table  id="dataGrid" ></table>
+					</form>
+				</div>
+			</div>
+		</div>
+</body>
+<script
+	src="${request.contextPath}/statics/js/qms/processQuality/qms_patrol_record_detail.js?_${.now?long}"></script>
+</html>

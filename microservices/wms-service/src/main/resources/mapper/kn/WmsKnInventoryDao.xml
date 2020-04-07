@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.kn.dao.WmsKnInventoryDao">
+
+     <select id="getInventoryList" parameterType="Map" resultType="Map">
+      SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT H.ID,H.WERKS,H.WH_NUMBER,H.INVENTORY_NO,H.INVENTORY_TYPE,H.WH_MANAGER,
+		      H.LGORT,H.PROPORTION,H.CREATOR,H.CREATE_DATE,H.EDITOR,H.EDIT_DATE,H.STATUS,D.VALUE STATUS_DESC
+		       FROM WMS_KN_INVENTORY_HEAD H
+		       LEFT JOIN SYS_DICT D ON D.DEL_FLAG='0' AND D.CODE=H.STATUS AND D.TYPE='INVENTORY_TYPE' 
+		      WHERE H.DEL='0'
+		      <if test="startDate != null and startDate !=''">
+		        AND H.CREATE_DATE &gt;=#{startDate}
+		      </if>
+		      <if test="endDate != null and endDate !=''">
+		        AND H.CREATE_DATE &lt;=#{endDate}
+		      </if>
+		      <if test="whManager != null and whManager !=''">
+		        AND H.WH_MANAGER  LIEK '%' || #{whManager} || '%'
+		      </if>
+		      <if test="lgort != null and lgort !=''">
+		        AND H.LGORT LIEK '%' || #{lgort} || '%'
+		      </if>
+		      <if test="status != null and status !=''">
+		        AND H.STATUS = #{status}
+		      </if>
+		      <if test="whNumber != null and whNumber !=''">
+		        AND H.WH_NUMBER = #{whNumber}
+		      </if>
+		      AND H.WERKS=#{werks} 
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{end})  
+	  WHERE ROW_ID > #{start} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getInventoryCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_KN_INVENTORY_HEAD H WHERE DEL='0'
+		      <if test="startDate != null and startDate !=''">
+		        AND H.CREATE_DATE &gt;=#{startDate}
+		      </if>
+		      <if test="endDate != null and endDate !=''">
+		        AND H.CREATE_DATE &lt;=#{endDate}
+		      </if>
+		      <if test="whManager != null and whManager !=''">
+		        AND H.WH_MANAGER  LIEK '%' || #{whManager} || '%'
+		      </if>
+		      <if test="lgort != null and lgort !=''">
+		        AND H.LGORT LIEK '%' || #{lgort} || '%'
+		      </if>
+		      <if test="status != null and status !=''">
+		        AND H.STATUS = #{status}
+		      </if>
+		      <if test="whNumber != null and whNumber !=''">
+		        AND H.WH_NUMBER = #{whNumber}
+		      </if>
+		      AND H.WERKS=#{werks} 
+    </select>
+     <select id="getInventoryItemList" parameterType="String" resultType="Map">
+		      SELECT D.ID,D.WERKS,D.WH_NUMBER,D.INVENTORY_NO,INVENTORY_ITEM_NO,D.MATNR,D.MAKTX,
+		      D.LIFNR,D.LIKTX,D.MEINS,D.STOCK_QTY,D.LGORT,
+		      NVL(INVENTORY_QTY,'') INVENTORY_QTY ,INVENTORY_QTY_REPEAT,NVL(DIFFERENCE_REASON,'') DIFFERENCE_REASON,
+		      FREEZE_QTY,INVENTORY_PEOPLE,INVENTORY_DATE,INVENTORY_PEOPLE_REPEAT,
+		      INVENTORY_DATE_REPEAT,CONFIRMOR,CONFIRM_DATE,A.MANAGER WH_MANAGER
+		       FROM WMS_KN_INVENTORY_ITEM D
+		      LEFT JOIN WMS_C_MAT_MANAGER MA 
+	               ON  MA.DEL='0'AND MA.WERKS=D.WERKS AND MA.WH_NUMBER=D.WH_NUMBER AND MA.MATNR=D.MATNR AND MA.LIFNR=D.LIFNR 
+	           LEFT JOIN WMS_C_MAT_MANAGER_TYPE  A 
+	               ON A.DEL='0' AND A.MANAGER_TYPE='01' AND A.WERKS=MA.WERKS AND A.WH_NUMBER=MA.WH_NUMBER AND A.AUTHORIZE_CODE=MA.AUTHORIZE_CODE
+		      WHERE D.DEL='0' AND D.INVENTORY_NO=#{INVENTORY_NO} 
+		      ORDER BY TO_NUMBER(INVENTORY_ITEM_NO)
+    </select>
+    <select id="getInventoryHead" parameterType="String" resultType="Map">
+		      SELECT H. INVENTORY_NO,H.WERKS,H.WH_NUMBER,H.INVENTORY_TYPE,H.STATUS,H.WH_MANAGER,
+		      H.LGORT,H.PROPORTION,H.CREATOR,H.CREATE_DATE,D.VALUE STATUS_DESC
+		       FROM WMS_KN_INVENTORY_HEAD H 
+		       LEFT JOIN SYS_DICT D ON D.DEL_FLAG='0' AND D.CODE=H.STATUS AND D.TYPE='INVENTORY_TYPE' 
+		        WHERE H.DEL='0'  AND 
+		      H.WERKS=#{WERKS} AND H.WH_NUMBER=#{WH_NUMBER}  AND H.INVENTORY_NO=#{INVENTORY_NO}
+    </select>
+	<insert id="saveInventoryHead" parameterType="Map">
+	 <selectKey resultType="int" order="BEFORE" keyProperty="ID">
+             SELECT SEQ_WMS_KN_INVENTORY_HEAD.NEXTVAL FROM DUAL
+	 </selectKey>
+		INSERT INTO WMS_KN_INVENTORY_HEAD
+		(ID,WERKS,WH_NUMBER,INVENTORY_NO,INVENTORY_TYPE,STATUS,WH_MANAGER,
+		      LGORT,PROPORTION,CREATOR,CREATE_DATE,DEL) VALUES (
+		    #{ID},#{WERKS},#{WH_NUMBER},#{INVENTORY_NO},#{INVENTORY_TYPE},
+		    '00',#{WH_MANAGER},#{LGORT},#{PROPORTION},#{CREATOR},#{CREATE_DATE},'0') 
+	</insert>
+	<insert id="saveInventoryItem" parameterType="List" >
+		INSERT INTO WMS_KN_INVENTORY_ITEM
+		(ID,INVENTORY_NO,INVENTORY_ITEM_NO,WERKS,WH_NUMBER,MATNR,MAKTX,LIFNR,LIKTX,LGORT,
+		STOCK_QTY,MEINS,FREEZE_QTY,DEL) 
+		SELECT SEQ_WMS_KN_INVENTORY_ITEM.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="detail" index="index" separator="UNION ALL">
+		SELECT  #{detail.INVENTORY_NO},#{detail.INVENTORY_ITEM_NO},#{detail.WERKS},#{detail.WH_NUMBER},
+		    #{detail.MATNR},#{detail.MAKTX},#{detail.LIFNR},#{detail.LIKTX},#{detail.LGORT},#{detail.STOCK_QTY},
+			#{detail.MEINS},#{detail.FREEZE_QTY},'0'
+		FROM DUAL
+		</foreach>
+		) m
+	</insert>
+	<!-- 查询库存数据，生成盘点表数据 -->
+	<select id="getInventoryStockList" parameterType="Map" resultType="Map">
+        
+	SELECT TMP.WERKS,TMP.WH_NUMBER,TMP.LGORT,TMP.MATNR,TMP.MAKTX,TMP.LIFNR,TMP.LIKTX,TMP.MEINS,
+	     TMP.MANAGER_STAFF,SUM(TMP.STOCK_QTY) STOCK_QTY,SUM(NVL(TMP.FREEZE_QTY,0)) FREEZE_QTY FROM (
+	          SELECT S.WERKS,S.WH_NUMBER,S.LGORT,S.MATNR,S.MAKTX,S.LIFNR,S.LIKTX,S.MEINS,
+	          NVL(S.STOCK_QTY,0)+NVL(S.LOCK_QTY,0)+NVL(S.FREEZE_QTY,0)+ 
+	          NVL(S.XJ_QTY,0) STOCK_QTY,S.FREEZE_QTY,A.MANAGER MANAGER_STAFF
+	           FROM WMS_CORE_STOCK S
+	           LEFT JOIN WMS_C_MAT_MANAGER MA 
+	               ON  MA.DEL='0'AND MA.WERKS=S.WERKS AND MA.WH_NUMBER=S.WH_NUMBER AND MA.MATNR=S.MATNR AND MA.LIFNR=S.LIFNR 
+	           LEFT JOIN WMS_C_MAT_MANAGER_TYPE  A 
+	               ON A.DEL='0' AND A.MANAGER_TYPE='01' AND A.WERKS=MA.WERKS AND A.WH_NUMBER=MA.WH_NUMBER AND A.AUTHORIZE_CODE=MA.AUTHORIZE_CODE
+	           WHERE 1=1
+		      <if test="LIFNR !=null and LIFNR !='' ">
+				and INSTR(','||#{LIFNR}||',',','||s.LIFNR||',')>0
+			  </if>
+		       <if test="WH_MANAGER!=null and WH_MANAGER.length>0">
+		           AND MA.MANAGER_STAFF IN
+			       <foreach collection="WH_MANAGER" item="detail" index="index" open="(" close=")" separator=",">
+			            #{detail}
+			       </foreach>
+		       </if>
+		       <if test="LGORT!=null and LGORT.length>0">
+		           AND S.LGORT IN
+			       <foreach collection="LGORT" item="detail" index="index" open="(" close=")" separator=",">
+			            #{detail}
+			       </foreach>
+		       </if>
+		        AND S.WH_NUMBER = #{WH_NUMBER} AND S.WERKS=#{WERKS} 
+		       ) TMP WHERE TMP.STOCK_QTY>0 
+		       GROUP BY WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,LIFNR,LIKTX,MANAGER_STAFF,MEINS
+    </select>
+    <update id="updateStatus" parameterType="Map">
+        UPDATE WMS_KN_INVENTORY_HEAD SET STATUS=#{STATUS},EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE} WHERE INVENTORY_NO=#{INVENTORY_NO}
+    </update>
+    <!-- 盘点结果，更新初盘数量、复盘数量、差异原因 -->
+    <update id="batchUpdateInventory" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			UPDATE WMS_KN_INVENTORY_ITEM SET 
+			  <if test="detail.TYPE=='00'"><!-- 初盘：更新初盘数量、初盘人、初盘时间 -->
+		         INVENTORY_QTY=to_number(#{detail.INVENTORY_QTY}),
+		         INVENTORY_PEOPLE=#{detail.PEOPLE},
+		         INVENTORY_DATE=#{detail.DATE}
+		      </if>
+		      <if test="detail.TYPE=='01'"><!--  复盘：更新复盘数量、复盘人、复盘时间 -->
+		        INVENTORY_QTY_REPEAT=to_number(#{detail.INVENTORY_QTY_REPEAT}) ,
+		        INVENTORY_PEOPLE_REPEAT=#{detail.PEOPLE},
+		        INVENTORY_DATE_REPEAT=#{detail.DATE}
+		      </if>
+		      <if test="detail.TYPE=='02'"><!--  盘点确认：更新差异原因、确认人、确认时间 -->
+		        DIFFERENCE_REASON=#{detail.DIFFERENCE_REASON},CONFIRMOR=#{detail.PEOPLE},
+		        CONFIRM_DATE=#{detail.DATE}
+		      </if>
+			WHERE ID=to_number(#{detail.ID})
+		</foreach>
+	</update>
+
+	<select id="getExistsItemList" parameterType="Map" resultType="Map">
+		      SELECT D.ID FROM WMS_KN_INVENTORY_ITEM D WHERE D.DEL='0' 
+		      <if test="TYPE=='00'"><!-- 初盘 -->
+		        AND NVL(INVENTORY_QTY,0)>0
+		      </if>
+		      <if test="TYPE=='01'"><!-- 复盘 -->
+		        AND NVL(INVENTORY_QTY_REPEAT,0)>0
+		      </if>
+		      <if test="TYPE=='02'"><!-- 盘点确认 -->
+		        AND NVL(DIFFERENCE_REASON,'')!=''
+		      </if>
+		      AND D.INVENTORY_NO=#{INVENTORY_NO} 
+		      AND NOT EXISTS (SELECT ID FROM WMS_KN_INVENTORY_ITEM T WHERE T.ID=D.ID
+		      <if test="IDS!=null and IDS.size>0">
+		      AND ID IN
+		       <foreach collection="IDS" item="detail" index="index" open="(" close=")" separator=",">
+			            #{detail}
+			   </foreach>
+			   </if>
+		      )
+    </select>
+    <!-- 盘点确认数据 -->
+    <select id="getInventoryConfirmList" parameterType="Map" resultType="Map">
+		      SELECT D.ID,D.WERKS,D.WH_NUMBER,D.INVENTORY_NO,INVENTORY_ITEM_NO,D.MATNR,D.MAKTX,
+		      D.LIFNR,D.LIKTX,D.MEINS,D.STOCK_QTY,TO_NUMBER(NVL(INVENTORY_QTY_REPEAT,0))-TO_NUMBER(STOCK_QTY) AS DIF_QTY,
+		      NVL(INVENTORY_QTY,'') INVENTORY_QTY ,INVENTORY_QTY_REPEAT,NVL(DIFFERENCE_REASON,'') DIFFERENCE_REASON,
+		      FREEZE_QTY,INVENTORY_PEOPLE,INVENTORY_DATE,INVENTORY_PEOPLE_REPEAT,
+		      INVENTORY_DATE_REPEAT,CONFIRMOR,CONFIRM_DATE,A.MANAGER WH_MANAGER
+		       FROM WMS_KN_INVENTORY_ITEM D
+		       LEFT JOIN WMS_KN_INVENTORY_HEAD H ON H.INVENTORY_NO=D.INVENTORY_NO
+		       LEFT JOIN WMS_C_MAT_MANAGER MA 
+	               ON  MA.DEL='0'AND MA.WERKS=D.WERKS AND MA.WH_NUMBER=D.WH_NUMBER AND MA.MATNR=D.MATNR AND MA.LIFNR=D.LIFNR 
+	           LEFT JOIN WMS_C_MAT_MANAGER_TYPE  A 
+	               ON A.DEL='0' AND A.MANAGER_TYPE='01' AND A.WERKS=MA.WERKS AND A.WH_NUMBER=MA.WH_NUMBER AND A.AUTHORIZE_CODE=MA.AUTHORIZE_CODE
+		      WHERE D.DEL='0' AND D.STOCK_QTY!=D.INVENTORY_QTY_REPEAT
+		      <if test="START_DATE != null and START_DATE !=''">
+		        AND H.CREATE_DATE &gt;=#{START_DATE}
+		      </if>
+		      <if test="END_DATE != null and END_DATE !=''">
+		        AND H.CREATE_DATE &lt;=#{END_DATE}
+		      </if>
+		      <if test="WH_MANAGER != null and WH_MANAGER !=''">
+		        AND A.MANAGER  LIEK '%' || #{WH_MANAGER} || '%'
+		      </if>
+		      <if test="INVENTORY_NO!=null and INVENTORY_NO!=''">
+		          AND D.INVENTORY_NO=#{INVENTORY_NO} 
+		      </if>
+		       AND D.WERKS=#{WERKS} AND D.WH_NUMBER=#{WH_NUMBER} AND H.STATUS='03'
+		      ORDER BY TO_NUMBER(INVENTORY_ITEM_NO)
+    </select>
+    <select id="getWhManagerList" parameterType="Map" resultType="Map">
+        SELECT * FROM WMS_C_MAT_MANAGER_TYPE T WHERE T.DEL='0' AND WERKS=#{WERKS} AND WH_NUMBER=#{WH_NUMBER}
+    </select>
+</mapper>

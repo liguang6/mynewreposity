@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>非JIS需求拣配</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+                   <form id="searchForm" class="form-inline" action="#">
+						<!-- 查询条件 -->
+						<table>
+						<tr>
+						<td width="100%">
+							<div class="form-group">
+								<label class="control-label">供应工厂：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="werks" style="height: 28px;width: 60px;" id="werks" onchange="vm.onPlantChange(event)">  
+										   <option value=''>全部</option>
+										   <#list tag.getUserAuthWerks("WLMS_FJIS") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										   </#list>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="margin-left:-3px">仓管员：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select class="input-medium" name="whManager" id="whManager" style="width: 70px;height:25px;">
+									 <option value="" >全部</option>
+									 <option v-for="w in relatedareaname" :value="w.AUTHORIZE_CODE" :key="w.AUTHORIZE_CODE">{{ w.MANAGER }}</option>
+									</select>
+								</div>
+							</div> 
+							<div class="form-group">
+								<label class="control-label">到货口：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="waitLocation" style="height: 28px;width: 60px;" id="waitLocation">  
+										   <option value=''>全部</option>
+										   <#list tag.wmsDictList("WAITLOCATION") as waitLocation>
+										      <option value="${waitLocation.value}">${waitLocation.value}</option>
+										   </#list>
+										</select>
+								</div>
+							</div>	
+							<div class="form-group">
+								<label class="control-label">料号：</label>
+								<input type="text" id="mateirlNo" name="mateirlNo" value="" class="form-control" style="width: 150px;"/>
+							</div>
+							<div class="form-group">
+								<label class="control-label">需求工厂：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="plantCode" style="height: 28px;width: 60px;" id="plantCode" disabled="true">  
+										   <!--  <#list tag.getUserAuthWerks("WLMS_FJIS") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										   </#list>-->
+										   <option value='C113'>C113</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">线别：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="lineCategory" style="height: 28px;width: 60px;" id="lineCategory">  
+										   <option value=''>全部</option>
+										   <#list tag.wmsDictList("LINE") as lineCategort>
+										      <option value="${lineCategort.code}">${lineCategort.value}</option>
+										   </#list>
+										</select>
+								</div>
+							</div>
+	
+							<div class="form-group">
+								    <input type="button" id="btnquerydispatchingFeiJIS" class="btn btn-primary btn-sm " value="查询"/>
+									<button type="reset" class="btn btn-info btn-sm">重置</button>
+							</div>
+						</td>
+							</tr>
+					</table>
+				   </form>
+				   <div id="pgtoolbar1">
+					<div id="links" >
+						<a href="#" class="btn" id="btnFeiJISDispatching" @click="feijisdispatching" title="拣配下架"><i class="fa fa-search"></i>拣配下架</a> 
+						<a href="#" class="btn" id="btnPrintFeiJIS" @click="feijisprint" title="打印" /><i class="fa fa-print"></i>打印单据</a>
+					</div>
+				</div>
+					<div id="pgtoolbar1" class="table-responsive table2excel">
+						<table id="dataGrid"></table>
+					</div>
+					<form id="print" target="_blank" method="post" action="${request.contextPath}/docPrint/dispatchingFeiJISPrintPreview" >
+						<button hidden="hidden" id="printButton" type="submit"></button>
+						<input hidden="hidden" name="BARCODE" id="BARCODE" type="text" >
+					</form>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/cswlms/dispatchingFeiJIS.js?_${.now?long}"></script>
+</body>
+</html>

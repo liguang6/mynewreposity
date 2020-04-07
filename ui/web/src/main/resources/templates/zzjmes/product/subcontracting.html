@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>委外加工</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="uploadForm" method="post" class="form-inline" action="#">
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 50px;"><span style="color:red">*</span>工厂：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+										<select v-model="werks" name="werks" id="werks" style="width: 60px;height: 28px;">
+											<!-- <option value="0">全部</option> -->
+											<#list tag.getUserAuthWerks("ZZJMES_SUBCONTRACTING") as factory>
+												<option data-name="${factory.NAME}" value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+										<input type="text" style="display: none;" name="werks_name" id="werks_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" ><span style="color:red">*</span>车间：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 70px" id="parentDiv">
+										<select v-model="workshop" name="workshop" id="workshop" style="width: 70px;height: 28px;">
+											<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+										<input type="text" style="display: none;" name="workshop_name" id="workshop_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>线别：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+										<select v-model="line" name="line" id="line" style="width: 60px;height: 28px;">
+											<option v-for="w in linelist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+										<input type="text" style="display: none;" name="line_name" id="line_name" >
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>委外工序：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 60px" id="parentDiv">
+										<select v-model="process" name="process" id="process" style="width: 60px;height: 28px;">
+											<option v-for="w in processList" :value="w.PROCESS_CODE">{{ w.PROCESS_NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label">订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+										<input v-model="search_order" type="text" name="search_order" id="search_order" class="form-control" @click="getOrderNoFuzzy()" placeholder="订单编号">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" >批次：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									  <select  name="zzj_plan_batch" id="zzj_plan_batch" v-model="zzj_plan_batch" style="width:100%;height:28px" >
+					                  		<option :data-name="plan.quantity" v-for="plan in batchplanlist" :value="plan.batch">{{ plan.batch }}</option>
+									  </select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:45px;"><span style="color:red">*</span>日期：</label>
+								<div class="control-inline" style="width:80px;">
+									<input id="business_date" v-model="business_date" name="business_date" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:45px;"><span style="color:red">*</span>总重：</label>
+								<div class="control-inline" style="width:70px;">
+									<input v-model="total_weight" type="text" name="total_weight" id="total_weight"  class="form-control" style="width:100%">
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:60px;"><span style="color:red">*</span>零部件：</label>
+								<div class="control-inline" style="width:180px;">
+									<span class="input-icon input-icon-right tab_tz">
+										<input @keyup.enter="queryMatInfo" v-model="zzj_no" id="zzj_no" name="zzj_no" type="text" class="form-control" autocomplete="off" style="width:100%">
+										<i onclick="doScan('zzj_no')" class="ace-icon fa fa-barcode black bigger-180 btn_scan" style="cursor: pointer;"></i>
+									</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width:70px;"><span style="color:red">*</span>委外单位：</label>
+								<div class="control-inline" style="width:150px;">
+									<input v-model="vendor" type="text" name="vendor" id="vendor"  class="form-control" style="width:100%">
+								</div>
+							</div>
+							<div class="form-group">
+									<input type="button" id="btnSave" @click="btnSave" class="btn btn-info btn-sm" value="保存" /> 
+									<input type="button" id="btnClear" @click="clearTable"  class="btn btn-success btn-sm" value="清空" />
+							</div>
+						</div>
+					</form>	
+ 					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+					</div>
+					
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><span id="resultMsg"></span></h4>
+		<br/>
+		<form id="print_inspection" target="_blank" method="post" action="${request.contextPath}/zzjmes/outsourcing/outsourcingDocPreview" style="width:100px;float:left;margin-left: 5px;">
+			<button id="btnPrint2" class="btn btn-primary btn-sm" type="submit">打印委外清单</button>
+			<input name="headInfo" id="headInfo" type="text" hidden="hidden">
+			<input name="matList" id="matList" type="text" hidden="hidden">
+		</form>
+	</div>
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/subcontracting.js?_${.now?long}"></script>
+</body>
+</html>

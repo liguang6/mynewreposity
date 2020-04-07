@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.sap.modules.job.dao.ISapSyncDao">
+	
+	<select id="getSapUserByWerks" resultType="Map" parameterType="String">
+	SELECT SAP_USER,SAP_PASSWORD FROM WMS_C_SAP_USER WHERE DEL = '0' AND WERKS = #{WERKS}
+	</select>
+	
+	<select id="get_VENDOR_id" resultType="String" parameterType="Map">
+		SELECT ID FROM WMS_SAP_VENDOR WHERE LIFNR = #{LIFNR}
+	</select>
+	<update id="update_VENDOR" parameterType="Map">
+		UPDATE WMS_SAP_VENDOR
+		SET NAME1=#{NAME1}, NAME2=#{NAME2}, EDITOR=#{EDITOR}, 
+		EDIT_DATE=#{EDIT_DATE} WHERE ID=#{ID}
+	</update>
+	<insert id="insert_VENDOR" parameterType="Map">
+		INSERT INTO WMS_SAP_VENDOR
+		(ID, LIFNR, NAME1, NAME2, EDITOR, 
+		EDIT_DATE, IMPORT_DATE)
+		VALUES(SEQ_WMS_SAP_VENDOR.nextval, #{LIFNR}, #{NAME1}, #{NAME2}, #{EDITOR}, 
+		#{EDIT_DATE}, #{IMPORT_DATE})
+	</insert>
+	
+	<select id="get_SapMaterial_id" resultType="String" parameterType="Map">
+		SELECT ID FROM WMS_SAP_MATERIAL WHERE MATNR = #{MATNR} AND WERKS = #{WERKS}
+	</select>
+	
+	<!-- 更新，插入客户信息 -->
+	<update id="addOrUpdateCustomerInfo" parameterType="List">
+		merge into WMS_SAP_CUSTOMER s using(
+		select m.BUKRS,m.KUNNR,m.NAME1,m.SORTL,m.VKORG,m.VTWEG,m.SPART,m.ADDRESS,m.IMPORT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.BUKRS} BUKRS,#{d.KUNNR} KUNNR,#{d.NAME1} NAME1, #{d.SORTL} SORTL,#{d.VKORG} VKORG,
+			#{d.VTWEG} VTWEG,#{d.SPART} SPART,#{d.ADDRESS} ADDRESS,#{d.IMPORT_DATE} IMPORT_DATE
+			from dual
+		</foreach>
+		) m
+		group by m.BUKRS,m.KUNNR,m.NAME1,m.SORTL,m.VKORG,m.VTWEG,m.SPART,m.ADDRESS,m.IMPORT_DATE
+		) tmp
+		on (tmp.BUKRS=s.BUKRS and tmp.KUNNR=s.KUNNR 
+		and (s.VKORG IS NULL OR tmp.VKORG=s.VKORG) and (s.VTWEG IS NULL OR tmp.VTWEG=s.VTWEG) 
+		and (s.SPART IS NULL OR tmp.SPART=s.SPART))
+		when matched then
+		update  set s.NAME1=tmp.NAME1,s.SORTL=tmp.SORTL,
+		s.ADDRESS=tmp.ADDRESS,s.IMPORT_DATE=tmp.IMPORT_DATE
+		when not matched then
+		insert (ID,BUKRS,KUNNR,NAME1,SORTL,VKORG,VTWEG,SPART,ADDRESS,IMPORT_DATE)
+		VALUES (SEQ_WMS_SAP_CUSTOMER.nextval,tmp.BUKRS,tmp.KUNNR,tmp.NAME1,tmp.SORTL,tmp.VKORG,
+		tmp.VTWEG,tmp.SPART,tmp.ADDRESS,tmp.IMPORT_DATE
+		)
+	</update>
+	
+	<update id="update_SapMaterial" parameterType="Map">
+	UPDATE WMS_SAP_MATERIAL
+	SET MAKTX=#{MAKTX},MAKTX_EN=#{MAKTXEN},MEINS=#{MEINS},BSTME=#{BSTME},AUSME=#{AUSME},MMSTA=#{MMSTA},
+	LVORM=#{LVORM},BESKZ=#{BESKZ},SOBSL=#{SOBSL},VPRSV=#{VPRSV},VERPR=#{VERPR},STPRS=#{STPRS},PEINH=#{PEINH},XCHPF = #{XCHPF},
+	EDIT_DATE=#{IMPORTDATE},IMPORTOR=#{IMPORTOR},EDITOR_ID=#{EDITORID},EDITOR=#{EDITOR},PRFRQ=#{PRFRQ}
+	WHERE ID=#{ID}
+	</update>
+	
+	<insert id="insert_SapMaterial" parameterType="Map">
+	INSERT INTO WMS_SAP_MATERIAL
+	(ID,MATNR,MAKTX,MAKTX_EN,MEINS,WERKS,BSTME,AUSME,MMSTA,LVORM,
+	BESKZ,SOBSL,VPRSV,VERPR,STPRS,PEINH,IMPORT_DATE,IMPORTOR,EDITOR_ID,EDITOR,XCHPF,PRFRQ,
+	EDIT_DATE)
+	VALUES(SEQ_WMS_SAP_MATERIAL.nextval,#{MATNR},#{MAKTX}, #{MAKTXEN}, #{MEINS}, #{WERKS}, #{BSTME}, #{AUSME}, #{MMSTA}, #{LVORM},
+	#{BESKZ}, #{SOBSL}, #{VPRSV}, #{VERPR}, #{STPRS}, #{PEINH}, #{IMPORTDATE}, #{IMPORTOR}, #{EDITORID}, #{EDITOR}, #{XCHPF},#{PRFRQ},
+	#{EDITDATE})
+	</insert>
+	
+	<select id="get_SapMaterialUnit_id" resultType="String" parameterType="Map">
+		SELECT ID FROM WMS_SAP_MATERIAL_UNIT WHERE MATNR = #{MATNR} AND MEINH = #{MEINH}
+	</select>
+	<update id="update_SapMaterialUnit" parameterType="Map">
+	UPDATE WMS_SAP_MATERIAL_UNIT SET
+	MATNR=#{MATNR},MEINH=#{MEINH},UMREZ=#{UMREZ},UMREN=#{UMREN},IMPORT_DATE=#{IMPORTDATE}
+	WHERE ID=#{ID}
+	</update>
+	<insert id="insert_SapMaterialUnit" parameterType="Map">
+	INSERT INTO WMS_SAP_MATERIAL_UNIT
+	(ID,MATNR,MEINH,UMREZ,UMREN,IMPORT_DATE)
+	VALUES(SEQ_WMS_SAP_MATERIAL_UNIT.nextval,#{MATNR}, #{MEINH}, #{UMREZ}, #{UMREN}, #{IMPORTDATE})
+	</insert>
+	
+	<insert id="insert_ScheduleJobLog" parameterType="Map">
+	INSERT INTO SCHEDULE_JOB_LOG 
+	(LOG_ID,JOB_ID,BEAN_NAME,METHOD_NAME,PARAMS,STATUS,ERROR,TIMES,CREATE_TIME) VALUES 
+	(SEQ_SCHEDULE_JOB_LOG.nextval,0,#{BEANNAME},#{METHODNAME},#{PARAMS},#{STATUS},#{ERROR},1,#{CREATETIME})
+	</insert>
+	
+	<select id="getWmsSapCompanyList" resultType="Map" parameterType="Map">
+		SELECT sp.WERKS,sp.BUKRS,sp.EKORG
+			FROM WMS_SAP_PLANT sp
+			WHERE sp.DEL = '0'
+			<if test="SYNC_MAT !=null and SYNC_MAT !='' ">
+				and sp.SYNC_MAT=#{SYNC_MAT}
+			</if>
+			<if test="SYNC_PO !=null and SYNC_PO !='' ">
+				and sp.SYNC_PO=#{SYNC_PO}
+			</if>
+			<if test="SYNC_MO !=null and SYNC_MO !='' ">
+				and sp.SYNC_MO=#{SYNC_MO}
+			</if>			
+			<if test="SYNC_VENDOR !=null and SYNC_VENDOR !='' ">
+				and sp.SYNC_VENDOR=#{SYNC_VENDOR}
+			</if>						
+	</select>
+	
+	<select id="get_SAPPoAccount_id" resultType="String" parameterType="Map">
+		SELECT ID FROM WMS_SAP_PO_ACCOUNT WHERE EBELN=#{EBELN} AND EBELP=#{EBELP}
+	</select>
+	
+	<insert id="insert_SapPoAccount" parameterType="Map">
+	INSERT INTO WMS_SAP_PO_ACCOUNT
+	(ID,EBELN,EBELP,ZEKKN,LOEKZ,MENGE,SAKTO,KOSTL,ANLN1,ANLN2,AUFNR,PRCTR,PS_PSP_PNR,IMPORT_DATE)
+	VALUES(SEQ_WMS_SAP_PO_ACCOUNT.nextval,#{EBELN}, #{EBELP}, #{ZEKKN}, #{LOEKZ}, #{MENGE},#{SAKTO},#{KOSTL},#{ANLN1},#{ANLN2},
+	#{AUFNR},#{PRCTR},#{PS_PSP_PNR},#{IMPORT_DATE})
+	</insert>
+	
+	<update id="update_SapPoAccount" parameterType="Map">
+	UPDATE WMS_SAP_PO_ACCOUNT SET EBELN=#{EBELN},EBELP=#{EBELP},ZEKKN=#{ZEKKN},LOEKZ=#{LOEKZ},MENGE=#{MENGE},SAKTO=#{SAKTO},KOSTL=#{KOSTL},ANLN1=#{ANLN1},
+	ANLN2=#{ANLN2},AUFNR=#{AUFNR},PRCTR=#{PRCTR},PS_PSP_PNR=#{PS_PSP_PNR},IMPORT_DATE=#{IMPORT_DATE}
+	WHERE EBELN=#{EBELN} AND EBELP=#{EBELP}
+	</update>
+	
+	<select id="get_SapMoHead_id" resultType="String" parameterType="String">
+	SELECT id FROM WMS_SAP_MO_HEAD WHERE AUFNR = #{AUFNR} 
+	</select>
+	<insert id="insert_SapMoHead" parameterType="Map">
+	INSERT INTO WMS_SAP_MO_HEAD 
+	(ID,AUART,AUFNR,WERKS,ISTAT_TXT,IMPORT_DATE) VALUES (
+	SEQ_WMS_SAP_MO_HEAD.nextval,#{AUART},#{AUFNR},#{WERKS},
+	#{ISTAT_TXT},#{IMPORT_DATE})
+	</insert>
+	<update id="update_SapMoHead" parameterType="Map">
+	UPDATE WMS_SAP_MO_HEAD SET AUART=#{AUART},WERKS=#{WERKS},
+	ISTAT_TXT=#{ISTAT_TXT},UPDATE_DATE=#{UPDATE_DATE}
+	WHERE AUFNR=#{AUFNR} 
+	</update>
+	
+	<select id="get_SapMoItem_id" resultType="String" parameterType="String">
+	SELECT ID FROM WMS_SAP_MO_ITEM WHERE AUFNR = #{AUFNR} AND POSNR = #{CO_POSNR}
+	</select>
+	
+	<insert id="insert_SapMoItem" parameterType="Map">
+	INSERT INTO WMS_SAP_MO_ITEM 
+	(ID,AUFNR,POSNR,KDAUF,KDPOS,MATNR,MAKTX,PSMNG,MEINS,IMPORT_DATE) VALUES (
+	SEQ_WMS_SAP_MO_ITEM.nextval,#{AUFNR},#{POSNR},#{KDAUF},#{KDPOS},#{MATNR},#{MAKTX},#{PSMNG},#{MEINS},#{IMPORT_DATE})
+	</insert>
+	<update id="update_SapMoItem" parameterType="Map">
+	UPDATE WMS_SAP_MO_ITEM SET MATNR=#{MATNR},MAKTX=#{MAKTX},KDAUF=#{KDAUF},KDPOS=#{KDPOS},
+	PSMNG=#{PSMNG},MEINS=#{MEINS},UPDATE_DATE=#{UPDATE_DATE}
+	WHERE AUFNR=#{AUFNR} AND POSNR = #{POSNR} 
+	</update>
+	<update id="insertOrUpdateSapMoItem" parameterType="List">
+	MERGE INTO WMS_SAP_MO_ITEM S USING(	
+		SELECT m.AUFNR,m.POSNR,m.KDAUF,m.KDPOS,m.MATNR,m.MAKTX,m.PSMNG,m.MEINS,m.IMPORT_DATE,m.UPDATE_DATE
+		FROM (
+		<foreach collection="matList" item="d" index="index" separator="union all">
+		select 
+		#{d.AUFNR} AUFNR,#{d.POSNR} POSNR,#{d.KDAUF} KDAUF,#{d.KDPOS} KDPOS, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.PSMNG} PSMNG,#{d.MEINS} MEINS,#{d.IMPORT_DATE} IMPORT_DATE,#{d.UPDATE_DATE} UPDATE_DATE
+		FROM dual
+		</foreach>
+		) m 
+		GROUP BY m.AUFNR,m.POSNR,m.KDAUF,m.KDPOS,m.MATNR,m.MAKTX,m.PSMNG,m.MEINS,m.IMPORT_DATE,m.UPDATE_DATE
+		) tmp 
+		ON (tmp.AUFNR=s.AUFNR and tmp.POSNR=s.POSNR)
+		WHEN matched THEN 
+			UPDATE SET 
+			s.KDAUF=tmp.KDAUF,s.KDPOS=tmp.KDPOS,s.MATNR=tmp.MATNR,s.MAKTX=tmp.MAKTX,
+			s.PSMNG=tmp.PSMNG,s.MEINS=tmp.MEINS,s.UPDATE_DATE=tmp.UPDATE_DATE
+		WHEN NOT MATCHED THEN 
+			insert (ID,AUFNR,POSNR,KDAUF,KDPOS,MATNR,MAKTX,PSMNG,MEINS,IMPORT_DATE) 
+		VALUES (
+		SEQ_WMS_SAP_MO_ITEM.nextval,tmp.AUFNR,tmp.POSNR,tmp.KDAUF,tmp.KDPOS,tmp.MATNR,
+		tmp.MAKTX,tmp.PSMNG,tmp.MEINS,tmp.IMPORT_DATE
+		)
+	</update>
+	
+	<select id="get_SapMoComponent_id" resultType="String" parameterType="String">
+	SELECT id FROM WMS_SAP_MO_COMPONENT WHERE AUFNR = #{AUFNR} AND MATNR = #{MATNR} AND RSNUM = #{RSNUM} AND RSPOS = #{RSPOS}
+	</select>
+	<insert id="insert_SapMoComponent" parameterType="Map">
+	INSERT INTO WMS_SAP_MO_COMPONENT
+	(ID,AUFNR,RSNUM,RSPOS,XLOEK,XWAOK,MATNR,WERKS,
+	LGORT,CHARG,BDTER,BDMNG,MEINS,SHKZG,BWART,SAKNR,
+	POSTP,SORTF,RGEKZ,SOBKZ,DUMPS,KZKUP,SGTXT,IMPORT_DATE,
+	IMPORT_PEOPLE,UPDATE_DATE,UPDATE_PEOPLE,VERIFY,POSNR) VALUES (
+	SEQ_WMS_SAP_MO_COMPONENT.nextval,#{AUFNR},#{RSNUM},#{RSPOS},#{XLOEK},#{XWAOK},#{MATNR},#{WERKS},
+	#{LGORT},#{CHARG},#{BDTER},#{BDMNG},#{MEINS},#{SHKZG},#{BWART},#{SAKNR},
+	#{POSTP},#{SORTF},#{RGEKZ},#{SOBKZ},#{DUMPS},#{KZKUP},#{SGTXT},#{IMPORT_DATE},
+	#{IMPORT_PEOPLE},#{UPDATE_DATE},#{UPDATE_PEOPLE},#{VERIFY},#{POSNR})
+	</insert>
+	<update id="update_SapMoComponent" parameterType="Map">
+	UPDATE WMS_SAP_MO_COMPONENT SET
+	RSNUM=#{RSNUM},RSPOS=#{RSPOS},XLOEK=#{XLOEK},XWAOK=#{XWAOK},WERKS=#{WERKS},
+	LGORT=#{LGORT},CHARG=#{CHARG},BDTER=#{BDTER},BDMNG=#{BDMNG},MEINS=#{MEINS},SHKZG=#{SHKZG},BWART=#{BWART},SAKNR=#{SAKNR},
+	POSTP=#{POSTP},SORTF=#{SORTF},RGEKZ=#{RGEKZ},SOBKZ=#{SOBKZ},DUMPS=#{DUMPS},KZKUP=#{KZKUP},SGTXT=#{SGTXT},POSNR=#{POSNR},
+	UPDATE_DATE=#{UPDATE_DATE},UPDATE_PEOPLE=#{UPDATE_PEOPLE},VERIFY=#{VERIFY}
+	WHERE AUFNR=#{AUFNR} AND MATNR = #{MATNR} AND RSPOS = #{RSPOS}
+	</update>
+	<update id="insertOrUpdateSapMoComponent" parameterType="Map">
+	MERGE INTO WMS_SAP_MO_COMPONENT S USING(	
+		SELECT m.AUFNR,m.RSNUM,m.RSPOS,m.XLOEK,m.XWAOK,m.MATNR,m.WERKS,
+		m.LGORT,m.CHARG,m.BDTER,m.BDMNG,m.MEINS,m.SHKZG,m.BWART,m.SAKNR,
+		m.POSTP,m.SORTF,m.RGEKZ,m.SOBKZ,m.DUMPS,m.KZKUP,m.SGTXT,m.IMPORT_DATE,
+		m.IMPORT_PEOPLE,m.UPDATE_DATE,m.UPDATE_PEOPLE,m.VERIFY,m.POSNR
+		FROM (
+		<foreach collection="matList" item="d" index="index" separator="union all">
+		select 
+		#{d.AUFNR} AUFNR,#{d.RSNUM} RSNUM,#{d.RSPOS} RSPOS,#{d.XLOEK} XLOEK,#{d.XWAOK} XWAOK,#{d.MATNR} MATNR,#{d.WERKS} WERKS,
+		#{d.LGORT} LGORT,#{d.CHARG} CHARG,#{d.BDTER} BDTER,#{d.BDMNG} BDMNG,#{d.MEINS} MEINS,#{d.SHKZG} SHKZG,#{d.BWART} BWART,#{d.SAKNR} SAKNR,
+		#{d.POSTP} POSTP,#{d.SORTF} SORTF,#{d.RGEKZ} RGEKZ,#{d.SOBKZ} SOBKZ,#{d.DUMPS} DUMPS,#{d.KZKUP} KZKUP,#{d.SGTXT} SGTXT,#{d.IMPORT_DATE} IMPORT_DATE,
+		#{d.IMPORT_PEOPLE} IMPORT_PEOPLE,#{d.UPDATE_DATE} UPDATE_DATE,#{d.UPDATE_PEOPLE} UPDATE_PEOPLE,#{d.VERIFY} VERIFY,#{d.POSNR} POSNR
+		FROM dual
+		</foreach>
+		) m 
+		GROUP BY m.AUFNR,m.RSNUM,m.RSPOS,m.XLOEK,m.XWAOK,m.MATNR,m.WERKS,
+		m.LGORT,m.CHARG,m.BDTER,m.BDMNG,m.MEINS,m.SHKZG,m.BWART,m.SAKNR,
+		m.POSTP,m.SORTF,m.RGEKZ,m.SOBKZ,m.DUMPS,m.KZKUP,m.SGTXT,m.IMPORT_DATE,
+		m.IMPORT_PEOPLE,m.UPDATE_DATE,m.UPDATE_PEOPLE,m.VERIFY,m.POSNR
+		) tmp 
+		ON (tmp.AUFNR=s.AUFNR and tmp.POSNR=s.POSNR and tmp.RSNUM=s.RSNUM and tmp.RSPOS=s.RSPOS)		
+		WHEN matched THEN 
+			UPDATE SET 
+			s.XLOEK=tmp.XLOEK,s.XWAOK=tmp.XWAOK,s.MATNR=tmp.MATNR,s.WERKS=tmp.WERKS,
+			s.LGORT=tmp.LGORT,s.CHARG=tmp.CHARG,s.BDTER=tmp.BDTER,s.BDMNG=tmp.BDMNG,s.MEINS=tmp.MEINS,s.SHKZG=tmp.SHKZG,s.BWART=tmp.BWART,s.SAKNR=tmp.SAKNR,
+			s.POSTP=tmp.POSTP,s.SORTF=tmp.SORTF,s.RGEKZ=tmp.RGEKZ,s.SOBKZ=tmp.SOBKZ,s.DUMPS=tmp.DUMPS,s.KZKUP=tmp.KZKUP,s.SGTXT=tmp.SGTXT,
+			s.UPDATE_DATE=tmp.UPDATE_DATE,s.UPDATE_PEOPLE=tmp.UPDATE_PEOPLE,s.VERIFY=tmp.VERIFY
+		WHEN NOT MATCHED THEN 
+			insert (ID,AUFNR,RSNUM,RSPOS,XLOEK,XWAOK,MATNR,WERKS,
+			LGORT,CHARG,BDTER,BDMNG,MEINS,SHKZG,BWART,SAKNR,
+			POSTP,SORTF,RGEKZ,SOBKZ,DUMPS,KZKUP,SGTXT,IMPORT_DATE,
+			IMPORT_PEOPLE,UPDATE_DATE,UPDATE_PEOPLE,VERIFY,POSNR) 
+		VALUES (
+		SEQ_WMS_SAP_MO_COMPONENT.nextval,tmp.AUFNR,tmp.RSNUM,tmp.RSPOS,tmp.XLOEK,tmp.XWAOK,tmp.MATNR,tmp.WERKS,
+		tmp.LGORT,tmp.CHARG,tmp.BDTER,tmp.BDMNG,tmp.MEINS,tmp.SHKZG,tmp.BWART,tmp.SAKNR,
+		tmp.POSTP,tmp.SORTF,tmp.RGEKZ,tmp.SOBKZ,tmp.DUMPS,tmp.KZKUP,tmp.SGTXT,tmp.IMPORT_DATE,
+		tmp.IMPORT_PEOPLE,tmp.UPDATE_DATE,tmp.UPDATE_PEOPLE,tmp.VERIFY,tmp.POSNR
+		)
+	</update>
+	
+	<insert id="insert_SapPoHead" parameterType="Map">
+	INSERT INTO WMS_SAP_PO_HEAD
+	(ID,EBELN,BSTYP,BSART,BUKRS,EKORG,EKGRP,LIFNR,AEDAT,FRGRL,BEDAT,IMPORT_DATE,UPDATE_DATE,FRGGR,FRGSX)
+	VALUES(SEQ_WMS_SAP_PO_HEAD.nextval,#{EBELN}, #{BSTYP}, #{BSART}, #{BUKRS},#{EKORG},#{EKGRP},
+	#{LIFNR},#{AEDAT},#{FRGRL},#{BEDAT},#{IMPORT_DATE},#{UPDATE_DATE},#{FRGGR},#{FRGSX})
+	</insert>
+	
+	<select id="get_SAPPoHead_id" resultType="String" parameterType="Map">
+		SELECT ID FROM WMS_SAP_PO_HEAD WHERE EBELN=#{EBELN}
+	</select>
+	
+	<update id="update_SAPPoHead" parameterType="Map">
+	UPDATE WMS_SAP_PO_HEAD SET EBELN=#{EBELN},BSTYP=#{BSTYP},BSART=#{BSART},BUKRS=#{BUKRS},EKORG=#{EKORG},
+	EKGRP=#{EKGRP},LIFNR=#{LIFNR},AEDAT=#{AEDAT},FRGRL=#{FRGRL},BEDAT=#{BEDAT},UPDATE_DATE=#{UPDATE_DATE},
+	FRGGR=#{FRGGR},FRGSX=#{FRGSX}
+	WHERE EBELN=#{EBELN}
+	</update>
+	
+	<insert id="insert_SapCustomer" parameterType="Map">
+	INSERT INTO WMS_SAP_CUSTOMER (
+	ID,BUKRS,KUNNR,NAME1,SORTL,VKORG,VTWEG,
+	SPART,ADDRESS,MANAGER,EDITOR,EDIT_DATE) VALUES (
+	SEQ_WMS_SAP_CUSTOMER.nextval,#{BUKRS},#{KUNNR},#{NAME1},#{SORTL},#{VKORG},#{VTWEG},
+	#{SPART},#{ADDRESS},#{MANAGER},#{EDITOR},#{EDIT_DATE}
+	)
+	</insert>
+	<select id="get_SapCustomer_id" resultType="String" parameterType="Map">
+	SELECT ID FROM WMS_SAP_CUSTOMER WHERE BUKRS = #{BUKRS} AND KUNNR = #{KUNNR}
+	</select>
+	<update id="update_SapCustomer" parameterType="Map">
+	UPDATE WMS_SAP_CUSTOMER SET NAME1=#{NAME1},SORTL=#{SORTL},VKORG=#{VKORG},VTWEG=#{VTWEG},
+	SPART=#{SPART},ADDRESS=#{ADDRESS},MANAGER=#{MANAGER},EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE}
+	WHERE BUKRS = #{BUKRS} AND KUNNR = #{KUNNR}
+	</update>
+	
+	<insert id="insert_SapPoItem" parameterType="Map">
+	INSERT INTO WMS_SAP_PO_ITEM
+	(ID,EBELN,EBELP,LOEKZ,MATNR,TXZ01,BUKRS,WERKS,LGORT,BEDNR,MATKL,MENGE,MEINS,LMEIN,PSTYP,KNTTP,LEWED,ELIKZ,UNTTO,
+	UEBTO,RETPO,AFNAM,MFRPN,MFRNR,IMPORT_DATE,UPDATE_DATE,SOBKZ,MAX_MENGE,ORDERPR_UN,UMREN,UMREZ)
+	VALUES (SEQ_WMS_SAP_PO_ITEM.nextval,#{EBELN}, #{EBELP}, #{LOEKZ}, #{MATNR},#{TXZ01},#{BUKRS},
+	#{WERKS},#{LGORT},#{BEDNR},#{MATKL},#{MENGE},#{MEINS},#{LMEIN},#{PSTYP},#{KNTTP},#{LEWED},#{ELIKZ},#{UNTTO},
+	#{UEBTO},#{RETPO},#{AFNAM},#{MFRPN},#{MFRNR},#{IMPORT_DATE},#{UPDATE_DATE},#{SOBKZ},#{MAX_MENGE},#{ORDERPR_UN},#{UMREN},#{UMREZ})
+	</insert>
+	
+	<select id="get_SAPPoItem_id" resultType="String" parameterType="Map">
+		SELECT ID FROM WMS_SAP_PO_ITEM WHERE EBELN=#{EBELN} and EBELP=#{EBELP}
+	</select>
+	
+	<update id="update_SAPPoItem" parameterType="Map">
+	UPDATE WMS_SAP_PO_ITEM SET EBELN=#{EBELN},EBELP=#{EBELP},LOEKZ=#{LOEKZ},MATNR=#{MATNR},TXZ01=#{TXZ01},
+	BUKRS=#{BUKRS},WERKS=#{WERKS},LGORT=#{LGORT},BEDNR=#{BEDNR},MATKL=#{MATKL},MENGE=#{MENGE},MEINS=#{MEINS},
+	LMEIN=#{LMEIN},PSTYP=#{PSTYP},KNTTP=#{KNTTP},LEWED=#{LEWED},ELIKZ=#{ELIKZ},UNTTO=#{UNTTO},UEBTO=#{UEBTO}
+	,RETPO=#{RETPO},AFNAM=#{AFNAM},MFRPN=#{MFRPN},MFRNR=#{MFRNR},UPDATE_DATE=#{UPDATE_DATE}
+	,SOBKZ=#{SOBKZ},MAX_MENGE=#{MAX_MENGE}
+	<if test="ORDERPR_UN !=null and ORDERPR_UN !='' ">
+		,ORDERPR_UN=#{ORDERPR_UN}
+	</if>
+	<if test="UMREN !=null and UMREN !='' ">
+		,UMREN=#{UMREN}
+	</if>
+	<if test="UMREZ !=null and UMREZ !='' ">
+		,UMREZ=#{UMREZ}
+	</if>
+	WHERE EBELN=#{EBELN} and EBELP=#{EBELP}
+	</update>
+	
+	<update id="update_SAPPoItem_LMEIN" parameterType="Map"> 
+		UPDATE WMS_SAP_PO_ITEM SET 
+		LMEIN=#{LMEIN} 
+		<if test="UMREN !=null and UMREN !='' ">
+			,UMREN=#{UMREN} 
+		</if>
+		<if test="UMREZ !=null and UMREZ !='' ">
+			,UMREZ=#{UMREZ} 
+		</if>
+		WHERE EBELN=#{EBELN} and EBELP=#{EBELP} 
+	</update>
+	
+	<insert id="insert_SapPoComponent" parameterType="Map">
+	INSERT INTO WMS_SAP_PO_COMPONENT(ID,
+	EBELN,EBELP,ETENR,RSPOS,MATN1,MENG1,MEIN1,
+	MATN2,MENG2,MEIN2,WERKS,IMPORT_DATE,UPDATE_DATE) VALUES (SEQ_WMS_SAP_PO_COMPONENT.nextval,
+	#{EBELN},#{EBELP},#{ETENR},#{RSPOS},#{MATN1},#{MENG1},#{MEIN1},
+	#{MATN2},#{MENG2},#{MEIN2},#{WERKS},#{IMPORT_DATE},#{UPDATE_DATE})
+	</insert>
+	<select id="get_SapPoComponent_id" resultType="String" parameterType="Map">
+	SELECT ID FROM WMS_SAP_PO_COMPONENT WHERE EBELN=#{EBELN} and EBELP=#{EBELP} 
+	and WERKS = #{WERKS} and MATN2 = #{MATN2} and ETENR =#{ETENR}
+	</select>
+	<update id="update_SapPoComponent" parameterType="Map">
+	UPDATE WMS_SAP_PO_COMPONENT SET ETENR=#{ETENR},MENG1=#{MENG1},MEIN1=#{MEIN1},
+	MATN2=#{MATN2},MENG2=#{MENG2},MEIN2=#{MEIN2},UPDATE_DATE=#{UPDATE_DATE}
+	WHERE EBELN=#{EBELN} and EBELP=#{EBELP} and WERKS = #{WERKS} and MATN1 = #{MATN1} and RSPOS =#{RSPOS}
+	</update>
+
+</mapper>

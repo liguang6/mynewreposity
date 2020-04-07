@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>拣配单查询</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+                   <form id="searchForm" class="form-inline" action="#">
+						<!-- 查询条件 -->
+						<table>
+						<tr>
+						<td width="100%">
+							<div class="form-group">
+								<label class="control-label">供应工厂：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="werks" style="height: 28px;width: 60px;" id="werks" onchange="vm.onPlantChange(event)">  
+										   <option value=''>全部</option>
+										   <#list tag.getUserAuthWerks("WLMS_QUERY") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										   </#list>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label"><span style="color:red">*</span>排序类别：</label>
+								<div class="control-inline" style="width:120px;">
+								<select class="form-control" v-model="sortType" name="sortType" id="sortType" style="height: 28px;width: 100px;">
+									<option value=''>全部</option>
+									<option v-for="t in sortTypeList"  :key="t.SORT_NUM" :value="t.SORT_NUM">
+										{{t.JIS_SORT_TYPE}}
+									</option>
+								</select>
+								</div>
+							</div>
+							<div class="form-group">
+										<label class="control-label">上线模式：</label>
+										<div class="control-inline">
+											<div class="input-group" style="width:100px">
+											   <select id="dispatching_type" name="dispatching_type" style="width: 100%;"> 
+                                                   <option value=''>全部</option>
+												   <#list tag.wmsDictList('DISPATCHING_TYPE') as d> 
+												     <option value="${d.code}">${d.value}</option> 
+												   </#list>
+											  </select>
+											</div>
+										</div>
+                            </div>
+                            <div class="form-group">
+										<label class="control-label">状态：</label>
+										<div class="control-inline">
+											<div class="input-group" style="width:100px">
+											   <select id="dispatching_status" name="dispatching_status" style="width: 100%;"> 
+                                                   <option value=''>全部</option>
+												   <#list tag.wmsDictList('DISPATCHING_STATUS') as d> 
+												     <option value="${d.code}">${d.value}</option> 
+												   </#list>
+											  </select>
+											</div>
+										</div>
+                            </div>
+							<div class="form-group">
+								<label class="control-label">需求工厂：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="plantCode" style="height: 28px;width: 60px;" id="plantCode" disabled="true">  
+										   <!--  <#list tag.getUserAuthWerks("WLMS_QUERY") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										   </#list>-->
+										   <option value='C113'>C113</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">线别：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="lineCategory" style="height: 28px;width: 60px;" id="lineCategory">  
+										   <option value=''>全部</option>
+										   <#list tag.wmsDictList("LINE") as lineCategort>
+										      <option value="${lineCategort.code}">${lineCategort.value}</option>
+										   </#list>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">单号：</label>
+								<input type="text" id="dispatchingNo" name="dispatchingNo" value="" class="form-control" style="width: 150px;" />
+							</div>
+							<div class="form-group">
+								<label class="control-label">料号：</label>
+								<input type="text" id="materialNo" name="materialNo" value="" class="form-control" style="width: 100px;" />
+							</div>
+	
+							<div class="form-group">
+								    <input type="button" id="btnquerydispatchingquery" class="btn btn-primary btn-sm " value="查询"/>
+									<button type="reset" class="btn btn-info btn-sm">重置</button>
+							</div>
+						</td>
+							</tr>
+					</table>
+				   </form>
+				   <div id="pgtoolbar1">
+					<div id="links" >
+						<a href="#" class="btn" id="btnJISDispatchingfabu"  title="重新发布"><i class="fa fa-check"></i>重新发布</a> 
+						<a href="#" class="btn" id="btnJISDispatchingchaifen"  title="拆分"><i class="fa fa-adjust"></i>拆分</a> 
+						<a href="#" class="btn" id="btnPrintJIS" @click="dispatchingprint" title="打印" /><i class="fa fa-print"></i>打印单据</a>
+						<a href='#' class='btn' id='exportOperation' onclick="export2Excel()"><i class='fa fa-download' aria-hidden='true'></i> 导出</a>
+									
+					</div>
+					</div>
+				   <!-- 需求拆分页面 -->	
+				<div id="dispatchingchaifenLayer" style="display: none; padding: 10px;">
+					<div class="modal-body">
+                        <form id="newform" class="form-horizontal" action="">
+                            <center><table>
+                                    
+                                <tr style="height:40px">
+                                    <td>&nbsp;供应工厂：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise"  id="c_from_plant_code" name="c_from_plant_code" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;包装号：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise"  id="c_barcode" name="c_barcode" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;拣配单号：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise"  id="c_dispatching_no" name="c_dispatching_no" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;物料号：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise"  id="c_material_no" name="c_material_no" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;物料描述：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise"  id="c_material_desc" name="c_material_desc" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;数量：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise"  id="c_qty" name="c_qty" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;拆分数量：</td><td colspan="1"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise" @blur="calchaifen()" id="c_chai_qty" name="c_chai_qty" /></td>
+                                    	
+                                    <td>和</td><td colspan="1"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise"  id="c_chai_s_qty" name="c_chai_s_qty" /></td>
+                                </tr>
+                                </table></center>
+                            
+                        </form>
+                    </div>
+				</div>
+				
+					<div id="pgtoolbar1" class="table-responsive table2excel">
+						<table id="dataGrid"></table>
+					</div>
+					
+					<form id="printfeijis" target="_blank" method="post" action="${request.contextPath}/docPrint/dispatchingFeiJISPrintPreview" >
+						<button hidden="hidden" id="printButton_feijis" type="submit"></button>
+						<input hidden="hidden" name="BARCODE" id="BARCODE" type="text" >
+						<input hidden="hidden" name="BUPRINT" id="BUPRINT" type="text" value="补">
+					</form>
+					
+					<form id="printjis" target="_blank" method="post" action="${request.contextPath}/docPrint/dispatchingJISPrintPreview" >
+						<button hidden="hidden" id="printButton_jis" type="submit"></button>
+						<input hidden="hidden" name="DISPATCHING_NO" id="DISPATCHING_NO" type="text" >
+						<input hidden="hidden" name="BUPRINT" id="BUPRINT" type="text" value="补">
+					</form>
+					
+			</div>
+		</div>
+	</div>
+	<table id="tb_excel" style="display:none"></table>	
+	<script src="${request.contextPath}/statics/js/wms/cswlms/dispatchingchaxun.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.ProcessDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.admin.modules.masterdata.entity.ProcessEntity" id="settingProcessMap">
+        <result property="id" column="id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="werksName" column="werks_name"/>
+        <result property="workshopName" column="workshop_name"/>
+        <result property="processCode" column="process_code"/>
+        <result property="processName" column="process_name"/>
+        <result property="monitoryPointFlag" column="monitory_point_flag"/>
+        <result property="sectionCode" column="section_code"/>
+        <result property="sectionName" column="section_name"/>
+        <result property="planNodeName" column="plan_node_name"/>
+        <result property="planNodeCode" column="plan_node_code" />
+        <result property="memo" column="memo"/>
+        <result property="deleteFlag" column="delete_flag"/>
+        <result property="editor" column="editor"/>
+        <result property="editDate" column="edit_date"/>
+    </resultMap>
+    <!-- 模糊查找工序 or process_name LIKE concat('%',upper(#{process}) , '%') -->
+	<select id="getProcessList" parameterType="Map" resultType="Map">
+		SELECT process_code,process_name,monitory_point_flag,section_code,section_name,plan_node_code,
+		id as  process_id,plan_node_name, werks_name,werks FROM MASTERDATA_PROCESS 
+		WHERE 1=1
+		<if test="process !=null and process !='' ">
+			AND (process_code LIKE concat(upper(#{process}) , '%') )
+		</if>
+	    <if test="factory_name !=null and factory_name !='' ">
+			AND factory_name=#{factory_name}
+		</if>
+		<if test="line_name !=null and line_name !='' ">
+			AND line_name=#{line_name}
+		</if>
+		<if test="werks !=null and werks !='' ">
+			AND werks=#{werks}
+		</if>
+		 
+	</select>
+	
+	<select id="getWorkshopProcessList" parameterType="Map" resultType="Map">
+		SELECT * FROM MASTERDATA_PROCESS 
+		WHERE 1=1 AND NVL(DEL,'0') = '0' 
+	    <if test="WERKS !=null and WERKS !='' ">
+			AND (WERKS = #{WERKS} OR WERKS_NAME = #{WERKS} )
+		</if>
+		<if test="WORKSHOP !=null and WORKSHOP !='' ">
+			AND ( INSTR(#{WORKSHOP},WORKSHOP) >0 OR INSTR(#{WORKSHOP},WORKSHOP_NAME) >0 ) 
+		</if>
+		<if test="PROCESS !=null and PROCESS !='' ">
+			AND ( PROCESS_CODE  = #{PROCESS} OR PROCESS_NAME = #{PROCESS} )
+		</if>
+		<if test="PROCESS_TYPE !=null and PROCESS_TYPE !='' ">
+			AND PROCESS_TYPE = #{PROCESS_TYPE} 
+		</if>
+		
+	</select>
+	
+	
+	
+    <select id="checkRepeat" parameterType="com.byd.admin.modules.masterdata.entity.ProcessEntity" resultType="int">
+		SELECT count(1) FROM MASTERDATA_PROCESS 
+		WHERE PROCESS_CODE=#{processCode}
+			AND WERKS=#{werks} 
+			AND nvl(del,'0') = '0'
+			<if test="id !=null and id !=0">
+			AND id !=#{id}
+			</if>
+	</select>
+</mapper>

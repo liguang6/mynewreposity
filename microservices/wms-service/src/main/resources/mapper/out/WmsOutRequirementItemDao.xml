@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 需求拣配 mapper -->
+<mapper namespace="com.byd.wms.business.modules.out.dao.WmsOutRequirementItemDao">
+
+
+	<select id="queryStatusByRequirementItem" parameterType="Map" resultType="Map">
+ 		select * from
+		  			 WMS_OUT_REQUIREMENT_ITEM item
+		       where item.REQUIREMENT_NO=#{REQUIREMENT_NO}
+	</select>
+
+	<update id="updateQxStatusByRequirementItem" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			UPDATE WMS_OUT_REQUIREMENT_ITEM SET
+			REQ_ITEM_STATUS = 'X',DEL='X',EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE}
+			WHERE REQUIREMENT_NO=#{s.REQUIREMENT_NO} AND REQUIREMENT_ITEM_NO=#{s.REQUIREMENT_ITEM_NO}
+		</foreach>
+	</update>
+	<update id="updateQxStatusByRequirementHead" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			UPDATE WMS_OUT_REQUIREMENT_HEAD SET
+			REQUIREMENT_STATUS = 'X',DEL='X',EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE}
+			WHERE REQUIREMENT_NO=#{s.REQUIREMENT_NO}
+		</foreach>
+	</update>
+
+	<update id="updateGbStatusByRequirementHead" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			UPDATE WMS_OUT_REQUIREMENT_HEAD SET
+			REQUIREMENT_STATUS = '07',EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE}
+			WHERE REQUIREMENT_NO=#{s.REQUIREMENT_NO}
+		</foreach>
+	</update>
+	<update id="updateGbStatusByRequirementItem" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			UPDATE WMS_OUT_REQUIREMENT_ITEM SET
+			REQ_ITEM_STATUS = '06',EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE}
+			WHERE REQUIREMENT_NO=#{s.REQUIREMENT_NO} AND REQUIREMENT_ITEM_NO=#{s.REQUIREMENT_ITEM_NO}
+		</foreach>
+	</update>
+
+	<select id="queryStatusByWhTask" parameterType="Map" resultType="Map">
+ 		select task.* from
+		        	 WMS_OUT_REQUIREMENT_HEAD head
+		  left join  WMS_OUT_REQUIREMENT_ITEM item
+		         on  head.requirement_no = item.requirement_no
+		         and head.del = 0
+		  left join  WMS_CORE_WH_TASK task
+		         on  item.requirement_no = task.reference_delivery_no
+		         and item.requirement_item_no = task.reference_delivery_item
+		         and task.del = 0
+		         and task.wt_status != '03'
+		       where head.REQUIREMENT_NO=#{REQUIREMENT_NO}
+		         and item.REQUIREMENT_ITEM_NO = #{REQUIREMENT_ITEM_NO}
+	</select>
+
+	
+	<update id="updateOutboundItemQtyANDStatus" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		UPDATE WMS_OUT_REQUIREMENT_ITEM SET 
+		EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE}
+		<if test="s.QTY_REAL !=null and s.QTY_REAL !=''">
+			,QTY_REAL=NVL(QTY_REAL,0)+ #{s.QTY_REAL} 
+		</if>
+		<if test="s.QTY_REAL !=null and s.QTY_REAL !=''">
+			,REQ_ITEM_STATUS=
+			<![CDATA[
+			(
+			CASE
+			WHEN NVL(QTY_REAL,0) +#{s.QTY_REAL} >0 AND NVL(QTY_REAL,0) +#{s.QTY_REAL} <NVL(QTY,0)
+				THEN '04'
+			WHEN NVL(QTY_REAL,0) +#{s.QTY_REAL} >0 AND NVL(QTY_REAL,0) +#{s.QTY_REAL} >=NVL(QTY,0)
+				THEN '05'
+				ELSE REQ_ITEM_STATUS END
+			)
+			]]>
+		</if>
+		<if test="s.QTY_XJ !=null and s.QTY_XJ !=''">
+			,QTY_XJ=NVL(QTY_XJ,0)+ #{s.QTY_XJ} 
+		</if>
+		<if test="s.QTY_XJ !=null and s.QTY_XJ !=''">
+			,REQ_ITEM_STATUS=
+			<![CDATA[
+			(
+			CASE
+			WHEN NVL(QTY_REAL,0) >0
+				THEN REQ_ITEM_STATUS
+			WHEN NVL(QTY_XJ,0) +#{s.QTY_XJ} >0 AND NVL(QTY_XJ,0) +#{s.QTY_XJ} <NVL(QTY,0)
+				THEN '02'
+			WHEN NVL(QTY_XJ,0) +#{s.QTY_XJ} >0 AND NVL(QTY_XJ,0) +#{s.QTY_XJ} >=NVL(QTY,0)
+				THEN '03'
+				ELSE REQ_ITEM_STATUS END
+			)
+			]]>
+		</if>
+		<if test="s.REQ_ITEM_STATUS !=null and s.REQ_ITEM_STATUS !=''">
+			,REQ_ITEM_STATUS=
+			(
+		    CASE
+		      WHEN REQ_ITEM_STATUS ='00'
+		        THEN '01'
+		      WHEN #{s.REQ_ITEM_STATUS} != '01'
+		        THEN #{s.REQ_ITEM_STATUS}
+		      ELSE REQ_ITEM_STATUS END
+		    )
+		</if>
+		WHERE REQUIREMENT_NO=#{s.REQUIREMENT_NO} AND REQUIREMENT_ITEM_NO=#{s.REQUIREMENT_ITEM_NO}
+		</foreach>
+	</update>
+	
+	<select id="queryShippingLabel" parameterType="Map" resultType="Map">
+		select t.*,task.wh_number,task.task_num,task.confirm_quantity,task.batch,t1.delivery_type,t1.werks,t1.maktx zmaktx,
+		       t1.lifnr,t1.point_of_use,t1.pou,t1.dosage,t1.line_no,t1.line_feeding_route,t1.end_material_code,t1.reference_no,
+		       v.name1 LIKTX
+		 from WMS_CORE_WH_TASK task 
+		 left join WMS_SAP_VENDOR v
+           on task.lifnr = v.lifnr,
+		      WMS_OUT_REQUIREMENT_ITEM t
+		 left join WMS_WS_CALL_MATERIAL t1
+		 on t.dispatching_no = t1.delivery_no
+		and t.dispatching_item_no = t1.dlv_item
+		where t.requirement_no = task.reference_delivery_no
+		  and t.requirement_item_no = task.reference_delivery_item
+		  and task.wh_number = #{WH_NUMBER}
+		  and t.requirement_no = #{REQUIREMENT_NO}
+		  and t.dispatching_no is not null
+		  and t.req_item_status in ('02', '03','04','05')
+		  and task.wt_status not in('00','03')
+  </select>
+  
+  <select id="queryShippingLabelcs" parameterType="Map" resultType="Map">
+		select rownum id, a.* from (
+		      select distinct
+		      		 head.werks,
+             		 head.wh_number,
+		             item.requirement_no,
+		             item.requirement_item_no,
+		             item.business_name,
+		             item.business_type,
+		             item.req_item_status,
+		             item.matnr,
+		             item.maktx,
+		             item.unit,
+		             item.qty_xj xj,
+		             item.qty,
+		             task.confirm_quantity as qty_xj,
+		             item.station,
+		             head.requirement_status,
+		             task.task_num,
+		             task.from_storage_area STORAGE_AREA_CODE,
+		             task.from_bin_code BIN_CODE,
+		             bin.bin_name,
+		             task.batch,
+		             task.lifnr,
+		             vendor.name1 LIKTX,
+		             dict.value,
+		             head.required_date,
+		             task.confirmor
+		        from SYS_DICT                 dict,
+		             WMS_OUT_REQUIREMENT_HEAD head,
+		             WMS_OUT_REQUIREMENT_ITEM item,
+		             WMS_CORE_WH_BIN bin,
+		             WMS_CORE_WH_TASK task 
+		             left join WMS_SAP_VENDOR vendor
+		             on task.lifnr = vendor.lifnr 
+		       where item.requirement_no = task.reference_delivery_no
+		         and item.requirement_item_no = task.reference_delivery_item
+		         and task.wt_status not in('00','03')
+		         and task.del = '0'
+		         and head.requirement_no = item.requirement_no
+		         and head.del = '0'
+		         and dict.type = 'BUSINESS_NAME'
+		         and dict.code = item.business_name
+		         and task.wh_number = bin.wh_number
+		         and task.from_bin_code = bin.bin_code
+			   <if test="WH_NUMBER !=null and WH_NUMBER !=''">
+				   and head.WH_NUMBER = #{WH_NUMBER}
+			   </if>
+			   <if test="REQUIREMENT_NO !=null and REQUIREMENT_NO !=''">
+			  	   and head.REQUIREMENT_NO = #{REQUIREMENT_NO}
+			   </if>
+			  ) a order by to_number(a.requirement_item_no)
+	</select>
+	
+	<select id="queryKeyPartsLabel" parameterType="Map" resultType="Map">
+		select distinct
+		       head.werks,
+               head.wh_number,
+		       item.matnr,
+		       item.maktx,
+		       item.unit,
+		       item.qty_xj xj,
+		       item.qty,
+		       task.from_storage_area STORAGE_AREA_CODE,
+		       task.from_bin_code BIN_CODE,
+		       task.batch,
+		       task.lifnr,
+		       vendor.name1 LIKTX
+		  from WMS_OUT_REQUIREMENT_HEAD head,
+		       WMS_OUT_REQUIREMENT_ITEM item,
+		       WMS_C_KEY_PARTS kpart,
+		       WMS_CORE_WH_TASK task 
+     left join WMS_SAP_VENDOR vendor
+		    on task.lifnr = vendor.lifnr 
+		 where item.requirement_no = task.reference_delivery_no
+		   and item.requirement_item_no = task.reference_delivery_item
+		   and task.wt_status not in('00','03')
+		   and task.del = '0'
+		   and head.requirement_no = item.requirement_no
+		   and head.del = '0'
+		   and item.matnr = kpart.matnr
+		   and kpart.del = '0'
+		   <if test="WH_NUMBER !=null and WH_NUMBER !=''">
+		   		and head.WH_NUMBER = #{WH_NUMBER}
+	       </if>
+		   <if test="REQUIREMENT_NO !=null and REQUIREMENT_NO !=''">
+		   		and head.REQUIREMENT_NO = #{REQUIREMENT_NO}
+		   </if>
+	</select>
+
+	<select id="queryRequirementByRealQty" parameterType="Map" resultType="java.lang.Integer">
+ 		select NVL(item.qty,0) from
+		  			 WMS_OUT_REQUIREMENT_ITEM item
+		       where del='0' and req_item_status !='06' AND qty_real='0'
+		<if test="AUFNR !=null and AUFNR !=''">
+			and item.MO_NO = #{AUFNR}
+		</if>
+		<if test="POSNR !=null and POSNR !=''">
+			and item.MO_ITEM_NO = #{POSNR}
+		</if>
+		<if test="MATNR !=null and MATNR !=''">
+			and item.MATNR = #{MATNR}
+		</if>
+
+	</select>
+	
+	<select id="queryRequirementItem" parameterType="Map" resultType="Map">
+ 		select item.*,head.WERKS,head.WH_NUMBER from
+ 					 WMS_OUT_REQUIREMENT_HEAD head,
+		  			 WMS_OUT_REQUIREMENT_ITEM item
+		       where head.requirement_no = item.requirement_no
+		         and item.REQUIREMENT_NO=#{REQUIREMENT_NO}
+	</select>
+</mapper>

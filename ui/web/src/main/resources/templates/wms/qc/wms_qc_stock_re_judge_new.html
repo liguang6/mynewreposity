@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>创建复检单</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div class="wrapper" id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" action="">
+					    <!-- 查询条件 -->
+						<input id="pageSize" value="10000000" name="pageSize" hidden="hidden"/>
+						<input id="pageNo" value="1" name="pageNo" hidden="hidden"/>
+						<div class="row" style="margin-left: 0px;">
+
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">工厂：</label>
+								<div class="control-inline" style="width: 100px;">
+									<select v-model="werks" style="width: 70px;height: 26px;" class="" name="werks" id="werks" >
+										<#list tag.getUserAuthWerks("QC_CREAT_REVIEW") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										</#list>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">仓库号：</label>
+								<div class="control-inline" style="width: 100px;">
+									<select v-model="whNumber" class="" name="whNumber" id="whNumber" style="width: 70px;height: 26px;">
+										<option v-for="wh in warehourse" :value="wh.WH_NUMBER" :key="wh.ID">{{wh.WH_NUMBER}}</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">库位：</label>
+								<div class="control-inline" style="width: 100px;">
+									<select style="width: 70px;height: 26px;" class="" name="lgort" id="lgort" v-model="lgort">
+										<option value="">全部</option>
+										<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">批次：</label>
+								<div class="control-inline" >
+									<input style="width: 100px;" type="text" class="form-control" name="batch" id="batch" />
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">料号：</label>
+								<div class="control-inline" >
+									    <input type="text" id="matnr" name="matnr"  style="width: 80px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#matnr'))" style="width: 10px;"/>
+																	</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">供应商：</label>
+								<div class="control-inline" >
+									<input style="width: 90px;" type="text" class="form-control" name="lifnr" id="lifnr" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">库存状态：</label>
+								<div class="control-inline" >
+									<select style="width: 70px;height: 26px;" class="" name="status" id="status">
+										<option value='02'>全部</option>
+										<option value='00'>非限制</option>
+										<option value='01'>冻结</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">启用保质期：</label>
+								<div class="control-inline" style="width: 100px;">
+									<select class="form-control" name="effectDateFlag" id="effectDateFlag">
+										<option value="0">全部</option>
+										<option value="1">是</option>
+										<option value="2">否</option>
+									</select>
+								</div>
+							</div>
+
+							<button type="reset" class="btn btn-default">重置</button>
+						</div>
+					</form>
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#'
+								class='btn' id='query' @click="query()" ><i class='fa fa-search'
+								aria-hidden='true' ></i> 查询</a>
+
+						   <a href='#'
+								class='btn' id='new' @click="create()"><i class='fa fa-plus'
+								aria-hidden='true'></i> 创建复检单</a>
+						</div>
+					</div>
+					<table id="dataGrid"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+		<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><span id="resultMsg"></span></h4>
+		<br/>
+		<form id="print_inspection" target="_blank" method="post" action="${request.contextPath}/docPrint/inspectionLabelPreview" style="width:100px;float:left">
+			<button id="btnPrint" class="btn btn-primary btn-sm" type="submit">送检单打印</button>
+			<input name="inspectionList" id="inspectionList" type="text" hidden="hidden">
+		</form>
+		</div>
+	<script
+		src="${request.contextPath}/statics/js/wms/qc/wms_qc_stock_re_judge_new.js?_${.now?long}"></script>
+</body>
+</html>

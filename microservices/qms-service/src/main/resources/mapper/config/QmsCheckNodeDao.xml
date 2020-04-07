@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.config.dao.QmsCheckNodeDao">
+	 
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+      SELECT D.ID,CASE D.TEST_TYPE WHEN '01' THEN '大巴' WHEN '02' THEN '专用车' END TEST_TYPE,
+          D.TEST_NODE,(CASE D.VIN_FLAG WHEN '0' THEN '否' WHEN 'X' THEN '是' END) VIN_FLAG,
+		      (CASE D.CUSTOM_NO_FLAG WHEN '0' THEN '否' WHEN 'X' THEN '是' END) CUSTOM_NO_FLAG,
+		      D.EDITOR,D.EDIT_DATE,D.CREATOR ,D.CREATE_DATE
+		       FROM QMS_C_TEST_NODE D  WHERE 1=1
+		         <if test="testNode != null and testNode !=''">
+			        AND D.TEST_NODE=#{testNode} 
+			      </if>
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+			      <if test="customNoFlag != null and customNoFlag !=''">
+			        AND D.CUSTOM_NO_FLAG =#{customNoFlag}
+			      </if>
+			       ORDER BY D.CREATE_DATE DESC
+         LIMIT #{start},#{limit}
+                
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM QMS_C_TEST_NODE D WHERE  1=1
+		         <if test="testNode != null and testNode !=''">
+			        AND D.TEST_NODE=#{testNode} 
+			      </if>
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+			      <if test="customNoFlag != null and customNoFlag !=''">
+			        AND D.CUSTOM_NO_FLAG =#{customNoFlag}
+			      </if>
+    </select>
+    <select id="getById" parameterType="Long" resultType="Map">
+      SELECT D.ID id, D.TEST_TYPE testType, D.TEST_NODE testNode,
+         D.VIN_FLAG vinFlag, D.CUSTOM_NO_FLAG customNoFlag
+		       FROM QMS_C_TEST_NODE D  WHERE ID=#{id}
+    </select>
+    <select id="getList" parameterType="Map" resultType="Map">
+      SELECT D.ID id, D.TEST_TYPE testType, D.TEST_NODE testNode,
+         D.VIN_FLAG vinFlag, D.CUSTOM_NO_FLAG customNoFlag
+		       FROM QMS_C_TEST_NODE D  WHERE 1=1
+		          <if test="testNode != null and testNode !=''">
+			        AND D.TEST_NODE=#{testNode} 
+			      </if>
+	              <if test="testType != null and testType !=''">
+			        AND D.TEST_TYPE = #{testType}
+			      </if>
+				  <if test="customNoFlag != null and customNoFlag !=''">
+			        AND D.CUSTOM_NO_FLAG = #{customNoFlag}
+			      </if>
+				  <if test="test_node != null and test_node !=''">
+			        AND D.TEST_NODE like concat('%',#{test_node},'%')
+			      </if>
+    </select>
+    <insert id="save" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_C_TEST_NODE
+		(TEST_TYPE,TEST_NODE,VIN_FLAG,CUSTOM_NO_FLAG,CREATOR,CREATE_DATE) values
+			(#{testType},#{testNode},#{vinFlag},#{customNoFlag},#{user},#{createDate})
+	</insert>
+	<update id="update" parameterType="Map">
+			update QMS_C_TEST_NODE set TEST_TYPE=#{testType},TEST_NODE=#{testNode},
+			custom_no_flag= #{customNoFlag},vin_flag=#{vinFlag},editor=#{user},edit_date=#{editDate} where id=#{id}
+	</update>
+	<update id="delete" parameterType="Long">
+			delete from QMS_C_TEST_NODE  where id=#{id}
+	</update>
+</mapper>

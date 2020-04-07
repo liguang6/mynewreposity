@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>数据权限配置</title>
+    <#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:620px">
+    <div class="main-content">
+        <div class="box box-main">
+            <div class="box-body">
+
+
+                <form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+                   <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text" style="display:none" id="Id" name="Id"  class="form-control "v-model="storage.ID"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <!--<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>${tag.getLocale("MENUID","M")}
+                            </label>-->
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>${tag.getLocale("MENUNAME","M")}
+                            </label>
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text" style="display:none"  id="menuId" name="menuId"  class="form-control required"  v-model="storage.MENUID" placeholder=${tag.getLocale("MENUID","M")}>
+                            </div>
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text"  @click="getMenuNoFuzzy()"  @blur="getAuthFields()"  id="menuName" name="menuName"  class="form-control required"  v-model="storage.MENUNAME" placeholder=${tag.getLocale("MENUNAME","M")}>
+                            </div>
+
+
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>${tag.getLocale("AUTHFIELDS","M")}
+                            </label>
+                            <!--<div style="float:left;width:50%" class="col-sm-8">-->
+                                <!--<input type="text"  id ="authFields" name="authFields"  class="form-control required"  v-model="storage.AUTHFIELDS" placeholder=${tag.getLocale("AUTHFIELDS","M")}>-->
+                            <!--</div>-->
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <!-- <input type="text"  id="storageAreaCode" name="storageAreaCode" class="form-control required"
+                                 v-model="fixedStorage.storageAreaCode" placeholder='${tag.getLocale("STORAGE_TYPE","M")}' /> -->
+                                <select id="authFields" name="authFields" v-model="storage.AUTHFIELDS"  class="required" style="width:50%">
+                                </select>
+                            </div>
+
+
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>${tag.getLocale("AUTHVALUE","M")}
+                            </label>
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text"  id = "authValue" name="authValue"  class="form-control required"  v-model="storage.AUTHVALUE" placeholder=${tag.getLocale("AUTHVALUE","M")}>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text"  style="display:none" id="userId" name="userId"  class="form-control "  v-model="storage.USERID" placeholder=${tag.getLocale("USERID","M")}>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="btnSubmit" type="submit" hidden="true"></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="${request.contextPath}/statics/js/sys/userPermission_edit.js?_${.now?long}"></script>
+</body>
+</html>

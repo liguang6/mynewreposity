@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>生成编号</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<div id="searchDiv" method="post" class="form-inline" action = "#">
+					<table>
+						<tr>
+							<td>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">工厂：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select name="search_werks" id="search_werks" onchange="vm.onWerksChange(event)" style="width: 150px;" class="form-control">
+											<!-- <option value="0">全部</option> -->
+											<#list tag.getUserAuthWerks("ZZJMES_PMD_MANAGE") as factory>
+											<option value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">*订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<input type="text" name="search_order" id="search_order" @click="getOrderNoFuzzy()" class="form-control" placeholder="订单名称">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">车间：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select name="search_workshop" id="search_workshop" onchange="vm.onWorkshopChange(event)" style="width: 150px;height:25px;background-color:white">
+										<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							</td>
+						</tr>
+							<tr>
+								<td>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">产品类别：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<select name="search_prductTypeCode" id="search_prductTypeCode" style="width: 150px;height:25px;background-color:white">
+												<!-- <option value="">全部</option> -->
+												<#list tag.masterdataDictList('PRODUCT_TYPE') as dict>
+												<option value="${dict.code}">${dict.value}</option>
+												</#list>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">产品名称：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_prductTypeName" id="search_prductTypeName" class="form-control" placeholder="产品名称">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label" style="width: 60px">产品编号：</label>
+										<div class="control-inline">
+											<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+												<input type="text" name="search_productNo" id="search_productNo" class="form-control" placeholder="产品编号">
+											</div>
+										</div>
+									</div>
+								</td>
+								<td width="180px">
+									<div class="form-group">
+										<input type="button" @click="fun_query" id="btnSearchData" class="btn btn-info btn-sm" value="查询" /> 
+										<input type="button" @click="fun_generate" id="btnGenerate" class="btn btn-success btn-sm" value="生成" />
+										<input type="button" @click="fun_delete" id="btnDelete" class="btn btn-default btn-sm" value="删除" />
+									</div>
+								</td>
+							</tr>
+					</table>
+					</div>
+					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+						<!-- <div id="dataGridPage"></div> -->
+					</div>
+					<table id="tb_excel" style="display: none"></table>
+				</div>
+			</div>
+		</div>
+	
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/bjmes/product/productNoManage.js?_${.now?long}"></script>
+</body>
+</html>

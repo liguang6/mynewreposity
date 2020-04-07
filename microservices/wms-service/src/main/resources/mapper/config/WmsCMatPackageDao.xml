@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCMatPackageDao">
+	
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM ( SELECT ID,WERKS,WH_NUMBER,MATNR,LIFNR,FULL_BOX_QTY,
+         DECODE(PACKAGE_TYPE,'01','入库','02','出库') PACKAGE_TYPE_DESC,DECODE(STATUS,'00','使用','01','停用') STATUS_DESC,
+         PACKAGE_TYPE,STATUS,CREATOR,CREATE_DATE,EDITOR,EDIT_DATE
+		       FROM WMS_C_MAT_PACKAGE_HEAD D
+		       WHERE 1=1 AND D.DEL='0'
+		     <if test="werks != null and werks !=''">
+		        AND D.WERKS=#{werks} 
+		      </if>
+              <if test="whNumber != null and whNumber !=''">
+		        AND D.WH_NUMBER = #{whNumber}
+		      </if>
+		      <if test="matnr != null and matnr !=''">
+		        AND D.MATNR=#{matnr} 
+		      </if>
+              <if test="lifnr != null and lifnr !=''">
+		        AND D.LIFNR = #{lifnr}
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM WMS_C_MAT_PACKAGE_HEAD D
+		       WHERE 1=1 AND D.DEL='0'
+		      <if test="werks != null and werks !=''">
+		        AND D.WERKS=#{werks} 
+		      </if>
+              <if test="whNumber != null and whNumber !=''">
+		        AND D.WH_NUMBER = #{whNumber}
+		      </if>
+		      <if test="matnr != null and matnr !=''">
+		        AND D.MATNR=#{matnr} 
+		      </if>
+              <if test="lifnr != null and lifnr !=''">
+		        AND D.LIFNR = #{lifnr}
+		      </if>
+    </select>
+    <select id="getItemList" parameterType="String" resultType="Map">
+          SELECT ID as id,PACKAGING_MATNR as packagingMatnr,PACKAGING_MATNR_TYPE as  packagingMatnrType,
+          QTY as qty,UNIT as unit,PACKAGE_LEVEL as  packageLevel,PACKAGE_QTY as packageQty  FROM WMS_C_MAT_PACKAGE_ITEM D
+		       WHERE  D.DEL='0' AND D.MAT_PACKAGE_HEAD_ID=#{mat_package_head_id}
+    </select>
+    <select id="getHeadById" parameterType="String" resultType="Map">
+          SELECT *  FROM WMS_C_MAT_PACKAGE_HEAD D
+		       WHERE  D.DEL='0' AND D.ID=#{id}
+    </select>
+	 <insert id="insertHead" parameterType="Map"> 
+		<selectKey keyProperty="id" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_C_MAT_PACKAGE_HEAD.NEXTVAL FROM dual
+		</selectKey>
+		INSERT INTO WMS_C_MAT_PACKAGE_HEAD (ID,WERKS,WH_NUMBER,PACKAGE_TYPE,MATNR,LIFNR,FULL_BOX_QTY,STATUS,DEL,
+	    CREATOR,CREATE_DATE)
+		VALUES (#{id},#{werks},#{whNumber},#{packageType},#{matnr},#{lifnr},#{fullBoxQty},#{status},'0',#{creator},#{createDate})
+	</insert>
+	<insert id="insertItems" parameterType="Map" >
+		INSERT INTO WMS_C_MAT_PACKAGE_ITEM
+		(ID,MAT_PACKAGE_HEAD_ID,PACKAGING_MATNR,PACKAGING_MATNR_TYPE,QTY,UNIT,PACKAGE_LEVEL,
+		PACKAGE_QTY,DEL,EDITOR,EDIT_DATE) 
+		SELECT SEQ_WMS_C_MAT_PACKAGE_ITEM.NEXTVAL,m.* FROM (
+		<foreach collection="addList" item="detail" index="index" separator="UNION ALL">
+		SELECT 
+		    #{headId},#{detail.PACKAGINGMATNR},#{detail.PACKAGINGMATNRTYPE},#{detail.QTY},#{detail.UNIT},#{detail.PACKAGELEVEL},
+		    #{detail.PACKAGEQTY},'0',#{creator},#{createDate}
+		FROM DUAL
+		</foreach>
+		) m
+	</insert>
+	<update id="updateHead" parameterType="Map">	
+		UPDATE WMS_C_MAT_PACKAGE_HEAD SET WERKS=#{werks},WH_NUMBER=#{whNumber},
+		PACKAGE_TYPE=#{packageType}, MATNR=#{matnr},LIFNR=#{lifnr},STATUS=#{status},
+		FULL_BOX_QTY=#{fullBoxQty},EDITOR=#{editor},EDIT_DATE=#{editDate} WHERE ID=#{headId}
+	</update>
+	<update id="updateItems" parameterType="Map">
+		<foreach item="d" index="index" collection="updateList" open="begin"
+            close=";end;" separator=";">
+				UPDATE WMS_C_MAT_PACKAGE_ITEM SET PACKAGING_MATNR=#{d.PACKAGINGMATNR},
+		PACKAGING_MATNR_TYPE=#{d.PACKAGINGMATNRTYPE},QTY = #{d.QTY} ,UNIT=#{d.UNIT},PACKAGE_LEVEL=#{d.PACKAGELEVEL},
+		PACKAGE_QTY=#{d.PACKAGEQTY},EDITOR=#{editor},EDIT_DATE=#{editDate} WHERE ID=#{d.ID}
+		</foreach>
+	</update>
+	<update id="deleteHead" parameterType="String">	
+		UPDATE WMS_C_MAT_PACKAGE_HEAD SET DEL='X' WHERE ID=#{headId}
+	</update>
+	<update id="deleteItem" parameterType="String">	
+		UPDATE WMS_C_MAT_PACKAGE_ITEM SET DEL='X' WHERE ID=#{id}
+	</update>
+	<update id="deleteItems" parameterType="String">	
+		UPDATE WMS_C_MAT_PACKAGE_ITEM SET DEL='X' WHERE MAT_PACKAGE_HEAD_ID=#{headId}
+	</update>
+</mapper>

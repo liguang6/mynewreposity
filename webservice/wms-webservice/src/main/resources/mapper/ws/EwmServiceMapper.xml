@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.webservice.ws.dao.EwmServiceDao">
+
+	<select id="getMaktx" parameterType="String"  resultType="String">
+
+        SELECT T.MAKTX FROM WMS_SAP_MATERIAL T WHERE 1=1
+        <if test="MAKTX == null or MAKTX == ''">
+            and 1=2
+        </if>
+        AND T.MATNR=#{MATNR}
+
+    </select>
+
+	<select id="getLiktx" parameterType="String"  resultType="String">
+
+        SELECT T.NAME1 FROM WMS_SAP_VENDOR T WHERE 1=1
+        <if test="LIFNR == null or LIFNR == ''">
+           and 1=2
+        </if>
+        and T.LIFNR=#{LIFNR}
+    </select>
+</mapper>

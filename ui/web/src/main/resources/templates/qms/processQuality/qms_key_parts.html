@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>关键零部件追踪</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/qms/keyParts/list" data-page-no="" data-page-size="" data-order-by="" >
+						<div class="row">
+					      <div class="form-group">
+								<label class="control-label" style="width: 70px">订单类型：</label>
+								<div class="control-inline">
+                                       <select  name="testType" id="testType"  v-model="testType" style="width:100%;height:25px">
+<!-- 										 <option value=''>全部</option> -->
+										  <#list tag.qmsDictList('order_type') as d> 
+										     <option value="${d.code}">${d.value}</option> 
+										   </#list>
+									</select>		
+								</div>
+							</div>
+<!-- 							<div class="form-group"> -->
+<!-- 								<label class="control-label" style="width: 50px">工厂：</label> -->
+<!-- 								<div class="control-inline"> -->
+<!--                                        <select  name="werks" id="werks" style="width:100%;height:25px"> -->
+<!-- 			                                <#list tag.getUserAuthWerks("QMS_PATROL_RECORD") as factory>  -->
+<!-- 			                                    <option value="${factory.code}">${factory.code}</option> -->
+<!-- 			                                </#list> -->
+<!-- 			                            </select> -->
+<!-- 								</div> -->
+<!-- 							</div> -->
+							<div class="form-group" v-show="!showList">
+								<label class="control-label" style="width: 50px">车间：</label>
+								<div class="control-inline">
+                                       <select  name="workshop" id="workshop" style="width:100%;height:25px">
+			                                <option value=''>全部</option>
+                                            <option v-for="workshop in workshopList" :value="workshop.workshop_name">{{workshop.workshop_name}}</option>
+			                            </select>
+								</div>
+							</div>
+							<div class="form-group" v-show="showList">
+								<label class="control-label" style="width: 50px">线别：</label>
+								<div class="control-inline">
+                                       <select  name="lineName" id="lineName" style="width:100%;height:25px">
+			                                 <option value=''>全部</option>
+                                            <option v-for="line in lineList" :value="line.name">{{line.name}}</option>
+			                            </select>
+								</div>
+							</div>
+							<div class="form-group">
+	                          <label class="control-label" style="width: 50px">订单：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   	<input type="text"  id="orderNo" name="orderNo" style="width: 80px;" 
+									   	class="form-control" @click="onOrderNoChange()"/>
+									</div>
+								</div>
+							</div>
+						    <div class="form-group">
+								<label class="control-label" style="width: 50px">配置：</label>
+								<div class="control-inline" style="width: 80px;">
+									 <select v-model="orderConfigName" name="orderConfigName" id="orderConfigName" style="width:100%;height:25px">
+		                                <option value=''>全部</option>
+                                        <option v-for="orderConfig in orderConfigList" :value="orderConfig.id">{{orderConfig.order_config_name}}</option>
+                   		              </select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" >车号/VIN：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									<div class="control-inline">
+										<div class="input-group" >
+		                                    <input type="text" id="vin" name="vin" value=""
+											class="form-control" style="width: 150px;"/>						    
+										 </div>
+									</div>
+									</div>
+								</div>
+							</div>
+						<div class="form-group">
+							<button type="button" class="btn btn-primary btn-sm" @click="query">查询</button>
+						</div>
+					</div>
+				</form>
+						<table id="dataGrid"></table>
+						<div  id="dataGridPage" ></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/qms/processQuality/qms_key_parts.js?_${.now?long}"></script>
+</body>
+</html>

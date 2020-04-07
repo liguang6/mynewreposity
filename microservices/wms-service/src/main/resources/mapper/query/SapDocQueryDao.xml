@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.SapDocQueryDao">
+
+	 <select id="getDocList"  parameterType="List" resultType="Map">
+	  SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+	     SELECT D.REF_WMS_ITEM_NO,D.MAT_DOC,D.MATDOC_ITM,D.DOC_YEAR,D.MOVE_TYPE,
+	     D.MATERIAL,D.PLANT,D.STGE_LOC,D.ENTRY_QNT,D.ENTRY_UOM,D.BATCH,D.CREATE_DATE,
+	     D.REF_MATDOC_ITM,H.DOC_DATE,H.PSTNG_DATE,H.REF_DOC_NO,H.HEADER_TXT,
+	     H.REF_WMS_NO,H.TR_EV_TYPE
+	     FROM WMS_CORE_SAPDOC_ITEM D
+	     LEFT JOIN WMS_CORE_SAPDOC_HEAD H ON H.MAT_DOC=D.MAT_DOC
+	     WHERE 1=1
+	      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+	      <if test="PLANT !=null and PLANT !='' ">
+			AND D.PLANT=#{PLANT}
+		   </if>
+		   <if test="MOVE_TYPE !=null and MOVE_TYPE !='' ">
+			AND D.MOVE_TYPE=#{MOVE_TYPE}
+		   </if>
+		   <if test="LGORT !=null and LGORT !='' ">
+			AND D.STGE_LOC=#{LGORT}
+		   </if>
+		   <if test="MATERIAL !=null and MATERIAL !='' ">
+			AND D.MATERIAL=#{MATERIAL}
+		   </if>
+		   <if test="BATCH !=null and BATCH !='' ">
+			AND D.BATCH=#{BATCH}
+		   </if>
+		   <if test="DOC_DATE_START !=null and DOC_DATE_START !='' ">
+			AND H.DOC_DATE&gt;=#{DOC_DATE_START}
+		   </if>
+		   <if test="DOC_DATE_END !=null and DOC_DATE_END !='' ">
+			AND H.DOC_DATE&lt;=#{DOC_DATE_END}
+		   </if>
+		   <if test="PSTNG_DATE_START !=null and PSTNG_DATE_START !='' ">
+			AND H.PSTNG_DATE&gt;=#{PSTNG_DATE_START}
+		   </if>
+		   <if test="PSTNG_DATE_END !=null and PSTNG_DATE_END !='' ">
+			AND H.PSTNG_DATE&lt;=#{PSTNG_DATE_END}
+		   </if>
+		   <if test="REF_WMS_NO !=null and REF_WMS_NO !='' ">
+			AND H.REF_WMS_NO=#{REF_WMS_NO}  <!-- WMS凭证号 -->
+		   </if>
+		    <if test="MAT_DOC !=null and MAT_DOC !='' ">
+			AND D.MAT_DOC=#{MAT_DOC}  <!-- SAP凭证单号 -->
+		   </if>
+		    ORDER BY D.MAT_DOC
+		     ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+	 </select>
+	 
+	<select id="getDocCount"  parameterType="Map" resultType="int">
+       SELECT COUNT(1)  FROM WMS_CORE_SAPDOC_ITEM D
+	     LEFT JOIN WMS_CORE_SAPDOC_HEAD H ON H.MAT_DOC=D.MAT_DOC
+	     WHERE 1=1
+	     <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+	     <if test="PLANT !=null and PLANT !='' ">
+			AND D.PLANT=#{PLANT}
+		   </if>
+		   <if test="MOVE_TYPE !=null and MOVE_TYPE !='' ">
+			AND D.MOVE_TYPE=#{MOVE_TYPE}
+		   </if>
+		   <if test="LGORT !=null and LGORT !='' ">
+			AND D.STGE_LOC=#{LGORT}
+		   </if>
+		   <if test="MATERIAL !=null and MATERIAL !='' ">
+			AND D.MATERIAL=#{MATERIAL}
+		   </if>
+		   <if test="BATCH !=null and BATCH !='' ">
+			AND D.BATCH=#{BATCH}
+		   </if>
+		   <if test="DOC_DATE_START !=null and DOC_DATE_START !='' ">
+			AND H.DOC_DATE&gt;=#{DOC_DATE_START}
+		   </if>
+		   <if test="DOC_DATE_END !=null and DOC_DATE_END !='' ">
+			AND H.DOC_DATE&lt;=#{DOC_DATE_END}
+		   </if>
+		   <if test="PSTNG_DATE_START !=null and PSTNG_DATE_START !='' ">
+			AND H.PSTNG_DATE&gt;=#{PSTNG_DATE_START}
+		   </if>
+		   <if test="PSTNG_DATE_END !=null and PSTNG_DATE_END !='' ">
+			AND H.PSTNG_DATE&lt;=#{PSTNG_DATE_END}
+		   </if>
+		   <if test="REF_WMS_NO !=null and REF_WMS_NO !='' ">
+			AND H.REF_WMS_NO=#{REF_WMS_NO}  <!-- WMS凭证号 -->
+		   </if>
+		    <if test="MAT_DOC !=null and MAT_DOC !='' ">
+			AND D.MAT_DOC=#{MAT_DOC}  <!-- SAP凭证单号 -->
+		   </if>
+		</select>
+</mapper>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>复制交接模式配置</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/config/handoverType/list" v-model="page.list">
+						<input type="hidden" value="10000" name="pageSize"/>
+						<input type="hidden" value="1" name="pageNo"/>
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">源工厂：</label>
+								<div class="control-inline" style="width: 80px;">
+                                    <select  name="werks" id="werks" v-model="werks" style="width:100%;height:25px">
+                                        <#list tag.getUserAuthWerks("WMS_C_HANDOVER_TYPE") as factory> 
+                                            <option value="${factory.code}">${factory.code}</option>
+                                        </#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">源仓库：</label>
+								<div class="control-inline" style="width: 80px;">
+                                    <select v-model="whNumber" name="whNumber" id="whNumber"  style="width:100%;height:25px"  @change="whChange()">
+										<option v-for="w in s_warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>
+                            <div class="form-group">
+								<label class="control-label" style="width: 80px">目标工厂：</label>
+								<div class="control-inline" style="width: 80px;">
+								
+									<select  name="targetWerks" id="targetWerks" v-model="targetWerks"style="width:100%;height:25px" onchange="onPlantChange(event)">
+									     <option value="">请选择</option>
+									      <#list tag.getUserAuthWerks("WMS_C_HANDOVER_TYPE") as factory> 
+                                            <option value="${factory.code}">${factory.code}</option>
+                                        </#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 80px">目标仓库：</label>
+								<div class="control-inline" style="width: 80px;">
+                                    <select v-model="targetWhNumber" name="targetWhNumber" id="targetWhNumber"  style="width:100%;height:25px"  onchange="onWhNumberChange(event)">
+										<option value="">请选择</option>
+										<option v-for="w in t_warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<button id="save" value="保存" style="display:none" @click="vm.save()"></button>
+						</form>
+						<table id="dataGrid"></table>
+					</div>
+				</div>
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_handover_type_copy.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"></meta>
+<title>打印WBS发货单</title>
+<style>
+@page {
+            size: 210mm 297mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            margin: 0.25in;
+            padding: 1em;
+            @bottom-center{
+                content:"CSCC © 版权所有";
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            };
+            @top-center { content: element(header) };
+            @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;
+            };
+        }
+
+table
+  {
+  border-collapse:collapse;
+  }
+
+table, td, th
+  {
+  border:1px solid black;
+  }
+  td,th {
+  padding:8px;
+  }
+  
+  .title {
+    font-size: xx-large;
+    font-weight: bold;
+    padding: 8px 0;
+  }
+  
+  .logo{
+  	position: fixed;
+  	top: 0;
+  	left: 0;
+  }
+  
+  .head-info {
+  		padding:16px 5%;
+  }
+</style>
+</head>
+<body style="font-family: SimSun">
+	<div>
+	    <!-- 定位到左上角 -->
+	    <img class="logo"  src="${basePath}/statics/images/byd_logo.png"></img>
+		<div style="text-align: center"><p class="title">${title}</p> </div>
+
+		<div class="head-info">
+		   发货时间: 2018-10-11 14:26
+		</div>
+		
+		<table style="width: 100%">
+		<tr>
+		  <td colspan="4">表头: ...</td>
+		</tr>
+			<tr>
+				<th>名字</th>
+				<th>公司</th>
+				<th>备注</th>
+				<th>其他</th>
+			</tr>
+			<tr>
+				<td>dev</td>
+				<td>比亚迪</td>
+				<td>HBase是谷歌BigTble的开源实现。 </td>
+				<td>..</td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>

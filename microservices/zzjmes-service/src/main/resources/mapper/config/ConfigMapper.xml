@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.config.dao.ConfigDao">
+	
+	<select id="getMachineAssignList" parameterType="Map" resultType="Map">
+		SELECT * FROM ZZJ_MACHINE_ASSIGN WHERE del='0' 
+		<if test="werks != '' and werks != null">
+			AND werks = #{werks}
+		</if>
+		<if test="workshoplist !=null and workshoplist !='' ">
+			AND workshop in 
+			<foreach collection="workshoplist" item="workshop" separator="," open="(" close=")">
+				 #{workshop}
+			</foreach>
+		</if>
+		<if test="workgrouplist !=null and workgrouplist !='' ">
+			AND workgroup in 
+			<foreach collection="workgrouplist" item="workgroup" separator="," open="(" close=")">
+				 #{workgroup}
+			</foreach>
+		</if>
+		<if test="linelist !=null and linelist !='' ">
+			AND line in 
+			<foreach collection="linelist" item="line" separator="," open="(" close=")">
+				 #{line}
+			</foreach>
+		</if>
+		<if test="machine != '' and machine != null">
+			AND (machine_code like CONCAT('%',#{machine},'%') or machine_name like CONCAT('%',#{machine},'%'))
+		</if>
+		<if test="device_code != '' and device_code != null">
+			AND (device_code like CONCAT('%',#{device_code},'%') )
+		</if>
+		<if test="device_name != '' and device_name != null">
+			AND (device_name like CONCAT('%',#{device_name},'%') )
+		</if>
+		<if test="process != '' and process != null">
+			AND (process_code like CONCAT('%',#{process},'%') or process_name like CONCAT('%',#{process},'%'))
+		</if>
+		<if test="status != '' and status != null">
+			AND status = #{status}
+		</if>
+		<if test="username != '' and username != null">
+			AND username = #{username}
+		</if>
+		
+		<if test="pageSize != '' and pageSize != null">
+			LIMIT ${start},${pageSize} 
+		</if>
+	</select>
+	<select id="getMachineAssignCount" parameterType="Map" resultType="int">
+		SELECT COUNT(*) FROM ZZJ_MACHINE_ASSIGN WHERE del='0' 
+		<if test="werks != '' and werks != null">
+			AND werks = #{werks}
+		</if>
+		<if test="workshoplist !=null and workshoplist !='' ">
+			AND workshop in 
+			<foreach collection="workshoplist" item="workshop" separator="," open="(" close=")">
+				 #{workshop}
+			</foreach>
+		</if>
+		<if test="workgrouplist !=null and workgrouplist !='' ">
+			AND workgroup in 
+			<foreach collection="workgrouplist" item="workgroup" separator="," open="(" close=")">
+				 #{workgroup}
+			</foreach>
+		</if>
+		<if test="linelist !=null and linelist !='' ">
+			AND line in 
+			<foreach collection="linelist" item="line" separator="," open="(" close=")">
+				 #{line}
+			</foreach>
+		</if>
+		<if test="machine != '' and machine != null">
+			AND (machine_code like CONCAT('%',#{machine},'%') or machine_name like CONCAT('%',#{machine},'%'))
+		</if>
+		<if test="device_code != '' and device_code != null">
+			AND (device_code like CONCAT('%',#{device_code},'%') )
+		</if>
+		<if test="device_name != '' and device_name != null">
+			AND (device_name like CONCAT('%',#{device_name},'%') )
+		</if>
+		<if test="process != '' and process != null">
+			AND (process_code like CONCAT('%',#{process},'%') or process_name like CONCAT('%',#{process},'%'))
+		</if>
+		<if test="status != '' and status != null">
+			AND status = #{status}
+		</if>
+		<if test="username != '' and username != null">
+			AND username = #{username}
+		</if>
+		
+	</select>
+	
+	<insert id="insertMachineAssign" parameterType="Map">
+	INSERT INTO ZZJ_MACHINE_ASSIGN
+	(machine_code,machine_name,username,process_code,process_name,section,workgroup_name,workgroup,
+	team_name,team,werks,werks_name,workshop,workshop_name,line,line_name,device_code,device_name,
+	specification_model,status,memo,assets,del,editor,edit_date,creator,create_date)
+	
+	VALUES (#{machinecode},#{machine},#{username1},#{process},#{process_name},#{section},#{workgroup_name},#{workgroup}
+	,#{workteam_name},#{workteam},#{werks},#{werks_name},#{workshop},#{workshop_name},#{line},#{line_name},#{devicetype},#{device_name},
+	#{specificationModel},#{status},#{memo},#{assets},#{del},#{editor},#{edit_date},#{creator},#{create_date})
+	</insert>
+	
+	<select id="selectById" parameterType="Map" resultType="Map">
+		select machine_code machinecode,machine_name machine,username,process_code process,process_name,section,workgroup_name workgroup_name,workgroup workgroup,
+		team_name workteam_name,team workteam,werks,werks_name werks_name,workshop,workshop_name workshop_name,line,line_name,device_code devicetype,device_name device_name,
+		specification_model specificationModel,status,memo,assets,del,editor,edit_date,creator,create_date
+		   from ZZJ_MACHINE_ASSIGN where del='0'
+		<if test="ID != '' and ID != null">
+			AND ID = #{ID}
+		</if>
+	</select>
+	
+	<select id="selectByCond" parameterType="Map" resultType="Map">
+		select * from ZZJ_MACHINE_ASSIGN where del='0'
+	</select>
+	
+	<select id="selectMachineByNo" parameterType="Map" resultType="Map">
+		select * from ZZJ_MACHINE_PLAN_ITEMS where 1=1
+		<if test="machinecode != '' and machinecode != null">
+			AND MACHINE = #{machinecode}
+		</if>
+	</select>
+	
+	<update id="updateMachineAssign" parameterType="Map">
+		UPDATE ZZJ_MACHINE_ASSIGN 
+		SET machine_code = #{machinecode},machine_name = #{machine},username = #{username1},
+		process_code = #{process}, process_name = #{process_name}, section = #{section}, 
+		workgroup_name = #{workgroup_name},workgroup=#{workgroup},team_name=#{workteam_name},team = #{workteam},
+		werks = #{werks}, werks_name = #{werks_name},workshop = #{workshop}, workshop_name = #{workshop_name},line = #{line},
+		line_name = #{line_name},device_code = #{devicetype},device_name = #{device_name},specification_model = #{specificationModel},status = #{status},
+		memo = #{memo},assets = #{assets},
+		editor = #{editor}, edit_date = #{edit_date}	
+		WHERE id = #{id}
+	</update>
+	
+	
+	<delete id="delMachineAssign" parameterType="Map">
+		UPDATE ZZJ_MACHINE_ASSIGN SET del='1' WHERE id = #{id}
+	</delete>
+	
+</mapper>

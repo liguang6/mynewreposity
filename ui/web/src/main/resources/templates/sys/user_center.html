@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>个人中心</title>
+<#include "/header.html">
+
+</head>
+<body class="hold-transition ">
+<div id="user_center" class="wrapper">
+	<div class="main-content">
+		<div class="nav-tabs-custom nav-main">
+			<ul class="nav nav-tabs pull-right">
+				<li class=""><a href="#tab-2" data-toggle="tab">修改密码</a></li>
+					<li class="active"><a href="#tab-1" data-toggle="tab">个人信息</a></li>
+				<li class="pull-left header">
+					<i class="fa icon-user" style="vertical-align:-1px;"></i>个人中心
+				</li>
+			</ul>
+			<div class="tab-content p0">
+				<div class="tab-pane active" id="tab-1">
+					<form id="inputFormBase" action="#" method="post" class="form-horizontal">
+						<div class="box-body"><br/>
+							<div class="col-sm-offset-1 col-sm-3"><br/>
+								<div class="box box-main">
+									<div class="box-body box-profile">
+										<img id="avatarImg" class="profile-user-img img-responsive img-circle"
+											src="${request.contextPath}/statics/images/user.jpg">
+										<h3 class="profile-username text-center" id="username"></h3>
+										<p class="text-muted text-center">
+										<span id="sex" class="icheck">
+											<label><input type="radio" id="sex1" name="sex" value="1" class="form-control required" checked> 男</label><label>
+											<input type="radio" id="sex2" name="sex" value="2" class="form-control required"> 女</label>
+										</span>
+										</p>								
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-7"><br/>
+								<div class="row">
+								
+									<div class="col-xs-12">
+										<div class="form-group">
+											<label class="control-label col-sm-3">
+												<span class="required">*</span> 工号：</label>
+											<div class="col-sm-9">
+												<div class="input-group">
+													<input type="text" id="staffNumber" readonly="readonly" name="staffNumber" value="" v-model="user.STAFF_NUMBER" maxlength="32" class="form-control required"/>
+													<span class="input-group-addon"><i class="fa fa-fw fa-user" style="margin-top:-2px;display:block;"></i></span>
+								                </div>
+											</div>
+										</div>
+									</div>
+									<div class="col-xs-12">
+										<div class="form-group">
+											<label class="control-label col-sm-3">
+												<span class="required">*</span> 姓名：</label>
+											<div class="col-sm-9">
+												<div class="input-group">
+													<input type="text" id="fullName" name="fullName" value="" v-model="user.FULL_NAME" maxlength="32" class="form-control required"/>
+													<span class="input-group-addon"><i class="fa fa-fw fa-user" style="margin-top:-2px;display:block;"></i></span>
+								                </div>
+											</div>
+										</div>
+									</div>
+									<div class="col-xs-12">
+										<div class="form-group">
+											<label class="control-label col-sm-3" title="">
+												<span class="required hide">*</span> 电子邮箱：<i class="fa icon-question hide"></i></label>
+											<div class="col-sm-9">
+												<div class="input-group">
+													<input type="text" id="email" name="email" value="" v-model="user.EMAIL" maxlength="300" class="form-control email"/>
+													<span class="input-group-addon"><i class="fa fa-fw fa-envelope" style="margin-top:-2px;display:block;"></i></span>
+								                </div>
+											</div>
+										</div>
+									</div>
+									<div class="col-xs-12">
+										<div class="form-group">
+											<label class="control-label col-sm-3" title="">
+												<span class="required hide">*</span> 手机号码：<i class="fa icon-question hide"></i></label>
+											<div class="col-sm-9">
+												<div class="input-group">
+													<input type="text" id="mobile" name="mobile" value="" v-model="user.MOBILE" maxlength="100" class="form-control mobile"/>
+													<span class="input-group-addon"><i class="fa fa-fw fa-mobile" style="margin-top:-2px;display:block;"></i></span>
+								                </div>
+											</div>
+										</div>
+									</div>
+<!-- 									<div class="col-xs-12">
+										<div class="form-group">
+											<label class="control-label col-sm-3" title="">
+												<span class="required hide">*</span> 部门：<i class="fa icon-question hide"></i></label>
+											<div class="col-sm-9">
+												<div class="input-group">
+													<input type="text" id="deptName" name="deptName" value="" v-model="user.deptName" maxlength="100" class="form-control deptName"/>
+													<span class="input-group-addon"><i class="fa fa-fw icon-grid" style="margin-top:-2px;display:block;"></i></span>
+												</div>
+											</div>
+										</div>
+									</div> -->
+									<div class="col-xs-12">
+										<div class="form-group">
+											<label class="control-label col-sm-3">上次登录：</label>
+											<div class="col-sm-9 pt3" >
+												时间：{{user.LAST_LOGIN_DATE}}
+												&nbsp; &nbsp; IP：{{user.LAST_LOGIN_IP}}
+												
+											</div>
+										</div>
+									</div>
+								</div>
+								<br/>
+							</div>
+						</div>
+						<div class="box-footer">
+							<div class="row mr20 pr20">
+								<div class="text-center mr20 pr20">
+									<button type="submit" @click="updateUser" class="btn btn-sm btn-primary"><i class="fa fa-check"></i> 保 存</button>&nbsp;
+									<button type="button" class="btn btn-sm btn-default" @click="js.closeCurrentTabPage()"><i class="fa fa-reply-all"></i> 关 闭</button>
+								</div>
+							</div>
+						</div>
+				</form>
+			</div>
+				<div class="tab-pane " id="tab-2">
+					<form id="inputFormPwd" action="#" method="post" class="form-horizontal">
+					<input type="text" id="username" style="display:none" name="username" value="" v-model="user.STAFF_NUMBER" maxlength="32" class="form-control required"/>
+						<div class="box-body">
+							<div class="form-unit">修改密码</div>
+							<div class="row">
+								<div class="col-xs-12">
+									<div class="form-group">
+										<label class="control-label col-sm-3">旧密码：</label>
+										<div class="col-sm-8">
+											<input id="password" name="password" type="password" autocomplete="off" value="" maxlength="50" minlength="3" class="form-control required"/>
+										</div>
+									</div>
+								</div>
+								<div class="col-xs-12">
+									<div class="form-group">
+										<label class="control-label col-sm-3">新密码：</label>
+										<div class="col-sm-8">
+											<div class="strength strength-loose">
+												<input id="newPassword" name="newPassword" type="password" autocomplete="off" value="" maxlength="50" minlength="3" class="form-control required"/>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="col-xs-12">
+									<div class="form-group">
+										<label class="control-label col-sm-3">确认新密码：</label>
+										<div class="col-sm-8">
+											<input id="confirmNewPassword" name="confirmNewPassword" type="password" autocomplete="off" value="" maxlength="50" minlength="3" class="form-control required" equalTo="#newPassword"/>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="box-footer">
+							<div class="row">
+								<div class="col-sm-offset-3 col-sm-10">
+									<button type="button" id="btn_save" @click="updatePassword" class="btn btn-sm btn-primary"><i class="fa fa-check"></i> 保 存</button>&nbsp;
+									<button type="button" class="btn btn-sm btn-default" @click="js.closeCurrentTabPage()"><i class="fa fa-reply-all"></i> 关 闭</button>
+								</div>
+							</div>
+						</div>
+					</form>
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+
+<script>
+
+var vm = new Vue({
+    el: '#user_center',
+    data: {
+        user: {},
+        password: '',
+        newPassword: '',
+        navTitle: "用户中心"
+    },
+    created: function(){
+    	this.getUser();
+    },
+    methods: {
+        getUser: function () {
+            $.getJSON("${request.contextPath}/sys/user/info?_" + $.now(), function (r) {
+            	userId = r.user.USER_ID;
+                vm.user = r.user;
+            });
+
+        },
+        updatePassword:function(){
+        	console.log('-->updatePassword' + $("#newPassword").val())
+        	if($("#newPassword").val() != $("#confirmNewPassword").val()){
+        		alert("两次输入的新密码不相同");
+        		return false;
+        	}
+        	//修改密码
+        	$("#inputFormPwd").ajaxSubmit({
+	            type: "POST",
+	            url: "${request.contextPath}/sys/user/password",
+	            dataType: "json",
+	            success: function (result) {
+	                if (result.code == 0) {
+	                    layer.alert('修改成功', function (index) {
+	                        location.reload();
+	                    });
+	                } else {
+	                    layer.alert(result.msg);
+	                }
+	            }
+	        });
+        },
+        updateUser: function(){
+        	// 个人信息
+        	$("#inputFormBase").validate({
+        		submitHandler: function(form){
+/*         	 		js.ajaxSubmitForm($(form), function(data){
+        	            if (data.code == 0) {
+        	                layer.alert('修改成功', function (index) {
+        	                    location.reload();
+        	                });
+        	            } else {
+        	                layer.alert(data.msg);
+        	            }
+        			}, "json");  */
+        			
+                    $.ajax({
+                        type: "POST",
+                        url: "${request.contextPath}/sys/user/update",
+                        contentType: "application/json",
+                        data: JSON.stringify(vm.user),
+                        success: function(data){
+            	            if (data.code == 0) {
+            	                layer.alert('修改成功', function (index) {
+            	                    location.reload();
+            	                });
+            	            } else {
+            	                layer.alert(data.msg);
+            	            }
+                        }
+                    });
+
+        	    }
+        	});
+
+        }
+    }});
+	
+</script>
+</body>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.processQuality.dao.QmsPatrolRecordDao">
+
+     <select id="getListByPage" parameterType="Map" resultType="Map">
+     SELECT * FROM (
+      SELECT PATROL_RECORD_NO patrolRecordNo,T.WERKS werks,CONCAT(o.ORDER_NO,o.ORDER_TEXT) orderNo,TEST_NODE testNode,MAX(TESTOR) testor,
+           MAX(TEST_DATE) testDate,(CASE WHEN locate('NG',GROUP_CONCAT(JUDEG_DESC))>0 THEN '不合格' ELSE '合格' END) judgeDesc     
+           FROM (
+             SELECT h.*,(CASE WHEN h.JUDGE='NG' and h.re_judge!='OK' THEN 'NG' else 'OK' END) JUDEG_DESC          
+		          FROM QMS_PROCESS_PATROL_RECORD h  WHERE 1=1  
+		          <if test="werks != null and werks !=''">
+			        AND h.WERKS=#{werks} 
+			      </if>
+			       <if test="orderNo != null and orderNo !=''">
+			        AND h.ORDER_NO=#{orderNo} 
+			      </if>
+	              <if test="testNode != null and testNode !=''">
+			        AND h.TEST_NODE = #{testNode}
+			      </if>
+			      <if test="startDate != null and startDate !=''">
+			        AND h.TEST_DATE&gt;= CONCAT(#{startDate},' 00:00:01')
+			      </if>
+			      <if test="endDate != null and endDate !=''">
+			        AND h.TEST_DATE&lt;= CONCAT(#{endDate},' 23:59:59')
+			      </if>
+			       ) T LEFT JOIN QMS_MES_ORDER o on o.ORDER_NO=T.ORDER_NO
+			       WHERE 1=1
+			       GROUP BY PATROL_RECORD_NO ORDER BY MAX(TEST_DATE) desc
+			   ) t where 1=1
+			    <if test=" result=='NG'">
+			        AND  t.judgeDesc='不合格'
+			      </if>
+			      <if test=" result=='OK'">
+			       AND  t.judgeDesc='合格'
+			      </if>
+         LIMIT #{start},#{limit}
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT count(1) FROM (
+      SELECT PATROL_RECORD_NO patrolRecordNo,WERKS werks,ORDER_NO orderNo,TEST_NODE testNode,MAX(TESTOR) testor,
+           MAX(TEST_DATE) testDate,(CASE WHEN locate('NG',GROUP_CONCAT(JUDEG_DESC))>0 THEN '不合格' ELSE '合格' END) judgeDesc     
+           FROM (
+             SELECT h.*,(CASE WHEN h.JUDGE='NG' and h.re_judge!='OK' THEN 'NG' else 'OK' END) JUDEG_DESC          
+		          FROM QMS_PROCESS_PATROL_RECORD h  WHERE 1=1  
+		          <if test="werks != null and werks !=''">
+			        AND h.WERKS=#{werks} 
+			      </if>
+			       <if test="orderNo != null and orderNo !=''">
+			        AND h.ORDER_NO=#{orderNo} 
+			      </if>
+	              <if test="testNode != null and testNode !=''">
+			        AND h.TEST_NODE = #{testNode}
+			      </if>
+			      <if test="startDate != null and startDate !=''">
+			        AND h.TEST_DATE&gt;= CONCAT(#{startDate},' 00:00:01')
+			      </if>
+			      <if test="endDate != null and endDate !=''">
+			        AND h.TEST_DATE&lt;= CONCAT(#{endDate},' 23:59:59')
+			      </if>
+			       ) T 
+			       WHERE 1=1
+			       GROUP BY PATROL_RECORD_NO 
+			   ) t where 1=1
+			    <if test=" result=='NG'">
+			        AND  t.judgeDesc='不合格'
+			      </if>
+			      <if test=" result=='OK'">
+			       AND  t.judgeDesc='合格'
+			      </if>
+    </select>
+  <select id="getList" parameterType="Map" resultType="Map">
+      SELECT h.ID id,h.PATROL_RECORD_NO patrolRecordNo,h.PATROL_RECORD_ITEM_NO patrolRecordItemNo,
+      h.TEMP_NO tempNo,h.TEMP_ITEM_NO tempItemNo,h.WERKS werks,h.ORDER_NO orderNo,h.TEST_NODE testNode,
+        h.TEST_TOOL_NO testToolNo,h.PROCESS_NAME processName,h.TEST_ITEM testItem,h.TEST_STANDARD testStandard,
+        h.JUDGE judge,h.TEST_RESULT testResult,h.RE_TEST_RESULT reTestResult,h.RE_JUDGE reJudge,h.TESTOR testor,
+        h.TEST_DATE testDate, h.EDITOR editor,h.EDIT_DATE editDate,h.CREATOR creator ,h.CREATE_DATE createDate
+		FROM QMS_PROCESS_PATROL_RECORD h  WHERE PATROL_RECORD_NO=#{patrolRecordNo}
+		    
+    </select>
+	<insert id="batchSave" parameterType="Map"  useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into QMS_PROCESS_PATROL_RECORD
+		(PATROL_RECORD_NO,PATROL_RECORD_ITEM_NO,TEMP_NO,TEMP_ITEM_NO,WERKS,ORDER_NO,TEST_NODE,
+		TEST_TOOL_NO,PROCESS_NAME,TEST_ITEM,TEST_STANDARD,TEST_RESULT,JUDGE,
+		RE_TEST_RESULT,RE_JUDGE,TESTOR,TEST_DATE,CREATOR,CREATE_DATE) values
+		<foreach collection="list" item="detail" index="index" separator=",">
+			(#{patrolRecordNo},#{detail.patrolRecordItemNo},#{detail.tempNo},#{detail.tempItemNo},#{werks},#{orderNo},#{testNode},
+			#{detail.testToolNo},#{detail.processName},#{detail.testItem},#{detail.testStandard},#{detail.testResult},#{detail.judge},
+			#{detail.reTestResult},#{detail.reJudge},#{testor},#{testDate},#{user},#{createDate})
+		</foreach>
+	</insert>
+	<update id="batchUpdate" parameterType="Map">
+		<foreach item="detail" index="index" collection="updateList" open="" separator=";" close=";">
+			update QMS_PROCESS_PATROL_RECORD 
+			set TEST_RESULT= #{detail.testResult},JUDGE=#{detail.judge},
+			RE_TEST_RESULT=#{detail.reTestResult},RE_JUDGE=#{detail.reJudge},
+			TESTOR=#{user},TEST_DATE=#{createDate},
+			EDITOR=#{user},EDIT_DATE=#{createDate}  where ID=#{detail.id}
+		</foreach>
+	</update>
+	
+    <update id="delete" parameterType="String">
+		DELETE FROM QMS_PROCESS_PATROL_RECORD WHERE PATROL_RECORD_NO=#{patrolRecordNo}
+	</update>
+	<select id="getMaxTempNo" parameterType="Map" resultType="String">
+      SELECT max(temp_No) FROM QMS_PROCESS_TEST_RECORD_TEMP_HEAD   WHERE 1=1
+		          <if test="testType =='01'">
+				        AND ORDER_NO=#{orderNo} 
+			      </if>
+			        AND TEST_NODE = #{testNode}
+			        AND TEST_TYPE= #{testType}	   
+    </select>
+    <select id="getTemplateList" parameterType="String" resultType="Map">
+      SELECT TEMP_NO tempNo,TEMP_ITEM_NO tempItemNo,PROCESS_NAME processName,
+          TEST_ITEM testItem,TEST_STANDARD testStandard  FROM QMS_PROCESS_TEST_RECORD_TEMP_ITEM  WHERE
+			 PATROL_FLAG='X' AND  TEMP_NO= #{tempNo}	   
+    </select>
+</mapper>

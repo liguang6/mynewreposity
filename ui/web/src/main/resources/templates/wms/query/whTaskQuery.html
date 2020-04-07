@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>仓库任务查询</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<script type="text/javascript" src="${request.contextPath}/statics/js/dynamicColum.js"></script>
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/taskQuery/list" >
+						<div class="row">					
+							<div class="form-group">
+								<label class="control-label" style="width: 45px">工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select name="WERKS" id="werks" v-model="werks" class="input-medium" style="width:100%;height:25px">
+									   <#list tag.getUserAuthWerks("QUERY_WHTASK") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 70px;">仓库号：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select class="form-control" v-model="whNumber" name="WH_NUMBER" id="whNumber" style="height: 28px;width: 60px;">
+										 <option v-for="w in wh_list" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+										</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+	                           <label class="control-label">参考单据号：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									   	<input type="text" id="REFERENCE_DELIVERY_NO" name="REFERENCE_DELIVERY_NO" style="width: 130px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+	                           <label class="control-label">物料号：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									   	<input type="text" id="MATNR" name="MATNR" style="width: 130px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+	                           <label class="control-label">批次：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									   	<input type="text" id="BATCH" name="BATCH" style="width: 130px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							
+						    <div class="form-group">
+								<label class="control-label" >仓库处理类型：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									<select id="PROCESS_TYPE" name="PROCESS_TYPE" style="height: 25px;width:100%">
+									    <option value="">全部</option>
+										<option value="00">上架</option>
+										<option value="01">下架</option>
+										<option value="02">调仓</option>
+										<option value="03">补货</option>
+									</select>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" >状态：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									<select id="WT_STATUS" name="WT_STATUS" style="height: 25px;width:100%">
+									    <option value="">全部</option>
+										<option value="00">未清</option>
+										<option value="01">部分确认</option>
+										<option value="02">已确认</option>
+										<option value="03">已取消</option>
+										<option value="04">部分过账</option>
+										<option value="05">已过账</option>
+									</select>
+									</div>
+								</div>
+							</div>
+					</div>
+					<div class="row">
+					
+							<div class="form-group">
+	                           <label class="control-label">供应商：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									   	<input type="text" id="LIFNR" name="LIFNR" style="width: 130px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+							   <label class="control-label" style="margin-left:-3px">仓管员：</label>
+							    <div class="control-inline" style="width: 70px;">
+								 	<select class="input-medium" name="AUTHORIZE_CODE" id="whManager" style="width: 70px;height:25px;">
+								 	 <option value="" >全部</option>
+								 	 <option v-for="w in relatedareaname" :value="w.AUTHORIZE_CODE" :key="w.AUTHORIZE_CODE">{{ w.MANAGER }}</option>
+									</select>
+									<input type="text" id="AUTHORIZE_NAME" name="AUTHORIZE_NAME" hidden="hidden" />
+								</div>
+							</div> 
+						
+							<div class="form-group">
+									<label class="control-label" style="width: 60px">创建时间：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width:170px">
+										<div class="control-inline">
+											<div class="input-group" style="width:80px">
+			                                    <input type="text" id="createDateStart" name="createDateStart"
+												class="form-control width-300" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>
+											<div class="input-group" style="width:80px">
+											    <input type="text" id="createtDateEnd" name="createtDateEnd"
+												class="form-control width-300" style="width: 80px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group">
+	                           <label class="control-label">仓库任务号：</label>
+								<div class="control-inline">
+									<div class="input-group" >
+									   	<input type="text" id="TASK_NUM" name="TASK_NUM" style="width: 130px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+									
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" onclick="query()">查询</button>
+								<button type="button" class="btn btn-primary btn-sm" @click="exp">导出</button>
+								<button type="reset" class="btn btn-primary btn-sm">重置</button>
+							</div>
+							<div class="form-group">
+								<div class="control-inline">
+									<div class="input-group" style="width:80px">
+									   <select id="example-getting-started" multiple="multiple" style="display: none;">
+											<option value="TASK_NUM">仓库任务号</option>
+											<option value="REFERENCE_DELIVERY_ITEM">仓库任务行项目</option>
+											<option value="LABEL_NO">条码号</option>
+											<option value="MOULD_NO">物流器具号</option>
+											<option value="HX_FLAG">核销标记</option>
+											<option value="TO_STORAGE_AREA">目的储位</option>
+											<option value="TO_BIN_CODE">目的储位名称</option>
+											<option value="EDITOR">操作人</option>
+											<option value="EDIT_DATE">操作时间</option>
+											<option value="CREATE_DATE">创建时间</option>
+										</select> 
+									</div>
+								</div>
+							</div>
+						</div>
+					</form>
+						<div id="divDataGrid" style="width:100%;overflow:auto;">
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>	
+						<table id="tb_excel" style="display:none"></table>
+					</div>
+				</div>
+					
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/whTaskQuery.js?_${.now?long}"></script>
+</body>
+</html>

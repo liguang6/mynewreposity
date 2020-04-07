@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>拣配确认</title>  
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+                   <form id="searchForm" class="form-inline" action="#">
+						<!-- 查询条件 -->
+						<table>
+						<tr>
+						<td width="100%">
+							<div class="form-group">
+								<label class="control-label">供应工厂：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="werks" style="height: 28px;width: 60px;" id="werks" onchange="vm.onPlantChange(event)">  
+										   <option value=''>全部</option>
+										   <#list tag.getUserAuthWerks("WLMS_QR") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										   </#list>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">单号：</label>
+								<input type="text" id="dispatchingNo" name="dispatchingNo" value="" class="form-control" style="width: 150px;" @keyup.enter="querylistbydanhao"/>
+							</div>
+							<div class="form-group">
+								<label class="control-label">需求工厂：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="plantCode" style="height: 28px;width: 60px;" id="plantCode" disabled="true">  
+										   <!--  <#list tag.getUserAuthWerks("WLMS_QR") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										   </#list>-->
+										   <option value='C113'>C113</option>
+										</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">线别：</label>
+								<div class="control-inline" style="width:60px;">
+										<select class="form-control" name="lineCategory" style="height: 28px;width: 60px;" id="lineCategory">  
+										   <option value=''>全部</option>
+										   <#list tag.wmsDictList("LINE") as lineCategort>
+										      <option value="${lineCategort.code}">${lineCategort.value}</option>
+										   </#list>
+										</select>
+								</div>
+							</div>
+	
+							<div class="form-group">
+								    <input type="button" id="btnquerydispatchingqueren" class="btn btn-primary btn-sm " value="查询"/>
+								    <input type="button" id="btndispatchingqueren" class="btn btn-primary btn-sm " @click="save" value="拣配确认"/>
+									<button type="reset" class="btn btn-info btn-sm">重置</button>
+							</div>
+							<div class="form-group pull-right">
+								<div  class="control-inline" style="font-size: 28px;font-weight:bold;width: 100px;text-align: center;background-color: #FF8C00;border: 1px solid #FF8C00;border-radius: 4px;color: black"><span id="dispatching_count">0</span></div>
+							</div>
+						</td>
+							</tr>
+					</table>
+						
+				   </form>
+				   <!-- 交接页面 -->	
+				<div id="handoverConfirmLayer" style="display: none; padding: 10px;">
+					<div class="modal-body">
+                        <form id="newform" class="form-horizontal" action="">
+                            <center><table>
+                                    <tr style="height:40px">
+                                    <td>&nbsp;确认模式：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    <td><label class="radio"><input type="radio" id="radio1"  name="group1" >扫描模式&nbsp;&nbsp;</label></td>
+                                    <td><label class="radio"><input type="radio" id="radio2" checked name="group1">刷卡模式</label></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;工号：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise" placeholder="工号..." id="c_userNo" name="c_userNo" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;姓名：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise" placeholder="姓名..." id="c_name" name="c_name" /></td>
+                                </tr>
+                                <tr style="height:40px">
+                                    <td>&nbsp;部门：</td><td colspan="3"><input  style="height: 30px;width: 150px" type="text" class="input-medium revise" placeholder="部门..." id="c_department" name="c_department" /></td>
+                                </tr>
+                                </table></center>
+                            
+                        </form>
+                    </div>
+				</div>
+				
+					<div id="pgtoolbar1" class="table-responsive table2excel">
+						<table id="dataGrid"></table>
+					</div>
+					
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/cswlms/dispatchingqueren.js?_${.now?long}"></script>
+</body>
+</html>

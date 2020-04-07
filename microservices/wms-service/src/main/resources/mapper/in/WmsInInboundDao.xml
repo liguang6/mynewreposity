@@ -1,0 +1,1950 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.in.dao.WmsInInboundDao">
+<!--                       2019-06 thw 优化                                                           -->
+	
+	<!--  根据工厂和仓库号获取物料管理模式-授权码  -->
+	<resultMap type="Map" id="RelatedAreaNameMap">
+		<result property="AUTHORIZE_CODE"  column="AUTHORIZE_CODE" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap> 
+	<select id="getRelatedAreaName" parameterType="Map" resultType="Map">
+		select NVL(WMSYS.WM_CONCAT(AUTHORIZE_CODE), '') AUTHORIZE_CODE,MANAGER,MAT_MANAGER_TYPE from WMS_C_MAT_MANAGER_TYPE WHERE  DEL='0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			AND AUTHORIZE_CODE=#{AUTHORIZE_CODE}
+		</if>
+		group by MANAGER,MAT_MANAGER_TYPE
+	</select>
+	
+	<!-- 根据授权码查询物料管理模式可进仓的外购收货单信息 -->
+	<select id="queryReceiptByAuthCode" parameterType="Map" resultType="Map">
+		select k.*
+			from (
+				select a.werks,a.wh_number,a.matnr,a.maktx,a.batch,SUBSTR(a.CREATE_DATE,3) CREATE_DATE,
+						(a.inable_qty-(nvl(e.in_qty,0)-nvl(e.real_qty,0)+nvl(e.qty_cancel,0))) inable_qty,
+						CASE WHEN a.CREATE_DATE > to_char(SYSDATE - 1,'YYYY-MM-DD HH24:MI:SS') THEN '0' ELSE 'X' END DANGER_FLAG,
+						a.LIFNR || '：' || a.MATNR || '(' || a.MAKTX || ')' || inable_qty || a.UNIT || ' 待进仓' TASK_CONTENT 
+				from 
+						(	select t.* 
+								from wms_in_receipt t ,
+								(	select matManager.Werks,matManager.Wh_Number,matManager.Matnr 
+										from WMS_C_MAT_MANAGER matManager 
+										INNER JOIN WMS_C_MAT_MANAGER_TYPE matType
+										on matType.Werks=matManager.Werks and matType.Wh_Number=matManager.Wh_Number and matType.Authorize_Code=matManager.Authorize_Code
+										WHERE 1=1 and matType.del='0' and matManager.del='0'
+										and INSTR(#{AUTHORIZE_CODE},matType.AUTHORIZE_CODE||',')>0  
+								) t1
+								WHERE t.Werks=t1.Werks and t.Wh_Number=t1.Wh_Number and t.Matnr=t1.Matnr
+								AND t.del = '0' AND t.INABLE_QTY>0 
+								<if test="WERKS !=null and WERKS !='' ">
+									AND t.WERKS=#{WERKS}
+								</if>
+								<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+									AND t.WH_NUMBER=#{WH_NUMBER}
+								</if>								
+							
+						) a
+				left join 
+						(	select t3.receipt_no,t3.receipt_item_no,sum(t3.in_qty) in_qty,sum(t3.real_qty) real_qty,sum(t3.qty_cancel) qty_cancel
+								from wms_in_inbound_item t3,
+								(
+									select matManager.Werks,matManager.Wh_Number,matManager.Matnr 
+										from WMS_C_MAT_MANAGER matManager 
+										INNER JOIN WMS_C_MAT_MANAGER_TYPE matType
+										on matType.Werks=matManager.Werks and matType.Wh_Number=matManager.Wh_Number and matType.Authorize_Code=matManager.Authorize_Code
+										WHERE 1=1 and matType.del='0' and matManager.del='0'
+										and INSTR(#{AUTHORIZE_CODE},matType.AUTHORIZE_CODE||',')>0 
+								) t4
+								where t3.Werks=t4.Werks and t3.Wh_Number=t4.Wh_Number and T3.Matnr=t4.Matnr 
+								AND t3.item_status in ('00', '01') and nvl(t3.del,'0') = '0'
+								<if test="WERKS !=null and WERKS !='' ">
+									AND t3.WERKS=#{WERKS}
+								</if>
+								<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+									AND t3.WH_NUMBER=#{WH_NUMBER}
+								</if>
+								group by t3.receipt_no,t3.receipt_item_no,t3.item_status,t3.qty_cancel
+						) e
+				on e.receipt_no=a.receipt_no and e.receipt_item_no=a.receipt_item_no
+			) k
+			where k.inable_qty > 0
+			ORDER BY k.CREATE_DATE DESC
+	</select>
+	
+	<!-- 根据库位可进仓的外购收货单信息 -->
+	<select id="queryReceiptByLgort" parameterType="Map" resultType="Map">
+		select k.*
+			from (
+				select a.werks,a.wh_number,a.matnr,a.maktx,a.batch,SUBSTR(a.CREATE_DATE,3) CREATE_DATE,
+						(a.inable_qty-(nvl(e.in_qty,0)-nvl(e.real_qty,0)+nvl(e.qty_cancel,0))) inable_qty,
+						CASE WHEN a.CREATE_DATE > to_char(SYSDATE - 1,'YYYY-MM-DD HH24:MI:SS') THEN '0' ELSE 'X' END DANGER_FLAG,
+						a.LIFNR || '：' || a.MATNR || '(' || a.MAKTX || ')' || inable_qty || a.UNIT || ' 待进仓' TASK_CONTENT 
+				from 
+						(	select * 
+								from wms_in_receipt t 
+								where t.del = '0' AND t.INABLE_QTY>0
+								<if test="WERKS !=null and WERKS !='' ">
+									AND t.WERKS=#{WERKS}
+								</if>
+								<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+									AND t.WH_NUMBER=#{WH_NUMBER}
+								</if>								
+								AND INSTR(#{LGORT},t.LGORT||',')>0
+								order by receipt_date asc, batch
+						) a
+			left join 
+						(	select receipt_no,receipt_item_no,sum(in_qty) in_qty,sum(real_qty) real_qty,sum(qty_cancel) qty_cancel
+								from wms_in_inbound_item 
+								where 
+								item_status in ('00', '01') and nvl(del,'0') = '0'
+								<if test="WERKS !=null and WERKS !='' ">
+									AND WERKS=#{WERKS}
+								</if>
+								<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+									AND WH_NUMBER=#{WH_NUMBER}
+								</if>
+								AND INSTR(#{LGORT},LGORT||',')>0
+								group by receipt_no,receipt_item_no,item_status,qty_cancel
+						) e
+			on e.receipt_no=a.receipt_no and e.receipt_item_no=a.receipt_item_no
+			) k
+			where k.inable_qty > 0
+			ORDER BY k.CREATE_DATE DESC
+
+	</select>
+	
+   <!--收货单  -->
+	<select id="getReceiptList" parameterType="Map" resultType="Map">
+	select M.*,N.MANAGER WH_MANAGER from 
+(
+	select distinct k.batch,
+       k.matnr,
+       k.maktx,
+       k.lgort,
+       k.receipt_qty,
+       k.unit,
+       k.sobkz,
+       k.lifnr,
+       k.liktx,
+       k.gr_area,
+       k.bednr,
+       k.inable_qty,
+       k.in_qty,
+       k.try_qty,
+       k.bin_code,
+       k.bin_name,
+       k.TRY_BIN_CODE,
+       k.LIKU_BIN_CODE,
+       k.BUSINESS_NAME,
+       k.BUSINESS_TYPE,
+       k.F_WERKS,
+       k.F_WH_NUMBER,
+       k.F_LGORT,
+       k.F_BATCH,
+       k.WERKS,
+       k.WH_NUMBER,
+       k.ASNNO,
+       k.ASNITM,
+       k.PO_NO,
+       k.PO_ITEM_NO,
+       k.SAP_OUT_NO,
+       k.SAP_OUT_ITEM_NO,
+       k.SAP_303_NO,
+       k.SAP_303_ITEM_NO,
+       k.FULL_BOX_QTY,
+       k.BOX_COUNT,
+       k.AFNAM,
+       k.RECEIPT_DATE,
+       k.RECEIVER,
+       k.RECEIPT_NO,
+       k.RECEIPT_ITEM_NO,
+       k.QC_RESULT
+  from (
+		select a.batch,
+       a.matnr,
+       a.maktx,
+       a.lgort,<!--收货库位-->
+       a.receipt_qty,<!--收货数量-->
+       a.unit,
+       a.sobkz,<!--库存类型-->
+       a.lifnr,<!--供应商-->
+       a.liktx,<!--供应商描述-->
+       a.gr_area,<!--收料房存放区-->
+       a.bednr,<!--需求跟踪号-->
+       <if test="QC_RESULT =='01'"><!-- 合格 --><!--可进仓数量-->
+       (a.inable_qty-(nvl(e.in_qty,0)-nvl(e.real_qty,0)+nvl(e.qty_cancel,0))) inable_qty,
+       </if>
+       <if test="QC_RESULT =='02'"><!-- 不合格 -->
+       (a.returnable_qty-(nvl(e.in_qty,0)-nvl(e.real_qty,0)+nvl(e.qty_cancel,0))) inable_qty,
+       </if>
+       <if test="QC_RESULT =='01'"><!-- 合格 --><!--进仓数量-->
+       (a.inable_qty-(nvl(e.in_qty,0)-nvl(e.real_qty,0)+nvl(e.qty_cancel,0))) in_qty,
+       </if>
+       <if test="QC_RESULT =='02'"><!-- 不合格 -->
+       (a.returnable_qty-(nvl(e.in_qty,0)-nvl(e.real_qty,0)+nvl(e.qty_cancel,0))) in_qty,
+       </if>
+       case when (nvl(a.try_qty, 0) - nvl(a.try_in_qty, 0))>0 then 
+       (nvl(a.try_qty, 0) - nvl(a.try_in_qty, 0)-(nvl(g.in_qty, 0) - nvl(g.real_qty, 0))) <!--试装数量-->
+       else (nvl(a.try_qty, 0) - nvl(a.try_in_qty, 0)) end try_qty,
+       '' bin_code,
+       '' bin_name, <!--储位-->
+      
+       <!--试装储位-->
+       <![CDATA[
+       case when (nvl(a.try_qty, 0) - nvl(a.try_in_qty, 0))>0 then d.BIN_CODE  else '' end TRY_BIN_CODE,
+       ]]>
+       f.STORAGE_AREA_CODE LIKU_BIN_CODE,
+       a.BUSINESS_NAME,
+       a.BUSINESS_TYPE,
+       a.F_WERKS,
+       a.F_WH_NUMBER,
+       a.F_LGORT,
+       a.F_BATCH,
+       a.WERKS,
+       a.WH_NUMBER,
+       a.ASNNO,
+       a.ASNITM,
+       a.PO_NO,
+       a.PO_ITEM_NO,
+       a.SAP_OUT_NO,
+       a.SAP_OUT_ITEM_NO,
+       a.SAP_MATDOC_NO SAP_303_NO,
+       a.SAP_MATDOC_ITEM_NO SAP_303_ITEM_NO,
+       a.FULL_BOX_QTY,
+       a.BOX_COUNT,
+       a.AFNAM,
+       a.RECEIPT_DATE,
+       a.RECEIVER,
+       
+       a.RECEIPT_NO,
+       a.RECEIPT_ITEM_NO,
+       <if test="QC_RESULT =='01'">
+       '01' QC_RESULT
+       </if>
+       <if test="QC_RESULT =='02'">
+       '02' QC_RESULT
+       </if>
+       
+  from (select *
+          from wms_in_receipt t
+         where t.del = '0'
+        <if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="LGORT !=null and LGORT !='' ">
+			AND LGORT=#{LGORT}
+		</if>
+		<if test="BATCH !=null and BATCH !='' ">
+			AND BATCH=#{BATCH}
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			AND LIFNR=#{LIFNR}
+		</if>
+		<if test="RECEIPT_DATE_START !=null and RECEIPT_DATE_START !='' ">
+			<![CDATA[
+			AND RECEIPT_DATE>=#{RECEIPT_DATE_START}
+			]]>
+		</if>
+		<if test="RECEIPT_DATE_END !=null and RECEIPT_DATE_END !='' ">
+			<![CDATA[
+			AND RECEIPT_DATE<=#{RECEIPT_DATE_END}
+			]]>
+		</if>
+		<if test="ASNNO !=null and ASNNO !='' ">
+			AND ASNNO=#{ASNNO}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND MATNR LIKE '%' || #{MATNR} || '%'
+		</if>
+		<if test="QC_RESULT =='01'"><!-- 合格 -->
+			<![CDATA[
+			AND INABLE_QTY>0
+			]]>
+		</if>
+		<if test="QC_RESULT =='02'"><!-- 不合格 -->
+			<![CDATA[
+			AND RETURNABLE_QTY>0 AND SOBKZ='K'
+			]]>
+		</if>
+         order by receipt_date asc, batch) a
+  
+  left join (select * from wms_core_wh_bin where del = '0') d <!--试装储位-->
+    on d.wh_number = a.wh_number
+   and d.bin_type='04'
+  left join (select receipt_no,receipt_item_no,sum(in_qty) in_qty,sum(real_qty) real_qty
+  ,sum(qty_cancel) qty_cancel
+                      from (select * from wms_in_inbound_item where del='0') where item_status in ('00', '01') group by receipt_no,receipt_item_no,item_status,qty_cancel
+                     ) e
+  on e.receipt_no=a.receipt_no and e.receipt_item_no=a.receipt_item_no
+  
+  left join (select * from wms_core_wh_bin where del = '0') f
+            on f.wh_number = a.wh_number
+           and f.bin_type='05'
+  left join (select itm.receipt_no,
+                           itm.receipt_item_no,
+                           sum(itm.in_qty) in_qty,
+                           sum(itm.real_qty) real_qty
+                      from (select * from wms_in_inbound_item where del='0') itm,(select * from wms_core_wh_bin where bin_type='04' and del='0') whbin
+                     where itm.item_status in('00', '01') and itm.bin_code =whbin.bin_code and itm.wh_number=whbin.wh_number
+                     group by itm.receipt_no,
+                              itm.receipt_item_no
+                    ) g<!-- 统计进仓单试装数量 -->
+            on g.receipt_no = a.receipt_no
+           and g.receipt_item_no = a.receipt_item_no
+	) k
+	 where inable_qty > 0
+	 ) M
+	 <if test='CONDMG !=null  and CONDMG=="1" '>
+			left join 
+			 (
+			 select matManager.Werks,matManager.Wh_Number,matManager.Matnr,matType.Manager from WMS_C_MAT_MANAGER_TYPE matType,WMS_C_MAT_MANAGER matManager 
+			where matType.Werks=matManager.Werks and matType.Wh_Number=matManager.Wh_Number and matType.Authorize_Code=matManager.Authorize_Code
+			and matType.del='0' and matManager.del='0'
+			 ) N
+			 on M.Werks=N.Werks and M.Wh_Number=N.Wh_Number and M.Matnr=N.Matnr
+	 </if>
+	 <if test='CONDMG !=null  and CONDMG=="2" '>
+			left join
+			 (
+			 select matType.Werks,matType.Wh_Number,matType.Authorize_Code,matType.Manager from WMS_C_MAT_MANAGER_TYPE matType
+			 where matType.del='0'
+			 ) N
+			 on M.Werks=N.Werks and M.Wh_Number=N.Wh_Number and M.LGORT=N.Authorize_Code
+	 </if>
+	 <if test='CONDMG !=null  and CONDMG=="3" '>
+			,(
+			 select matManager.Werks,matManager.Wh_Number,matManager.Matnr,matType.Manager from WMS_C_MAT_MANAGER_TYPE matType,WMS_C_MAT_MANAGER matManager 
+			where matType.Werks=matManager.Werks and matType.Wh_Number=matManager.Wh_Number and matType.Authorize_Code=matManager.Authorize_Code
+			and matType.del='0' and matManager.del='0'
+			and INSTR(','||#{RELATED_AREA_NAME}||',',','||matType.AUTHORIZE_CODE||',')>0
+			 ) N
+			 where M.Werks=N.Werks and M.Wh_Number=N.Wh_Number and M.Matnr=N.Matnr
+	 </if>
+	 <if test='CONDMG !=null  and CONDMG=="4" '>
+			,(
+			 select matType.Werks,matType.Wh_Number,matType.Authorize_Code,matType.Manager from WMS_C_MAT_MANAGER_TYPE matType
+			 where matType.del='0' 
+			 and INSTR(','||#{RELATED_AREA_NAME}||',',','||matType.AUTHORIZE_CODE||',')>0
+			 ) N
+			 where M.Werks=N.Werks and M.Wh_Number=N.Wh_Number and M.LGORT=N.Authorize_Code 
+	 </if>
+	 <if test='CONDMG !=null  and CONDMG=="0" '>
+			left join
+			 (select '0' as Werks,'0' as Wh_Number,'' as manager from dual) N
+			on M.Werks=N.Werks and M.Wh_Number=N.Wh_Number
+	 </if>
+		
+		
+	</select>
+	<!-- 根据收货单号、收货单行项目号获取收货单关联的SAP凭证号、凭证行项目号、凭证年份，及收货单关联的采购订单行项目类别 -->
+	<select id="getWmsDocItemByReceiptNo" parameterType="List" resultType="Map">
+		SELECT w.*,h.*,p.PSTYP,TO_CHAR(SUBSTR(w.WMS_SAP_MAT_DOC, 1,INSTR(w.WMS_SAP_MAT_DOC, ';')-1 ) ) MAT_DOC_ITEM  
+			FROM WMS_CORE_WMSDOC_ITEM w 
+			LEFT JOIN WMS_CORE_SAPDOC_HEAD h ON w.WMS_NO = h.REF_WMS_NO 
+								AND h.MAT_DOC = SUBSTR(w.WMS_SAP_MAT_DOC,1,INSTR(w.WMS_SAP_MAT_DOC, ':')-1 )  
+		  LEFT JOIN WMS_SAP_PO_ITEM p ON w.PO_NO = p.EBELN AND w.PO_ITEM_NO = p.EBELP 
+			WHERE w.DEL = '0' AND w.SAP_MOVE_TYPE = '103' AND 
+			<foreach collection="condList" item="d" open="(" close=")" separator="or">
+				w.RECEIPT_NO = #{d.RECEIPT_NO} AND w.RECEIPT_ITEM_NO = #{d.RECEIPT_ITEM_NO} 
+			</foreach>
+	</select>
+	
+	<insert id="insertWmsInboundHead" parameterType="Map"> 
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_IN_INBOUND_HEAD.NEXTVAL FROM dual
+		</selectKey>
+		insert into WMS_IN_INBOUND_HEAD (ID,INBOUND_NO,INBOUND_TYPE,INBOUN_STATUS,WERKS,WH_NUMBER,HEADER_TXT,
+		IS_AUTO,DEL,CREATOR,CREATE_DATE,QC_RESULT)
+		values (#{ID},#{INBOUND_NO},#{INBOUND_TYPE},#{INBOUN_STATUS},#{WERKS},#{WH_NUMBER},#{HEADER_TXT},
+		#{IS_AUTO},#{DEL},#{CREATOR},#{CREATE_DATE},#{QC_RESULT})
+	</insert>
+	
+	<insert id="insertWmsInboundItem" parameterType="List">
+		<!-- insert into WMS_IN_INBOUND_ITEM (ID,INBOUND_NO,INBOUND_ITEM_NO,ITEM_TEXT,ITEM_STATUS,BUSINESS_NAME,
+		BUSINESS_TYPE,DEL,F_WERKS,F_WH_NUMBER,F_LGORT,F_BATCH,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,BIN_CODE,UNIT,
+		F_QTY,IN_QTY,TRY_QTY,BATCH,REAL_QTY,QTY_CANCEL,SOBKZ,FULL_BOX_QTY,BOX_COUNT,WH_MANAGER,RECEIPT_NO,RECEIPT_ITEM_NO,
+		LIFNR,LIKTX,COST_CENTER,IO_NO,WBS,SAKTO,ANLN1,MO_NO,MO_ITEM_NO,PRODUCT_DATE,SAP_MATDOC_NO,SAP_MATDOC_ITEM_NO,BEDNR,MEMO,CREATOR,CREATE_DATE,CUSTOMER_MATNR,
+		BIN_CODE_SHELF,AUTO_PUTAWAY_FLAG,PO_NO,PO_ITEM_NO,SO_NO,SO_ITEM_NO,REF_SAP_MATDOC_NO,REF_SAP_MATDOC_ITEM_NO,REF_SAP_MATDOC_YEAR,LABEL_NO,
+		WORKSHOP,WORKGROUP_NO,CAR_TYPE,MOULD_NO,LT_WARE,DRAWING_NO,OPERATOR,PRO_STATION)
+		select SEQ_WMS_IN_INBOUND_ITEM.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.INBOUND_NO},#{d.INBOUND_ITEM_NO},#{d.ITEM_TEXT},#{d.ITEM_STATUS},#{d.BUSINESS_NAME}
+		,#{d.BUSINESS_TYPE},#{d.DEL},#{d.F_WERKS},#{d.F_WH_NUMBER},#{d.F_LGORT},#{d.F_BATCH},#{d.WERKS},#{d.WH_NUMBER}
+		,#{d.LGORT},#{d.MATNR},#{d.MAKTX},#{d.BIN_CODE},#{d.UNIT},#{d.F_QTY},#{d.IN_QTY},#{d.TRY_QTY}
+		,#{d.BATCH},#{d.REAL_QTY},#{d.QTY_CANCEL},#{d.SOBKZ},#{d.FULL_BOX_QTY},#{d.BOX_COUNT},#{d.WH_MANAGER}
+		,#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.LIFNR},#{d.LIKTX},#{d.COST_CENTER},#{d.IO_NO},#{d.WBS},#{d.SAKTO}
+		,#{d.ANLN1},#{d.MO_NO},#{d.MO_ITEM_NO},#{d.PRODUCT_DATE},#{d.SAP_MATDOC_NO},#{d.SAP_MATDOC_ITEM_NO},#{d.BEDNR},#{d.MEMO},#{d.CREATOR},#{d.CREATE_DATE},#{d.CUSTOMER_MATNR}
+		,#{d.BIN_CODE_SHELF},#{d.AUTO_PUTAWAY_FLAG},#{d.PO_NO},#{d.PO_ITEM_NO},#{d.SO_NO},#{d.SO_ITEM_NO},#{d.REF_SAP_MATDOC_NO},#{d.REF_SAP_MATDOC_ITEM_NO},#{d.REF_SAP_MATDOC_YEAR}
+		,#{d.LABEL_NO}
+		,#{d.WORKSHOP},#{d.WORKGROUP_NO},#{d.CAR_TYPE},#{d.MOULD_NO},#{d.LT_WARE},#{d.DRAWING_NO},#{d.OPERATOR},#{d.PRO_STATION}
+		from dual
+		</foreach>
+		) m -->
+		begin
+		<foreach collection="list" item="d" index="index" separator=";">
+		insert into WMS_IN_INBOUND_ITEM (ID,INBOUND_NO,INBOUND_ITEM_NO,ITEM_TEXT,ITEM_STATUS,BUSINESS_NAME,
+		BUSINESS_TYPE,DEL,F_WERKS,F_WH_NUMBER,F_LGORT,F_BATCH,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,BIN_CODE,UNIT,
+		F_QTY,IN_QTY,TRY_QTY,BATCH,REAL_QTY,QTY_CANCEL,SOBKZ,FULL_BOX_QTY,BOX_COUNT,WH_MANAGER,RECEIPT_NO,RECEIPT_ITEM_NO,
+		LIFNR,LIKTX,COST_CENTER,IO_NO,WBS,SAKTO,ANLN1,MO_NO,MO_ITEM_NO,PRODUCT_DATE,SAP_MATDOC_NO,SAP_MATDOC_ITEM_NO,BEDNR,MEMO,CREATOR,CREATE_DATE,CUSTOMER_MATNR,
+		BIN_CODE_SHELF,AUTO_PUTAWAY_FLAG,PO_NO,PO_ITEM_NO,SO_NO,SO_ITEM_NO,REF_SAP_MATDOC_NO,REF_SAP_MATDOC_ITEM_NO,REF_SAP_MATDOC_YEAR,LABEL_NO,
+		WORKSHOP,WORKGROUP_NO,CAR_TYPE,MOULD_NO,LT_WARE,DRAWING_NO,OPERATOR,PRO_STATION) 
+		values (SEQ_WMS_IN_INBOUND_ITEM.NEXTVAL,#{d.INBOUND_NO},#{d.INBOUND_ITEM_NO},#{d.ITEM_TEXT},#{d.ITEM_STATUS},#{d.BUSINESS_NAME}
+		,#{d.BUSINESS_TYPE},#{d.DEL},#{d.F_WERKS},#{d.F_WH_NUMBER},#{d.F_LGORT},#{d.F_BATCH},#{d.WERKS},#{d.WH_NUMBER}
+		,#{d.LGORT},#{d.MATNR},#{d.MAKTX},#{d.BIN_CODE},#{d.UNIT},#{d.F_QTY},#{d.IN_QTY},#{d.TRY_QTY}
+		,#{d.BATCH},#{d.REAL_QTY},#{d.QTY_CANCEL},#{d.SOBKZ},#{d.FULL_BOX_QTY},#{d.BOX_COUNT},#{d.WH_MANAGER}
+		,#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.LIFNR},#{d.LIKTX},#{d.COST_CENTER},#{d.IO_NO},#{d.WBS},#{d.SAKTO}
+		,#{d.ANLN1},#{d.MO_NO},#{d.MO_ITEM_NO},#{d.PRODUCT_DATE},#{d.SAP_MATDOC_NO},#{d.SAP_MATDOC_ITEM_NO},#{d.BEDNR},#{d.MEMO},#{d.CREATOR},#{d.CREATE_DATE},#{d.CUSTOMER_MATNR}
+		,#{d.BIN_CODE_SHELF},#{d.AUTO_PUTAWAY_FLAG},#{d.PO_NO},#{d.PO_ITEM_NO},#{d.SO_NO},#{d.SO_ITEM_NO},#{d.REF_SAP_MATDOC_NO},#{d.REF_SAP_MATDOC_ITEM_NO},#{d.REF_SAP_MATDOC_YEAR}
+		,#{d.LABEL_NO,jdbcType=CLOB}
+		,#{d.WORKSHOP},#{d.WORKGROUP_NO},#{d.CAR_TYPE},#{d.MOULD_NO},#{d.LT_WARE},#{d.DRAWING_NO},#{d.OPERATOR},#{d.PRO_STATION})
+		</foreach>
+		;end;
+	</insert>	
+	
+	<insert id="insertWmsInPoCptConsume" parameterType="List">
+		insert into WMS_IN_PO_CPT_CONSUME (ID,WERKS,INBOUND_NO,INBOUND_ITEM_NO,EBELN,EBELP,
+		MATN2,MAKTX2,MENG2,MEIN2,EDITOR,EDIT_DATE,BATCH)
+		select SEQ_WMS_IN_PO_CPT_CONSUME.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.WERKS},#{d.INBOUND_NO},#{d.INBOUND_ITEM_NO},#{d.EBELN},#{d.EBELP}
+		,#{d.MATN2},#{d.MAKTX2},#{d.MENG2},#{d.MEIN2},#{d.EDITOR},#{d.EDIT_DATE}
+		,#{d.BATCH}
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	
+<!--                       2019-06 thw 优化                                                           -->
+	
+	<select id="getManagerByMaterial" parameterType="Map" resultType="Map">
+		select matManager.Werks,matManager.Wh_Number,matManager.Matnr,matType.Manager 
+		from WMS_C_MAT_MANAGER_TYPE matType, WMS_C_MAT_MANAGER matManager
+ 		where matType.Werks = matManager.Werks and matType.Wh_Number = matManager.Wh_Number 
+ 		and matType.Authorize_Code = matManager.Authorize_Code and matType.del = '0' and matManager.del = '0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND matType.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND matType.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND matManager.MATNR=#{MATNR}
+		</if>
+	</select>
+	
+	<select id="getManagerByLgort" parameterType="Map" resultType="Map">
+		 select matType.Werks,matType.Wh_Number,matType.Authorize_Code,matType.Manager from WMS_C_MAT_MANAGER_TYPE matType
+			 where matType.del='0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND matType.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND matType.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="LGORT !=null and LGORT !='' ">
+			AND matType.Authorize_Code=#{LGORT}
+		</if>
+	</select>
+	
+	<select id="getWmsCMatLtSample" parameterType="Map" resultType="Map">
+		select WERKS,MATNR,MAKTX,FULL_BOX_QTY,LT_WARE,CAR_TYPE,DIS_STATION,MOULD_NO from WMS_C_MAT_LT_SAMPLE WHERE DEL='0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND MATNR=#{MATNR}
+		</if>
+	</select>
+	
+	<select id="getWmsCMatPackageHead" parameterType="Map" resultType="Map">
+		select WERKS,WH_NUMBER,PACKAGE_TYPE,MATNR,LIFNR,FULL_BOX_QTY,STATUS,DEL from WMS_C_MAT_PACKAGE_HEAD
+		WHERE DEL='0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND MATNR=#{MATNR}
+		</if>
+		<if test="LIFNR !=null and LIFNR !='' ">
+			AND LIFNR=#{LIFNR}
+		</if>
+		<if test="PACKAGE_TYPE !=null and PACKAGE_TYPE !='' ">
+			AND PACKAGE_TYPE=#{PACKAGE_TYPE}
+		</if>
+	</select>
+	
+	<select id="getWhManager" parameterType="Map" resultType="Map">
+		select d.manager_staff wh_manager_staff,
+                    d.manager wh_manager,
+                    c.werks,
+                    c.wh_number,
+                    c.matnr,
+                    d.RELATED_AREA_NAME
+               from WMS_C_MAT_RELATED_AREA c, WMS_C_RELATED_AREA d
+              where c.related_area_code = d.related_area_code
+                and c.del = '0'
+                and d.del = '0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND c.werks=#{WERKS}
+		</if>
+		<if test="WHNUMBER !=null and WHNUMBER !='' ">
+			AND c.wh_number=#{WHNUMBER}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND c.matnr=#{MATNR}
+		</if>
+	</select>
+	
+	<select id="getBusinessInfo" parameterType="Map" resultType="Map">
+		select * from wms_c_wms_business WHERE business_class='03' 
+		<if test="BUSINESS_NAME !=null and BUSINESS_NAME !='' ">
+			AND BUSINESS_NAME=#{BUSINESS_NAME}
+		</if>
+		<if test="SOBKZ !=null and SOBKZ !='' ">
+			AND SOBKZ=#{SOBKZ}
+		</if>
+	</select>
+	
+	<select id="getBusinessInfo_cond" parameterType="Map" resultType="Map">
+		select * from wms_c_wms_business WHERE 1=1
+		<if test="BUSINESS_NAME !=null and BUSINESS_NAME !='' ">
+			AND BUSINESS_NAME=#{BUSINESS_NAME}
+		</if>
+		<if test="BUSINESS_TYPE !=null and BUSINESS_TYPE !='' ">
+			AND BUSINESS_TYPE=#{BUSINESS_TYPE}
+		</if>
+		<if test="BUSINESS_CLASS !=null and BUSINESS_CLASS !='' ">
+			AND BUSINESS_CLASS=#{BUSINESS_CLASS}
+		</if>
+		<if test="SOBKZ !=null and SOBKZ !='' ">
+			AND SOBKZ=#{SOBKZ}
+		</if>
+	</select>
+	
+	<select id="getEntryQty" parameterType="Map" resultType="Map">
+		select sum(qty) QTY from (
+		select sum(in_qty) qty from wms_in_inbound_item t where item_status in ('00','01','02')
+		and nvl(del,'0') != 'X' 
+		and SAP_MATDOC_NO=#{SAP_MATDOC_NO}
+		and SAP_MATDOC_ITEM_NO=#{SAP_MATDOC_ITEM_NO}
+		union 
+		select sum(nvl(real_qty,0)) qty from wms_in_inbound_item t where item_status in ('04')
+		and nvl(del,'0') != 'X' 
+		and SAP_MATDOC_NO=#{SAP_MATDOC_NO}
+		and SAP_MATDOC_ITEM_NO=#{SAP_MATDOC_ITEM_NO}
+		) 
+		
+	</select>
+	
+	<select id="getInBoundHead" parameterType="Map" resultType="Map">
+		select M.ID,
+	         M.INBOUND_NO,
+	         M.INBOUND_TYPE,
+	         M.INBOUN_STATUS,
+	         M.WERKS,
+	         M.WH_NUMBER,
+	         M.HEADER_TXT,
+	         M.IS_AUTO,
+	         M.DEL,
+	         M.CREATOR,
+	         M.CREATE_DATE,
+	         M.EDITOR,
+	         M.EDIT_DATE,
+	         M.QC_RESULT
+	    from wms_in_inbound_head M where INBOUN_STATUS IN ('00','01') AND DEL='0'
+	    <if test="INBOUND_NO !=null and INBOUND_NO !='' ">
+			AND INBOUND_NO=#{INBOUND_NO}
+		</if>
+	</select>
+	
+	<resultMap type="Map" id="InBoundItemMap">
+		<result property="LABEL_NO"  column="LABEL_NO" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap> 
+	<select id="getInBoundItem" parameterType="Map" resultMap="InBoundItemMap">
+		SELECT T.ID,
+	       T.INBOUND_NO,
+	       T.INBOUND_ITEM_NO,
+	       T.ITEM_TEXT,
+	       T.ITEM_STATUS,
+	       T.BUSINESS_NAME,
+	       T.BUSINESS_TYPE,
+	       T.DEL,
+	       T.F_WERKS,
+	       T.F_WH_NUMBER,
+	       T.F_LGORT,
+	       T.F_BATCH,
+	       T.WERKS,
+	       T.WH_NUMBER,
+	       T.LGORT,
+	       T.MATNR,
+	       T.MAKTX,
+	       T.BIN_CODE,
+	       T.UNIT,
+	       T.F_QTY,
+	       T.IN_QTY,
+	       T.TRY_QTY,
+	       T.BATCH,
+	       (nvl(T.REAL_QTY,0)-nvl(T.QTY_CANCEL,0)) REAL_QTY,
+	       T.QTY_CANCEL,
+	       T.SOBKZ,
+	       T.FULL_BOX_QTY,
+	       T.BOX_COUNT,
+	       T.WH_MANAGER,
+	       T.RECEIPT_NO,
+	       T.RECEIPT_ITEM_NO,
+	       T.LIFNR,
+	       T.LIKTX,
+	       T.COST_CENTER,
+	       T.IO_NO,
+	       T.WBS,
+	       T.SAKTO,
+	       T.ANLN1,
+	       T.MO_NO,
+	       T.MO_ITEM_NO,
+	       T.PRODUCT_DATE,
+	       T.SAP_MATDOC_NO,
+	       T.SAP_MATDOC_ITEM_NO,
+	       T.BEDNR,
+	       T.MEMO,
+	       T.CREATOR,
+	       T.CREATE_DATE,
+	       (nvl(T.IN_QTY,0)-nvl(T.REAL_QTY,0)+nvl(T.QTY_CANCEL,0)) MAY_IN_QTY,
+	       T.BIN_NAME,
+	       T.DRAWING_NO,
+	       T.PRO_STATION,
+	       T.CAR_TYPE,
+	       T.WORKGROUP_NO,
+	       T.MOULD_NO,
+	       t.OPERATOR,
+	       (T.LABEL_NO) LABEL_NO,
+	       T.BIN_CODE_SHELF,
+	       T.AUTO_PUTAWAY_FLAG,
+	       T.SO_NO,
+	       T.SO_ITEM_NO,
+	       T.PO_NO,
+	       T.PO_ITEM_NO,
+	       T.REF_SAP_MATDOC_NO,
+	       T.REF_SAP_MATDOC_ITEM_NO,
+	       T.REF_SAP_MATDOC_YEAR,
+	       T.ASNNO,T.ASNITM 
+	  FROM (select a.*, b.bin_name,c.ASNNO,c.ASNITM 
+          from wms_in_inbound_item a
+          	left join WMS_CORE_WH_BIN b on a.wh_number = b.wh_number and a.bin_code = b.bin_code  and b.del='0' 
+          	left join WMS_IN_RECEIPT c on a.RECEIPT_NO = c.RECEIPT_NO and a.RECEIPT_ITEM_NO = c.RECEIPT_ITEM_NO 
+          ) T 
+    		where ITEM_STATUS IN ('00','01') AND DEL='0'
+	  <if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+	  </if>
+	  <if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+	  </if>
+	  <if test="INBOUND_NO !=null and INBOUND_NO !='' ">
+			AND INBOUND_NO=#{INBOUND_NO}
+	  </if>
+	  <if test="INBOUND_ITEM_NO !=null and INBOUND_ITEM_NO !='' ">
+			AND INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+	  </if>
+	  <if test="WH_MANAGER !=null and WH_MANAGER !='' ">
+			<!-- AND  WH_MANAGER IN (select WH_MANAGER from WMS_C_RELATED_AREA WHERE RELATED_AREA_NAME=#{WH_MANAGER}) -->
+	  		AND WH_MANAGER =#{WH_MANAGER}
+	  </if>
+	  <if test="LIFNR !=null and LIFNR !='' ">
+			AND LIFNR like '%' ||#{LIFNR}|| '%'
+	  </if>
+	  <if test="MATNR !=null and MATNR !='' ">
+			AND MATNR=#{MATNR}
+	  </if>
+	  <if test="BATCH !=null and BATCH !='' ">
+			AND BATCH=#{BATCH}
+	  </if>
+	  ORDER BY to_number(T.INBOUND_ITEM_NO) ASC,T.MATNR ASC,T.CREATE_DATE DESC
+	</select>
+	
+	<select id="getHxInfo" parameterType="Map" resultType="Map">
+		select SAP_MATDOC_NO MAT_DOC,SAP_MATDOC_ITEM_NO MAT_DOC_ITM,HX_QTY_XS from WMS_HX_TO WHERE 1=1
+		<if test="MAT_DOC !=null and MAT_DOC !='' ">
+			AND SAP_MATDOC_NO=#{MAT_DOC}
+		</if>
+		<if test="MAT_DOC_ITM !=null and MAT_DOC_ITM !='' ">
+			AND SAP_MATDOC_ITEM_NO=#{MAT_DOC_ITM}
+		</if>
+		
+	</select>
+	
+	<update id="updateRHStock" parameterType="Map">	
+	UPDATE WMS_IN_RH_STOCK SET RH_QTY = NVL(RH_QTY,0)-#{MAY_IN_QTY} ,
+	EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE},
+	 DEL = (
+	CASE WHEN 0=NVL(RH_QTY,0)-#{MAY_IN_QTY} THEN 'X' ELSE '0' END
+	) WHERE WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR}
+	AND NVL(BATCH,'') = #{BATCH} 
+	
+	</update>
+	
+	<update id="updateReceipt" parameterType="Map">	
+	UPDATE WMS_IN_RECEIPT SET 
+	INABLE_QTY= (CASE 
+		WHEN '01'=#{QC_RESULT}
+		THEN NVL(INABLE_QTY,0)-#{MAY_IN_QTY}
+		ELSE INABLE_QTY END),
+	IN_QTY=NVL(IN_QTY,0)+#{MAY_IN_QTY},
+	RETURNABLE_QTY=(CASE 
+		WHEN '02'=#{QC_RESULT}
+		THEN NVL(RETURNABLE_QTY,0)-#{MAY_IN_QTY}
+		ELSE RETURNABLE_QTY END),
+	TRY_IN_QTY= (CASE 
+		WHEN 'SZ'=#{BIN_CODE}
+		THEN NVL(TRY_IN_QTY,0)+#{MAY_IN_QTY}
+		ELSE TRY_IN_QTY END)
+	WHERE RECEIPT_NO = #{RECEIPT_NO} AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+		
+	</update>
+	
+	<update id="updateInboundItemLabel" parameterType="Map">
+	UPDATE wms_in_inbound_item SET LABEL_NO=#{LABEL_NO}
+	WHERE INBOUND_NO=#{INBOUND_NO} AND INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+	</update>
+	
+	<update id="updateInboundItemRealQty" parameterType="Map">
+	UPDATE wms_in_inbound_item SET REAL_QTY=NVL(REAL_QTY,0)+#{MAY_IN_QTY}
+	WHERE INBOUND_NO=#{INBOUND_NO} AND INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+	</update>
+	
+	<update id="updateInboundItemStatus" parameterType="Map">
+	UPDATE wms_in_inbound_item SET ITEM_STATUS=
+	(
+	CASE
+	<![CDATA[
+	WHEN NVL(REAL_QTY,0)>0 AND NVL(REAL_QTY,0)<NVL(IN_QTY,0)
+		THEN '01'
+	WHEN NVL(REAL_QTY,0)>0 AND NVL(REAL_QTY,0)=NVL(IN_QTY,0)
+		THEN '02'
+		ELSE ITEM_STATUS END
+		)
+	]]>
+	WHERE INBOUND_NO=#{INBOUND_NO} AND INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+	</update>
+	
+	<update id="updateInboundHeadStatus" parameterType="Map">
+	UPDATE wms_in_inbound_head SET INBOUN_STATUS=#{INBOUND_STATUS}
+	WHERE INBOUND_NO=#{INBOUND_NO}
+	</update>
+	
+	<select id="getPOITEM" parameterType="Map" resultType="Map">
+		select EBELN,EBELP,KNTTP,PSTYP,UMREN,UMREZ from WMS_SAP_PO_ITEM 
+		where ebeln=#{PO_NO} and to_number(ebelp)=to_number(#{PO_ITEM_NO})
+	</select>
+	
+	<select id="getReceiptByReceiptNo" parameterType="Map" resultType="Map">
+		select PO_NO,PO_ITEM_NO from wms_in_receipt t WHERE DEL='0' AND
+		RECEIPT_NO=#{RECEIPT_NO} and RECEIPT_ITEM_NO=#{RECEIPT_ITEM_NO} 
+	</select>
+	
+	<select id="getSAPMaterialUnit" parameterType="Map" resultType="Map">
+		select UMREZ,UMREN from WMS_SAP_MATERIAL_UNIT 
+		where MATNR=#{MATNR} AND MEINH=#{UNIT}
+	</select>
+	
+	<select id="getItemLs" parameterType="Map" resultType="Map">
+		select INBOUND_NO,INBOUND_ITEM_NO,RECEIPT_NO,RECEIPT_ITEM_NO,ITEM_STATUS from wms_in_inbound_item 
+		where INBOUND_NO=#{INBOUND_NO}  and DEL='0'
+	</select>
+	
+	<select id="getItemReceipt" parameterType="Map" resultType="Map">
+		select INBOUND_NO,INBOUND_ITEM_NO,RECEIPT_NO,RECEIPT_ITEM_NO from wms_in_inbound_item 
+		where INBOUND_NO=#{INBOUND_NO} and INBOUND_ITEM_NO=#{INBOUND_ITEM_NO} and DEL='0'
+	</select>
+	
+	<update id="updateCoreLabel" parameterType="List">
+		UPDATE WMS_CORE_LABEL
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="LABEL_STATUS =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} then #{d.LABEL_STATUS}
+                </foreach>
+            </trim>
+            
+        </trim>
+		WHERE 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+        </foreach>
+	</update>
+	
+	<select id="getMOListInfo" parameterType="Map" resultType="Map">
+		
+		SELECT I.AUFNR,I.POSNR,I.MATNR MATERIAL,I.MAKTX MATERIALDESC,NVL(I.PSMNG,0) PSMNG,I.MEINS,H.WERKS,I.KDAUF,case when I.KDAUF IS NULL THEN '' ELSE I.KDPOS END KDPOS 
+		FROM WMS_SAP_MO_HEAD H,WMS_SAP_MO_ITEM I 
+		WHERE H.AUFNR=I.AUFNR
+		AND H.AUFNR=#{AUFNR} AND H.WERKS=#{WERKS}
+	</select>
+	
+	<select id="getMOITEMMaktx" parameterType="Map" resultType="Map">
+		select MAKTX from  WMS_SAP_MO_ITEM WHERE AUFNR=#{AUFNR} AND POSNR='0001'
+	</select>
+	
+	<select id="getMOHEADInfo" parameterType="Map" resultType="Map">
+		SELECT AUFNR,WERKS,ISTAT_TXT  from WMS_SAP_MO_HEAD WHERE AUFNR=#{AUFNR} AND  WERKS=#{WERKS}
+	</select>
+	
+	<select id="getHxMOInfo" parameterType="Map" resultType="Map">
+		select AUFNR,MATNR,MAKTX,nvl(PSMNG,0) PSMNG,MEINS from WMS_HX_MO_ITEM WHERE 1=1
+		<if test="AUFNR !=null and AUFNR !='' ">
+			AND AUFNR=#{AUFNR}
+		</if>
+		
+	</select>
+	
+	<select id="getGZQty" parameterType="Map" resultType="Map">
+		select (sum(NVL(real_qty,0))-sum(NVL(qty_cancel,0)))  HASGZ
+		from wms_in_inbound_item where del='0' and mo_no=#{MO_NO} and mo_item_no=#{MO_ITEM_NO}
+		
+	</select>
+	<select id="getJCQty" parameterType="Map" resultType="Map">
+		select (sum(NVL(in_qty,0))-sum(NVL(real_qty,0))) HASJC from wms_in_inbound_item where del='0' and item_status in ('00','01')
+		and mo_no=#{MO_NO} and mo_item_no=#{MO_ITEM_NO}
+		
+	</select>
+	
+	<select id="getMOCOMPListInfo" parameterType="Map" resultType="Map">
+		
+		SELECT DISTINCT C.AUFNR,C.POSNR,C.MATNR MATERIAL,M.MAKTX MATERIALDESC,NVL(C.BDMNG,0) PSMNG,C.MEINS,C.WERKS,I.KDAUF,I.KDPOS 
+		FROM (SELECT * FROM WMS_SAP_MO_COMPONENT WHERE BWART='531' AND AUFNR=#{AUFNR} AND WERKS=#{WERKS}) C
+		LEFT JOIN WMS_SAP_MATERIAL M ON C.WERKS=M.WERKS AND C.MATNR=M.MATNR
+		LEFT JOIN WMS_SAP_MO_ITEM I ON I.AUFNR=C.AUFNR
+	</select>
+	
+	<select id="getMOCOMPListInfoBylist" parameterType="List" resultType="Map">
+		
+		SELECT DISTINCT C.AUFNR,C.POSNR,C.MATNR MATERIAL,M.MAKTX MATERIALDESC,NVL(C.BDMNG,0) PSMNG,C.MEINS,C.WERKS,I.KDAUF,I.KDPOS 
+		FROM (SELECT * FROM WMS_SAP_MO_COMPONENT WHERE BWART='531'
+		AND 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            AUFNR=#{d.AUFNR} 
+            <if test="d.MATNR !=null and d.MATNR !='' ">
+            and MATNR=#{d.MATNR} 
+            </if>
+            and WERKS=#{d.WERKS}
+        </foreach>
+		
+		) C
+		LEFT JOIN WMS_SAP_MATERIAL M ON C.WERKS=M.WERKS AND C.MATNR=M.MATNR
+		LEFT JOIN WMS_SAP_MO_ITEM I ON I.AUFNR=C.AUFNR
+		
+	</select>
+	
+	
+	<select id="getWmsBusinessClass"  parameterType="Map" resultType="Map">
+	     SELECT * FROM WMS_C_WMS_BUSINESS WHERE 1=1
+	     <if test="BUSINESS_TYPE !=null and BUSINESS_TYPE !='' ">
+	     	AND BUSINESS_TYPE=#{BUSINESS_TYPE}
+	     </if>
+	     <if test="BUSINESS_NAME !=null and BUSINESS_NAME !='' ">
+	     	AND BUSINESS_NAME=#{BUSINESS_NAME} 
+	     </if>
+	     <if test="SOBKZ !=null and SOBKZ !='' ">
+	     	AND SOBKZ=#{SOBKZ}
+	     </if>
+	     
+	 </select>
+	 
+	 <select id="getHXMOITEM" parameterType="Map" resultType="Map">
+		SELECT WERKS,WH_NUMBER,AUFNR,POSNR,MATNR,MAKTX,NVL(PSMNG,0) PSMNG,MEINS,XS101M,XS102M,SS101M,SS102M,NVL(HX_QTY,0) HX_QTY,
+		CREATOR,CREATE_DATE,EDITOR,EDIT_DATE
+		FROM WMS_HX_MO_ITEM WHERE WERKS=#{WERKS} AND WH_NUMBER=#{WHNUMBER} AND AUFNR IN 
+		<foreach collection="AUFNRList" item="m" open="(" close=")" separator=",">
+			#{m}
+		</foreach>	
+	</select>
+	
+	<update id="updateHXMOITEM" parameterType="List">
+		UPDATE WMS_HX_MO_ITEM 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="HX_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when AUFNR=#{d.AUFNR} and POSNR=#{d.POSNR} then HX_QTY-#{d.IN_QTY}
+                </foreach>
+            </trim>
+            <trim prefix="EDITOR =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when AUFNR=#{d.AUFNR} and POSNR=#{d.POSNR} then #{d.EDITOR}
+                </foreach>
+            </trim>
+            <trim prefix="EDIT_DATE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when AUFNR=#{d.AUFNR} and POSNR=#{d.POSNR} then #{d.EDIT_DATE}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            AUFNR=#{d.AUFNR} and POSNR=#{d.POSNR}
+        </foreach>
+	</update>
+	
+	<update id="updateHXMOCOMP" parameterType="List">
+		UPDATE WMS_HX_MO_COMPONENT 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="HX_QTY_BY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when AUFNR=#{d.AUFNR} and RSNUM=#{d.RSNUM} and RSPOS=#{d.RSPOS} then HX_QTY_BY-#{d.IN_QTY}
+                </foreach>
+            </trim>
+            <trim prefix="EDITOR =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when AUFNR=#{d.AUFNR} and RSNUM=#{d.RSNUM} and RSPOS=#{d.RSPOS} then #{d.EDITOR}
+                </foreach>
+            </trim>
+            <trim prefix="EDIT_DATE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when AUFNR=#{d.AUFNR} and RSNUM=#{d.RSNUM} and RSPOS=#{d.RSPOS} then #{d.EDIT_DATE}
+                </foreach>
+            </trim>
+        </trim>
+        where 
+        <foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            AUFNR=#{d.AUFNR} and RSNUM=#{d.RSNUM} and RSPOS=#{d.RSPOS}
+        </foreach>
+	</update>
+	
+	<select id="getHXMOCOMPONENT" parameterType="Map" resultType="Map">
+		SELECT WERKS,AUFNR,RSNUM,RSPOS,MATNR,BDMNG,MEINS,RGEKZ,XF261,XF262,SF261,SF262,HX_QTY,XS531
+ 		,XS532,SS531,SS532,HX_QTY_BY,CANCEL_FLAG,DEL,EDITOR,EDIT_DATE,CREATOR,CREATE_DATE FROM WMS_HX_MO_COMPONENT 
+ 		<![CDATA[WHERE DEL<>'X']]> AND AUFNR IN
+		<foreach collection="AUFNRList" item="m" open="(" close=")" separator=",">
+			#{m}
+		</foreach>	
+	</select>
+	
+	<select id="getMOComponentListByhx" parameterType="Map" resultType="Map">
+		SELECT M.AUFNR,M.RSNUM,M.RSPOS,M.MATNR MATERIAL,NVL(M.BDMNG,0) BDMNG 
+		FROM WMS_SAP_MO_COMPONENT M
+		WHERE  M.AUFNR=#{AUFNR}  AND M.RSNUM=#{RSNUM} AND M.RSPOS=#{RSPOS}
+	</select>
+	
+	<select id="getInboundItemLabelList" parameterType="List" resultType="Map">
+		<foreach collection="condList" item="d" open="" close="" separator="UNION ALL">
+			select l.*,#{d.INBOUND_NO} INBOUND_NO_I,#{d.INBOUND_ITEM_NO} INBOUND_ITEM_NO_I,
+				(select 'X' from wms_in_inbound_item i
+					where  i.DEL='0' AND  instr(i.LABEL_NO,l.LABEL_NO)>0 AND ROWNUM =1) CREATED_FLAG
+				FROM WMS_CORE_LABEL l WHERE l.DEL='0'  
+				<if test="d.LABEL_NO !=null and d.LABEL_NO !='' ">
+					AND l.LABEL_NO=#{d.LABEL_NO}
+				</if>
+				<if test="d.WERKS !=null and d.WERKS !='' ">
+					AND l.WERKS=#{d.WERKS}
+				</if>
+				<if test="d.WH_NUMBER !=null and d.WH_NUMBER !='' ">
+					AND l.WH_NUMBER=#{d.WH_NUMBER}
+				</if>
+				<!--  
+				<if test="d.INBOUND_NO !=null and d.INBOUND_NO !='' ">
+					AND l.INBOUND_NO=#{d.INBOUND_NO}
+				</if>
+				<if test="d.INBOUND_ITEM_NO !=null and d.INBOUND_ITEM_NO !='' ">
+					AND l.INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+				</if>
+				-->
+				<if test="d.RECEIPT_NO !=null and d.RECEIPT_NO !='' ">
+					AND l.RECEIPT_NO=#{d.RECEIPT_NO}
+				</if>
+				<if test="d.RECEIPT_ITEM_NO !=null and d.RECEIPT_ITEM_NO !='' ">
+					AND l.RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+				</if>
+		</foreach>
+	</select>
+	
+	<select id="getLabelList" parameterType="Map" resultType="Map">
+		select l.LABEL_NO,l.F_LABEL_NO,l.RECEIPT_NO,l.RECEIPT_ITEM_NO,l.INBOUND_NO,l.INBOUND_ITEM_NO,l.WMS_NO,l.WMS_ITEM_NO,
+		l.LABEL_STATUS,l.BOX_SN,l.FULL_BOX_QTY,l.BOX_QTY IN_QTY,l.END_FLAG,l.DEL,l.WERKS,l.WH_NUMBER,l.LGORT,l.MATNR,l.MAKTX,l.BIN_CODE,l.F_UNIT,l.UNIT,
+		l.SOBKZ,l.F_BATCH,l.BATCH,l.LIFNR,l.LIKTX,l.PRODUCT_DATE,i.*
+		FROM WMS_CORE_LABEL l
+		LEFT JOIN WMS_IN_INBOUND_ITEM i ON l.INBOUND_NO= i.INBOUND_NO AND l.INBOUND_ITEM_NO = i.INBOUND_ITEM_NO
+		WHERE 1=1
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND l.LABEL_NO=#{LABEL_NO}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+			AND l.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND l.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="INBOUND_NO !=null and INBOUND_NO !='' ">
+			AND l.INBOUND_NO=#{INBOUND_NO}
+		</if>
+		<if test="INBOUND_ITEM_NO !=null and INBOUND_ITEM_NO !='' ">
+			AND l.INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+		</if>
+		<if test="RECEIPT_NO !=null and RECEIPT_NO !='' ">
+			AND l.RECEIPT_NO=#{RECEIPT_NO}
+		</if>
+		<if test="RECEIPT_ITEM_NO !=null and RECEIPT_ITEM_NO !='' ">
+			AND l.RECEIPT_ITEM_NO=#{RECEIPT_ITEM_NO}
+		</if>
+	</select>
+	
+	<select id="getLabelQtyByReceiveNo" parameterType="Map" resultType="Map">
+		 select nvl(a.label_qty-b.inable_qty,0) in_qty from 
+		 (select sum(nvl(BOX_QTY, 0)) label_qty
+		   from WMS_CORE_LABEL
+		  where RECEIPT_NO = #{RECEIPT_NO}
+		    AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+		  group by RECEIPT_NO, RECEIPT_ITEM_NO) a,(select nvl(inable_qty,0) inable_qty from wms_in_receipt 
+		  where del='0' and RECEIPT_NO = #{RECEIPT_NO} AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}) b
+		
+	</select>
+	
+	<select id="getLabelQtyByReceiveNoAndItemNo" parameterType="Map" resultType="Map">
+		 select sum(nvl(BOX_QTY, 0)) label_qty
+          from WMS_CORE_LABEL
+         where LABEL_NO = #{LABEL_NO}
+           AND del='0'
+         group by RECEIPT_NO, RECEIPT_ITEM_NO
+		
+	</select>
+	
+	<select id="getLabelQtyByInboundNoAndItemNo" parameterType="Map" resultType="Map">
+		 select sum(nvl(BOX_QTY, 0)) label_qty
+          from WMS_CORE_LABEL
+         where LABEL_NO = #{LABEL_NO}
+           AND del='0'
+         group by INBOUND_NO, INBOUND_ITEM_NO
+		
+	</select>
+	
+	<select id="getReceiptQtyByReceiveNoAndItemNo" parameterType="Map" resultType="Map">
+		 select nvl(b.inable_qty, 0) in_qty
+		  from 
+		       (select nvl(inable_qty, 0) inable_qty
+		          from wms_in_receipt
+		         where del = '0'
+		           and RECEIPT_NO = #{RECEIPT_NO}
+		           AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}) b
+		
+	</select>
+	
+	<select id="geInboundQtyByReceiveNoAndItemNo" parameterType="Map" resultType="Map">
+		 select nvl(c.inbound_inable_qty,0) in_qty
+		  from 
+		        (select (sum(nvl(in_qty, 0)) - sum(nvl(real_qty, 0))+sum(nvl(qty_cancel,0))) inbound_inable_qty from wms_in_inbound_head h,wms_in_inbound_item i 
+		       where h.inbound_no=i.inbound_no and i.del='0' and i.RECEIPT_NO = #{RECEIPT_NO} and i.RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+		       and h.qc_result='01' and i.item_status in ('00','01')
+		       group by i.receipt_no,i.receipt_item_no
+		       ) c
+		
+	</select>
+	
+	<select id="geInboundQtyByInboundNoAndItemNo" parameterType="Map" resultType="Map">
+		select nvl(c.inbound_inable_qty,0) in_qty
+		from 
+		 (select (nvl(in_qty, 0) - nvl(real_qty, 0)+nvl(qty_cancel,0)) inbound_inable_qty from wms_in_inbound_item 
+		 where del='0' and inbound_no=#{INBOUND_NO} and inbound_item_no=#{INBOUND_ITEM_NO}
+		 ) c
+	</select>
+	
+	<select id="getLabelQtyByInboundNo" parameterType="Map" resultType="Map">
+		  select nvl(a.label_qty-b.inable_qty,0) in_qty from 
+		  (select sum(nvl(BOX_QTY, 0)) label_qty
+		    from WMS_CORE_LABEL
+		   where inbound_no = #{INBOUND_NO}
+		     and inbound_item_no = #{INBOUND_ITEM_NO}
+		   group by INBOUND_NO, INBOUND_ITEM_NO) a,
+		   (select (nvl(in_qty,0)-nvl(real_qty,0)) inable_qty from wms_in_inbound_item 
+		   where del='0' and inbound_no=#{INBOUND_NO} and INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}) b
+	</select>
+	
+	<select id="getBusinessNameByReceiveNo" parameterType="Map" resultType="Map">
+		 select business_name,business_type from wms_in_receipt
+		 where del='0' AND RECEIPT_NO = #{RECEIPT_NO}
+		    AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+	</select>
+	
+	<select id="getBusinessNameByInboundNo" parameterType="Map" resultType="Map">
+		   select * from wms_in_inbound_item
+		   where del='0' and inbound_no = #{INBOUND_NO}
+		     and inbound_item_no = #{INBOUND_ITEM_NO}
+	</select>
+	
+	<update id="updateLabelQtyAndStatus" parameterType="Map">
+		UPDATE WMS_CORE_LABEL SET BOX_QTY=#{MAY_IN_QTY},LABEL_STATUS='02'
+		WHERE LABEL_NO=#{LABEL_NO}
+	</update>
+	
+	<update id="updateLabelInboundByList" parameterType="List">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		 UPDATE WMS_CORE_LABEL SET INBOUND_NO=#{d.INBOUND_NO},INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+		 WHERE LABEL_NO=#{d.LABEL_NO}
+		</foreach>
+	</update>
+	
+	<update id="updateLabelStatusByLabelNo" parameterType="Map">
+		UPDATE WMS_CORE_LABEL SET LABEL_STATUS=#{LABEL_STATUS}
+		WHERE LABEL_NO=#{LABEL_NO}
+	</update>
+	
+	<update id="updateHXPO" parameterType="Map">
+		update WMS_HX_PO set SS105=SS105+#{MAY_IN_QTY} where EBELN=#{EBELN} and to_number(EBELP)=to_number(#{EBELP})
+		and WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+	</update>
+	
+	<select id="getWMSDOCMatDoc" parameterType="Map" resultType="Map">
+		SELECT WMS_NO,WMS_SAP_MAT_DOC FROM WMS_CORE_WMSDOC_ITEM WHERE RECEIPT_NO=#{RECEIPT_NO} AND RECEIPT_ITEM_NO=#{RECEIPT_ITEM_NO} 
+		AND BUSINESS_NAME=#{BUSINESS_NAME} AND BUSINESS_TYPE=#{BUSINESS_TYPE} AND BUSINESS_CLASS='01'
+	</select>
+	
+	<select id="getSAPDOCDocDate" parameterType="Map" resultType="Map">
+		SELECT DOC_YEAR FROM WMS_CORE_SAPDOC_HEAD where REF_WMS_NO=#{WMS_NO}
+	</select>
+	
+	<select id="getDeptNameByWerk" parameterType="Map" resultType="Map">
+	
+		SELECT 
+			CASE WHEN INSTR(p.BUKRS_NAME,'(') >0 THEN 
+			SUBSTR(p.BUKRS_NAME,INSTR(p.BUKRS_NAME,'(')+1,LENGTH( SUBSTR(p.BUKRS_NAME,INSTR(p.BUKRS_NAME,'(') ) )-2)
+			ELSE p.BUKRS_NAME END NAME
+						FROM WMS_SAP_PLANT p 
+						WHERE p.WERKS = #{WERKS}
+	
+	</select>
+	
+	<select id="getCompNameByWerk" parameterType="Map" resultType="Map">
+		SELECT p.BUKRS_NAME NAME 
+			FROM WMS_SAP_PLANT p 
+			WHERE p.WERKS = #{WERKS}
+	</select>
+	
+	<select id="getWMSDOCINFOByInBoundNo" parameterType="Map" resultType="Map">
+		SELECT WMS_NO,WMS_SAP_MAT_DOC,SAP_MOVE_TYPE FROM WMS_CORE_WMSDOC_ITEM WHERE INBOUND_NO=#{INBOUND_NO}
+	</select>
+	
+	<select id="getPOItemsByPoNO" parameterType="Map" resultType="Map">
+		select h.EBELN PO_NO,h.BSART,h.LIFNR,(select NAME1 from WMS_SAP_VENDOR where LIFNR=h.LIFNR and rownum=1) LIKTX,
+		i.EBELP PO_ITEM_NO,h.FRGRL,i.WERKS,i.MATNR,i.TXZ01 MAKTX,i.LGORT,NVL(i.MENGE,0) MENGE,i.MEINS UNIT,i.SOBKZ,i.AFNAM,NVL(i.MAX_MENGE,0) MAX_MENGE,i.BEDNR,
+		(select IS_SCM from WMS_C_VENDOR where WERKS=i.WERKS and LIFNR=h.LIFNR and nvl(DEL_FLAG,'0')!='X' and rownum=1) IS_SCM,
+		case when (select HX_FLAG from WMS_C_WH WHERE WERKS=i.WERKS and rownum=1 )='X' and x.HX_QTY>0 then 'X'
+		else '0' end as RECEIPT_FLAG,
+		(select FULL_BOX_QTY from WMS_C_MAT_LT_SAMPLE where WERKS=i.WERKS and MATNR=i.MATNR and rownum=1) FULL_BOX_QTY
+		from WMS_SAP_PO_HEAD h
+		left join WMS_SAP_PO_ITEM i on h.EBELN=i.EBELN
+		left join WMS_HX_PO x on x.EBELN=i.EBELN and x.EBELP=i.EBELP
+		where h.EBELN=#{PO_NO} and nvl(h.FRGRL,'0')!='X' and i.LOEKZ is null and nvl(i.ELIKZ,'0') !='X'
+	</select>
+	
+	<select id="getGZQtyByPONo" parameterType="Map" resultType="Map">
+		select (sum(NVL(IN_QTY,0))-sum(NVL(qty_cancel,0)))  HASGZ
+		from wms_in_inbound_item where del='0' and PO_NO=#{PO_NO} and PO_ITEM_NO=#{PO_ITEM_NO}
+		
+	</select>
+	
+	<select id="getGZQtyByPONoGuanbi" parameterType="Map" resultType="Map">
+		select (sum(NVL(REAL_QTY,0))-sum(NVL(qty_cancel,0)))  HASGZ
+		from wms_in_inbound_item where del='0' and PO_NO=#{PO_NO} and PO_ITEM_NO=#{PO_ITEM_NO}
+		
+	</select>
+	
+	<select id="getItemLsByPONO" parameterType="Map" resultType="Map">
+		select INBOUND_NO,INBOUND_ITEM_NO,RECEIPT_NO,RECEIPT_ITEM_NO,ITEM_STATUS from wms_in_inbound_item 
+		where PO_NO=#{PO_NO} and PO_ITEM_NO=#{PO_ITEM_NO} and DEL='0'
+	</select>
+	
+	<select id="getReceiveQtyByPONo" parameterType="Map" resultType="Map">
+		select (sum(NVL(RECEIPT_QTY,0))-sum(NVL(RETURN_QTY,0))) HASRECEIVEQTY 
+		from WMS_IN_RECEIPT where del='0' and PO_NO=#{PO_NO} and PO_ITEM_NO=#{PO_ITEM_NO}
+		
+	</select>
+	
+	<select id="getItemLsByLabelNo" parameterType="Map" resultType="Map">
+		select INBOUND_NO,INBOUND_ITEM_NO,LABEL_NO from wms_in_inbound_item 
+		where  DEL='0'
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND LABEL_NO like '%' ||#{LABEL_NO}|| '%'
+	    </if>
+	</select>
+	
+	<insert id="insertWmsCoreStockLabel" parameterType="List">
+		insert into WMS_CORE_STOCK_LABEL (ID,WERKS,WH_NUMBER,MATNR,BATCH,LABEL_NO,BIN_CODE,BIN_NAME,EDITOR,EDIT_DATE)
+		select SEQ_WMS_CORE_STOCK_LABEL.NEXTVAL,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.WERKS},#{d.WH_NUMBER},#{d.MATNR},#{d.BATCH},#{d.LABEL_NO}
+		,#{d.BIN_CODE},#{d.BIN_NAME},#{d.EDITOR},#{d.EDIT_DATE}
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<delete id="delStockLabelByLabelNo"  parameterType="Map">
+        delete  from wms_core_stock_label a
+        where a.label_no=#{LABEL_NO}
+    </delete>
+	
+	<select id="getLabelInfo" parameterType="Map" resultType="Map">
+		select LABEL_NO,MATNR,BOX_SN,BOX_QTY,MAKTX
+		from WMS_CORE_LABEL 
+		where INBOUND_NO=#{INBOUND_NO}
+		<if test="INBOUND_ITEM_NO !=null and INBOUND_ITEM_NO !='' ">
+			and INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+		</if>		 
+		and LABEL_STATUS in ('02','03') and nvl(DEL,'0')!='X'
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			and LABEL_NO=#{LABEL_NO}
+		</if>
+		
+	</select>
+	
+	<select id="queryCWh" resultType="Map">
+		select * from wms_c_wh
+		where del_flag != 'X'
+		<if test="WERKS != null and WERKS !=''">
+		and werks = #{WERKS} 
+		</if>
+		<if test="WH_NUMBER != null and WH_NUMBER !=''">
+		and wh_number = #{WH_NUMBER} 
+		</if>
+		
+	</select>
+	
+	
+	<select id="queryLabel" resultType="Map">
+		select * from wms_core_label
+		where 1 = 1
+		<if test="LABEL_NO != null and LABEL_NO !=''">
+			and label_no = #{LABEL_NO}
+		</if>
+		<if test="LABEL_NO_LIST != null">
+			and label_no in
+			<foreach collection="LABEL_NO_LIST" item="LABEL"
+				separator="," open="(" close=")">
+				#{LABEL}
+			</foreach>
+		</if>
+		and del != 'X'
+	</select>
+	
+	<select id="queryInInbound" resultType="Map">
+		select * from wms_in_inbound_item
+		where 1 = 1
+		<if test="LABEL_NO != null and LABEL_NO !=''">
+			and label_no like '%' || '${LABEL_NO}' || '%'
+		</if>
+		and del != 'X'
+	</select>
+
+<select id="queryMatManager" resultType="Map">
+		select b.* from WMS_C_MAT_MANAGER_TYPE a
+		inner join WMS_C_MAT_MANAGER b
+		on a.authorize_code = b.authorize_code and
+		a.werks = b.werks and a.wh_number = b.wh_number
+		where 1 = 1
+		<if test="WERKS != null and WERKS !=''">
+			and a.werks = #{WERKS}
+		</if>
+		<if test="WH_NUMBER != null and WH_NUMBER != ''">
+			and a.wh_number = #{WH_NUMBER}
+		</if>
+		<if test="MANAGER != null and MANAGER != ''">
+			and a.manager = #{MANAGER}
+		</if>
+		<if test="MAT_MANAGER_TYPE != null and MAT_MANAGER_TYPE !=''">
+			and a.mat_manager_type = #{MAT_MANAGER_TYPE}
+		</if>
+	</select>
+	
+		<select id="queryWhTask" resultType="Map">
+		select * from WMS_CORE_WH_TASK t
+		where 1 = 1
+		<if test="MATNR_LIST != null">
+			and t.matnr in
+			<foreach collection="MATNR_LIST" item="MATNR" separator=","
+				open="(" close=")">
+				#{MATNR}
+			</foreach>
+		</if>
+		<if test="WH_NUMBER">
+			and t.wh_number = #{WH_NUMBER}
+		</if>
+
+		<if test="WH_STATUS_LIST != null">
+			and wt_status in
+			<foreach collection="WH_STATUS_LIST" item="WH_STATUS"
+				separator="," open="(" close=")">
+				#{WH_STATUS}
+			</foreach>
+		</if>
+
+		<if test="BATCH">
+			and t.batch = #{BATCH}
+		</if>
+		
+		<if test="TASK_NUM != null and TASK_NUM !=''">
+			and t.TASK_NUM = #{TASK_NUM}
+		</if>
+		
+		<if test="ID != null and ID != ''">
+			and t.ID = #{ID}
+		</if>
+		and DEL != 'X'
+	</select>
+	
+	<select id="queryWhBinSQE" resultType="Map">
+		select SEQNO,BIN_CODE,SEQ_TYPE from WMS_CORE_WH_BIN_SEQ
+		where 1=1
+		<if test="WH_NUMBER != null and WH_NUMBER !=''">
+			and WH_NUMBER = #{WH_NUMBER}
+		</if>
+		<if test="SEQ_TYPE != null and SEQ_TYPE != ''">
+			and SEQ_TYPE = #{SEQ_TYPE}
+		</if>
+		<if test="BIN_CODE != null and BIN_CODE !=''">
+			and BIN_CODE = #{BIN_CODE}
+		</if>
+	</select>
+	
+		<update id="updateStockLabelByLabelNo" >
+		update WMS_CORE_STOCK_LABEL 
+		set 1 = 1
+		<if test="BIN_CODE != null and BIN_CODE !=''">
+			,BIN_CODE = #{BIN_CODE}
+		</if>
+		<if test="BATCH != null and BATCH !=''">
+			,BATCH = #{BATCH}
+		</if>
+		<if test="BIN_NAME != null and BIN_NAME !=''">
+			,BIN_NAME = #{BIN_NAME}
+		</if>
+		where 1=1
+		<if test="LABEL_NO != null and LABEL_NO != ''">
+			and LABEL_NO = #{LABEL_NO}
+		</if>
+	</update>
+	
+	<update id="updateWhTaskById">
+		update WMS_CORE_WH_TASK 
+		set 1 = 1
+		<if test="WT_STATUS != null and WT_STATUS !=''">
+			 ,WT_STATUS = #{WT_STATUS}
+		</if>
+		where 1 = 1
+		<if test="ID != null and ID !=''">
+			and ID = #{ID}
+		</if>
+	</update>
+	
+	<select id="queryInInboundItem" resultType="Map">
+		select * from WMS_IN_INBOUND_ITEM 
+		where 1=1
+		<if test="LABEL_NO != null and LABEL_NO !=''">
+			and LABEL_NO like '%' || #{LABEL_NO} || '%'
+		</if>
+		<if test="BATCH != null and BATCH !=''">
+			and BATCH = #{BATCH}
+		</if>
+		<if test="INBOUND_NO != null and INBOUND_NO !=''">
+			and INBOUND_NO = #{INBOUND_NO}
+		</if>
+		<if test="INBOUND_ITEM_NO != null and INBOUND_ITEM_NO !=''">
+			and INBOUND_ITEM_NO = #{INBOUND_ITEM_NO}
+		</if>
+		and DEl != 'X'
+	</select>
+	
+	<select id="queryLatestMoveStoreageByBatch" resultType="String">
+		select
+		bin_code
+		from (
+		select t.bin_code,t.edit_date from WMS_KN_MOVE_STORAGE t
+		where batch = #{batch} order by EDIT_DATE desc)
+		where rownum = 1
+	</select>
+	
+	<select id="queryLogrtFromInInbound" resultType="Map">
+		select distinct LGORT from WMS_IN_INBOUND_ITEM t 
+		where 1 = 1
+		<if test="werks != null and werks !=''">
+			and werks = #{werks}
+		</if> 
+		<if test="whNumber != null and whNumber !=''">
+			and wh_number = 'C161'
+		</if> 
+	</select>
+	
+	<select id="getReceiptInfoByReceiveNo" parameterType="Map" resultType="Map">
+		 select * from wms_in_receipt
+		 where del='0' AND RECEIPT_NO = #{RECEIPT_NO}
+		    AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+	</select>
+	
+	<update id="updateReceiptDestroyQty" parameterType="Map">	
+	UPDATE WMS_IN_RECEIPT SET 
+	DESTROY_GZ_QTY=NVL(DESTROY_GZ_QTY,0)+#{DESTROY_GZ_QTY}
+	WHERE RECEIPT_NO = #{RECEIPT_NO} AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+		
+	</update>
+	
+	<select id="getComponentInfoByPoNo" parameterType="Map" resultType="Map">
+		 select * from wms_sap_po_component
+		 where EBELN = #{PO_NO}
+		    AND EBELP = #{PO_ITEM_NO}
+	</select>
+	
+	<select id="getInpoCptConsume" parameterType="List" resultType="Map">
+		 select * from WMS_IN_PO_CPT_CONSUME
+		 where 1 = 1
+		 
+		<if test="list != null">
+			 and
+			<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	            INBOUND_NO=#{d.INBOUND_NO} and INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+	        </foreach>
+        </if>
+	</select>
+	
+	<select id="getInboundHeadList" parameterType="List" resultType="Map">
+		 select M.ID,
+	         M.INBOUND_NO,
+	         M.INBOUND_TYPE,
+	         M.INBOUN_STATUS,
+	         M.WERKS,
+	         M.WH_NUMBER,
+	         M.HEADER_TXT,
+	         M.IS_AUTO,
+	         M.DEL,
+	         M.CREATOR,
+	         M.CREATE_DATE,
+	         M.EDITOR,
+	         M.EDIT_DATE,
+	         M.QC_RESULT
+	    from wms_in_inbound_head M where INBOUN_STATUS IN ('00','01') AND DEL='0'
+	    
+		    AND
+			<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	            INBOUND_NO=#{d.INBOUND_NO}
+	        </foreach>
+        
+	</select>
+	
+	<update id="updateReceiptDestroyQtyByList" parameterType="List">	
+		UPDATE WMS_IN_RECEIPT 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="DESTROY_GZ_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+                     then NVL(DESTROY_GZ_QTY,0)+#{d.DESTROY_GZ_QTY}
+                </foreach>
+            </trim>
+        </trim>
+		WHERE 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            RECEIPT_NO = #{d.RECEIPT_NO} AND RECEIPT_ITEM_NO = #{d.RECEIPT_ITEM_NO}
+        </foreach>
+	</update>
+	
+	<update id="updateRHStockByList_old" parameterType="List">	
+		UPDATE WMS_IN_RH_STOCK 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="RH_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WERKS = #{d.WERKS} AND WH_NUMBER = #{d.WH_NUMBER} AND MATNR = #{d.MATNR}
+            		AND NVL(BATCH,'') = #{d.BATCH} then NVL(RH_QTY,0)-#{d.MAY_IN_QTY}
+                </foreach>
+            </trim>
+            <trim prefix="EDITOR =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WERKS = #{d.WERKS} AND WH_NUMBER = #{d.WH_NUMBER} AND MATNR = #{d.MATNR}
+            		AND NVL(BATCH,'') = #{d.BATCH} then #{d.EDITOR}
+                </foreach>
+            </trim>
+            <trim prefix="EDIT_DATE =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when WERKS = #{d.WERKS} AND WH_NUMBER = #{d.WH_NUMBER} AND MATNR = #{d.MATNR}
+            		AND NVL(BATCH,'') = #{d.BATCH} then #{d.EDIT_DATE}
+                </foreach>
+            </trim>
+            <trim prefix="DEL =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                    when WERKS = #{d.WERKS} AND WH_NUMBER = #{d.WH_NUMBER} AND MATNR = #{d.MATNR}
+            		AND NVL(BATCH,'') = #{d.BATCH}  then 
+					(CASE WHEN 0=NVL(RH_QTY,0)-#{d.MAY_IN_QTY} THEN 'X' ELSE '0' END) 
+                </foreach>
+            </trim>
+        </trim>
+		WHERE 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+            WERKS = #{d.WERKS} AND WH_NUMBER = #{d.WH_NUMBER} AND MATNR = #{d.MATNR}
+            AND NVL(BATCH,'') = #{d.BATCH} AND LGORT=#{d.LGORT} AND SOBKZ=#{d.SOBKZ}
+			AND LIFNR=#{d.LIFNR}
+        </foreach>
+		
+	</update>
+	
+	<update id="updateRHStockByList" parameterType="List">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		 UPDATE WMS_IN_RH_STOCK set RH_QTY =NVL(RH_QTY,0)-#{d.MAY_IN_QTY},EDITOR=#{d.EDITOR},EDIT_DATE=#{d.EDIT_DATE},
+		 DEL=(CASE WHEN 0=NVL(RH_QTY,0)-#{d.MAY_IN_QTY} THEN 'X' ELSE '0' END) 
+		 WHERE 
+		 WERKS = #{d.WERKS} AND WH_NUMBER = #{d.WH_NUMBER} AND MATNR = #{d.MATNR}
+            AND NVL(BATCH,'') = #{d.BATCH} AND LGORT=#{d.LGORT} AND SOBKZ=#{d.SOBKZ}
+			AND LIFNR=#{d.LIFNR}
+		</foreach>
+	</update>
+	
+	<update id="updateReceiptByList_old" parameterType="List">	
+		UPDATE WMS_IN_RECEIPT 
+		<trim prefix="set" suffixOverrides=",">
+	            <trim prefix="INABLE_QTY =case" suffix="end,">
+	                <foreach collection="list" item="d" index="index">
+	                     when RECEIPT_NO = #{d.RECEIPT_NO} AND RECEIPT_ITEM_NO = #{d.RECEIPT_ITEM_NO} then 
+	            		(CASE WHEN '01'=#{d.QC_RESULT}
+						THEN NVL(INABLE_QTY,0)-#{d.MAY_IN_QTY}
+						ELSE INABLE_QTY END)
+	                </foreach>
+	            </trim>
+	            <trim prefix="IN_QTY =case" suffix="end,">
+	                <foreach collection="list" item="d" index="index">
+	                     when RECEIPT_NO = #{d.RECEIPT_NO} AND RECEIPT_ITEM_NO = #{d.RECEIPT_ITEM_NO} then 
+	                     NVL(IN_QTY,0)+#{d.MAY_IN_QTY}
+	                </foreach>
+	            </trim>
+	            <trim prefix="RETURNABLE_QTY =case" suffix="end,">
+	                <foreach collection="list" item="d" index="index">
+	                     when RECEIPT_NO = #{d.RECEIPT_NO} AND RECEIPT_ITEM_NO = #{d.RECEIPT_ITEM_NO} then 
+	            		(CASE 
+						WHEN '02'=#{d.QC_RESULT}
+						THEN NVL(RETURNABLE_QTY,0)-#{d.MAY_IN_QTY}
+						ELSE RETURNABLE_QTY END)
+	                </foreach>
+	            </trim>
+	            <trim prefix="TRY_IN_QTY =case" suffix="end,">
+	                <foreach collection="list" item="d" index="index">
+	                    when RECEIPT_NO = #{d.RECEIPT_NO} AND RECEIPT_ITEM_NO = #{d.RECEIPT_ITEM_NO}  then 
+						(CASE 
+						WHEN 'SZ'=#{d.BIN_CODE}
+						THEN NVL(TRY_IN_QTY,0)+#{d.MAY_IN_QTY}
+						ELSE TRY_IN_QTY END)
+	                </foreach>
+	            </trim>
+	        </trim>	
+	        WHERE 
+			<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	            RECEIPT_NO = #{d.RECEIPT_NO} AND RECEIPT_ITEM_NO = #{d.RECEIPT_ITEM_NO}
+	        </foreach>
+		
+	</update>
+	
+	<update id="updateReceiptByList" parameterType="List">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		UPDATE WMS_IN_RECEIPT
+		set INABLE_QTY=(CASE WHEN '01'=#{d.QC_RESULT}
+						THEN NVL(INABLE_QTY,0)-#{d.MAY_IN_QTY}
+						ELSE INABLE_QTY END)
+		    ,IN_QTY=(NVL(IN_QTY,0)+#{d.MAY_IN_QTY})
+		    ,RETURNABLE_QTY=(CASE 
+						WHEN '02'=#{d.QC_RESULT}
+						THEN NVL(RETURNABLE_QTY,0)-#{d.MAY_IN_QTY}
+						ELSE RETURNABLE_QTY END)
+			,TRY_IN_QTY=(CASE 
+						WHEN 'SZ'=#{d.BIN_CODE}
+						THEN NVL(TRY_IN_QTY,0)+#{d.MAY_IN_QTY}
+						ELSE TRY_IN_QTY END)
+			WHERE RECEIPT_NO = #{d.RECEIPT_NO} AND RECEIPT_ITEM_NO = #{d.RECEIPT_ITEM_NO}
+		</foreach>
+	</update>
+	
+	<update id="updateInboundItemRealQtyByListOld" parameterType="List">
+		UPDATE wms_in_inbound_item 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="REAL_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when INBOUND_NO=#{d.INBOUND_NO} AND INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+                     then NVL(REAL_QTY,0)+#{d.MAY_IN_QTY}
+                </foreach>
+            </trim>
+        </trim>
+        WHERE
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          INBOUND_NO=#{d.INBOUND_NO} AND INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+	    </foreach>
+	</update>
+	
+	<update id="updateInboundItemRealQtyByList" parameterType="List">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		 UPDATE wms_in_inbound_item SET REAL_QTY=NVL(REAL_QTY,0)+#{d.MAY_IN_QTY}
+		 WHERE INBOUND_NO=#{d.INBOUND_NO} AND INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+		</foreach>
+	</update>
+	
+	<update id="updateInboundItemStatusByListOld" parameterType="List">
+		UPDATE wms_in_inbound_item 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="ITEM_STATUS =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when INBOUND_NO=#{d.INBOUND_NO} AND INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+                     then 
+                     ( CASE
+					<![CDATA[
+					WHEN NVL(REAL_QTY,0)>0 AND NVL(REAL_QTY,0)<NVL(IN_QTY,0)
+						THEN '01'
+					WHEN NVL(REAL_QTY,0)>0 AND NVL(REAL_QTY,0)=NVL(IN_QTY,0)
+						THEN '02'
+						ELSE ITEM_STATUS END
+					]]>
+					)
+                </foreach>
+            </trim>
+        </trim>
+        WHERE
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          INBOUND_NO=#{d.INBOUND_NO} AND INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+	    </foreach>
+		 
+	</update>
+	
+	<update id="updateInboundItemStatusByList" parameterType="List">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+		UPDATE wms_in_inbound_item set ITEM_STATUS =
+                     ( CASE
+					<![CDATA[
+					WHEN NVL(REAL_QTY,0)>0 AND NVL(REAL_QTY,0)<NVL(IN_QTY,0)
+						THEN '01'
+					WHEN NVL(REAL_QTY,0)>0 AND NVL(REAL_QTY,0)=NVL(IN_QTY,0)
+						THEN '02'
+						ELSE ITEM_STATUS END
+					]]>
+					)
+		WHERE INBOUND_NO=#{d.INBOUND_NO} AND INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+		</foreach>
+	</update>
+	
+	<select id="getItemReceiptByList" parameterType="List" resultType="Map">
+		select INBOUND_NO,INBOUND_ITEM_NO,RECEIPT_NO,RECEIPT_ITEM_NO from wms_in_inbound_item 
+		where DEL='0'
+		
+		    AND
+			<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	            INBOUND_NO=#{d.INBOUND_NO} and INBOUND_ITEM_NO=#{d.INBOUND_ITEM_NO}
+	        </foreach>
+       
+	</select>
+	
+	<select id="getReceiptByReceiptNoByList" parameterType="List" resultType="Map">
+		select PO_NO,PO_ITEM_NO from wms_in_receipt  WHERE DEL='0' 
+		AND
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	      RECEIPT_NO=#{d.RECEIPT_NO} and RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO} 
+	    </foreach>
+	</select>
+	
+	<select id="getPOITEMByList" parameterType="List" resultType="Map">
+		select EBELN,EBELP,KNTTP,PSTYP,nvl(UMREN,0) UMREN,nvl(UMREZ,0) UMREZ from WMS_SAP_PO_ITEM 
+		where
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	      ebeln=#{d.PO_NO} and to_number(ebelp)=to_number(#{d.PO_ITEM_NO})
+	    </foreach>
+	</select>
+	
+	<update id="updateHXPOByList" parameterType="List">
+		update WMS_HX_PO 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="SS105 =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when EBELN=#{d.EBELN} and to_number(EBELP)=to_number(#{d.EBELP})
+			  		 and WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+                     then SS105+#{d.MAY_IN_QTY} 
+                </foreach>
+            </trim>
+        </trim>
+        WHERE
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          EBELN=#{d.EBELN} and to_number(EBELP)=to_number(#{d.EBELP})
+			  and WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+	    </foreach>
+	</update>
+	
+	<update id="updateLabelQtyAndStatusByList" parameterType="List">
+		UPDATE WMS_CORE_LABEL 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="BOX_QTY =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when LABEL_NO=#{d.LABEL_NO}
+                     then #{d.MAY_IN_QTY}
+                </foreach>
+            </trim>
+            <trim prefix="LABEL_STATUS =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when LABEL_NO=#{d.LABEL_NO}
+                     then '02'
+                </foreach>
+            </trim>
+        </trim>
+        
+		WHERE 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          LABEL_NO=#{d.LABEL_NO}
+	    </foreach>
+	</update>
+	
+	<update id="updateLabelStatusByLabelNoByList" parameterType="List">
+		UPDATE WMS_CORE_LABEL 
+		<trim prefix="set" suffixOverrides=",">
+            <trim prefix="LABEL_STATUS =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when LABEL_NO=#{d.LABEL_NO}
+                     then #{d.LABEL_STATUS}
+                </foreach>
+            </trim>
+        </trim>
+		WHERE 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          LABEL_NO=#{d.LABEL_NO}
+	    </foreach>
+	</update>
+	
+	<select id="getWmsCoreWhBinByList" parameterType="List" resultType="Map">
+		SELECT * FROM WMS_CORE_WH_BIN WHERE DEL='0' 
+		AND
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	      WH_NUMBER=#{d.WH_NUMBER} and BIN_CODE=#{d.BIN_CODE} 
+	    </foreach>
+	</select>
+	
+	<select id="getRhStockList" parameterType="List" resultType="Map">
+		SELECT WERKS,WH_NUMBER,BATCH,MATNR,LGORT,SOBKZ,LIFNR,NVL(RH_QTY,0) RH_QTY FROM WMS_IN_RH_STOCK WHERE 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+			  and MATNR=#{d.MATNR} and BATCH=#{d.BATCH} 
+	    </foreach>
+		
+	</select>
+	
+	<delete id="deleteRHZeroStock" parameterType="Map">
+		DELETE FROM WMS_IN_RH_STOCK 
+		WHERE 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+			  and MATNR=#{d.MATNR} and BATCH=#{d.BATCH} 
+			  and LGORT=#{d.LGORT} and SOBKZ=#{d.SOBKZ}
+			  and LIFNR=#{d.LIFNR}
+			  and del='X'
+	    </foreach>
+		
+
+	</delete>
+	
+	<select id="getKnttp" parameterType="Map" resultType="Map">
+		select poitem.knttp,poitem.ebeln po_no,poitem.ebelp po_item_no,
+		CASE WHEN poitem.MEINS = mat.MEINS THEN '1' ELSE (case when un.unit_en=mat.MEINS then '1' 
+      	else (case when un.unit_zh=mat.MEINS then '1' else nvl(poitem.umrez,'0') end) end) END umrez,
+      
+    	CASE WHEN poitem.MEINS = mat.MEINS THEN '1' ELSE (case when un.unit_en=mat.MEINS then '1'
+      	else (case when un.unit_zh=mat.MEINS then '1' else nvl(poitem.umren,'0') end) end) END umren
+		<!--CASE WHEN poitem.MEINS = mat.MEINS THEN '1' ELSE nvl(poitem.umrez,'0') END umrez,
+		CASE WHEN poitem.MEINS = mat.MEINS THEN '1' ELSE nvl(poitem.umren,'0') END umren	-->	
+		<!-- nvl(poitem.umrez,0) umrez,nvl(poitem.umren,0) umren -->
+		from wms_in_inbound_item item,wms_in_receipt receipt,WMS_SAP_PO_ITEM poitem,WMS_SAP_MATERIAL mat,wms_c_unit un
+		where item.receipt_no=receipt.receipt_no and item.receipt_item_no=receipt.receipt_item_no
+		and receipt.po_no=poitem.ebeln and to_number(receipt.po_item_no)=to_number(poitem.ebelp)
+		AND item.MATNR = mat.MATNR 
+		and (un.unit_en=poitem.MEINS or un.unit_zh=poitem.MEINS )
+		<if test="INBOUND_NO !=null and INBOUND_NO !='' ">
+			AND item.INBOUND_NO=#{INBOUND_NO}
+	    </if>
+	    <if test="INBOUND_ITEM_NO !=null and INBOUND_ITEM_NO !='' ">
+			AND item.INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+	    </if>
+		
+	</select>
+	
+	<select id="getKnttpByInternal" parameterType="Map" resultType="Map">
+		select poitem.knttp,poitem.ebeln po_no,poitem.ebelp po_item_no,
+	    <!-- nvl(poitem.umrez,0) umrez,nvl(poitem.umren,0) umren-->
+	    CASE WHEN poitem.MEINS = mat.MEINS THEN '1' ELSE (case when un.unit_en=mat.MEINS then '1' 
+      	else (case when un.unit_zh=mat.MEINS then '1' else nvl(poitem.umrez,'0') end) end) END umrez,
+      
+    	CASE WHEN poitem.MEINS = mat.MEINS THEN '1' ELSE (case when un.unit_en=mat.MEINS then '1'
+      	else (case when un.unit_zh=mat.MEINS then '1' else nvl(poitem.umren,'0') end) end) END umren
+      	
+	    from wms_in_inbound_item item,WMS_SAP_PO_ITEM poitem,WMS_SAP_MATERIAL mat,wms_c_unit un
+	    where  item.po_no=poitem.ebeln and to_number(item.po_item_no)=to_number(poitem.ebelp)
+	    AND item.MATNR = mat.MATNR 
+	    and (un.unit_en=poitem.MEINS or un.unit_zh=poitem.MEINS )
+		<if test="INBOUND_NO !=null and INBOUND_NO !='' ">
+			AND item.INBOUND_NO=#{INBOUND_NO}
+	    </if>
+	    <if test="INBOUND_ITEM_NO !=null and INBOUND_ITEM_NO !='' ">
+			AND item.INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+	    </if>
+		
+	</select>
+	
+	<select id="getMoveAndSynByAll" parameterType="Map" resultType="Map">
+		select b.WMS_MOVE_TYPE,b.SAP_MOVE_TYPE,pb.SYN_FLAG,b.BUSINESS_CODE,b.GM_CODE,pb.LGORT
+		,b.BUSINESS_NAME,b.BUSINESS_CLASS,b.BUSINESS_TYPE,b.SOBKZ,pb.WERKS
+	    from WMS_C_WMS_BUSINESS b
+	    left join WMS_C_PLANT_BUSINESS pb on pb.business_code=b.business_code
+	    where 1=1 
+	    <if test="BUSINESS_CLASS !=null and BUSINESS_CLASS !='' ">
+			AND b.BUSINESS_CLASS=#{BUSINESS_CLASS}
+	    </if>
+	    <if test="BUSINESS_NAME !=null and BUSINESS_NAME !='' ">
+			AND b.BUSINESS_NAME=#{BUSINESS_NAME}
+	    </if>
+	    <if test="BUSINESS_TYPE !=null and BUSINESS_TYPE !='' ">
+			AND b.BUSINESS_TYPE=#{BUSINESS_TYPE}
+	    </if>
+	    <if test="SOBKZ !=null and SOBKZ !='' ">
+			AND b.SOBKZ=nvl(#{SOBKZ},'Z')
+	    </if>
+	    <if test="WERKS !=null and WERKS !='' ">
+			AND pb.WERKS=#{WERKS}
+	    </if>
+	    
+	</select>
+	
+	<update id="updateInboundHeadStatusByList" parameterType="List">
+	UPDATE wms_in_inbound_head 
+	<trim prefix="set" suffixOverrides=",">
+            <trim prefix="INBOUN_STATUS =case" suffix="end,">
+                <foreach collection="list" item="d" index="index">
+                     when INBOUND_NO=#{d.INBOUND_NO}
+                     then #{d.INBOUND_STATUS}
+                </foreach>
+            </trim>
+    </trim>
+		WHERE 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          INBOUND_NO=#{d.INBOUND_NO}
+	    </foreach>
+	
+	</update>
+	
+	<select id="getInBoundItemAllSt" parameterType="Map" resultType="Map">
+		SELECT T.ID,
+	       T.INBOUND_NO,
+	       T.INBOUND_ITEM_NO,
+	       T.ITEM_TEXT,
+	       T.ITEM_STATUS,
+	       T.BUSINESS_NAME,
+	       T.BUSINESS_TYPE,
+	       T.DEL,
+	       T.F_WERKS,
+	       T.F_WH_NUMBER,
+	       T.F_LGORT,
+	       T.F_BATCH,
+	       T.WERKS,
+	       T.WH_NUMBER,
+	       T.LGORT,
+	       T.MATNR,
+	       T.MAKTX,
+	       T.BIN_CODE,
+	       T.UNIT,
+	       T.F_QTY,
+	       T.IN_QTY,
+	       T.TRY_QTY,
+	       T.BATCH,
+	       T.REAL_QTY,
+	       T.QTY_CANCEL,
+	       T.SOBKZ,
+	       T.FULL_BOX_QTY,
+	       T.BOX_COUNT,
+	       T.WH_MANAGER,
+	       T.RECEIPT_NO,
+	       T.RECEIPT_ITEM_NO,
+	       T.LIFNR,
+	       T.LIKTX,
+	       T.COST_CENTER,
+	       T.IO_NO,
+	       T.WBS,
+	       T.SAKTO,
+	       T.ANLN1,
+	       T.MO_NO,
+	       T.MO_ITEM_NO,
+	       T.PRODUCT_DATE,
+	       T.SAP_MATDOC_NO,
+	       T.SAP_MATDOC_ITEM_NO,
+	       T.BEDNR,
+	       T.MEMO,
+	       T.CREATOR,
+	       T.CREATE_DATE，
+	       (nvl(T.IN_QTY,0)-nvl(T.REAL_QTY,0)) MAY_IN_QTY,
+	       T.BIN_NAME,
+	       T.DRAWING_NO,
+	       T.PRO_STATION,
+	       T.CAR_TYPE,
+	       T.WORKGROUP_NO,
+	       T.MOULD_NO,
+	       t.OPERATOR,
+	       T.LABEL_NO,
+	       T.BIN_CODE_SHELF,
+	       T.AUTO_PUTAWAY_FLAG,
+	       T.SO_NO,
+	       T.SO_ITEM_NO,
+	       T.PO_NO,
+	       T.PO_ITEM_NO,
+	       T.REF_SAP_MATDOC_NO,
+	       T.REF_SAP_MATDOC_ITEM_NO,
+	       T.REF_SAP_MATDOC_YEAR
+	  FROM (select a.*, b.bin_name
+          from wms_in_inbound_item a
+          left join WMS_CORE_WH_BIN b
+            on a.wh_number = b.wh_number
+           and a.bin_code = b.bin_code
+           and b.del='0') T 
+    		where  DEL='0'
+	  <if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+	  </if>
+	  <if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+	  </if>
+	  <if test="INBOUND_NO !=null and INBOUND_NO !='' ">
+			AND INBOUND_NO=#{INBOUND_NO}
+	  </if>
+	  <if test="INBOUND_ITEM_NO !=null and INBOUND_ITEM_NO !='' ">
+			AND INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+	  </if>
+	  <if test="WH_MANAGER !=null and WH_MANAGER !='' ">
+			<!-- AND  WH_MANAGER IN (select WH_MANAGER from WMS_C_RELATED_AREA WHERE RELATED_AREA_NAME=#{WH_MANAGER}) -->
+	  		AND WH_MANAGER =#{WH_MANAGER}
+	  </if>
+	  <if test="LIFNR !=null and LIFNR !='' ">
+			AND LIFNR like '%' ||#{LIFNR}|| '%'
+	  </if>
+	  <if test="MATNR !=null and MATNR !='' ">
+			AND MATNR=#{MATNR}
+	  </if>
+	  <if test="BATCH !=null and BATCH !='' ">
+			AND BATCH=#{BATCH}
+	  </if>
+	  ORDER BY to_number(T.INBOUND_ITEM_NO) ASC,T.MATNR ASC, T.CREATE_DATE DESC
+	</select>
+	
+	<select id="getLabelInfoBy303Z23" parameterType="List" resultType="Map">
+		 select c.*,m.SAP_MATDOC_NO,m.SAP_MATDOC_ITEM_NO,m.wms_move_type,m.MOVE_PLANT,m.MOVE_STLOC,m.MOVE_BATCH,m.F_WH_NUMBER
+		 ,m.business_name,m.business_type,m.business_class from wms_core_label c,wms_core_wmsdoc_item m where c.wms_no is not null and c.wms_item_no is not null
+		 and c.wms_no=m.wms_no and c.wms_item_no=m.wms_item_no and m.wms_move_type in ('303','Z23') 
+		 and c.del='0'
+		 AND
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+	          c.LABEL_NO=#{d.LABEL_NO}
+	    </foreach>
+		
+	</select>
+	
+</mapper>

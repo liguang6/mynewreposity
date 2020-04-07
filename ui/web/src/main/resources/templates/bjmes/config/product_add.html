@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-inline"  id="saveForm" action="#" method="post">
+				<table>
+					<tr>
+					<td>
+						<table class='table table-bordered'>
+									<tr style="background-color: #eee">
+										<th>序号</th>
+										<th>产品代码</th>
+										<th>产品名称</th>
+										<th>安装节点编码</th>
+										<th>安装节点名称</th>
+										<th>操作</th>
+									</tr>
+									<tr v-for="(product,index) in productarray" :key="product.id">
+										<td>
+										{{index+1}}
+										</td>
+										<td>
+										<!--<input type="text"  class="form-control" :value="product.product_code"/>-->
+										{{product.product_code}}
+										</td>
+										<td>
+										<!--<input type="text"  class="form-control" :value="product.product_name"/>-->
+										{{product.product_name}}
+										</td>
+										<td>
+										<input type="text"  class="form-control" :value="product.process_code" :id="index+1" :name="index+1" @click="getProcessNoFuzzy($event,product.process_flow_code)"/>
+										</td>
+										<td >
+										{{product.process_name}}
+										</td>
+										<td style="display:none">
+										{{product.id}}
+										</td>
+										<td style="display:none">
+										{{product.chid}}
+										</td>
+										<td class="actions">
+									       <!--  <a href="#" class="op op-up" @click="moveUp(index)"><i class="fa fa-long-arrow-up" aria-hidden="true"></i></a>
+									       <a href="#" class="op op-down" @click="moveDowm(index)"><i class="fa fa-long-arrow-down" aria-hidden="true"></i></a>-->
+									       <a href="#" class="op op-add" @click="insert(index,product.product_code,product.product_name,product.id)"><i class="fa fa-plus" aria-hidden="true"></i> </a>
+									       <a href="#" class="op op-m" @click="remove(index)"><i class="fa fa-minus"  aria-hidden="true"></i></a>
+									    </td>
+									</tr>
+						</table>
+					
+					</td>
+					</tr>
+					
+					</table>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/bjmes/config/product_add.js?_${.now?long}"></script>
+</body>
+</html>

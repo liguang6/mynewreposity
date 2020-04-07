@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.qc.dao.WmsQcInspectionItemDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+	<resultMap
+		type="com.byd.wms.business.modules.qc.entity.WmsQcInspectionItemEntity"
+		id="wmsQcInspectionItemMap">
+		<result property="id" column="ID" />
+		<result property="inspectionNo" column="INSPECTION_NO" />
+		<result property="inspectionItemNo" column="INSPECTION_ITEM_NO" />
+		<result property="inspectionItemStatus"
+			column="INSPECTION_ITEM_STATUS" />
+		<result property="stockSource" column="STOCK_SOURCE" />
+		<result property="werks" column="WERKS" />
+		<result property="whNumber" column="WH_NUMBER" />
+		<result property="lgort" column="LGORT" />
+		<result property="sobkz" column="SOBKZ" />
+		<result property="binCode" column="BIN_CODE" />
+		<result property="matnr" column="MATNR" />
+		<result property="maktx" column="MAKTX" />
+		<result property="unit" column="UNIT" />
+		<result property="inspectionQty" column="INSPECTION_QTY" />
+		<result property="boxCount" column="BOX_COUNT" />
+		<result property="batch" column="BATCH" />
+		<result property="leftQcDays" column="LEFT_QC_DAYS" />
+		<result property="lifnr" column="LIFNR" />
+		<result property="liktx" column="LIKTX" />
+		<result property="tryQty" column="TRY_QTY" />
+		<result property="receiver" column="RECEIVER" />
+		<result property="afnam" column="AFNAM" />
+		<result property="bednr" column="BEDNR" />
+		<result property="receiptDate" column="RECEIPT_DATE" />
+		<result property="receiptNo" column="RECEIPT_NO" />
+		<result property="receiptItemNo" column="RECEIPT_ITEM_NO" />
+		<result property="del" column="DEL" />
+		<result property="creator" column="CREATOR" />
+		<result property="createDate" column="CREATE_DATE" />
+		<result property="editor" column="EDITOR" />
+		<result property="editDate" column="EDIT_DATE" />
+		<result property="urgentFlag" column="URGENT_FLAG" />
+		<result property="checkedQty" column="RESULT_QTY" />
+		<result property="destoryQty" column="DESTROY_QTY" />
+		<result property="returnreason" column="RETURNREASON" />
+		<result property="labelNo" column="LABEL_NO" />
+	</resultMap>
+
+	<resultMap type="Map" id="wmsQcInspectionInfoMap">
+		<result property="LABELS"  column="labels" jdbcType="CLOB" javaType = "java.lang.String" />
+		<result property="BATCHS"  column="batchs" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap>
+
+	<!-- 来料质检查询 查询送检单明细表 关联的送检单抬头存在，且状态为 来料质检-01 紧急物料配置表中，没有被删除的，紧急物料标识为X的，有效期没过期的
+		- 紧急物料 排序规则：紧急物料排序靠前，收货日期早的靠前，根据物料号排序，根据批次排序 -->
+	<select id="selectInspectionItemList"
+		resultMap="wmsQcInspectionItemMap">
+		SELECT * FROM (
+		SELECT item.*,urgent.ID as urgent_flag,head.id as
+		head_id,wh.BARCODE_FLAG,case danger.DANGER_FLAG when 'X' then batch.effect_date else '' end as effect_date
+		FROM
+		WMS_QC_INSPECTION_ITEM
+		item
+		LEFT JOIN (SELECT WERKS,batch,matnr,effect_date FROM WMS_CORE_MAT_BATCH GROUP BY WERKS,BATCH,MATNR,EFFECT_DATE ) batch
+		on item.WERKS = batch.WERKS and
+		item.matnr = batch.matnr and
+		item.batch = batch.batch
+		LEFT JOIN WMS_C_WH wh ON wh.WERKS = item.WERKS
+		AND wh.WH_NUMBER = item.WH_NUMBER
+		LEFT JOIN WMS_QC_INSPECTION_HEAD head
+		on item.Inspection_No = head.Inspection_No
+		and head.INSPECTION_TYPE =
+		'01'
+		LEFT JOIN wms_c_mat_urgent urgent on
+		item.WERKS = urgent.WERKS and
+		item.MATNR = urgent.MATNR
+		AND urgent.DEL =
+		'0' AND URGENT_FLAG = 'X' AND
+		urgent.Start_Date &lt;=
+		to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		AND
+		urgent.End_Date &gt;=
+		to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		LEFT JOIN WMS_C_MAT_DANGER danger on
+		item.WERKS = danger.WERKS and
+		item.LIFNR = danger.LIFNR and
+		item.MATNR = danger.MATNR and
+		nvl(danger.DEL,'0') = '0' and danger.DANGER_FLAG = 'X'
+		WHERE 1=1 AND
+		item.del = '0'
+		<if test="params.werks != null and params.werks !=''">
+			AND item.werks like '%' || #{params.werks} || '%'
+		</if>
+		<if test="params.whNumber != null and params.whNumber !=''">
+			AND item.WH_NUMBER like '%' || #{params.whNumber} || '%'
+		</if>
+		<if
+			test="params.receiptDateStart != null and params.receiptDateStart != ''">
+			AND item.RECEIPT_DATE >= #{params.receiptDateStart}
+		</if>
+		<if
+			test="params.receiptDateEnd != null and params.receiptDateEnd !=''">
+			AND item.RECEIPT_DATE &lt;= #{params.receiptDateEnd}
+		</if>
+		<if test="params.lifnr != null and params.lifnr != ''">
+			AND item.lifnr like '%' || #{params.lifnr} || '%'
+		</if>
+		<if test="params.matnr != null and params.matnr !=''">
+			AND (item.matnr like '%' || #{params.matnr} || '%' or item.MAKTX like '%' || #{params.matnr} || '%')
+		</if>
+		<if test="params.batch != null and params.batch !=''">
+			AND item.batch like '%' || #{params.batch} || '%'
+		</if>
+		<if
+			test="params.inspectionItemStatus != null and params.inspectionItemStatus !=''">
+			AND item.INSPECTION_ITEM_STATUS = #{params.inspectionItemStatus}
+		</if>
+		<if
+			test="params.inspectionNo != null and  params.inspectionNo !=''">
+			AND item.INSPECTION_NO like '%' || #{params.inspectionNo}
+			|| '%'
+		</if>
+		<if
+			test="params.inspectionItemNo != null and params.inspectionItemNo != '' ">
+			AND item.INSPECTION_ITEM_NO like '%' ||
+			#{params.inspectionItemNo} ||
+			'%'
+		</if>
+		ORDER BY urgent.urgent_flag ,item.receipt_date,item.matnr,item.batch
+		)
+		t
+		WHERE t.head_id is not null
+	</select>
+
+	<!-- 查询质检中的记录 & 紧急物料逻辑 -->
+	<select id="selectInspectionList2"
+		resultMap="wmsQcInspectionItemMap">
+		select result.*,i.RECEIPT_DATE as
+		RECEIPT_DATE,i.INSPECTION_ITEM_STATUS,i.INSPECTION_QTY,i.BOX_COUNT,i.TRY_QTY,i.SOBKZ,
+		i.LIFNR,i.LIKTX,i.BEDNR,i.BIN_CODE,i.LEFT_QC_DAYS,i.RECEIVER,i.AFNAM,urgent.ID
+		as urgent_flag , result.qc_result as returnreason,
+		wh.barcode_flag,
+		case danger.DANGER_FLAG when 'X' then b.effect_date else '' end as effect_date
+		from
+		(select ID,QC_RESULT_NO,QC_RESULT_ITEM_NO,INSPECTION_NO,INSPECTION_ITEM_NO,QC_RECORD_TYPE,STOCK_SOURCE,
+		WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,UNIT,RESULT_QTY,BATCH,QC_DATE,QC_RESULT_CODE,QC_RESULT_TEXT,QC_RESULT,
+		DESTROY_QTY,IQC_COST_CENTER,QC_PEOPLE,LABEL_NO,DEL,CREATOR,CREATE_DATE,EDITOR,EDIT_DATE
+		from wms_qc_result where qc_result_code
+		in (
+		select
+		distinct
+		qc_result_code from WMS_C_QC_RESULT t
+		where
+		qc_status = '01' and
+		(
+		<if test="params.werks != null and params.werks !=''">
+			werks = #{params.werks} or
+		</if>
+		werks is null
+		)
+		) and del ='0') result
+		left join
+		wms_qc_inspection_item i
+		on
+		result.INSPECTION_NO = i.inspection_no and result.INSPECTION_ITEM_NO
+		=
+		i.inspection_item_no
+		and result.batch = i.batch
+		and i.DEL ='0' and
+		i.stock_source ='01'
+
+		LEFT JOIN wms_c_wh wh on result.werks = wh.werks and result.wh_number =
+		wh.wh_number
+		LEFT JOIN (SELECT WERKS,batch,matnr,effect_date FROM WMS_CORE_MAT_BATCH GROUP BY WERKS,BATCH,MATNR,EFFECT_DATE ) b on result.WERKS = b.WERKS and result.batch = b.batch and result.matnr
+		= b.matnr
+
+		LEFT JOIN wms_c_mat_urgent urgent on result.WERKS
+		= urgent.WERKS and
+		result.MATNR = urgent.MATNR
+		AND urgent.DEL = '0' AND
+		URGENT_FLAG = 'X'
+		AND urgent.Start_Date &lt;=
+		to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		AND
+		urgent.End_Date >=
+		to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		LEFT JOIN WMS_C_MAT_DANGER danger on
+		i.WERKS = danger.WERKS and
+		i.LIFNR = danger.LIFNR and
+		i.MATNR = danger.MATNR and
+		nvl(danger.DEL,'0') = '0' and danger.DANGER_FLAG = 'X'
+		WHERE 1=1
+		<if test="params.werks != null and params.werks != ''">
+			and result.WERKS like '%' || #{params.werks} || '%'
+		</if>
+		<if test="params.whNumber != null and params.whNumber != ''">
+			and result.WH_NUMBER like '%' || #{params.whNumber} || '%'
+		</if>
+		<if test="params.matnr != null and params.matnr != ''">
+			and (result.matnr like '%' || #{params.matnr} || '%' or  result.MAKTX like '%' || #{params.matnr} || '%')
+		</if>
+		<if test="params.batch != null and params.batch != ''">
+			and result.batch like '%' || #{params.batch} || '%'
+		</if>
+		<if
+			test="params.inspectionNo != null and params.inspectionNo != ''">
+			and result.INSPECTION_NO = #{params.inspectionNo}
+		</if>
+		<if
+			test="params.inspectionItemNo != null and params.inspectionItemNo != ''">
+			and result.INSPECTION_ITEM_NO = #{params.inspectionItemNo}
+		</if>
+		<if test="params.lifnr !=null and params.lifnr !=''">
+			and i.LIFNR like '%' || #{params.lifnr} || '%'
+		</if>
+		<if
+			test="params.receiptDateStart !=null and params.receiptDateStart !=''">
+			and i.RECEIPT_DATE &gt;= #{params.receiptDateStart}
+		</if>
+		<if
+			test="params.receiptDateEnd != null and params.receiptDateEnd !=''">
+			and i.RECEIPT_DATE &lt;= #{params.receiptDateEnd}
+		</if>
+		ORDER BY URGENT_FLAG,receipt_date,result.matnr,result.batch
+	</select>
+
+	<!-- 来料质检之已质检查询 -->
+	<select id="selectHasInspectedItem" parameterType="Map"
+		resultType="Map">
+		select urgent.ID as
+		urgent_flag,item.ID,item.RECEIPT_NO,item.RECEIPT_ITEM_NO,item.BATCH,item.MATNR,item.MAKTX,item.LGORT,item.WH_NUMBER,item.UNIT,item.LIFNR,item.LIKTX,item.WERKS,item.RECEIPT_DATE,
+		(nvl(RETURNABLE_QTY,0) + nvl(INABLE_QTY,0)) as UPDATEABLE
+		,w.barcode_flag from
+		WMS_IN_RECEIPT item
+		left join wms_c_wh w on
+		item.werks = w.werks and item.wh_number = w.wh_number
+		LEFT JOIN wms_c_mat_urgent
+		urgent on item.WERKS = urgent.WERKS and item.MATNR = urgent.MATNR AND
+		urgent.DEL = '0' AND
+		URGENT_FLAG = 'X' AND urgent.Start_Date >=
+		to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		AND urgent.End_Date >=
+		to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		where 1=1
+		<if test="params.werks != null and params.werks !=''">
+			and item.WERKS = #{params.werks}
+		</if>
+		<if test="params.whNumber !=null and params.whNumber !=''">
+			and item.WH_NUMBER = #{params.whNumber}
+		</if>
+		<if
+			test="params.receiptDateStart != null and params.receiptDateStart != ''">
+			and item.RECEIPT_DATE &gt;= #{params.receiptDateStart}
+		</if>
+		<if
+			test="params.receiptDateEnd != null and params.receiptDateEnd !=''">
+			and item.RECEIPT_DATE &lt;= #{params.receiptDateEnd}
+		</if>
+		<if test="params.lifnr != null and params.lifnr !=''">
+			and item.LIFNR like '%' || #{params.lifnr} || '%'
+		</if>
+		<if test="params.receiptNo != null and params.receiptNo != ''">
+			and item.RECEIPT_NO like '%' || #{params.receiptNo} || '%'
+		</if>
+		<if test="params.matnr != null and params.matnr !=''">
+			and item.MATNR like '%' || #{params.matnr} || '%'
+		</if>
+		<if test="params.batch != null and params.batch != ''">
+			and item.BATCH like '%' || #{params.batch} || '%'
+		</if>
+		<if test="params.labelNo != null and params.labelNo !=''">
+			and label.label_no = #{params.labelNo}
+		</if>
+		and nvl(item.del,'0') = '0'
+		and (item.RETURNABLE_QTY > 0
+		or item.INABLE_QTY > 0)
+		order by urgent_flag,item.RECEIPT_DATE
+		desc,item.MATNR,item.BATCH
+
+	</select>
+
+	<!-- 查询库存复检数据 bug1444-->
+	<select id="selectStockReJudgeItems" parameterType="Map"
+		resultType="Map">
+		SELECT s.*,DECODE(#{params.status},'00',STOCK_QTY,'01',FREEZE_QTY,nvl(FREEZE_QTY,0) + nvl(STOCK_QTY,0)) as
+		STOCK_FREEZE_QTY,b.EFFECT_DATE,wh.barcode_flag,d.min_good_dates,d.good_dates
+		FROM WMS_CORE_STOCK s
+		LEFT JOIN WMS_CORE_MAT_BATCH b
+		ON s.WERKS = b.WERKS and
+		s.matnr = b.matnr
+		AND s.batch = b.batch
+		LEFT JOIN wms_c_wh wh on wh.werks = s.werks and wh.wh_number = s.wh_number
+		LEFT JOIN WMS_C_MAT_DANGER d on
+		s.werks = d.werks and
+		s.matnr = d.matnr and d.del != 'X'
+		WHERE 1 = 1
+		<if test="params.status =='02'">
+			and nvl(FREEZE_QTY,0) + nvl(STOCK_QTY,0) >0
+		</if>
+		<if test="params.status =='00'">
+			and STOCK_QTY >0
+		</if>
+		<if test="params.status =='01'">
+			and FREEZE_QTY >0
+		</if>
+		<if test="params.WERKS != null and params.WERKS !=''">
+			and s.WERKS = #{params.WERKS}
+		</if>
+		<if test="params.WH_NUMBER != null and params.WH_NUMBER != ''">
+			and s.WH_NUMBER = #{params.WH_NUMBER}
+		</if>
+		<if test="params.LGORT != null and params.LGORT !=''">
+			and s.LGORT = #{params.LGORT}
+		</if>
+		<if test="params.BATCH != null and params.BATCH != ''">
+			and s.BATCH like '%' || #{params.BATCH} || '%'
+		</if>
+		<if test="params.MATNR != null and params.MATNR !='' and params.MATNR.indexOf(',') != -1 ">
+			and instr(#{params.MATNR},s.MATNR) >0
+		</if>
+		<if test="params.MATNR != null and params.MATNR !='' and params.MATNR.indexOf(',') == -1 ">
+			and s.MATNR like '%' || #{params.MATNR} || '%'
+		</if>
+		<if test="params.LIFNR != null and params.LIFNR !=''">
+			and s.LIFNR like '%' || #{params.LIFNR} || '%'
+		</if>
+		<if test="params.EFFECT_DATE_FLAG == 1">
+			and d.good_dates is not
+			null
+		</if>
+		<if test="params.EFFECT_DATE_FLAG == 2">
+			and d.good_dates is null
+		</if>
+		ORDER BY s.BATCH,s.MATNR,s.LIFNR
+	</select>
+
+	<select id="selectWmsCoreStockLgortList" resultType="Map">
+		select
+		distinct LGORT from wms_core_stock
+	</select>
+
+	<!-- 查询库存复检-未质检 -->
+	<select id="selectStockReJudgeNotInspected" parameterType="Map"
+		resultType="Map">
+		SELECT item.*,head.MEMO,urgent.ID as urgent_flag,
+		b.EFFECT_DATE,w.BARCODE_FLAG,d.EXTENDED_EFFECT_DATE,(NVL(s.STOCK_QTY,0)+NVL(s.FREEZE_QTY,0)) ALL_STOCK_QTY,
+		NVL(s.STOCK_QTY,0) STOCK_QTY,NVL(s.FREEZE_QTY,0) FREEZE_QTY
+		FROM WMS_QC_INSPECTION_ITEM item
+		INNER JOIN WMS_QC_INSPECTION_HEAD head
+		ON
+		head.INSPECTION_TYPE = '02' and item.INSPECTION_NO = head.INSPECTION_NO
+		LEFT JOIN
+		(
+			<!-- FIX: 批次表有重复数据 ,去重后无论是否有重复都不会影响查询结果-->
+			select distinct werks,matnr,batch,lifnr,EFFECT_DATE from WMS_CORE_MAT_BATCH
+		) b on item.werks = b.werks and item.matnr = b.matnr and item.batch = b.batch and item.lifnr = b.lifnr
+		LEFT JOIN WMS_C_WH w on item.werks = w.werks and item.wh_number = w.wh_number
+		LEFT JOIN WMS_C_MAT_DANGER d on
+		item.matnr = d.matnr and item.werks = d.werks and item.lifnr = d.lifnr and d.del != 'X'
+		LEFT JOIN wms_c_mat_urgent urgent
+		on item.WERKS = urgent.WERKS and item.MATNR = urgent.MATNR
+		AND urgent.DEL = '0' AND
+		URGENT_FLAG = 'X' AND
+		urgent.Start_Date >= to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		AND
+		urgent.End_Date >= to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		LEFT JOIN WMS_CORE_STOCK s on s.WERKS = item.werks and s.WH_NUMBER = item.WH_NUMBER and s.BATCH = item.BATCH and s.LGORT = item.LGORT
+		and s.BIN_CODE = item.BIN_CODE and s.SOBKZ = item.SOBKZ and s.MATNR = item.MATNR and (item.LIFNR IS NULL OR s.LIFNR = item.LIFNR)
+		WHERE item.INSPECTION_ITEM_STATUS = '00' and item.DEL = '0' and item.STOCK_SOURCE = '02'
+		<if test="params.WERKS != null and params.WERKS !=''">
+			AND item.WERKS = #{params.WERKS}
+		</if>
+		<if test="params.WH_NUMBER != null and params.WH_NUMBER != ''">
+			AND item.WH_NUMBER = #{params.WH_NUMBER}
+		</if>
+		<if test="params.LIFNR != null and params.LIFNR !=''">
+			AND item.LIFNR like '%' || #{params.LIFNR} || '%'
+		</if>
+		<if
+			test="params.CREATE_DATE_START != null and params.CREATE_DATE_START !=''">
+			AND SUBSTR(item.CREATE_DATE,0,10) >= #{params.CREATE_DATE_START}
+		</if>
+		<if
+			test="params.CREATE_DATE_END != null and params.CREATE_DATE_END !=''">
+			AND SUBSTR(item.CREATE_DATE,0,10) &lt;= #{params.CREATE_DATE_END}
+		</if>
+		<if test="params.MATNR != null and params.MATNR !=''">
+			AND (item.MATNR like '%' || #{params.MATNR} || '%' or item.MAKTX like '%' || #{params.MATNR} || '%' )
+		</if>
+		<if
+			test="params.INSPECTION_NO != null and params.INSPECTION_NO !=''">
+			AND item.INSPECTION_NO like '%' || #{params.INSPECTION_NO} || '%'
+		</if>
+		<if
+			test="params.INSPECTION_ITEM_NO != null and params.INSPECTION_ITEM_NO !=''">
+			AND item.INSPECTION_ITEM_NO like '%' || #{params.INSPECTION_ITEM_NO} || '%'
+		</if>
+		<if test="params.BATCH != null and params.BATCH !=''">
+			AND item.BATCH like '%' || #{params.BATCH} || '%'
+		</if>
+		ORDER BY item.CREATE_DATE desc ,item.MATNR,item.BATCH
+	</select>
+
+	<!-- 查询库存复检 - 质检中 -->
+	<select id="selectStockRejudgeOnInspect" parameterType="Map"
+		resultType="Map">
+		select * from (
+		SELECT urgent.ID as URGENT_FLAG,item.*,i.CREATE_DATE as
+		I_CREATE_DATE,i.LIKTX
+		,i.BIN_CODE,i.INSPECTION_QTY,h.MEMO,i.RECEIPT_DATE,wh.BARCODE_FLAG
+		FROM wms_qc_result
+		item
+		left join wms_qc_inspection_item i
+		on
+		item.INSPECTION_NO =
+		i.INSPECTION_NO and item.INSPECTION_ITEM_NO =
+		i.INSPECTION_ITEM_NO and
+		i.STOCK_SOURCE = '02' and i.DEL = '0'
+		left join
+		wms_qc_inspection_head
+		h on item.INSPECTION_NO = h.INSPECTION_NO
+		and
+		h.INSPECTION_TYPE = '02'
+		LEFT JOIN wms_c_wh wh on item.werks = wh.werks
+		and item.wh_number = wh.wh_number and wh.del_flag != 'X'
+		LEFT JOIN
+		wms_c_mat_urgent urgent on item.WERKS = urgent.WERKS and
+		item.MATNR =
+		urgent.MATNR
+		AND urgent.DEL = '0' AND URGENT_FLAG = 'X'
+		AND
+		urgent.Start_Date >=
+		to_char(TRUNC(sysdate),'yyyy-mm-dd')
+		AND
+		urgent.End_Date >= to_char(TRUNC(sysdate),'yyyy-mm-dd')
+
+		WHERE 1 = 1
+		<if test="params.WERKS != null and params.WERKS !=''">
+			AND item.WERKS = #{params.WERKS}
+		</if>
+		<if test="params.WH_NUMBER != null and params.WH_NUMBER != ''">
+			AND item.WH_NUMBER = #{params.WH_NUMBER}
+		</if>
+
+		<if test="params.MATNR != null and params.MATNR !=''">
+			AND item.MATNR like '%' || #{params.MATNR} || '%'
+		</if>
+		<if
+			test="params.INSPECTION_NO != null and params.INSPECTION_NO !=''">
+			AND item.INSPECTION_NO like '%' || #{params.INSPECTION_NO}
+			|| '%'
+		</if>
+		<if test="params.INSPECTION_ITEM_NO != null and params.INSPECTION_ITEM_NO !=''">
+			AND item.INSPECTION_ITEM_NO = #{params.INSPECTION_ITEM_NO}
+		</if>
+		<if test="params.BATCH != null and params.BATCH !=''">
+			AND item.BATCH like '%' || #{params.BATCH} || '%'
+		</if>
+		) t
+		where I_CREATE_DATE is not null and t.DEL = '0'
+		<if test="params.LIFNR != null and params.LIFNR !=''">
+			AND t.LIFNR like '%' || #{params.LIFNR} || '%'
+		</if>
+		<if
+			test="params.CREATE_DATE_START != null and params.CREATE_DATE_START !=''">
+			AND t.I_CREATE_DATE >= #{params.CREATE_DATE_START}
+		</if>
+		<if
+			test="params.CREATE_DATE_END != null and params.CREATE_DATE_END !=''">
+			AND t.I_CREATE_DATE &lt;= #{params.CREATE_DATE_END}
+		</if>
+		order by t.I_CREATE_DATE desc,t.MATNR,t.BATCH
+	</select>
+
+	<select id="queryLabelInfo" parameterType="Map" resultType="Map">
+		select a.* from wms_core_label a
+		right join
+		wms_c_wh b
+		on a.WERKS =
+		b.WERKS and a.WH_NUMBER = b.WH_NUMBER and b.BARCODE_FLAG =
+		'X'
+		where 1 =
+		1
+		<if test="params.RECEIPT_NO != null and params.RECEIPT_NO !=''">
+			and a.RECEIPT_NO = #{params.RECEIPT_NO}
+		</if>
+		<if
+			test="params.RECEIPT_ITEM_NO != null and params.RECEIPT_ITEM_NO !=''">
+			and a.RECEIPT_ITEM_NO = #{params.RECEIPT_ITEM_NO}
+		</if>
+		<if test="params.WERKS != null and params.WERKS !=''">
+			and a.WERKS = #{params.WERKS}
+		</if>
+		<if test="params.WH_NUMBER != null and params.WH_NUMBER !=''">
+			and a.WH_NUMBER = #{params.WH_NUMBER}
+		</if>
+		<if test="params.MATNR != null and params.MATNR != ''">
+			and a.MATNR = #{params.MATNR}
+		</if>
+		<if test="params.LGORT != null and params.LGORT !=''">
+			and a.LGORT = #{params.LGORT}
+		</if>
+		<if test="params.BATCH != null and params.BATCH !=''">
+			and a.BATCH = #{params.BATCH}
+		</if>
+		<if test="params.LABEL_NO_LIST != null">
+			and a.LABEL_NO in
+			<foreach collection="params.LABEL_NO_LIST" item="LABEL_NO"
+				separator="," open="(" close=")">
+				#{LABEL_NO}
+			</foreach>
+		</if>
+		<if test="params.LABEL_STATUS_LIST != null">
+			and a.LABEL_STATUS in
+			<foreach collection="params.LABEL_STATUS_LIST"
+				item="LABEL_STATUS" separator="," open="(" close=")">
+				#{LABEL_STATUS}
+			</foreach>
+		</if>
+	</select>
+
+	<update id="updateWmsCoreMatBatch">
+		update WMS_CORE_MAT_BATCH set EFFECT_DATE =
+		#{EFFECT_DATE}
+		where MATNR = #{MATNR} and BATCH = #{BATCH} and WERKS = #{WERKS}
+	</update>
+
+	<select id="queryDict" resultType="Map">
+		select * from sys_dict
+		where
+		type = #{type}
+	</select>
+
+	<select id="queryInspectionByLabelNo" resultMap="wmsQcInspectionItemMap">
+		select l.label_no,w.barcode_flag,i.* from wms_core_label l
+		left join
+		wms_qc_inspection_item i
+		on l.receipt_no = i.receipt_no and
+		l.receipt_item_no = i.receipt_item_no
+		left join wms_c_wh w on l.werks =
+		w.werks and l.wh_number =
+		w.wh_number
+		where l.label_no = #{labelNo}
+		<if test="stockSource != null and stockSource !=''">
+			and l.stock_source = #{stockSource}
+		</if>
+	</select>
+	<select id="queryInspectionInfos" resultMap="wmsQcInspectionInfoMap">
+		select
+		a.inspection_no,(a.labels) labels,b.sum_inspection_qty ,(c.batchs) batchs from
+		(
+		select
+		i.inspection_no,wm_concat(l.label_no) as labels
+		from
+		wms_qc_inspection_item i
+		left join wms_core_label l
+		on i.batch = l.batch
+		and i.werks = l.werks and i.wh_number = l.wh_number
+		group by
+		i.inspection_no
+		) a
+		left join
+
+		(
+		select inspection_no,sum(inspection_qty)
+		as sum_inspection_qty from
+		wms_qc_inspection_item group by
+		inspection_no
+		) b
+
+		on a.inspection_no = b.inspection_no
+
+		left join (
+		select
+		wm_concat(batch) as batchs,inspection_no from wms_qc_inspection_item
+		group by inspection_no
+		) c
+
+		on a.inspection_no = c.inspection_no
+		where
+		a.inspection_no = #{INSPECTION_NO}
+	</select>
+
+	<select id="listInspectionItems"
+		resultMap="wmsQcInspectionItemMap">
+		select * from wms_qc_inspection_item
+		where 1 = 1
+		<if test="INSPECTION_NO != null and INSPECTION_NO !=''">
+			and INSPECTION_NO = #{INSPECTION_NO}
+		</if>
+	</select>
+
+
+
+	<select id="queryWhConfig" resultType="Map">
+		SELECT * from WMS_C_WH
+		WHERE WERKS = #{WERKS} and WH_NUMBER = #{WH_NUMBER}
+		AND DEL_FLAG != 'X'
+	</select>
+
+	<select id="queryInspectionEffectDate">
+		select
+		a.inspection_no,a.inspection_item_no,b.effect_date,a.batch,c.extended_effect_date
+		from wms_qc_inspection_item a
+		left join WMS_CORE_MAT_BATCH b
+		on a.batch = b.batch and a.matnr = b.matnr and a.werks = b.werks
+		left join WMS_C_MAT_DANGER c
+		on a.matnr
+		= c.matnr and a.werks = c.werks and c.del != 'X'
+		where a.inspection_no
+		= #{INSPECTION_NO} and a.del != 'X'
+		<if test="STOCK_SOURCE != null and STOCK_SOURCE !=''">
+			and a.stock_source = #{STOCK_SOURCE}
+		</if>
+	</select>
+
+	<select id="queryInspectionInfoForRejudge" resultType="Map">
+		select
+		a.*,b.effect_date,c.barcode_flag,d.EXTENDED_EFFECT_DATE,e.label_no
+		from wms_qc_inspection_item a
+		left join wms_core_mat_batch b
+		on a.batch = b.batch and a.matnr = b.matnr and a.werks = b.werks
+		left join wms_c_wh c
+		on a.werks = c.werks and a.wh_number = c.wh_number and c.del_flag != 'X'
+		left join wms_c_mat_danger d
+		on a.werks = d.werks and a.matnr = d.matnr and d.del != 'X'
+		left join wms_core_label e on e.batch = a.batch and e.receipt_no =
+		a.receipt_no and e.receipt_item_no = a.receipt_item_no
+		where a.stock_source = '02'
+		<if test="LABEL_NO != null and LABEL_NO != ''">
+			and e.label_no = #{LABEL_NO}
+		</if>
+		<if test="INSPECTION_NO != null and INSPECTION_NO !=''">
+			and a.inspection_no = #{INSPECTION_NO}
+		</if>
+	</select>
+
+	<select id="queryInspectionItemLabelsByReceipt" resultType="Map">
+		select wm_concat(a.label_no) as labels from wms_core_label a
+		where a.RECEIPT_NO = #{RECEIPT_NO} and a.RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+		group by (RECEIPT_NO,RECEIPT_ITEM_NO)
+	</select>
+
+	<select id="queryInspectionItemByMatList" parameterType="Map" resultType="Map">
+		SELECT i.INSPECTION_ITEM_NO,i.INSPECTION_ITEM_NO,i.WERKS,i.WH_NUMBER,i.MATNR,i.MAKTX,
+				i.LIFNR,i.LIKTX,i.BATCH,i.INSPECTION_QTY,i.UNIT,i.BOX_COUNT,
+				SUBSTR(i.CREATE_DATE,3) CREATE_DATE,
+				CASE WHEN i.CREATE_DATE > to_char(SYSDATE - 1,'YYYY-MM-DD HH24:MI:SS') THEN '0' ELSE 'X' END DANGER_FLAG,
+				i.MATNR || '(' || i.MAKTX || ')' || i.INSPECTION_QTY || i.UNIT || ' 待检' TASK_CONTENT
+			FROM
+			WMS_QC_INSPECTION_ITEM i
+			WHERE i.INSPECTION_ITEM_STATUS = '00'
+
+			<foreach collection="list" item="d" separator="OR" open="AND (" close=")">
+				( i.WERKS=#{d.WERKS} AND i.WH_NUMBER=#{d.WH_NUMBER} AND i.MATNR = #{d.MATNR} AND (i.LIFNR = #{d.LIFNR} OR NVL(#{d.LIFNR},'-1')='-1' OR #{d.LIFNR} = '')  )
+			</foreach>
+			ORDER BY i.CREATE_DATE DESC
+	</select>
+
+	<select id="queryInspectionItemByLgort" parameterType="Map" resultType="Map">
+		SELECT i.INSPECTION_ITEM_NO,i.INSPECTION_ITEM_NO,i.WERKS,i.WH_NUMBER,i.MATNR,i.MAKTX,
+				i.LIFNR,i.LIKTX,i.BATCH,i.INSPECTION_QTY,i.UNIT,i.BOX_COUNT,i.CREATE_DATE,
+				SUBSTR(i.CREATE_DATE,3) CREATE_DATE,
+				CASE WHEN i.CREATE_DATE > to_char(SYSDATE - 1,'YYYY-MM-DD HH24:MI:SS') THEN '0' ELSE 'X' END DANGER_FLAG,
+				i.MATNR || '(' || i.MAKTX || ')' || i.INSPECTION_QTY || i.UNIT || ' 待检' TASK_CONTENT
+			FROM
+			WMS_QC_INSPECTION_ITEM i
+			WHERE i.INSPECTION_ITEM_STATUS = '00'
+			<if test="WERKS !=null and WERKS !='' ">
+				AND i.WERKS=#{WERKS}
+			</if>
+			<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+				AND i.WH_NUMBER=#{WH_NUMBER}
+			</if>
+			<if test="LGORT !=null and LGORT !='' ">
+				AND INSTR(#{LGORT},i.LGORT) >0
+			</if>
+			ORDER BY i.CREATE_DATE DESC
+	</select>
+
+
+</mapper>

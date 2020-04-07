@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.StandardWorkgroupDao">
+	
+	
+	<select id="getStandardWorkgroupList" resultType="Map" parameterType="Map">
+		SELECT * FROM MASTERDATA_STANDARD_WORKGROUP  
+		WHERE 1=1 
+		<if test="TYPE != '' and TYPE != null">
+			AND TYPE = #{TYPE} 
+		</if>
+		<if test="WORKSHOP != '' and WORKSHOP != null">
+			AND WORKSHOP = #{WORKSHOP} 
+		</if>
+		
+	</select>
+	
+	<select id="getStandardWorkgroupListByPage" resultType="Map" parameterType="Map">
+	SELECT * FROM (
+	SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT t.* 
+		FROM MASTERDATA_STANDARD_WORKGROUP t 
+		WHERE 1=1 
+		<if test="WORKSHOP != '' and WORKSHOP != null">
+			AND t.WORKSHOP = #{WORKSHOP} 
+		</if>
+		<if test="TYPE != '' and TYPE != null">
+			AND t.TYPE = #{TYPE} 
+		</if>
+		<if test="WORKGROUP_NO != '' and WORKGROUP_NO != null">
+			AND t.WORKGROUP_NO =#{WORKGROUP_NO}
+		</if>
+		<if test="WORKGROUP_NAME != '' and WORKGROUP_NAME != null">
+			AND (t.WORKGROUP_NAME like '%' ||#{WORKGROUP_NAME}|| '%')
+		</if>
+		) TMP 
+	   WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	</select>
+	
+	<select id="getStandardWorkgroupListCount" parameterType="Map" resultType="int">
+		SELECT count(*) 
+		FROM MASTERDATA_STANDARD_WORKGROUP t 
+		WHERE 1=1
+		<if test="WORKSHOP != '' and WORKSHOP != null">
+			AND t.WORKSHOP = #{WORKSHOP} 
+		</if>
+		<if test="TYPE != '' and TYPE != null">
+			AND t.TYPE = #{TYPE} 
+		</if>
+		<if test="WORKGROUP_NO != '' and WORKGROUP_NO != null">
+			AND (t.WORKGROUP_NO like '%' ||#{WORKGROUP_NO}|| '%')
+		</if>
+	</select>
+	
+	<select id="selectById" parameterType="Map" resultType="Map">
+		SELECT * FROM MASTERDATA_STANDARD_WORKGROUP WHERE 1=1
+		<if test="ID != '' and ID != null">
+			AND ID = #{ID}
+		</if>
+	</select>
+	
+	<insert id="insertStandardWorkgroup" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_MASTERDATA_STANDARD.NEXTVAL FROM dual
+		</selectKey>
+		INSERT INTO MASTERDATA_STANDARD_WORKGROUP
+		(ID,WORKSHOP,PARENT_WORKGROUP_NO,TYPE,WORKGROUP_NO,WORKGROUP_NAME,RESPONSIBILITY,MEMO,EDITOR,EDIT_DATE,WORKSHOP_NAME)
+		
+		VALUES (#{ID},#{WORKSHOP},#{PARENT_WORKGROUP_NO},#{TYPE},#{WORKGROUP_NO},#{WORKGROUP_NAME},
+		#{RESPONSIBILITY},#{MEMO},#{EDITOR},#{EDIT_DATE},#{WORKSHOP_NAME})
+	</insert>
+
+	
+	<update id="updateStandardWorkgroup" parameterType="Map">
+		UPDATE MASTERDATA_STANDARD_WORKGROUP
+		SET WORKSHOP=#{WORKSHOP},PARENT_WORKGROUP_NO=#{PARENT_WORKGROUP_NO},TYPE=#{TYPE},WORKGROUP_NO=#{WORKGROUP_NO},
+		WORKGROUP_NAME=#{WORKGROUP_NAME},RESPONSIBILITY=#{RESPONSIBILITY},MEMO=#{MEMO},
+		EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE},WORKSHOP_NAME=#{WORKSHOP_NAME}
+		WHERE ID=#{ID}
+	</update>
+	
+	<delete id="delStandardWorkgroup" parameterType="Map">
+		delete from MASTERDATA_STANDARD_WORKGROUP WHERE ID = #{ID}
+	</delete>
+	
+</mapper>

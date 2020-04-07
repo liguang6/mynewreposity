@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.in.dao.YPTDeliveryDao">
+
+	<select id="queryHeadByYPTCount"  parameterType="Map" resultType="int">
+		select count(*) cnt from (select distinct wid.DELIVERY_NO  asnno,wid.STATUS_RMK st,wid.PROVIDER_CODE vdcd,wid.PROVIDER_NAME vdcn,wid.WHCD_NO whno,
+		(wid.BOOKING_DATE||' '||wid.BOOKING_TIME) eta,wid.* from WMS_IN_DELIVERY wid
+		inner join WMS_IN_DELIVERY_ITEM widitem on wid.DELIVERY_NO=widitem.DELIVERY_NO
+		where 1=1
+		<if test="ASNNO !=null and ASNNO !='' ">
+			and wid.DELIVERY_NO=#{ASNNO}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+			and wid.FACT_NO=#{WERKS}
+		</if>
+		<if test="WHNUMBER !=null and WHNUMBER !='' ">
+			and wid.WHCD_NO=#{WHNUMBER}
+		</if>
+		<if test="STATUS !=null and STATUS !='' ">
+			and wid.STATUS_RMK=#{STATUS}
+		</if>
+		<if test="VDCD !=null and VDCD !='' ">
+			and wid.PROVIDER_NAME=#{VDCD}
+		</if>
+		<if test="ETA_DATE_START !=null and ETA_DATE_START !='' ">
+			<![CDATA[
+			and to_date((wid.BOOKING_DATE||' '||wid.BOOKING_TIME), 'yyyy-mm-dd hh24:mi:ss') >= to_date(#{ETA_DATE_START}, 'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		<if test="ETA_DATE_END !=null and ETA_DATE_END !='' ">
+			<![CDATA[
+			and to_date((wid.BOOKING_DATE||' '||wid.BOOKING_TIME), 'yyyy-mm-dd hh24:mi:ss') <= to_date(#{ETA_DATE_END}, 'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		<if test="PONO !=null and PONO !='' ">
+			and widitem.PO_NO=#{PONO}
+		</if>
+		<if test="MACD !=null and MACD !='' ">
+			and widitem.MAT_NO=#{MACD}
+		</if>
+		)
+	</select>
+
+
+	<select id="queryHeadByYPT" parameterType="map" resultType="map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (select distinct wid.DELIVERY_NO  asnno,wid.STATUS_RMK st,wid.PROVIDER_CODE vdcd,wid.PROVIDER_NAME vdcn,wid.WHCD_NO whno,
+		(wid.BOOKING_DATE||' '||wid.BOOKING_TIME) eta,wid.* from WMS_IN_DELIVERY wid
+		inner join WMS_IN_DELIVERY_ITEM widitem on wid.DELIVERY_NO=widitem.DELIVERY_NO
+		where 1=1
+		<if test="ASNNO !=null and ASNNO !='' ">
+			and wid.DELIVERY_NO=#{ASNNO}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+			and wid.FACT_NO=#{WERKS}
+		</if>
+		<if test="WHNUMBER !=null and WHNUMBER !='' ">
+			and wid.WHCD_NO=#{WHNUMBER}
+		</if>
+		<if test="STATUS !=null and STATUS !='' ">
+			and wid.STATUS_RMK=#{STATUS}
+		</if>
+		<if test="VDCD !=null and VDCD !='' ">
+			and wid.PROVIDER_NAME=#{VDCD}
+		</if>
+		<if test="ETA_DATE_START !=null and ETA_DATE_START !='' ">
+			<![CDATA[
+			and to_date((wid.BOOKING_DATE||' '||wid.BOOKING_TIME), 'yyyy-mm-dd hh24:mi:ss') >= to_date(#{ETA_DATE_START}, 'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		<if test="ETA_DATE_END !=null and ETA_DATE_END !='' ">
+			<![CDATA[
+			and to_date((wid.BOOKING_DATE||' '||wid.BOOKING_TIME), 'yyyy-mm-dd hh24:mi:ss') <= to_date(#{ETA_DATE_END}, 'yyyy-mm-dd hh24:mi:ss')
+			]]>
+		</if>
+		<if test="PONO !=null and PONO !='' ">
+			and widitem.PO_NO=#{PONO}
+		</if>
+		<if test="MACD !=null and MACD !='' ">
+			and widitem.MAT_NO=#{MACD}
+		</if>
+		) TMP
+		<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+		order by UPDT asc
+	</select>
+
+
+	<select id="queryItemByYPTCount"  parameterType="Map" resultType="int">
+		select count(*) cnt from (
+		select distinct widitem.PO_NO pono,widitem.ITEM_NO poitm,widitem.FACT_NO plcd,wid.WHCD_NO whcode,
+		widitem.MAT_NO macd,widitem.MAT_DESC mads,widitem.PROVIDER_CODE vdcd,widitem.PROVIDER_NAME vdnm,widitem.ITEM_QTY qty,
+		widitem.UNIT_NO unit,widitem.FULL_BOX_QTY bxcnt,widitem.RCQTY has_receipt_qty,widitem.BEDNR bednr from WMS_IN_DELIVERY_ITEM widitem
+		inner join WMS_IN_DELIVERY wid on widitem.DELIVERY_NO=wid.DELIVERY_NO
+		where widitem.DELIVERY_NO =#{ASNNO}
+		   )
+	</select>
+
+	<select id="queryItemByYPT" parameterType="map" resultType="map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		select * from (
+		select distinct widitem.DELIVERY_NO asnno,widitem.PO_NO pono,widitem.ITEM_NO poitm,widitem.FACT_NO plcd,wid.WHCD_NO whcode,
+		widitem.MAT_NO macd,widitem.MAT_DESC mads,widitem.PROVIDER_CODE vdcd,widitem.PROVIDER_NAME vdnm,widitem.ITEM_QTY qty,
+		widitem.UNIT_NO unit,widitem.FULL_BOX_QTY bxcnt,widitem.RCQTY has_receipt_qty,widitem.BEDNR bednr from WMS_IN_DELIVERY_ITEM widitem
+		inner join WMS_IN_DELIVERY wid on widitem.DELIVERY_NO=wid.DELIVERY_NO
+		  ) where asnno =#{ASNNO}
+		   ) TMP
+		<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+	</select>
+
+	<select id="getLabelCount" parameterType="Map" resultType="int">
+		select count(*) cnt from (
+		SELECT widp.BARCODE_NO label_no,widp.FACT_NO werks,widp.BYD_BATCH batch,
+		widitem.PROVIDER_CODE lifnr,widitem.PROVIDER_NAME liktx,widp.MAT_NO matnr,widp.MAT_DESC maktx,
+		widp.PRODUCTION_QTY box_qty,widp.UNIT_NO unit,widitem.BEDNR bednr,widp.PROD_DATE product_date,widp.EXPIRY_DATE
+		effect_date,widp.PO_NO po_no,widp.PO_ITEM po_item_no,widp.REMARK FROM WMS_IN_DELIVERY_PACKING widp
+		inner join WMS_IN_DELIVERY_ITEM widitem on widp.DELIVERY_NO=widitem.DELIVERY_NO and widp.ITEM_NO=widitem.ITEM_NO
+		)
+		<!--		<include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>-->
+<!--		AND widp.FACT_NO=#{WERKS}-->
+<!--		<if test="WH_NUMBER != null and WH_NUMBER !=''">-->
+<!--			AND D.WH_NUMBER = #{WH_NUMBER}-->
+<!--		</if>-->
+<!--		<if test="LABEL_TYPE != null and LABEL_TYPE =='00'">-->
+<!--			AND NVL(D.RECEIPT_NO,'0') !='0'-->
+<!--		</if>-->
+<!--		<if test="LABEL_TYPE != null and LABEL_TYPE =='01'">-->
+<!--			AND NVL(D.INBOUND_NO,'0') !='0'-->
+<!--		</if>-->
+<!--		<if test="LABEL_STATUS != null and LABEL_STATUS !=''">-->
+<!--			AND D.LABEL_STATUS = #{LABEL_STATUS}-->
+<!--		</if>-->
+<!--		<if test="LABEL_NO != null and LABEL_NO !=''">-->
+<!--			AND D.LABEL_NO = #{LABEL_NO}-->
+<!--		</if>-->
+<!--		<if test="LGORT != null and LGORT !=''">-->
+<!--			AND D.LGORT = #{LGORT}-->
+<!--		</if>-->
+<!--		<if test="BATCH != null and BATCH !=''">-->
+<!--			AND D.BATCH = #{BATCH}-->
+<!--		</if>-->
+<!--		<if test="MATNR != null and MATNR !=''">-->
+<!--			AND D.MATNR = #{MATNR}-->
+<!--		</if>-->
+<!--		<if test="LIFNR != null and LIFNR !=''">-->
+<!--			AND D.LIFNR = #{LIFNR}-->
+<!--		</if>-->
+<!--		<if test="BIN_CODE != null and BIN_CODE !=''">-->
+<!--			AND D.BIN_CODE = #{BIN_CODE}-->
+<!--		</if>-->
+<!--		<if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">-->
+<!--			AND D.CREATE_DATE&gt;=CONCAT(#{CREATE_DATE_START}, ' 00:00:00')-->
+<!--		</if>-->
+<!--		<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">-->
+<!--			AND D.CREATE_DATE&lt;=CONCAT(#{CREATE_DATE_END}, ' 23:59:59')-->
+<!--		</if>-->
+<!--		<if test="RECEIPT_NO != null and RECEIPT_NO !=''">-->
+<!--			AND D.RECEIPT_NO = #{RECEIPT_NO}-->
+<!--		</if>-->
+<!--		<if test="INBOUND_NO != null and INBOUND_NO !=''">-->
+<!--			AND D.INBOUND_NO = #{INBOUND_NO}-->
+<!--		</if>-->
+<!--		<if test="PO_NO != null and PO_NO !=''">-->
+<!--			AND D.RECEIPT_NO IN   (SELECT RECEIPT_NO  FROM WMS_IN_RECEIPT WHERE PO_NO=#{PO_NO})-->
+<!--		</if>-->
+<!--		<if test="PRODUCT_NO != null and PRODUCT_NO !=''">-->
+<!--			AND D.INBOUND_NO IN  (SELECT INBOUND_NO  FROM WMS_IN_INBOUND_ITEM WHERE MO_NO= #{PRODUCT_NO})-->
+<!--		</if>-->
+	</select>
+
+	<select id="getLabelList" parameterType="Map" resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT widp.BARCODE_NO label_no,widp.FACT_NO werks,widp.BYD_BATCH batch,
+		widitem.PROVIDER_CODE lifnr,widitem.PROVIDER_NAME liktx,widp.MAT_NO matnr,widp.MAT_DESC maktx,
+		widp.PRODUCTION_QTY box_qty,widp.UNIT_NO unit,widitem.BEDNR bednr,widp.PROD_DATE product_date,widp.EXPIRY_DATE effect_date,
+		widp.PO_NO po_no,widp.PO_ITEM po_item_no,widp.REMARK  FROM WMS_IN_DELIVERY_PACKING widp
+		inner join WMS_IN_DELIVERY_ITEM widitem on widp.DELIVERY_NO=widitem.DELIVERY_NO and widp.ITEM_NO=widitem.ITEM_NO
+		WHERE 1=1 and widp.DELIVERY_NO = #{ASNNO}
+<!--		<include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>-->
+<!--		AND D.WERKS=#{WERKS}-->
+<!--		<if test="WH_NUMBER != null and WH_NUMBER !=''">-->
+<!--			AND D.WH_NUMBER = #{WH_NUMBER}-->
+<!--		</if>-->
+<!--		<if test="LABEL_TYPE != null and LABEL_TYPE =='00'">-->
+<!--			AND NVL(D.RECEIPT_NO,'0') !='0'-->
+<!--		</if>-->
+<!--		<if test="LABEL_TYPE != null and LABEL_TYPE =='01'">-->
+<!--			AND NVL(D.INBOUND_NO,'0') !='0'-->
+<!--		</if>-->
+<!--		<if test="LABEL_STATUS != null and LABEL_STATUS !=''">-->
+<!--			AND D.LABEL_STATUS = #{LABEL_STATUS}-->
+<!--		</if>-->
+<!--		<if test="LABEL_NO != null and LABEL_NO !=''">-->
+<!--			AND D.LABEL_NO = #{LABEL_NO}-->
+<!--		</if>-->
+<!--		<if test="LGORT != null and LGORT !=''">-->
+<!--			AND D.LGORT = #{LGORT}-->
+<!--		</if>-->
+<!--		<if test="BATCH != null and BATCH !=''">-->
+<!--			AND D.BATCH = #{BATCH}-->
+<!--		</if>-->
+<!--		<if test="MATNR!= null and MATNR !=''">-->
+<!--			AND D.MATNR = #{MATNR}-->
+<!--		</if>-->
+<!--		<if test="LIFNR != null and LIFNR !=''">-->
+<!--			AND D.LIFNR = #{LIFNR}-->
+<!--		</if>-->
+<!--		<if test="BIN_CODE != null and BIN_CODE !=''">-->
+<!--			AND D.BIN_CODE = #{BIN_CODE}-->
+<!--		</if>-->
+<!--		<if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">-->
+<!--			AND D.CREATE_DATE&gt;=CONCAT(#{CREATE_DATE_START}, ' 00:00:00')-->
+<!--		</if>-->
+<!--		<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">-->
+<!--			AND D.CREATE_DATE&lt;=CONCAT(#{CREATE_DATE_END}, ' 23:59:59')-->
+<!--		</if>-->
+<!--		<if test="RECEIPT_NO != null and RECEIPT_NO !=''">-->
+<!--			AND D.RECEIPT_NO = #{RECEIPT_NO}-->
+<!--		</if>-->
+<!--		<if test="INBOUND_NO != null and INBOUND_NO !=''">-->
+<!--			AND D.INBOUND_NO = #{INBOUND_NO}-->
+<!--		</if>-->
+<!--		<if test="PO_NO != null and PO_NO !=''">-->
+<!--			AND D.RECEIPT_NO IN   (SELECT RECEIPT_NO  FROM WMS_IN_RECEIPT WHERE PO_NO=#{PO_NO})-->
+<!--		</if>-->
+<!--		<if test="PRODUCT_NO != null and PRODUCT_NO !=''">-->
+<!--			AND D.INBOUND_NO IN  (SELECT INBOUND_NO  FROM WMS_IN_INBOUND_ITEM WHERE MO_NO= #{PRODUCT_NO})-->
+<!--		</if>-->
+		) TMP
+		WHERE ROWNUM  &lt;=#{END})
+		WHERE ROW_ID > #{START}
+		<if test="orderBy !=null and orderBy !='' ">
+			ORDER BY  ${orderBy}
+		</if>
+	</select>
+
+
+</mapper>

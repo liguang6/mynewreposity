@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+    <title>盘点单</title>
+    <style>
+        @page {
+            size: 210mm 297mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            /*margin: 0.15in; */
+            margin-top:140px;
+            padding: 0.1em;
+            @top-left{ content:element(header_left)};
+            @top-center{ content: element(header_center)};
+            @top-right{ content: element(header_right)};
+            @bottom-center{
+                content:"CSCC © 版权所有";
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            };
+            @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;
+            };
+        }
+        #page-header-left {
+		    position:running(header_left);
+		    margin-bottom:50px;
+     	}
+        
+	    #page-header-center {
+	    	position:running(header_center);
+	    }
+
+	   	#page-header-right {
+		    position:running(header_right);
+	    }
+    </style>
+</head>
+<body style="font-family: SimSun">
+	<div id="page-header-left">
+		<table style="width: 100%;height: 40px;">
+			<tr style="width: 100%;">
+				<td style="text-align: left;width: 20%;height: 40px;" >
+					<img src="${contextPath}/statics/images/byd_logo.png" style="height: 40px;"></img>
+				</td>
+				<td style="width: 40%;text-align: center;height: 40px;" >
+					<label style="width: 100%;font-size: 18px;">盘点单</label>
+				</td>
+				<td style="width: 30%;text-align: right;height: 40px;">
+					<img src="${barCode}" style="height: 70px;"></img>
+				</td>
+			</tr>
+		</table>
+		<table  style="width: 100%;height: 60px;">	
+			<tr style="width: 100%;font-size: 13px;" >
+				<td style="text-align: left;width: 20%;height: 20px;" >
+					盘点任务号：${inventoryNo}
+				</td>
+				<td style="text-align: left;width: 30%;height: 20px;" >
+					工厂：${werks}
+				</td>
+				<td style="text-align: left;width: 20%;height: 20px;" >
+					仓库：${whNumber}
+				</td>
+			</tr>
+		</table>
+		<table style="border:solid #000000; border-width:1px 0px 0px 1px;width: 100%;">
+			<tr style="width: 100%;font-size: 12px;">
+	            <td style="width: 10%;border:solid #000000; border-width:0px 1px 1px 0px; ">料号</td>
+	            <td style="width: 18%;border:solid #000000; border-width:0px 1px 1px 0px; ">物料描述</td>  
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; ">库位号</td>  
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; ">仓管员</td> 
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; ">供应商代码</td>    
+	            <td style="width: 15%;border:solid #000000; border-width:0px 1px 1px 0px; ">供应商名称</td>   
+				<td style="width: 6%;border:solid #000000; border-width:0px 1px 1px 0px; ">单位</td>  
+				<td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; ">库存数量</td>    
+				<td style="width: 10%;border:solid #000000; border-width:0px 1px 1px 0px; ">初盘数量</td>     
+				<td style="width: 10%;border:solid #000000; border-width:0px 1px 1px 0px; ">复盘数量</td>   
+
+	        </tr>
+	        <#list itemList as item>
+		        <tr style="width: 100%;font-size: 12px;">
+		            <td style="width: 10%;border:solid #000000; border-width:0px 1px 1px 0px;">${item.MATNR!''}</td>
+		            <td style="width: 18%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.MAKTX!''}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.LGORT!''}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.WH_MANAGER!''}</td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.LIFNR!''}</td>
+		            <td style="width: 15%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.LIKTX!''}</td>
+		            <td style="width: 6%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.MEINS!''}</td>		
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;">${item.STOCK_QTY!''}</td>		
+		            <td style="width: 10%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>		
+		            <td style="width: 10%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>		
+		        </tr>
+	       </#list>
+	    </table>
+	</div>
+		
+</body>
+</html>

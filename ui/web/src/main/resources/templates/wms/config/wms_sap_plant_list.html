@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>工厂信息维护</title> <#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+	<div class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+
+					<form id="searchForm" class="form-inline"
+						action="${request.contextPath}/config/sapPlant/list">
+						<div class="form-group" style="width:160px">
+							<label class="control-label">工厂代码：</label>
+							<div class="control-inline">
+								<input type="text" id="werks" name="werks" class="form-control" style="width:80px" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">工厂名：</label>
+							<div class="control-inline">
+								<input type="text" id="werksName" name="werksName" class="form-control width-300" />
+							</div>
+						</div>
+
+
+
+						<div class="form-group">
+							<button type="submit" onclick="appendExportUrl()" class="btn btn-primary btn-sm">查询</button>
+							<button type="reset" class="btn btn-default btn-sm">重置</button>
+						</div>
+					</form>
+
+
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#' class='btn' id='newOperation'><i
+								class='fa fa-plus' aria-hidden='true'></i> 新增</a> <a href='#'
+								class='btn' id='editOperation'><i
+								class='fa fa-pencil-square-o' aria-hidden='true'></i> 修改</a> <a
+								href='#' class='btn' id='deleteOperation'><i
+								class='fa fa-trash' aria-hidden='true'></i> 删除</a> 
+								
+<!-- 								<a href='#' -->
+<!-- 								class='btn' id='importOperation'><i class='fa fa-upload' -->
+<!-- 								aria-hidden='true'></i> 导入</a>  -->
+								<a href="${request.contextPath}/config/sapPlant/exportExcel" id="exportOperation" class="btn"> <i class="fa fa-download"></i> 导出</a>
+								<a href="#" class="btn"
+								id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a>
+						</div>
+					</div>
+					<table id="dataGrid"></table>
+					<div id="dataGridPage"></div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+	<script
+		src="${request.contextPath}/statics/js/wms/config/wms_sap_plant_list.js?_${.now?long}"></script>
+</body>
+</html>

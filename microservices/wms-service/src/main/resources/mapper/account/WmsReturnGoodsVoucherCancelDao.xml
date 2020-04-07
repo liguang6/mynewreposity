@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.account.dao.WmsReturnGoodsVoucherCancelDao">
+
+	<resultMap type="Map" id="wmsDocMap">
+		<result property="LABEL_NO"  column="LABEL_NO" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap>
+
+	<select id="getWmsDocHeadInfo" parameterType="Map" resultMap="wmsDocMap">
+	SELECT   I.*,
+	H.PZ_DATE,B.BUSINESS_CLASS,B.GM_CODE,W.BARCODE_FLAG,
+	(select nvl(RETURN_QTY,0)+(nvl(IN_QTY,0)-nvl(WH_RETURN_QTY,0))+nvl(DESTROY_QTY,0) from WMS_IN_RECEIPT 
+	where RECEIPT_NO=I.RECEIPT_NO and RECEIPT_ITEM_NO=I.RECEIPT_ITEM_NO) as RECEIPT_CHECK_QTY,
+	NVL(P.TEST_FLAG,'-1') TEST_FLAG_WK,NVL(QM.TEST_FLAG,'-1') TEST_FLAG_MAT,
+	CASE WHEN NVL(QM.TEST_FLAG,'-1') = '-1' THEN NVL(P.TEST_FLAG,'-1') ELSE NVL(QM.TEST_FLAG,'-1') END
+	TEST_FLAG,
+	NVL(WA.STORAGE_CAPACITY_FLAG,'0') STORAGE_CAPACITY_FLAG,
+	NVL(WB.ID,'0') WBID,NVL(WS.QTY,'1') WS_QTY,
+	I.MOVE_PLANT,I.MOVE_STLOC,I.CUSTOMER
+	FROM WMS_CORE_WMSDOC_ITEM I 
+	LEFT JOIN WMS_IN_RECEIPT IR ON IR.RECEIPT_NO = I.RECEIPT_NO AND IR.RECEIPT_ITEM_NO = I.RECEIPT_ITEM_NO
+	LEFT JOIN WMS_CORE_WMSDOC_HEAD H ON I.WMS_NO = H.WMS_NO
+	LEFT JOIN WMS_C_WH W ON I.WERKS = W.WERKS AND I.WH_NUMBER = W.WH_NUMBER
+	LEFT JOIN WMS_C_WMS_BUSINESS B ON B.BUSINESS_CLASS = I.BUSINESS_CLASS AND I.BUSINESS_TYPE = B.BUSINESS_TYPE 
+		AND I.BUSINESS_NAME=B.BUSINESS_NAME AND I.SOBKZ=B.SOBKZ
+	LEFT JOIN WMS_C_QC_PLANT P ON P.WERKS = I.WERKS AND P.BUSINESS_NAME = IR.BUSINESS_NAME AND P.DEL = '0'
+	AND P.START_DATE &lt;= #{TODAY} AND P.END_DATE >= #{TODAY}
+	LEFT JOIN WMS_C_QC_MAT QM ON QM.WERKS = I.WERKS AND QM.MATNR = I.MATNR AND QM.DEL = '0'
+	AND QM.START_DATE &lt;= #{TODAY} AND QM.END_DATE >= #{TODAY}
+	LEFT JOIN WMS_CORE_WH_BIN WB ON WB.WH_NUMBER = I.WH_NUMBER AND WB.BIN_CODE = I.BIN_CODE AND WB.DEL = '0'
+	LEFT JOIN WMS_CORE_WH_AREA WA ON WA.WH_NUMBER = I.WH_NUMBER AND WA.STORAGE_AREA_CODE = WB.STORAGE_AREA_CODE AND WA.DEL = '0'
+	LEFT JOIN WMS_C_MAT_STORAGE WS ON WS.WERKS = I.WERKS AND WS.WH_NUMBER = I.WH_NUMBER AND 
+	WS.MATNR = I.MATNR AND WS.DEL = '0'
+	WHERE I.WMS_NO = #{VO_NO} AND (H.DEL != 'X' OR H.DEL IS NULL)
+	AND I.CANCEL_FLAG = '0' 
+	AND (I.QTY_CANCEL = '' OR NVL(I.QTY_CANCEL,0) =0) 
+	AND I.WERKS=#{WERKS} AND I.WH_NUMBER=#{WH_NUMBER}
+	ORDER BY I.WMS_ITEM_NO
+	</select>
+	<select id="getSapDocHeadInfo" parameterType="Map" resultMap="wmsDocMap">
+	SELECT W.*,
+	SH.DOC_DATE AS PZ_DATE,B.BUSINESS_CLASS,B.GM_CODE,WH.BARCODE_FLAG,
+	(select nvl(RETURN_QTY,0)+nvl(IN_QTY,0)+nvl(DESTROY_QTY,0) from WMS_IN_RECEIPT 
+	where RECEIPT_NO=W.RECEIPT_NO and RECEIPT_ITEM_NO=W.RECEIPT_ITEM_NO) as RECEIPT_CHECK_QTY 
+	FROM WMS_CORE_SAPDOC_ITEM S
+	LEFT JOIN WMS_CORE_SAPDOC_HEAD SH ON S.MAT_DOC = SH.MAT_DOC
+	LEFT JOIN WMS_CORE_WMSDOC_ITEM W ON S.REF_WMS_ITEM_NO = W.WMS_ITEM_NO AND SH.REF_WMS_NO = W.WMS_NO	
+	LEFT JOIN WMS_C_WH WH ON W.WERKS = WH.WERKS AND W.WH_NUMBER = WH.WH_NUMBER	
+	LEFT JOIN WMS_C_WMS_BUSINESS B ON W.BUSINESS_TYPE = B.BUSINESS_TYPE AND W.BUSINESS_NAME=B.BUSINESS_NAME
+	AND W.BUSINESS_CLASS = B.BUSINESS_CLASS
+	AND W.SOBKZ=B.SOBKZ
+	LEFT JOIN WMS_C_QC_PLANT P ON P.WERKS = W.WERKS AND P.BUSINESS_NAME = W.BUSINESS_NAME AND P.DEL = '0'
+	AND P.START_DATE &lt;= #{TODAY} AND P.END_DATE >= #{TODAY}
+	WHERE S.MAT_DOC = #{VO_NO}
+	AND W.WERKS = #{WERKS}
+    AND W.WH_NUMBER = #{WH_NUMBER} 
+	AND W.CANCEL_FLAG = '0' 
+	AND (W.QTY_CANCEL = '' OR NVL(W.QTY_CANCEL,0) =0) ORDER BY W.WMS_ITEM_NO
+	</select>
+	<update id="updateWmsDocItemQtyCancel" parameterType="Map">
+	UPDATE WMS_CORE_WMSDOC_ITEM SET QTY_CANCEL = nvl(QTY_CANCEL,0)+#{QTY_WMS} WHERE ID = #{ID}
+	</update>
+	
+	<update id="updateWhBinUStorageUnit" parameterType="Map">
+	UPDATE WMS_CORE_WH_BIN SET U_STORAGE_UNIT = NVL(U_STORAGE_UNIT,0) + #{Q_QTY} WHERE ID = #{WBID}
+	</update>
+
+	<update id="updateLabelsStatus" parameterType="Map">
+	UPDATE WMS_CORE_LABEL SET LABEL_STATUS = #{LABEL_STATUS}
+	WHERE 1=1
+	<if test="LABELS != null and LABELS.size() > 0">
+	 AND 
+		<foreach collection="LABELS" item="l" open="(" close=")" separator="OR">
+			LABEL_NO = #{l}
+		</foreach>
+	</if>
+	</update>
+	
+	<select id="getReceiptInfoFromReturnItem" parameterType="Map" resultType="Map">
+	SELECT RECEIPT_NO,RECEIPT_ITEM_NO FROM WMS_OUT_RETURN_ITEM WHERE 
+	RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO}
+	</select>
+	<update id="updateInReceiptQty" parameterType="Map">
+	UPDATE WMS_IN_RECEIPT SET RETURNABLE_QTY = NVL(RETURNABLE_QTY,0) + #{QTY_WMS} , 
+	RETURN_QTY = NVL(RETURN_QTY,0) - #{QTY_WMS} 
+	WHERE RECEIPT_NO = #{RECEIPT_NO} AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+	</update>
+	<select id="queryInRhStock" parameterType="Map" resultType="Map">
+	SELECT * FROM WMS_IN_RH_STOCK WHERE WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} 
+	AND BATCH = #{BATCH} AND SOBKZ = #{SOBKZ} AND LIFNR = #{LIFNR}
+	</select>
+	<update id="updateInRhStock" parameterType="Map">
+	UPDATE WMS_IN_RH_STOCK SET RH_QTY = RH_QTY + #{QTY_WMS} WHERE WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} 
+	AND MATNR = #{MATNR} AND BATCH = #{BATCH} AND SOBKZ = #{SOBKZ} AND LIFNR = #{LIFNR}
+	</update>
+	<insert id="insertInRhStock" parameterType="Map">
+	INSERT INTO WMS_IN_RH_STOCK (ID,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,BATCH,UNIT,RH_QTY,SOBKZ,
+	LIFNR,LIKTX,DEL,CREATOR,CREATE_DATE) VALUES(SEQ_WMS_IN_RH_STOCK.nextval,#{WERKS},#{WH_NUMBER},#{LGORT},#{MATNR},
+	#{MAKTX},#{BATCH},#{UNIT},#{QTY_WMS},#{SOBKZ},#{LIFNR},#{LIKTX},'0',#{CREATOR},#{CREATE_DATE})
+	</insert>
+	<update id="updatePoHx" parameterType="Map">
+	UPDATE WMS_HX_PO SET SS124 = (NVL(SS124,0) - #{QTY_WMS} ,HX_QTY = (NVL(HX_QTY) - #{QTY_WMS} WHERE
+	WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} AND LIFNR = #{LIFNR}
+	</update>
+	<update id="updateToHx" parameterType="Map">
+	UPDATE WMS_HX_TO SET SS304DB = (NVL(SS304DB,0) - #{QTY_WMS},HX_QTY = (NVL(HX_QTY) - #{QTY_WMS} WHERE
+	WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} AND LIFNR = #{LIFNR}
+	</update>
+	<delete id="delSapJobItem" parameterType="Map">
+	DELETE FROM WMS_JOB_SAP_ITEM WHERE SAP_JOB_NO = 
+	(SELECT SAP_JOB_NO FROM WMS_JOB_SAP_HEAD WHERE REF_WMS_NO = #{WMS_NO})
+	</delete>
+	<delete id="delSapJobHead" parameterType="Map">
+	DELETE FROM WMS_JOB_SAP_HEAD WHERE REF_WMS_NO = #{WMS_NO}
+	</delete>
+	<update id="updateCoreStockFreeze" parameterType="Map">
+	UPDATE WMS_CORE_STOCK SET FREEZE_QTY = FREEZE_QTY + #{QTY_WMS} WHERE
+	WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} AND LIFNR = #{LIFNR} AND SOBKZ = #{SOBKZ}
+	</update>
+	<update id="updateCoreStockStockQty" parameterType="Map">
+	UPDATE WMS_CORE_STOCK SET STOCK_QTY = STOCK_QTY - #{QTY_WMS} WHERE
+	WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} 
+	AND LGORT = #{LGORT} AND BATCH = #{BATCH} AND BIN_CODE = #{BIN_CODE}
+	AND LIFNR = #{LIFNR} AND SOBKZ = #{SOBKZ}
+	</update>
+	
+	<update id="updateSapMoComponentTLQty" parameterType="Map">
+	UPDATE WMS_SAP_MO_COMPONENT SET TL_QTY = TL_QTY + #{QTY_WMS} WHERE
+	WERKS = #{WERKS} AND AUFNR = #{MO_NO} AND POSNR = #{MO_ITEM_NO} AND MATNR = #{MATNR} AND SOBKZ = #{SOBKZ}
+	</update>
+	<select id="getCancelBussinessType" parameterType="Map" resultType="Map">
+	SELECT DISTINCT BUSINESS_TYPE AS BUSINESS_TYPE FROM WMS_IN_RECEIPT WHERE RECEIPT_NO = 
+	(SELECT RECEIPT_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	</select>
+	<update id="updateInReceiptWhReturnQty" parameterType="Map">
+	UPDATE WMS_IN_RECEIPT SET WH_RETURN_QTY = (NVL(WH_RETURN_QTY,0) + #{QTY_WMS} WHERE
+	RECEIPT_NO = 
+	(SELECT RECEIPT_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	AND RECEIPT_ITEM_NO = 
+	(SELECT RECEIPT_ITEM_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	</update>
+	<update id="updateInBoundCancelQty" parameterType="Map">
+	UPDATE WMS_IN_INBOUND_ITEM SET QTY_CANCEL = (NVL(QTY_CANCEL,0) + #{QTY_WMS} WHERE
+	INBOUND_NO = 
+	(SELECT INBOUND_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	AND INBOUND_ITEM_NO = 
+	(SELECT INBOUND_ITEM_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	</update>
+	
+	<update id="updateCoreStockCancelQty" parameterType="Map">
+	UPDATE WMS_CORE_STOCK SET STOCK_QTY=NVL(STOCK_QTY,0)-#{QTY_WMS} WHERE WERKS=#{WERKS} AND WH_NUMBER=#{WH_NUMBER} 
+	AND MATNR=#{MATNR} AND BATCH=#{BATCH}
+	<if test="LIFNR !=null and LIFNR !='' ">
+    AND LIFNR=#{LIFNR} 
+    </if>
+    <if test="LGORT !=null and LGORT !='' ">
+    AND LGORT=#{LGORT} 
+    </if>
+    <if test="SOBKZ !=null and SOBKZ !='' ">
+    AND SOBKZ=#{SOBKZ} 
+    </if>
+    <if test="BIN_CODE !=null and BIN_CODE !='' ">
+    AND BIN_CODE=#{BIN_CODE}
+    </if>
+	</update>
+	
+	<update id="updateInBoundItemRealQty" parameterType="Map">
+	UPDATE WMS_IN_INBOUND_ITEM SET QTY_CANCEL=NVL(QTY_CANCEL,0)+#{QTY_WMS} WHERE INBOUND_NO=#{INBOUND_NO} AND INBOUND_ITEM_NO=#{INBOUND_ITEM_NO}
+	</update>
+	
+	<update id="updateInReceiptInfo" parameterType="Map">
+		UPDATE WMS_IN_RECEIPT SET 
+		<if test="QC_RESULT =='01'">
+		INABLE_QTY=NVL(INABLE_QTY,0)+#{QTY_WMS},
+		WH_RETURN_QTY=NVL(WH_RETURN_QTY,0)+#{QTY_WMS}
+			<if test="BIN_CODE =='SZ'">
+			,TRY_IN_QTY=NVL(TRY_IN_QTY,0)-#{QTY_WMS}
+			</if>
+		</if>
+		<if test="QC_RESULT =='02'">
+		RETURNABLE_QTY=NVL(RETURNABLE_QTY,0)+#{QTY_WMS},
+		WH_RETURN_QTY=NVL(WH_RETURN_QTY,0)+#{QTY_WMS}
+		</if>
+		WHERE RECEIPT_NO=#{RECEIPT_NO} AND RECEIPT_ITEM_NO=#{RECEIPT_ITEM_NO}
+	</update>
+	
+	<select id="queryInbondHeadQcResult" parameterType="Map" resultType="Map">
+       SELECT M.QC_RESULT,N.BIN_CODE FROM WMS_IN_INBOUND_HEAD M,WMS_IN_INBOUND_ITEM N 
+       WHERE M.INBOUND_NO=N.INBOUND_NO AND RECEIPT_NO=#{RECEIPT_NO} and RECEIPT_ITEM_NO=#{RECEIPT_ITEM_NO}
+	</select>
+	
+	<update id="updateHXPO" parameterType="Map">
+		update WMS_HX_PO set SS106=nvl(SS106,0)+#{QTY_WMS} where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER} 
+		and EBELN=#{PO_NO} and EBELP=#{PO_ITEM_NO}
+	</update>
+	
+	<update id="updateHXMOITEM" parameterType="Map">
+		UPDATE WMS_HX_MO_ITEM SET SS102M=NVL(SS102M,0)+#{QTY_WMS} where WERKS=#{WERKS} and WH_NUMBER=#{WH_NUMBER} 
+        AND AUFNR=#{MO_NO} AND POSNR=#{MO_ITEM_NO}
+	</update>
+	
+	<update id="updateHXMOCOMPONENT" parameterType="Map">
+		UPDATE WMS_HX_MO_COMPONENT SET SS532=NVL(SS532,0)+#{QTY_WMS} WHERE WERKS=#{WERKS} 
+		AND AUFNR=#{MO_NO} AND RSNUM=#{RSNUM} AND RSPOS=#{RSPOS}
+	</update>
+	
+	<update id="updateWmsDocItemQtyCancel_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_CORE_WMSDOC_ITEM  SET QTY_CANCEL = cast(nvl(QTY_CANCEL,0) as number)+cast(#{d.QTY_WMS} as number)
+			WHERE ID = #{d.ID}
+		</foreach>	
+	</update>
+	
+	<update id="deleteInReceipt_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_IN_RECEIPT SET DEL='X' 
+			WHERE RECEIPT_NO=#{d.RECEIPT_NO} AND RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+		</foreach>		
+	</update>
+	
+	<update id="deleteLable_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_CORE_LABEL SET DEL='X' 
+			WHERE RECEIPT_NO=#{d.RECEIPT_NO} AND RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+		</foreach>	
+	</update>
+	
+	<update id="deleteQCItem_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_QC_INSPECTION_ITEM SET DEL='X' 
+			WHERE RECEIPT_NO=#{d.RECEIPT_NO} AND RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+		</foreach>
+	</update>
+	
+	<update id="deleteQCHead" parameterType="Map">
+		UPDATE WMS_QC_INSPECTION_HEAD SET DEL='X'
+		WHERE INSPECTION_NO = (
+			SELECT  INSPECTION_NO FROM WMS_QC_INSPECTION_ITEM
+			WHERE RECEIPT_NO=#{RECEIPT_NO} AND rownum=1
+		)
+		AND not exists (
+			SELECT ID FROM WMS_QC_INSPECTION_ITEM WHERE nvl(DEL,'0')!='X'
+			AND RECEIPT_NO = 	#{RECEIPT_NO}
+		)
+	</update>
+	
+	<update id="deleteQCResult_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_QC_RESULT SET DEL='X' 
+			WHERE INSPECTION_NO=#{d.INSPECTION_NO} AND INSPECTION_ITEM_NO=#{d.INSPECTION_ITEM_NO}
+		</foreach>
+	</update>
+	
+	<update id="updateDeleteInRhStock_Batch" parameterType="list">
+		merge into WMS_IN_RH_STOCK r using(
+			select a.WERKS,a.WH_NUMBER,a.LGORT,a.MATNR,a.BATCH,sum(a.RH_QTY) RH_QTY,a.LIFNR,a.SOBKZ from (
+				<foreach collection="list" item="d" index="index" separator="union all">
+				select #{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT,#{d.MATNR} MATNR,#{d.BATCH} BATCH,#{d.QTY_WMS} RH_QTY,#{d.LIFNR} LIFNR,#{d.SOBKZ} SOBKZ
+				from dual
+				</foreach>) a group by a.WERKS,a.WH_NUMBER,a.LGORT,a.MATNR,a.BATCH,a.LIFNR,a.SOBKZ
+		)tmp on (r.WERKS=tmp.WERKS and r.WH_NUMBER=tmp.WH_NUMBER and r.LGORT=tmp.LGORT and r.MATNR=tmp.MATNR and r.BATCH=tmp.BATCH and r.LIFNR=tmp.LIFNR and r.SOBKZ=tmp.SOBKZ)
+		when matched then
+			update set r.RH_QTY=cast(nvl(r.RH_QTY,0) as number)-cast(nvl(tmp.RH_QTY,0) as number)
+			DELETE where (r.WERKS=tmp.WERKS and r.WH_NUMBER=tmp.WH_NUMBER and r.LGORT=tmp.LGORT and r.MATNR=tmp.MATNR and r.BATCH=tmp.BATCH and r.LIFNR=tmp.LIFNR and r.SOBKZ=tmp.SOBKZ
+			and cast(nvl(r.RH_QTY,0) as number)-cast(nvl(tmp.RH_QTY,0) as number)&lt;=0)
+	</update>
+	
+	<update id="updateHXPO_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_HX_PO SET HX_QTY=nvl(HX_QTY,0)+cast(nvl(#{d.QTY_WMS},0) as number),
+			SS104=nvl(SS104,0)+cast(nvl(#{d.QTY_WMS},0) as number)
+			WHERE EBELN=#{d.PO_NO} AND EBELP=#{d.PO_ITEM_NO} AND MATNR=#{d.MATNR} AND nvl(CANCEL_FLAG,'0') !='X'
+		</foreach>
+	</update>
+	
+	<update id="updateHXPO_Cancel" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_HX_PO SET HX_QTY=nvl(HX_QTY,0)-cast(nvl(#{d.QTY_WMS},0) as number),
+			XS102=nvl(XS102,0)+cast(nvl(#{d.QTY_WMS},0) as number)
+			WHERE EBELN=#{d.PO_NO} AND EBELP=#{d.PO_ITEM_NO} AND MATNR=#{d.MATNR} AND nvl(CANCEL_FLAG,'0') !='X'
+		</foreach>
+	</update>
+	
+	<update id="updateHXDN_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_HX_DN SET HX_QTY_XS=nvl(HX_QTY_XS,0)+cast(nvl(#{d.QTY_WMS},0) as number),
+			SS124T=nvl(SS124T,0)+cast(nvl(#{d.QTY_WMS},0) as number)
+			WHERE EBELN=#{d.PO_NO} AND EBELP=#{d.PO_ITEM_NO} AND MATNR=#{d.MATNR} AND nvl(CANCEL_FLAG,'0') !='X'
+		</foreach>
+	</update>
+	
+	<update id="updateHXTO_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_HX_TO SET HX_QTY_XS=nvl(HX_QTY_XS,0)+cast(nvl(#{d.QTY_WMS},0) as number),
+			SF304=nvl(SF304,0)+cast(nvl(#{d.QTY_WMS},0) as number)
+			WHERE SAP_MATDOC_NO=#{d.SAP_MATDOC_NO} AND SAP_MATDOC_ITEM_NO=#{d.SAP_MATDOC_ITEM_NO} AND MATNR=#{d.MATNR} 
+		</foreach>
+	</update>
+	
+	<update id="updateHXTO_Cancel" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_HX_TO SET HX_QTY_XS=nvl(HX_QTY_XS,0)-cast(nvl(#{d.QTY_WMS},0) as number),
+			XS306=nvl(XS306,0)+cast(nvl(#{d.QTY_WMS},0) as number)
+			WHERE SAP_MATDOC_NO=#{d.SAP_MATDOC_NO} AND SAP_MATDOC_ITEM_NO=#{d.SAP_MATDOC_ITEM_NO} AND MATNR=#{d.MATNR} 
+		</foreach>
+	</update>
+	
+	<update id="updateOrInsertRhStock" parameterType="list">
+		merge into WMS_IN_RH_STOCK s using(
+		select m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,
+		m.BATCH,sum(cast(nvl(m.QTY_WMS,0) as number)) QTY_WMS,m.SOBKZ,m.UNIT,m.LIFNR,m.LIKTX,'0' DEL,m.CREATOR,m.CREATE_DATE,
+		m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select 
+		#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+		#{d.BATCH} BATCH,#{d.UNIT} UNIT,#{d.QTY_WMS} QTY_WMS,#{d.SOBKZ} SOBKZ,#{d.LIFNR} LIFNR,
+		#{d.LIKTX} LIKTX,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE
+		from dual
+		</foreach>
+		) m 
+		group by m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.BATCH,m.SOBKZ,m.UNIT,m.LIFNR,m.LIKTX,m.CREATOR,m.CREATE_DATE,
+		m.EDITOR,m.EDIT_DATE
+		) tmp 
+		on (tmp.WERKS=s.WERKS and tmp.WH_NUMBER=s.WH_NUMBER 
+		and tmp.MATNR=s.MATNR and tmp.BATCH=s.BATCH and tmp.SOBKZ=s.SOBKZ and tmp.LIFNR=s.LIFNR and tmp.LGORT=s.LGORT)
+		when matched then 
+			update  set s.RH_QTY=s.RH_QTY+to_number(nvl(tmp.QTY_WMS,0)),s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then 
+			insert (ID,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,BATCH,UNIT,RH_QTY,SOBKZ,LIFNR,
+			LIKTX,DEL,CREATOR,CREATE_DATE) 
+			VALUES (SEQ_WMS_IN_RH_STOCK.nextval,tmp.WERKS,tmp.WH_NUMBER,tmp.LGORT,tmp.MATNR,tmp.MAKTX,
+			tmp.BATCH,tmp.UNIT,tmp.QTY_WMS,tmp.SOBKZ,tmp.LIFNR,tmp.LIKTX,'0',tmp.CREATOR,tmp.CREATE_DATE
+			)
+	</update>
+	<select id="getInboundInfoByInboundNo" parameterType="Map" resultType="Map">
+		   select inbound_no,inbound_item_no,bin_code_shelf,bin_code,auto_putaway_flag from wms_in_inbound_item
+		   where del='0' and inbound_no = #{INBOUND_NO}
+		     and inbound_item_no = #{INBOUND_ITEM_NO}
+	</select>
+	
+	<select id="getwmsWhTaskByInboundNo" parameterType="Map" resultType="Map">
+		   select * from wms_core_wh_task where del='0' 
+		   and reference_delivery_no=#{INBOUND_NO} and reference_delivery_item=#{INBOUND_ITEM_NO}
+	</select>
+	
+	<select id="getReceiptInfoByreceiptNo" parameterType="Map" resultType="Map">
+		   select * from wms_in_receipt where del='0' 
+		   and receipt_no=#{RECEIPT_NO} and receipt_item_no=#{RECEIPT_ITEM_NO}
+	</select>
+	
+	<delete id="delStockLabelByList" parameterType="list">
+		
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			DELETE FROM WMS_CORE_STOCK_LABEL WHERE LABEL_NO = #{d.LABEL_NO}
+		</foreach>
+	</delete>
+	
+	<select id="getCoreStockByCond" parameterType="Map" resultType="Map">
+		select sum(nvl(stock_qty,0)) STOCK_QTY from wms_core_stock 
+		WHERE WERKS=#{WERKS} AND WH_NUMBER=#{WH_NUMBER} 
+		AND MATNR=#{MATNR} AND BATCH=#{BATCH}
+		<if test="LIFNR !=null and LIFNR !='' ">
+	    AND LIFNR=#{LIFNR} 
+	    </if>
+	    <if test="LGORT !=null and LGORT !='' ">
+	    AND LGORT=#{LGORT} 
+	    </if>
+	    <if test="SOBKZ !=null and SOBKZ !='' ">
+	    AND SOBKZ=#{SOBKZ} 
+	    </if>
+	    <if test="BIN_CODE !=null and BIN_CODE !='' ">
+	    AND BIN_CODE=#{BIN_CODE}
+	    </if>
+	</select>
+	
+	<select id="getCoreStockInfoByCond" parameterType="Map" resultType="Map">
+		select * from wms_core_stock 
+		WHERE WERKS=#{WERKS} AND WH_NUMBER=#{WH_NUMBER} 
+		AND MATNR=#{MATNR} AND BATCH=#{BATCH}
+		<if test="LIFNR !=null and LIFNR !='' ">
+	    AND LIFNR=#{LIFNR} 
+	    </if>
+	    <if test="LGORT !=null and LGORT !='' ">
+	    AND LGORT=#{LGORT} 
+	    </if>
+	    <if test="SOBKZ !=null and SOBKZ !='' ">
+	    AND SOBKZ=#{SOBKZ} 
+	    </if>
+	    <if test="BIN_CODE !=null and BIN_CODE !='' ">
+	    AND BIN_CODE=#{BIN_CODE}
+	    </if>
+	</select>
+
+</mapper>

@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.product.dao.ZzjJTOperationDao">
+   <select id="getJTPlanList" resultType="Map" parameterType="Map">
+   		SELECT *  FROM (
+		SELECT mpi.id,mpi.id plan_item_id,mpi.`no`,mpi.plan_quantity,mpi.plan_date,mpi.plan_process,mpi.zzj_no,pi.zzj_name,pi.id zzj_pmd_items_id,
+		case mpi.status when '1' then '已锁定' when '2' then '生产中' when '3' then '已完成' end as status,mpi.machine,mph.werks,mph.workshop,mph.line,
+		mph.werks_name,mph.workshop_name,mph.line_name,pi.process_sequence, p.quantity plan_batch_qty,
+		mph.zzj_plan_batch,pi.process_flow,pi.quantity single_qty,pi.specification,pi.filling_size,pi.process_machine,
+		concat(o.order_no,' ',o.order_name,o.bus_type_code,' ',o.order_qty,'台') order_desc,o.id order_id,o.order_no,pi.material_no,pi.aperture,
+		pi.use_workshop,pi.process,pi.assembly_position,pi.subcontracting_type,pi.accuracy_demand,
+		CASE WHEN e.exception_str IS NOT NULL THEN e.exception_str 
+		ELSE '无异常' END AS exception_str 
+		FROM ZZJ_MACHINE_PLAN_ITEMS mpi
+		LEFT JOIN ZZJ_MACHINE_PLAN_HEAD mph ON mpi.machine_plan_head_id=mph.id
+		LEFT JOIN ZZJ_PMD_ITEMS pi ON  mpi.zzj_pmd_items_id=pi.id
+		LEFT JOIN ZZJ_WERKS_ORDER o ON o.order_no=mph.order_no
+		LEFT JOIN ZZJ_PLAN p ON p.werks=mph.werks and p.workshop=mph.workshop and p.line=mph.line 
+		and p.order_no = mph.order_no and p.batch = mph.zzj_plan_batch
+		LEFT JOIN (
+			SELECT pe.zzj_pmd_items_id,GROUP_CONCAT(
+					CASE WHEN pe.exception_type_code IS NOT NULL AND pe.process_date>0 THEN '已处理' 
+					WHEN pe.exception_type_code IS NOT NULL AND (pe.process_date IS NULL OR pe.process_date ='') 
+					THEN '未处理' ELSE '无异常' END) AS exception_str
+			FROM
+			ZZJ_PRODUCTION_EXCEPTION pe 
+			GROUP BY pe.zzj_pmd_items_id
+		) e ON mpi.zzj_pmd_items_id = e.zzj_pmd_items_id 
+		WHERE mpi.machine=#{machine_code} and mpi.plan_process=#{process} and mpi.`status` in ('1','2')
+		<if test="order_no !=null and order_no !='' ">
+			and mph.order_no = #{order_no}
+		</if>
+		<if test="zzj_no !=null and zzj_no !='' ">
+			and mpi.zzj_no = #{zzj_no}
+		</if>	
+		<if test="batch !=null and batch !='' ">
+			and mph.zzj_plan_batch = #{batch}
+		</if>
+		<if test="accuracy_demand !=null and accuracy_demand !='' ">
+			and pi.accuracy_demand like concat('%', #{accuracy_demand} ,'%' )
+		</if>
+		<if test="specification !=null and specification !='' ">
+			and pi.specification like concat('%', #{specification} ,'%' )
+		</if>
+		<if test="subcontracting_type !=null and subcontracting_type !='' ">
+			and LOCATE(pi.subcontracting_type , #{subcontracting_type} )>0
+		</if>	
+		<if test="process_sequence !=null and process_sequence !='' ">
+			and pi.process_sequence like concat('%', #{process_sequence} ,'%' )
+		</if>	
+		) tmp
+		<if test="orderBy !=null and orderBy !='' ">
+			ORDER BY ${orderBy}
+		</if>
+		<if test="orderBy==null or orderBy=='' ">
+			ORDER BY plan_date asc,zzj_no
+		</if>
+	</select>
+	
+	<select id="getPmdItems" parameterType="Map"  resultType="Map">
+		SELECT t.zzj_pmd_items_id,t.zzj_name,t.quantity,t.assembly_position,t.process,t.`no`,t.machine,t.process use_process,#{process_name} process_name,
+		substring_index(substring_index(concat(t.process_flow,'-'),concat('-', #{process_name} ,'-'),1),'-',-1) last_process,
+		t.process_flow,t.order_desc,t.batch_quantity,t.product_order,t.plan_item_id,ifnull(t.prod_quantity,0) prod_quantity,t.plan_quantity,t.plan_date,
+		sum(t.ecn_qty) as ecn_qty,t.qm_test_id,t.material_no,
+		<!-- sum(case when t.to_no &lt; t.batch_quantity and ifnull(t.to_no,0)>0 then (t.to_no-t.from_no+1)*t.single_qty
+		when t.from_no  &lt; t.batch_quantity and t.to_no>t.batch_quantity and ifnull(t.to_no,0)>0 then (t.batch_quantity-t.from_no+1)*t.single_qty
+		end) as ecn_qty, -->		
+		(select sum(ifnull(pi.prod_quantity,0)) from ZZJ_MACHINE_PLAN_ITEMS pi 
+		left join ZZJ_MACHINE_PLAN_HEAD ph on ph.id=pi.machine_plan_head_id
+		where pi.zzj_pmd_items_id=t.zzj_pmd_items_id  
+		and ph.zzj_plan_batch = #{zzj_plan_batch} 
+		and pi.plan_process=substring_index(substring_index(concat(t.process_flow,'-'),concat('-', #{process_name} ,'-'),1),'-',-1))  as last_prod_quantity,
+		#{zzj_plan_batch} zzj_plan_batch,
+		(select pi.machine_plan_head_id 
+		from ZZJ_MACHINE_PLAN_ITEMS pi  
+		left join ZZJ_MACHINE_PLAN_HEAD ph on ph.id=pi.machine_plan_head_id
+		where zzj_pmd_items_id=t.zzj_pmd_items_id  
+		and ph.zzj_plan_batch = #{zzj_plan_batch}
+		and pi.plan_process=substring_index(substring_index(concat(t.process_flow,'-'),concat('-', #{process_name} ,'-'),1),'-',-1) 
+		limit 1 ) as last_plan_head_id
+		from(
+		SELECT i.id zzj_pmd_items_id, i.zzj_name,i.quantity,i.assembly_position,i.material_no,
+		<!-- e.to_no,e.from_no,e.quantity single_qty, -->
+		i.process,i.process_flow,i.`no`,#{machine} machine,
+		(select sum(
+		case WHEN p.from_no >= e.from_no AND p.to_no &lt;= e.to_no THEN (p.to_no-p.from_no+1)*e.quantity
+		     WHEN p.from_no >= e.from_no AND p.from_no &lt;= e.to_no AND p.to_no >= e.to_no THEN (e.to_no-p.from_no+1)*e.quantity
+		     WHEN p.from_no &lt;= e.from_no AND p.to_no >= e.to_no THEN (e.to_no-e.from_no+1)*e.quantity
+		     WHEN p.from_no &lt;= e.from_no AND p.to_no >= e.from_no  AND p.to_no &lt;= e.to_no THEN (e.to_no-p.to_no+1)*e.quantity
+		     else 0
+		end) from ZZJ_PMD_ECN e
+		where e.zzj_pmd_items_id=i.id ) as ecn_qty,
+		(select CONCAT(o.order_no,' ',o.order_desc) from ZZJ_WERKS_ORDER o where o.order_no= #{order_no} ) as order_desc,
+		(SELECT p.quantity from ZZJ_PLAN p 
+		where p.order_no= #{order_no}  and p.werks= #{werks} and p.batch= #{zzj_plan_batch}  and p.workshop= #{workshop} and p.line= #{line} )
+		as batch_quantity,
+		(SELECT product_order from ZZJ_MACHINE_PLAN_ITEMS WHERE zzj_pmd_items_id=i.id
+		order by create_date asc limit 1) as product_order,		
+		pi.id as plan_item_id, pi.plan_date,pi.prod_quantity,pi.plan_quantity,
+		(SELECT id from ZZJ_QM_TEST_RECORD_HEAD where werks=#{werks} and order_no= #{order_no} and workshop = #{workshop} 
+		and zzj_no= #{zzj_no}  and zzj_plan_batch= #{zzj_plan_batch}  limit 1) as qm_test_id
+		FROM ZZJ_PMD_ITEMS i
+		JOIN ZZJ_PLAN p on p.werks = #{werks} and p.workshop = #{workshop} and p.line = #{line}  and p.order_no = #{order_no} 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id	
+		LEFT JOIN (
+			select pi.id,pi.plan_date,pi.prod_quantity,pi.plan_quantity,zzj_pmd_items_id  
+			from ZZJ_MACHINE_PLAN_ITEMS pi
+			left join ZZJ_MACHINE_PLAN_HEAD ph on ph.id=pi.machine_plan_head_id
+			where pi.zzj_no=#{zzj_no}  and plan_process= #{process_name} and machine= #{machine}  
+			and ph.werks = #{werks} and ph.workshop = #{workshop} and ph.line = #{line}  and ph.order_no = #{order_no}  and ph.zzj_plan_batch=#{zzj_plan_batch}
+		) pi on pi.zzj_pmd_items_id=i.id 
+		WHERE i.zzj_no= #{zzj_no}  and h.order_no= #{order_no}  and h.werks= #{werks} and h.workshop= #{workshop} 
+		and h.line=#{line} and p.batch=#{zzj_plan_batch}
+		and locate(concat('-', #{process_name} ,'-'),concat('-',i.process_flow,'-'))>0  
+		) t 
+		group by t.zzj_pmd_items_id
+	</select>
+	
+	<select id="getJTPlanListByZzj" parameterType="List" resultType="String">
+		SELECT distinct i.zzj_pmd_items_id
+		FROM ZZJ_MACHINE_PLAN_ITEMS i
+		LEFT JOIN ZZJ_MACHINE_PLAN_HEAD h on h.id= i.machine_plan_head_id
+		WHERE
+		<foreach collection="list" item="d" open="" close=" " separator=" or ">
+			( i.zzj_pmd_items_id=#{d.zzj_pmd_items_id} and i.machine=#{d.machine} and h.zzj_plan_batch =#{d.zzj_plan_batch} )
+		</foreach>
+		
+	</select>
+	
+	<select id="getMachineAchieve" parameterType="Map" resultType="Map">
+	SELECT ifnull(a.need_qty,0) need_qty,ifnull(b.done_qty,0) done_qty
+	from( 
+	SELECT count(distinct i.id) need_qty
+	FROM ZZJ_PMD_ITEMS i
+	LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+	WHERE locate(concat('-',#{process} ,'-'),concat('-',i.process_flow,'-'))>0 and h.werks = #{werks}
+	and h.order_no= #{order_no}
+	)a,
+	(
+	SELECT count(distinct i.zzj_pmd_items_id) done_qty
+	FROM ZZJ_MACHINE_PLAN_ITEMS i
+	LEFT JOIN ZZJ_MACHINE_PLAN_HEAD h ON h.id=i.machine_plan_head_id
+	WHERE h.order_no = #{order_no} and h.werks= #{werks} and i.machine= #{machine}  and i.`status`='3'
+	)b
+	</select>
+	
+	<select id="getJTPlanHeadList"  parameterType="List" resultType="String">
+		SELECT concat(h.order_no,';',h.werks,';',h.workshop,';',h.line,';',h.zzj_plan_batch) as head_key
+		FROM ZZJ_MACHINE_PLAN_HEAD h
+		where 
+		<foreach collection="list" item="d" open=" " close=" " separator=" or ">
+			(h.order_no = #{d.order_no} and h.werks= #{d.werks} and h.workshop = #{d.workshop}
+			and h.line = #{d.line} and h.zzj_plan_batch = #{d.zzj_plan_batch} )
+		</foreach>
+	</select>
+	
+	<insert id="saveJTPlanHead" parameterType="List" >
+		insert into ZZJ_MACHINE_PLAN_HEAD (order_no,werks,werks_name,workshop,workshop_name,line,line_name,zzj_plan_batch,creator,create_date)
+		values 
+		<foreach collection="list" item="d" open=" " close=" " separator=" ,">
+			(#{d.order_no},#{d.werks},#{d.werks_name},#{d.workshop},#{d.workshop_name},#{d.line},#{d.line_name},#{d.zzj_plan_batch},#{d.creator},#{d.create_date})
+		</foreach>
+	</insert>
+	
+	<insert id="saveJTPlanItems" parameterType="List">
+		insert into ZZJ_MACHINE_PLAN_ITEMS (machine_plan_head_id,zzj_pmd_items_id,no,zzj_no,plan_process,plan_quantity,machine,plan_date,status,
+		product_order,creator,create_date) values
+		<foreach collection="list" item="d" open=" " close=" " separator=" ,">
+			((select h.id from ZZJ_MACHINE_PLAN_HEAD h where h.order_no = #{d.order_no} and h.werks= #{d.werks} and h.workshop = #{d.workshop}
+			and h.line = #{d.line} and h.zzj_plan_batch = #{d.zzj_plan_batch}),#{d.zzj_pmd_items_id},#{d.no},#{d.zzj_no},#{d.plan_process},#{d.plan_quantity},
+			#{d.machine},#{d.plan_date},'1',#{d.product_order},#{d.creator},#{d.create_date})
+		</foreach>
+	</insert>
+	
+	<select id="getJTOutputListByZzj" parameterType="List" resultType="String">
+		SELECT distinct i.zzj_pmd_items_id
+		FROM ZZJ_MACHINE_PLAN_ITEMS i
+		LEFT JOIN ZZJ_PMD_ITEMS pi ON i.zzj_pmd_items_id=pi.id
+		LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph on ph.id= i.machine_plan_head_id
+		WHERE i.prod_quantity>0  and ph.zzj_plan_batch=#{list[0].zzj_plan_batch} 
+		and i.plan_process=substring_index(substring_index(concat(pi.process_flow,'-'),concat('-', #{list[0].process_name} ,'-'),1),'-',-1)
+		<foreach collection="list" item="d" open=" and " close=" " separator=" or ">
+			( i.zzj_pmd_items_id=#{d.zzj_pmd_items_id})
+		</foreach>
+		
+	</select>
+	
+	<insert id="saveZzjOutputData" parameterType="List" >
+		insert into ZZJ_OUTPUT (zzj_pmd_items_id,machine_plan_items_id,output_type,order_no,werks,werks_name,workshop,workshop_name,
+		line,line_name,zzj_no,process,workgroup,team,machine_code,zzj_plan_batch,product_date,quantity,productor,memo,creator,create_date)
+		values
+		<foreach collection="list" item="d" separator=",">
+			(#{d.zzj_pmd_items_id},#{d.plan_item_id},#{d.output_type},#{d.order_no},#{d.werks},#{d.werks_name},#{d.workshop},#{d.workshop_name},
+			#{d.line},#{d.line_name},#{d.zzj_no},#{d.process},#{d.workgroup_name},#{d.team_name},#{d.machine},#{d.zzj_plan_batch},#{d.product_date},
+			#{d.quantity},#{d.productor},#{d.memo},#{d.creator},#{d.create_date})
+		</foreach>
+	</insert>
+	
+	<select id="getCurrentProcessList" parameterType="List" resultType="String">
+		select concat(order_no, ';',werks, ';' ,workshop, ';' ,line, ';' ,zzj_plan_batch,';',zzj_pmd_items_id) 
+		from ZZJ_PMD_CURRENT_PROCESS h
+		where 
+		<foreach collection="list" item="d" open="  " close=" " separator=" or ">
+			(h.order_no= #{d.order_no} and h.werks= #{d.werks} and h.workshop = #{d.workshop}
+			and h.line = #{d.line} and h.zzj_plan_batch = #{d.zzj_plan_batch} and h.zzj_pmd_items_id = #{d.zzj_pmd_items_id})
+		</foreach>
+	</select>
+	
+	<update id="updateMachinePlanOutput" parameterType="List">
+		<foreach collection="list"  item="d" separator=";">
+			update ZZJ_MACHINE_PLAN_ITEMS set prod_quantity = ifnull(prod_quantity,0)+cast(#{d.quantity} as signed), 
+			piece_quantity =ifnull(piece_quantity,0) +cast(#{d.quantity} as signed),
+			status=(case when cast(prod_quantity as signed) >= cast(plan_quantity as signed) then '3' else '2' end)
+			where id=#{d.plan_item_id}
+		</foreach>
+	</update>
+	
+	<update id="saveZzjCurrentProcess" parameterType="List">
+		insert into ZZJ_PMD_CURRENT_PROCESS (order_no,werks,werks_name,workshop,workshop_name,line,line_name,
+		zzj_pmd_items_id,zzj_plan_batch,current_process,current_process_name,editor,edit_date)
+		values
+		<foreach collection="list" separator="," item="d">
+			(#{d.order_no},#{d.werks},#{d.werks_name},#{d.workshop},#{d.workshop_name},#{d.line},#{d.line_name},
+			#{d.zzj_pmd_items_id},#{d.zzj_plan_batch},#{d.process_code},#{d.process},#{d.creator},#{d.create_date})
+		</foreach>
+	</update>
+	
+	<update id="updateZzjCurrentProcess" parameterType="List">
+		<foreach collection="list"  item="d" separator=";">
+			update ZZJ_PMD_CURRENT_PROCESS set current_process=#{d.process_code},current_process_name=#{d.process},
+			editor=#{d.creator},edit_date=#{d.create_date}
+			where locate(concat('-', #{d.process} ,'-'), concat('-', #{d.process_flow} ,'-') )> locate(concat('-', current_process_name ,'-'), concat('-', #{d.process_flow} ,'-') )
+			and order_no=#{d.order_no} and werks = #{d.werks} and workshop= #{d.workshop} and line =#{d.line} and zzj_pmd_items_id = #{d.zzj_pmd_items_id}
+			and zzj_plan_batch = #{d.zzj_plan_batch}			
+		</foreach>
+	</update>
+	
+	<insert id="saveZzjOperRecord" parameterType="List" >
+		insert into ZZJ_PMD_OPERATE_RECORD (order_no,zzj_plan_batch,werks,werks_name,workshop,workshop_name,line,line_name,
+		zzj_pmd_items_id,operate_type,operate_location,operate_object,editor,edit_date) values
+		<foreach collection="list" separator="," item="d">
+		(#{d.order_no},#{d.zzj_plan_batch},#{d.werks},#{d.werks_name},#{d.workshop},#{d.workshop_name},#{d.line},#{d.line_name},
+		#{d.zzj_pmd_items_id},#{d.operate_type},#{d.machine},#{d.process},#{d.creator},#{d.create_date})
+		</foreach>
+	</insert>
+	
+	<select id="queryOutputRecordsCount" parameterType="Map" resultType="int">
+		SELECT count(o.id)
+		FROM ZZJ_OUTPUT o
+		LEFT JOIN ZZJ_PMD_ITEMS i on o.zzj_pmd_items_id=i.id
+		LEFT JOIN ZZJ_MACHINE_PLAN_ITEMS pi on o.machine_plan_items_id=pi.id
+		WHERE o.werks=#{werks} and o.workshop=#{workshop} 
+		and o.product_date>=concat(#{start_date},' 00:00:00')  and o.product_date &lt;= concat(#{end_date},' 23:59:59')
+		<if test="line !=null and line !='' ">
+			and o.line=#{line}
+		</if>
+		<if test="order_no !=null and order_no !='' ">
+			and o.order_no=#{order_no}
+		</if>
+		<if test="process !=null and process !='' ">
+			and o.process=#{process}
+		</if>
+		<if test="zzj_plan_batch !=null and zzj_plan_batch !='' ">
+			and o.zzj_plan_batch=#{zzj_plan_batch}
+		</if>
+		<if test="zzj_no !=null and zzj_no !='' ">
+			and ( o.zzj_no like concat('%',#{zzj_no},'%') or i.zzj_name like concat('%',#{zzj_no},'%') )
+		</if>
+		<if test="machine !=null and machine !='' ">
+			and o.machine_code like concat('%',#{machine},'%')
+		</if>
+		<if test="workgroup !=null and workgroup !='' ">
+			and o.workgroup=#{workgroup}
+		</if>
+		<if test="team !=null and team !='' ">
+			and o.team=#{team}
+		</if>
+		<if test="product_order !=null and product_order !='' ">
+			and pi.product_order=#{product_order}
+		</if>
+		<if test="productor !=null and productor !='' ">
+			and o.productor=#{productor}
+		</if>
+				
+	</select>
+	
+	<select id="queryOutputRecords" parameterType="Map" resultType="Map">
+		select * from( SELECT o.id,o.zzj_pmd_items_id,o.machine_plan_items_id,o.order_no,o.output_type,o.werks,o.werks_name,
+		 concat(o.order_no,' ',wo.order_desc) order_desc,
+		o.workshop,o.workshop_name,o.line,o.line_name,o.zzj_no,o.process,o.workgroup,o.team,o.machine_code,o.zzj_plan_batch,
+		o.product_date,o.quantity,o.productor,o.memo,pi.plan_quantity,
+		substring_index(substring_index(concat(i.process_flow,'-'),concat('-',o.process,'-'),1),'-',-1) last_process,
+		substring_index(substring_index(concat('-',i.process_flow,'-'),concat('-',o.process,'-'),-1),'-',1) next_process,
+		i.zzj_name,i.section,pi.product_order,i.material_no,i.process_flow,i.assembly_position,i.process user_process, i.process_name user_process_name,
+		case when ifnull(o.editor,'')='' then o.creator else o.editor end as editor,
+		case when ifnull(o.edit_date,'') ='' then o.create_date else o.edit_date end as edit_date 
+		FROM ZZJ_OUTPUT o
+		LEFT JOIN ZZJ_WERKS_ORDER wo on wo.order_no=o.order_no and wo.werks=o.werks
+		LEFT JOIN ZZJ_PMD_ITEMS i on o.zzj_pmd_items_id=i.id
+		LEFT JOIN ZZJ_MACHINE_PLAN_ITEMS pi on o.machine_plan_items_id=pi.id 
+		WHERE o.werks=#{werks} and o.workshop=#{workshop} 
+		and o.product_date>=concat(#{start_date},' 00:00:00')  and o.product_date &lt;= concat(#{end_date},' 23:59:59')
+		<if test="line !=null and line !='' ">
+			and o.line=#{line}
+		</if>
+		<if test="order_no !=null and order_no !='' ">
+			and o.order_no=#{order_no}
+		</if>
+		<if test="process !=null and process !='' ">
+			and o.process=#{process}
+		</if>
+		<if test="zzj_plan_batch !=null and zzj_plan_batch !='' ">
+			and o.zzj_plan_batch=#{zzj_plan_batch}
+		</if>
+		<if test="zzj_no !=null and zzj_no !='' ">
+			and ( o.zzj_no like concat('%',#{zzj_no},'%') or i.zzj_name like concat('%',#{zzj_no},'%') )
+		</if>
+		<if test="machine !=null and machine !='' ">
+			and o.machine_code like concat('%',#{machine},'%')
+		</if>
+		<if test="workgroup !=null and workgroup !='' ">
+			and o.workgroup=#{workgroup}
+		</if>
+		<if test="team !=null and team !='' ">
+			and o.team=#{team}
+		</if>
+		<if test="product_order !=null and product_order !='' ">
+			and pi.product_order=#{product_order}
+		</if>
+		<if test="productor !=null and productor !='' ">
+			and o.productor like concat('%',#{productor},'%') 
+		</if>
+		) tmp
+		<if test="orderBy !=null and orderBy !='' ">
+			ORDER BY  ${orderBy}
+	  	</if>
+	  	<if test="start !=null and length !=-1 ">
+			LIMIT #{start},#{length}
+		</if>
+	  		
+	</select>
+	
+	<select id="getPmdPlanOutInfo" parameterType="Map" resultType="Map">
+		SELECT a.*,ifnull(b.last_prod_qty,'0') last_prod_qty,ifnull(c.next_prod_qty,'0') next_prod_qty
+		from(
+		SELECT mpi.prod_quantity,mpi.plan_quantity
+		FROM ZZJ_MACHINE_PLAN_ITEMS mpi
+		WHERE mpi.id=#{machine_plan_items_id} and mpi.plan_process=#{process}
+		)a,
+		(SELECT sum(mpi.prod_quantity) last_prod_qty
+		FROM ZZJ_MACHINE_PLAN_ITEMS mpi 
+		WHERE mpi.zzj_pmd_items_id=#{zzj_pmd_items_id} and mpi.plan_process=#{last_process}
+		)b,
+		(SELECT sum(mpi.prod_quantity) next_prod_qty
+		FROM ZZJ_MACHINE_PLAN_ITEMS mpi 
+		WHERE mpi.zzj_pmd_items_id=#{zzj_pmd_items_id} and mpi.plan_process=#{next_process}
+		)c
+	</select>
+	
+	<update id="updatePmdOutput" parameterType="Map" >
+		update ZZJ_OUTPUT set quantity=#{quantity} ,editor=#{editor},edit_date=#{edit_date},product_date=#{product_date},productor=#{productor}
+		where id = #{id}
+	</update>
+	
+	<update id="updateMachinePlanOutputByItem" parameterType="Map" >
+		update ZZJ_MACHINE_PLAN_ITEMS set prod_quantity=prod_quantity-(cast(#{prod_quantity} as SIGNED)-cast(#{quantity} as SIGNED)),
+		piece_quantity = piece_quantity -(cast(#{prod_quantity} as SIGNED)-cast(#{quantity} as SIGNED)),
+		editor=#{editor},edit_date=#{edit_date},
+		status = (case when prod_quantity=0 then '1' 
+		when plan_quantity= prod_quantity then '3'
+		else '2' end)
+		where id=#{machine_plan_items_id}
+	</update>
+	<update id="updateMachinePlanByScrape" parameterType="Map" >
+		update ZZJ_MACHINE_PLAN_ITEMS set prod_quantity=prod_quantity-cast(#{scrape_quantity} as SIGNED),
+		editor=#{editor},edit_date=#{edit_date},status = #{plan_status}
+		where id=#{machine_plan_items_id}
+	</update>
+	<update id="updateZzjCurrentProcessByItem" parameterType="Map" >
+		UPDATE ZZJ_PMD_CURRENT_PROCESS set current_process_name=#{last_process}
+		where zzj_pmd_items_id=#{zzj_pmd_items_id} and EXISTS(
+		SELECT mpi.id
+		FROM ZZJ_MACHINE_PLAN_ITEMS mpi
+		LEFT JOIN ZZJ_MACHINE_PLAN_HEAD ph on ph.id=mpi.machine_plan_head_id
+		WHERE mpi.zzj_pmd_items_id=#{zzj_pmd_items_id} and ph.zzj_plan_batch=#{zzj_plan_batch}
+		and mpi.plan_process=#{process} and mpi.prod_quantity>0)
+	</update>
+	
+	<delete id="deletePmdOutput" parameterType="Map">
+		delete from ZZJ_OUTPUT where id =#{id}
+	</delete>
+	
+	<select id="queryCombRecords" parameterType="Map" resultType="Map">
+		select tmp.*,case when tmp.ecn_qty>0 then tmp.ecn_qty else  tmp.batch_plan_qty end as demand_quantity
+		from (
+		SELECT t.*,p.batch,pr.current_process,pr.current_process_name,p.from_no,p.to_no,p.quantity*t.quantity batch_plan_qty,p.quantity batch_qty,
+		(select sum(
+		case WHEN p.from_no >= e.from_no AND p.to_no &lt;= e.to_no THEN (p.to_no-p.from_no+1)*e.quantity
+		     WHEN p.from_no >= e.from_no AND p.from_no &lt;= e.to_no AND p.to_no >= e.to_no THEN (e.to_no-p.from_no+1)*e.quantity
+		     WHEN p.from_no &lt;= e.from_no AND p.to_no >= e.to_no THEN (e.to_no-e.from_no+1)*e.quantity
+		     WHEN p.from_no &lt;= e.from_no AND p.to_no >= e.from_no  AND p.to_no &lt;= e.to_no THEN (e.to_no-p.to_no+1)*e.quantity
+		     else 0
+		end)
+		from ZZJ_PMD_ECN e
+		where e.zzj_pmd_items_id=t.id ) as ecn_qty,
+		( select sum(mpi.plan_quantity) from ZZJ_MACHINE_PLAN_ITEMS mpi
+		left join ZZJ_MACHINE_PLAN_HEAD mph on mph.id=mpi.machine_plan_head_id
+		where mpi.zzj_pmd_items_id=t.id and mph.werks = #{werks} and mph.workshop= #{workshop} and mph.line = #{line}
+		and mph.order_no = #{order_no} and mph.zzj_plan_batch=p.batch and mpi.plan_process = pr.current_process_name
+		) as plan_quantity,
+		( select sum(mpi.prod_quantity) from ZZJ_MACHINE_PLAN_ITEMS mpi
+		left join ZZJ_MACHINE_PLAN_HEAD mph on mph.id=mpi.machine_plan_head_id
+		where mpi.zzj_pmd_items_id=t.id and mph.werks= #{werks}  and mph.workshop = #{workshop} and mph.line =  #{line}
+		and mph.order_no = #{order_no} and mph.zzj_plan_batch=p.batch  and mpi.plan_process = pr.current_process_name
+		) as prod_quantity
+		FROM (
+		SELECT i.id,i.no,i.mat_description,i.zzj_no,i.zzj_name,i.material_no,i.assembly_position,i.use_workshop,
+		i.process_flow,i.mat_type,i.quantity
+		FROM ZZJ_PMD_ITEMS i 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} and i.zzj_no=#{zzj_no}
+		
+		<if test='PMD_LEVEL.contains("L1") '>
+		UNION
+		SELECT i.id,i.no,i.mat_description,i.zzj_no,i.zzj_name,i.material_no,i.assembly_position,i.use_workshop,
+		i.process_flow,i.mat_type,i.quantity
+		FROM ZZJ_PMD_ITEMS i 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} 
+		and i.assembly_position in (
+		SELECT i.assembly_position
+		FROM ZZJ_PMD_ITEMS i
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} and i.zzj_no=#{zzj_no}
+		)
+		</if>
+		
+		<if test='PMD_LEVEL.contains("L0") '>		
+		UNION
+		SELECT i.id,i.no,i.mat_description,i.zzj_no,i.zzj_name,i.material_no,i.assembly_position,i.use_workshop,
+		i.process_flow,i.mat_type,i.quantity
+		FROM ZZJ_PMD_ITEMS i 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} 
+		and i.assembly_position in (
+		SELECT i.mat_description
+		FROM ZZJ_PMD_ITEMS i
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} and i.zzj_no=#{zzj_no}
+		)
+		</if>
+		
+		<if test='PMD_LEVEL.contains("L2") '>	
+		UNION
+		SELECT i.id,i.no,i.mat_description,i.zzj_no,i.zzj_name,i.material_no,i.assembly_position,i.use_workshop,
+		i.process_flow,i.mat_type,i.quantity
+		FROM ZZJ_PMD_ITEMS i 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} 
+		and i.mat_description in(
+		SELECT i.assembly_position
+		FROM ZZJ_PMD_ITEMS i
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} and i.zzj_no=#{zzj_no}
+		)		
+		</if>
+		
+		) t
+		JOIN ZZJ_PLAN p on p.werks = #{werks} and p.workshop = #{workshop} and p.line = #{line}  and p.order_no = #{order_no} 
+		LEFT JOIN ZZJ_PMD_CURRENT_PROCESS pr on pr.werks =  #{werks}  and pr.workshop = #{workshop} and pr.line = #{line} 
+		and pr.zzj_pmd_items_id=t.id and pr.zzj_plan_batch=p.batch and pr.order_no =  #{order_no}
+		where 1=1
+		<if test="zzj_plan_batch !=''  and  zzj_plan_batch !=null ">
+			and p.batch = #{zzj_plan_batch}
+		</if>
+		) tmp
+		<if test="orderBy !=null and orderBy !=''  and orderBy !='no'.toString()">
+			ORDER BY  ${orderBy}
+	  	</if>
+	  	<if test="orderBy ==null or orderBy ==''  or orderBy =='no'.toString() ">
+			ORDER BY cast(SUBSTRING_INDEX(no,'.',1) as SIGNED)
+	  	</if>
+	  	<if test="start !=null and length !=-1 ">
+			LIMIT #{start},#{length}
+		</if>
+	</select>
+	
+	<select id="queryCombRecordsCount" parameterType="Map" resultType="int">
+		SELECT count(t.id) FROM (
+		SELECT i.id,i.no,i.mat_description,i.zzj_no,i.zzj_name,i.material_no,i.assembly_position,i.use_workshop,
+		i.process_flow,i.mat_type,i.quantity
+		FROM ZZJ_PMD_ITEMS i 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} and i.zzj_no=#{zzj_no}	
+		
+		<if test='PMD_LEVEL.contains("L1") '>
+		UNION
+		SELECT i.id,i.no,i.mat_description,i.zzj_no,i.zzj_name,i.material_no,i.assembly_position,i.use_workshop,
+		i.process_flow,i.mat_type,i.quantity
+		FROM ZZJ_PMD_ITEMS i 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} 
+		and i.assembly_position in (
+		SELECT i.assembly_position
+		FROM ZZJ_PMD_ITEMS i
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} and i.zzj_no=#{zzj_no}
+		)
+		</if>
+		
+		<if test='PMD_LEVEL.contains("L0") '>		
+		UNION
+		SELECT i.id,i.no,i.mat_description,i.zzj_no,i.zzj_name,i.material_no,i.assembly_position,i.use_workshop,
+		i.process_flow,i.mat_type,i.quantity
+		FROM ZZJ_PMD_ITEMS i 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} 
+		and i.assembly_position in (
+		SELECT i.mat_description
+		FROM ZZJ_PMD_ITEMS i
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} and i.zzj_no=#{zzj_no}
+		)
+		</if>
+		
+		<if test='PMD_LEVEL.contains("L2") '>	
+		UNION
+		SELECT i.id,i.no,i.mat_description,i.zzj_no,i.zzj_name,i.material_no,i.assembly_position,i.use_workshop,
+		i.process_flow,i.mat_type,i.quantity
+		FROM ZZJ_PMD_ITEMS i 
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} 
+		and i.mat_description in(
+		SELECT i.assembly_position
+		FROM ZZJ_PMD_ITEMS i
+		LEFT JOIN ZZJ_PMD_HEAD h on h.id=i.pmd_head_id
+		WHERE h.werks = #{werks} and h.workshop = #{workshop} and h.line = #{line}  and h.order_no = #{order_no} and i.zzj_no=#{zzj_no}
+		)		
+		</if>		
+		) t
+		JOIN ZZJ_PLAN p on p.werks = #{werks} and p.workshop = #{workshop} and p.line = #{line}  and p.order_no = #{order_no} 
+		where 1=1
+		<if test="zzj_plan_batch !=''  and  zzj_plan_batch !=null ">
+			and p.batch = #{zzj_plan_batch}
+		</if>
+	</select>
+	
+	<insert id="insertVisualMachinePlan" parameterType="List" useGeneratedKeys="true" keyProperty="machine_plan_items_id">
+		insert into ZZJ_MACHINE_PLAN_ITEMS (machine_plan_head_id,zzj_pmd_items_id,zzj_no,plan_process,plan_quantity,prod_quantity,piece_quantity,
+		machine,plan_date,status,product_order,editor,edit_date,creator,create_date) values
+		<foreach collection="list" separator="," item="d">
+		(#{d.last_plan_head_id},#{d.zzj_pmd_items_id},#{d.zzj_no},#{d.process},#{d.quantity},#{d.quantity},#{d.quantity},
+		#{d.machine},#{d.product_date},'3',#{d.product_order},#{d.creator},#{d.create_date},#{d.creator},#{d.create_date})
+		</foreach>
+	</insert>
+
+	<select  id="getPmdBaseInfo" parameterType="Map" resultType="Map">
+		SELECT h.id,pi.zzj_name,pi.process_flow,pi.material_no
+		FROM ZZJ_PMD_HEAD h
+		LEFT JOIN ZZJ_PMD_ITEMS pi on h.id = pi.pmd_head_id
+		WHERE h.order_no = #{order_no} and h.werks = #{werks} and h.workshop= #{workshop} and h.line = #{line}
+		and pi.zzj_no = #{zzj_no}
+		limit 1
+	</select>
+
+	<select id="getPmdBindPlan" parameterType="Map" resultType="Map">
+		select pi.id,pi.plan_date,pi.prod_quantity,pi.plan_quantity,zzj_pmd_items_id  
+		from ZZJ_MACHINE_PLAN_ITEMS pi
+		left join ZZJ_MACHINE_PLAN_HEAD ph on ph.id=pi.machine_plan_head_id
+		where pi.zzj_no=#{zzj_no}  and plan_process= #{process_name} and ph.werks = #{werks} 
+		and ph.workshop = #{workshop} and ph.line = #{line}  and ph.order_no = #{order_no}  
+		and ph.zzj_plan_batch=#{zzj_plan_batch}
+	</select>
+</mapper>

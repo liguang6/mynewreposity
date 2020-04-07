@@ -1,0 +1,94 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>一步联动异常处理</title>
+<#include "/web_header.html">
+<head>
+</head>
+<body class="hold-transition " >
+	<div class="wrapper"  id="vue">
+		<div class="main-content">
+			<div class="box box-main">
+			<div class="box-body">
+			<form id="searchForm" action="${request.contextPath}/in/autoPutaway/loglist" method="post" class="form-inline" >
+				<div class="form-group" align="left">
+					<label class="control-label" style="width: 45px" ><span
+						class="required">*</span>工厂：</label>
+						<div class="control-inline" style="width: 80px;">
+							<select class="form-control" name="WERKS" id="WERKS"
+								onchange="vm.onPlantChange(event)"> 
+								<#list tag.getUserAuthWerks("AUTO_PUTAWAY_PROCESS") as factory> 
+									<option value="${factory.code}">${factory.code}</option> 
+								</#list>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label class="control-label" style="width: 60px"><span class="required">
+								*</span>仓库号：</label>
+						<div class="control-inline" style="width: 80px;">
+							<select class="form-control" v-model="WH_NUMBER" name="WH_NUMBER" id="WH_NUMBER" style="height: 28px;width: 60px;">
+								<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+	                    <label class="control-label" style="width: 50px">物料号：</label>
+						<div class="control-inline">
+							<div class="input-group">
+								<input type="text" id="MATNR" name="MATNR" style="width: 80px;" class="form-control" />
+								<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#MATNR'))" style="width: 10px;"/>
+							</div>
+						</div>
+				    </div>
+				    <div class="form-group">
+						<label class="control-label" style="width: 40px;">类型：</label>
+						<div class="control-inline" style="width: 70px;">
+							<select class="form-control" name="logtype" id="logtype">
+								<option value="">全部</option>
+								<option value="1" selected>异常</option>
+								<option value="2">成功</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="control-label" style="width: 70px"><span class="required">*</span>开始时间：</label>
+						<div class="control-inline">
+							<input type="text" id="startDate" name="startDate"  value=""
+								class="form-control"
+								onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+								style="width: 80px;"
+								/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="control-label" style="width: 70px"><span class="required">*</span>结束时间：</label>
+						<div class="control-inline">
+							<input type="text" id="endDate" name="endDate"  value=""
+								class="form-control"
+								onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"
+								style="width: 80px;"
+								/>
+						</div>
+					</div>
+						
+				<div class="form-group">
+					<!-- <input type="button" id="btnquery" class="btn btn-primary btn-sm " value="${tag.getLocale("QUERY","M")}"/> -->
+					<button type="submit" class="btn btn-primary btn-sm" @click="query">${tag.getLocale("QUERY","M")}</button>
+					<button type="button" id="btnsaveinteralbound" class="btn btn-primary btn-sm" @click="save">执行</button>
+					<button type="reset" class="btn btn-default btn-sm"> ${tag.getLocale("RESET","M")}</button>
+				</div>
+			</form>
+			<!-- <table id="dataGrid"></table>  
+			<div id="dataGridPage"> -->
+			<div id="divDataGrid" style="width:100%;overflow:auto;">
+				<table id="dataGrid"></table>
+				<div id="dataGridPage"></div>
+			</div>	
+		</div>
+	</div>
+</div>
+</div>
+</div>
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+	<script src="${request.contextPath}/statics/js/wms/account/wms_auto_putaway_process.js?_${.now?long}"></script>
+</body>

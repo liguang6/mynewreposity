@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysUserAuthDao">
+
+	<select id="queryUserPermissionList" resultType="Map" parameterType="Map">
+		select a.id,a.auth_fields as authFields,a.auth_value AS authValue,
+		a.user_id AS userId,d.full_name as userName,a.menu_id AS menuId,c.name as menuName
+		from SYS_USER_AUTH a
+		left join sys_user d on a.user_id = d.user_id
+		left join sys_menu c on a.menu_id = c.menu_id
+		where 1=1
+		and a.del = '0'
+		<if test="userId != '' and userId != null">
+		and a.user_id = #{userId}
+		</if>
+		<if test="menuId != '' and menuId != null">
+			AND a.menu_Id = #{menuId}
+		</if>
+		order by a.id
+	</select>
+	
+	<select id="selectSysUserPermissionById" resultType="java.util.HashMap" parameterType="Map">
+		select a.id,a.auth_fields as authFields,a.auth_value AS authValue,
+		a.user_id AS userId,d.full_name as userName,a.menu_id AS menuId,c.name as menuName
+		from SYS_USER_AUTH a
+		left join sys_user d on a.user_id = d.username
+		left join sys_menu c on a.menu_id = c.menu_id
+		where 1=1
+        AND a.id = #{id}
+        AND a.DEL='0'
+	</select>
+</mapper>

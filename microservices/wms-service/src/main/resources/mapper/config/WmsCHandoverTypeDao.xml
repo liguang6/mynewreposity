@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCHandoverTypeDao">
+	 <select id="validate"  parameterType="List" resultType="Map">
+	     SELECT ID,CONCAT(WERKS,'-') || MATNR  AS UNIQUE_STR  FROM WMS_C_MAT_USING 
+	        WHERE CONCAT(WERKS,'-') || MATNR IN
+	       <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+			AND DEL='0'
+	 </select>
+	 <select id="getListByPage" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM ( SELECT D.ID,D.WERKS,D.WH_NUMBER,S.VALUE AS BUSINESS_NAME_DESC,
+		      D.BUSINESS_NAME,DECODE(D.HANDOVER_TYPE,'00','无交接','01','刷厂牌交接','02','扫描交接','03', '密码模式') HANDOVER_TYPE_DESC,
+		      D.HANDOVER_TYPE,D.EDITOR,D.EDIT_DATE,D.CREATOR ,D.CREATE_DATE
+		       FROM WMS_C_HANDOVER_TYPE D
+		       LEFT JOIN SYS_DICT S ON D.BUSINESS_NAME=S.CODE AND S.TYPE='BUSINESS_NAME'
+		       WHERE 1=1 AND D.DEL='0'
+		        <if test="werks != null and werks !=''">
+		        AND D.WERKS=#{werks} 
+		      </if>
+              <if test="whNumber != null and whNumber  !=''">
+		        AND D.WH_NUMBER = #{whNumber }
+		      </if>
+              <if test="handoverType != null and handoverType !=''">
+		        AND D.HANDOVER_TYPE = #{handoverType}
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM WMS_C_HANDOVER_TYPE D
+		       WHERE 1=1 AND D.DEL='0'
+		      <if test="werks != null and werks !=''">
+		        AND D.WERKS=#{werks} 
+		      </if>
+              <if test="whNumber != null and whNumber  !=''">
+		        AND D.WH_NUMBER = #{whNumber }
+		      </if>
+              <if test="handoverType != null and handoverType !=''">
+		        AND D.HANDOVER_TYPE = #{handoverType}
+		      </if>
+    </select>
+    <select id="getList" parameterType="Map" resultType="Map">
+          SELECT D.ID,D.WERKS,D.WH_NUMBER,S.VALUE AS BUSINESS_NAME,
+		      D.BUSINESS_NAME AS BUSINESS_CODE,D.HANDOVER_TYPE,D.EDITOR,D.EDIT_DATE,D.CREATOR ,D.CREATE_DATE
+		       FROM WMS_C_HANDOVER_TYPE D
+		       LEFT JOIN SYS_DICT S ON D.BUSINESS_NAME=S.CODE
+		       WHERE 1=1 AND D.DEL='0'
+		      <if test="werkslist != null and werkslist !=''">
+		        AND D.WERKS IN 
+		        <foreach collection="werkslist" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			  	</foreach>
+		      </if>
+		      
+              <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="BUSINESS_NAME != null and BUSINESS_NAME !=''">
+		        AND D.BUSINESS_NAME = #{BUSINESS_NAME}
+		      </if>
+		      AND D.BUSINESS_NAME IN
+		      <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			  </foreach>
+    </select>
+    <!-- 更新or插入 -->
+	<update id="merge" parameterType="List">
+		merge into WMS_C_HANDOVER_TYPE s using(
+		select m.WERKS,m.WH_NUMBER,m.BUSINESS_NAME,m.HANDOVER_TYPE,m.DEL,
+        m.CREATOR,m.CREATE_DATE,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.BUSINESS_NAME} BUSINESS_NAME, 
+			#{d.HANDOVER_TYPE} HANDOVER_TYPE,
+			#{d.DEL} DEL,#{d.CREATOR} CREATOR,#{d.CREATEDATE} CREATE_DATE,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE
+			from dual
+		</foreach>
+		) m ) tmp
+		on (tmp.WERKS=s.WERKS and tmp.WH_NUMBER=s.WH_NUMBER and tmp.BUSINESS_NAME=s.BUSINESS_NAME AND s.DEL='0' )
+		when matched then
+		update  set s.HANDOVER_TYPE=tmp.HANDOVER_TYPE,s.EDITOR=tmp.CREATOR,s.EDIT_DATE=tmp.CREATE_DATE
+		when not matched then
+		insert (ID,WERKS,WH_NUMBER,BUSINESS_NAME,HANDOVER_TYPE,DEL,CREATOR,CREATE_DATE,EDITOR,EDIT_DATE)
+		VALUES (SEQ_WMS_C_HANDOVER_TYPE.nextval,tmp.WERKS,tmp.WH_NUMBER,tmp.BUSINESS_NAME,tmp.HANDOVER_TYPE,
+        '0',tmp.CREATOR,tmp.CREATE_DATE,tmp.EDITOR,tmp.EDIT_DATE
+		)
+	</update>
+<!-- 	 <insert id="insert" parameterType="Map">  -->
+<!-- 		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer"> -->
+<!-- 			SELECT SEQ_WMS_C_HANDOVER_TYPE.NEXTVAL FROM dual -->
+<!-- 		</selectKey> -->
+<!-- 		insert into WMS_C_HANDOVER_TYPE (ID,WERKS,WH_NUMBER,BUSINESS_NAME,HANDOVER_TYPE,DEL, -->
+<!-- 	    CREATOR,CREATE_DATE) -->
+<!-- 		values (#{ID},#{WERKS},#{WH_NUMBER},#{BUSINESS_NAME},#{HANDOVER_TYPE},'0',#{CREATOR},#{CREATE_DATE}) -->
+<!-- 	</insert> -->
+<!-- 	<update id="update" parameterType="Map">	 -->
+<!-- 		UPDATE WMS_C_HANDOVER_TYPE SET  -->
+<!-- 		WERKS = #{WERKS} ,WH_NUMBER=#{WH_NUMBER},BUSINESS_NAME=#{BUSINESS_NAME}, -->
+<!-- 		HANDOVER_TYPE=#{HANDOVER_TYPE},EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE} WHERE ID=#{ID} -->
+<!-- 	</update> -->
+<!-- 	<update id="delete" parameterType="String">	 -->
+<!-- 		UPDATE WMS_C_HANDOVER_TYPE SET DEL='X' WHERE ID=#{ID} -->
+<!-- 	</update> -->
+</mapper>

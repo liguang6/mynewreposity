@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCQcPlantDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.wms.business.modules.config.entity.WmsCQcPlantEntity" id="wmsCQcPlantMap">
+        <result property="id" column="ID"/>
+		<result property="werks" column="WERKS"/>
+        <result property="businessName" column="BUSINESS_NAME"/>
+        <result property="testFlag" column="TEST_FLAG"/>
+        <result property="startDate" column="START_DATE"/>
+		<result property="endDate" column="END_DATE"/>
+        <result property="memo" column="MEMO"/>
+        <result property="del" column="DEL"/>
+		<result property="creator" column="CREATOR"/>
+		<result property="createDate" column="CREATE_DATE"/>
+		<result property="editor" column="EDITOR"/>
+		<result property="editDate" column="EDIT_DATE"/>
+    </resultMap>
+    <select id="getListByPage"  parameterType="Map" resultMap="wmsCQcPlantMap">
+     SELECT * FROM ( 
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+		     SELECT b.ID,b.WERKS,<!--b.BUSINESS_NAME,b.TEST_FLAG,-->
+			 b.START_DATE,b.END_DATE,b.MEMO,d1.VALUE BUSINESS_NAME ,d2.VALUE TEST_FLAG,
+		     b.CREATOR,B.CREATE_DATE,b.EDITOR,b.EDIT_DATE, ROWNUM
+		     FROM WMS_C_QC_PLANT b
+		     LEFT JOIN SYS_DICT d1 ON d1.CODE=b.BUSINESS_NAME AND d1.TYPE='BUSINESS_NAME'
+	         LEFT JOIN SYS_DICT d2 ON d2.CODE=b.TEST_FLAG  AND d2.TYPE='QC_TEST_FLAG'
+	         WHERE b.DEL='0'
+	         <if test="werks !=null and werks !='' ">
+				AND b.WERKS=#{werks}
+			 </if>
+			 <if test="businessName !=null and businessName !='' ">
+				AND b.BUSINESS_NAME=#{businessName}
+			 </if>
+			 ) TMP 
+		 WHERE ROWNUM  &lt;=#{end})  
+	  WHERE ROW_ID > #{start} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		order by ${orderBy}
+	  </if>
+	  </select>
+	  <select id="getListCount"  parameterType="Map" resultType="int">
+	     SELECT  COUNT(1) FROM WMS_C_QC_PLANT b WHERE b.DEL='0'
+	     <if test="werks !=null and werks !='' ">
+				AND b.WERKS=#{werks}
+			 </if>
+			 <if test="businessName !=null and businessName !='' ">
+				AND b.BUSINESS_NAME=#{businessName}
+			 </if>
+	 </select>
+	
+</mapper>

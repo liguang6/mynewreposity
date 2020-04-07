@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>${tag.getLocale("FIXED_STORAGE","M")}</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+					<div class="form-group" style="align:center;margin-top:15px">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     <font style="color:red;font-weight:bold">*</font>${tag.getLocale("PLANT","M")}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<select class="form-control" name="werks" id="werks" onchange="vm.onPlantChange(event)">
+									<#list tag.getUserAuthWerks("FIXED_STORAGE") as factory>
+									   <option value="${factory.code}">${factory.code}</option>
+									</#list>
+								</select>
+							</div>
+						</div>
+					</div>
+							
+					<div class="form-group" style="align:center;margin-top:15px">
+						<div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+						    	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("WH_NUMBER","M")}：
+							</label>
+							<div style="float:left;width:50%" class="col-sm-8">
+								<select class="form-control" v-model="whNumber" name="whNumber" id="whNumber" onchange="vm.whNumerBlur()">
+									<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+					</div>
+						
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     <font style="color:red;font-weight:bold">*</font>${tag.getLocale("MATNR","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="matnr" name="matnr" class="form-control required"  v-model="fixedStorage.matnr" placeholder='${tag.getLocale("MATNR","M")}'  @change="getMaterialNoFuzzy()" />
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+							     	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("MATNR_DESC","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="maktx" name="maktx" class="form-control required"  readonly="true"
+					                 v-model="fixedStorage.maktx" placeholder='${tag.getLocale("MATNR_DESC","M")}' />
+							    </div>
+						</div>
+					</div>
+					
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+							     	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("STORAGE_TYPE","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <!-- <input type="text"  id="storageAreaCode" name="storageAreaCode" class="form-control required"  
+					                 v-model="fixedStorage.storageAreaCode" placeholder='${tag.getLocale("STORAGE_TYPE","M")}' /> -->
+					                 <select id="storageAreaCode" name="storageAreaCode" v-model="fixedStorage.storageAreaCode"  class="required" style="width:50%">
+									   	 <option value="" >请选择</option>
+							   	     </select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+							     	<font style="color:red;font-weight:bold">*</font>${tag.getLocale("BIN_CODE","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="binCode" name="binCode" class="form-control required" 
+					                 v-model="fixedStorage.binCode" placeholder='${tag.getLocale("BIN_CODE","M")}' />
+							    </div>
+						</div>
+					</div>
+				    <div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" ><span class="required"> * </span>${tag.getLocale("PRIORITY","M")}：</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="seqno" name="seqno" class="form-control required number"  v-model="fixedStorage.seqno" placeholder='${tag.getLocale("PRIORITY","M")}'/>
+							    </div>
+						</div>
+					</div>
+					<!--  <div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >${tag.getLocale("QUANTITY","M")}：</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="qty" name="qty" class="form-control number"  v-model="fixedStorage.qty" placeholder='${tag.getLocale("QUANTITY","M")}'/>
+							    </div>
+						</div>
+					</div>-->
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >${tag.getLocale("MIN_QTY","M")}：</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="stockM" name="stockM" class="form-control number"  v-model="fixedStorage.stockM" placeholder='${tag.getLocale("MIN_QTY","M")}'/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >${tag.getLocale("MAX_QTY","M")}：</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="stockL" name="stockL" class="form-control number"  v-model="fixedStorage.stockL" placeholder='${tag.getLocale("MAX_QTY","M")}'/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+							     	${tag.getLocale("LGORT","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="lgort" name="lgort" class="form-control" 
+					                 v-model="fixedStorage.lgort" placeholder='${tag.getLocale("LGORT","M")}' />
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+							     	${tag.getLocale("STOCK_TYPE","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="sobkz" name="sobkz" class="form-control" 
+					                 v-model="fixedStorage.sobkz" placeholder='${tag.getLocale("STOCK_TYPE","M")}' />
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+							     	${tag.getLocale("LIFNR","M")}：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="lifnr" name="lifnr" class="form-control" 
+					                 v-model="fixedStorage.lifnr" placeholder='${tag.getLocale("LIFNR","M")}' />
+							    </div>
+						</div>
+					</div>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_c_mat_fixed_storage_edit.js?_${.now?long}"></script>
+</body>
+</html>

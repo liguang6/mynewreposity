@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>机台作业</title>  
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/css/multiple-select/multiple-select.css" />
+<style type="text/css">
+
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper" id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+				<div class="row">
+					<ul class="nav nav-tabs" id="myTab" style="padding-left:10px;">
+							<li id="#"  class="active"><a data-toggle="tab" href="#div_1" style="font-weight:bold">清单</a></li>
+							<li id="#"><a data-toggle="tab" href="#div_2" style="font-weight:bold">绑定</a></li>
+							<li id="#" ><a data-toggle="tab" href="#div_3" style="font-weight:bold">录入</a></li>
+							<li id="#"><a data-toggle="tab" href="#div_4" style="font-weight:bold">自检</a></li>
+							<!-- <li id="div4"><a data-toggle="tab" href="#div_4">自检</a></li> -->
+						</ul>
+					</div>	
+					<div class="row">		
+						<div class="tabbable ">		
+						<form class="form-search" style="margin-left: 20px; min-height: 50px;padding-top: 10px;" id="searchForm" :action="formUrl">
+								<label class="tb_jt"> 机台：</label>
+								<span class="input-icon input-icon-right tb_jt" >
+										<input id="machine_code" name="machine_code" class="input-medium" style="width:130px; height: 28px;" type="text"  v-model="machine_code"  />
+										 <i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('machine_code')"> </i>
+								</span>	
+								<span v-cloak >{{process}}</span>
+								<input name="process" v-model="process"  type="hidden"/>
+									
+								<input type="text" id="order_no" name="order_no" v-model="order_no" class="input-medium tab_order" style="width:90px;height: 28px;margin-left:10px;" placeholder="请输入订单"></input>
+								<select  name="batch" class="input-small tab_order" style="height:28px;width:60px;" v-model="batch">
+									<option  value=''></option>
+									<option v-for="item in batch_list">{{item.batch}}</option>
+								</select>
+								<label class="tab_tz"> 零部件：</label>
+								<span class="input-icon input-icon-right tab_tz" >
+										<input id="zzj_no" name="zzj_no" class="input-medium" style="width: 150px; height: 28px;" type="text" v-model="zzj_no" /> 
+										<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('zzj_no')"></i>
+								</span>
+								
+								<label class="tab_tz" v-if="tab_id=='#div_3' "  v-cloak> 加工者：</label>
+								<span class="input-icon input-icon-right tab_tz" v-if="tab_id=='#div_3' "  v-cloak>
+										<input id="productor" name="productor" v-model="productor" class="input-medium" style="width: 100px; height: 28px;" type="text"  /> 
+										<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('productor')"></i>
+								</span>
+
+								<label v-if="tab_id=='#div_1' "  v-cloak>精度：</label>
+								<input id="accuracy_demand" name="accuracy_demand" class="input-medium" style="width: 90px; height: 28px;" type="text" 
+									v-model="accuracy_demand"  v-if="tab_id=='#div_1' "  v-cloak/>
+
+								<label style="width: 70px" v-if="tab_id=='#div_1' "  v-cloak>材料规格：</label>	
+								<input id="specification" name="specification" class="input-medium" style="width: 90px; height: 28px;" type="text" 
+									v-model="specification"  v-if="tab_id=='#div_1' "  v-cloak/>
+									
+								<label style="width: 70px" v-if="tab_id=='#div_1' "  v-cloak>分包类型：</label>
+								<div style="display:inline-block;" v-if="tab_id =='#div_1' " v-cloak >
+								<select  id="subcontracting_type" style="width: 100px;height:28px; " class="input-medium"  >
+									<option v-for="item in subcontracting_type_list"  :value="item.value">{{item.value}}</option>
+									<!-- <#list tag.masterdataDictList('ZZJ_SUB_TYPE') as dict>
+									<option value="${dict.value}">${dict.value}</option>
+									</#list> -->
+								</select>	
+								<input type="hidden" name="subcontracting_type" id="subcontracting_type_submit"/> 						
+								</div>
+								<label style="width: 70px" v-if="tab_id=='#div_1' "  v-cloak>加工顺序：</label>
+								<input id="process_sequence" name="process_sequence" class="input-medium" style="width: 60px; height: 28px;" type="text" 
+									v-if="tab_id=='#div_1' "  v-cloak/>
+								<input class="btn btn-sm btn-primary tab_save" v-if="tab_id=='#div_1' "  v-cloak
+									id="btnQuery" value="查询" style="margin-left: 10px;" type="button" @click="query">
+								<input class="btn btn-sm btn-success tab_save" v-if="tab_id=='#div_1' "  v-cloak
+									id="btnPrint" value="打印" style="margin-left: 10px;" type="button" @click="printLable">
+								<input class="btn btn-sm btn-info " v-if="tab_id=='#div_1' "  v-cloak
+									id="btnStart" value="开始" style="margin-left: 10px;" type="button" @click="startOpera">
+								<!-- <input class="btn btn-sm btn-success tab_save" v-if="tab_id=='#div_2' "  v-cloak
+								id="btnSave" value="保存" style="margin-left: 20px;" type="button" @click="saveJTBindData"> -->
+								<input class="btn btn-sm btn-success tab_save" v-if="tab_id=='#div_3' "  v-cloak
+								id="btnSave" value="保存" style="margin-left: 10px;" type="button" @click="saveJTOutputData">
+								<input class="btn btn-sm btn-success tab_save" v-if="tab_id=='#div_4' "  v-cloak
+								id="btnSave" value="保存" style="margin-left: 10px;" type="button" @click="saveTestRecord">
+								
+								<span style="font-size:15px;color:red;font-weight:bold;width:60px;display:inline-block; " v-if="tab_id=='#div_1' " v-cloak title="待加工：件数/种类">{{count_info_1}}</span>
+								<span style="font-size:15px;color:red;font-weight:bold;width:60px;display:inline-block; " v-if="tab_id=='#div_2' " v-cloak title="机台达成/工序需求">{{count_info_2}}</span>
+								<span style="font-size:15px;color:red;font-weight:bold;width:60px;display:inline-block; " v-if="tab_id=='#div_3' " v-cloak>{{count_info_3}}</span>
+								<span style="font-size:15px;color:red;font-weight:bold;width:60px;display:inline-block; " v-if="tab_id=='#div_4' " v-cloak title="抽检数/需求数">{{count_info_4}}</span>
+							</form>
+						</div>
+						<div >
+						
+						</div>		
+					</div>
+					
+					<!-- <div class="tab-content" id="tab-content" >
+							
+					</div> -->
+					<div id="div_1" class="tab-pane fade in active" >
+						<table id="dataGrid_div_1"  v-show="tab_id =='#div_1' "></table>
+						<table id="dataGrid_div_2"  v-show="tab_id =='#div_2' "></table>
+						<table id="dataGrid_div_3"  v-show="tab_id =='#div_3' "></table>
+						<table id="dataGrid_div_4"  v-show="tab_id =='#div_4' "></table>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>			
+		
+	<script src="${request.contextPath}/statics/js/multiple-select.js"></script>	
+	<script src="${request.contextPath}/statics/js/zzjmes/product/machineOperation.js?_${.now?long}"></script>
+</body>
+</html>

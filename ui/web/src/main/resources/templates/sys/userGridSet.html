@@ -1,0 +1,37 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>数据权限配置</title>
+    <#include "/header.html">
+</head>
+<body class="hold-transition ">
+    <div class="main-content">
+        <div class="box box-main">
+            <div class="box-header">
+            </div>
+           <form id="searchForm" v-model="page.list" action="${request.contextPath}/sys/columnConfiguration/usergridlist" method="post" class="form-inline " hidden="true" >
+                        <div class="control-inline">
+                            <input type="text" style="display:none" readonly="readonly" class="form-control" id=gridNo name="gridNo"  >
+                        </div>
+                </form>
+            <div class="box-body" v-show="showList">
+                <div class="ui-layout-content" >
+                    <table id="dataGrid1"></table>
+                    <div id="dataGridPage">
+                    </div>
+                </div>
+                <button id="btnSubmit" hidden="true"></button>
+            </div>
+        </div>
+    </div>
+<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+<script src="${request.contextPath}/statics/js/sys/grid.js?_${.now?long}"></script>
+<script type="text/javascript">
+
+    var lastrow,lastcell,lastcellname;
+    var smallUtil=new smallTools();
+    var array = new Array("roleName","menuName","roleId","authFields","authValue","userId","menuId");
+    var languageObj = smallUtil.loadlanguageByPKeyAndLKey(array,"M");
+    //加载角色列表数据
+
+
+</script>
+</body>

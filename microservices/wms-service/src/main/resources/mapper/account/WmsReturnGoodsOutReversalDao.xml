@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.account.dao.WmsReturnGoodsOutReversalDao">
+
+	<resultMap type="Map" id="wmsDocMap">
+		<result property="LABEL_NO"  column="LABEL_NO" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap>
+
+	<update id="updateRequirementItemCancelQty" parameterType="Map">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_OUT_REQUIREMENT_ITEM I set I.QTY_CANCEL = nvl(I.QTY_CANCEL,0) + #{s.QTY_WMS}
+			WHERE I.REQUIREMENT_NO=#{s.REQUIREMENT_NO} AND I.REQUIREMENT_ITEM_NO=#{s.REQUIREMENT_ITEM_NO}
+			AND DEL = '0'
+		</foreach>
+	</update>
+
+
+	<select id="getWmsDocHeadInfo" parameterType="Map" resultMap="wmsDocMap">
+	SELECT (I.QTY_WMS-nvl(I.QTY_CANCEL,0)) as QTY_WMS_MAX,(I.QTY_WMS-nvl(I.QTY_CANCEL,0)) as QTY_WMS,
+	 I.*,H.PZ_DATE,B.BUSINESS_CLASS,B.GM_CODE
+
+
+	FROM WMS_CORE_WMSDOC_ITEM I 
+	LEFT JOIN WMS_CORE_WMSDOC_HEAD H ON I.WMS_NO = H.WMS_NO
+	LEFT JOIN WMS_C_WMS_BUSINESS B ON I.BUSINESS_TYPE = B.BUSINESS_TYPE AND I.BUSINESS_NAME=B.BUSINESS_NAME
+	AND I.SOBKZ=B.SOBKZ AND B.WMS_MOVE_TYPE=I.WMS_MOVE_TYPE
+
+
+	WHERE I.WMS_NO = #{VO_NO} AND (H.DEL != 'X' OR H.DEL IS NULL)
+	AND I.REVERSAL_FLAG = '0' 
+	AND I.WERKS=#{WERKS} AND I.WH_NUMBER=#{WH_NUMBER}
+	AND QTY_WMS > NVL(QTY_CANCEL,0) ORDER BY I.WMS_ITEM_NO
+	</select>
+	<select id="getSapDocHeadInfo" parameterType="Map" resultMap="wmsDocMap">
+	SELECT (W.QTY_WMS- NVL(W.QTY_CANCEL,0))AS QTY_WMS_MAX,W.*,SH.DOC_DATE AS PZ_DATE,B.BUSINESS_CLASS,B.GM_CODE FROM WMS_CORE_SAPDOC_ITEM S
+	LEFT JOIN WMS_CORE_SAPDOC_HEAD SH ON S.MAT_DOC = SH.MAT_DOC
+	LEFT JOIN WMS_CORE_WMSDOC_ITEM W ON S.REF_WMS_ITEM_NO = W.WMS_ITEM_NO AND SH.REF_WMS_NO = W.WMS_NO
+	LEFT JOIN WMS_C_WMS_BUSINESS B ON W.BUSINESS_TYPE = B.BUSINESS_TYPE AND W.BUSINESS_NAME=B.BUSINESS_NAME
+	AND W.SOBKZ=B.SOBKZ AND B.WMS_MOVE_TYPE=W.WMS_MOVE_TYPE
+	WHERE S.MAT_DOC = #{VO_NO} 
+	AND W.REVERSAL_FLAG = '0' 
+	AND QTY_WMS > NVL(QTY_CANCEL,0) ORDER BY W.WMS_ITEM_NO
+	</select>
+	<update id="updateWmsDocItemQtyCancel" parameterType="Map">
+	UPDATE WMS_CORE_WMSDOC_ITEM SET QTY_CANCEL = #{QTY_WMS} WHERE ID = #{ID}
+	</update>
+	<update id="updateWmsDocItemQtyCancel2" parameterType="Map">
+	UPDATE WMS_CORE_WMSDOC_ITEM T SET T.QTY_CANCEL = nvl(T.QTY_CANCEL,0) + #{QTY_WMS} WHERE T.ID = #{ID}
+	</update>
+	<select id="getReceiptInfoFromReturnItem" parameterType="Map" resultType="Map">
+	SELECT RECEIPT_NO,RECEIPT_ITEM_NO FROM WMS_OUT_RETURN_ITEM WHERE 
+	RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO}
+	</select>
+	<update id="updateInReceiptQty" parameterType="Map">
+	UPDATE WMS_IN_RECEIPT SET RETURNABLE_QTY = (NVL(RETURNABLE_QTY,0) + #{QTY_WMS} , 
+	RETURN_QTY = (NVL(RETURN_QTY,0) - #{QTY_WMS} 
+	WHERE RECEIPT_NO = #{RECEIPT_NO} AND RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+	</update>
+	<select id="queryInRhStock" parameterType="Map" resultType="Map">
+	SELECT * FROM WMS_IN_RH_STOCK WHERE WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} 
+	AND BATCH = #{BATCH} AND SOBKZ = #{SOBKZ} AND LIFNR = #{LIFNR}
+	</select>
+	<update id="updateInRhStock" parameterType="Map">
+	UPDATE WMS_IN_RH_STOCK SET RH_QTY = RH_QTY + #{QTY_WMS} WHERE WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} 
+	AND MATNR = #{MATNR} AND BATCH = #{BATCH} AND SOBKZ = #{SOBKZ} AND LIFNR = #{LIFNR}
+	</update>
+	<insert id="insertInRhStock" parameterType="Map">
+	INSERT WMS_IN_RH_STOCK (ID,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,BATCH,UNIT,RH_QTY,SOBKZ,
+	LIFNR,DEL,CREATOR,CREATE_DATE) VALUES(SEQ_WMS_IN_RH_STOCK.nextval,#{WERKS},#{WH_NUMBER},#{LGORT},#{MATNR},
+	#{MAKTX},#{BATCH},#{UNIT},#{QTY_WMS},#{SOBKZ},#{LIFNR},'0',#{CREATOR},#{CREATE_DATE})
+	</insert>
+	<update id="updatePoHx" parameterType="Map">
+	UPDATE WMS_HX_PO SET SS124 = (NVL(SS124,0) - #{QTY_WMS} ,HX_QTY = (NVL(HX_QTY) - #{QTY_WMS} WHERE
+	WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} AND LIFNR = #{LIFNR}
+	</update>
+	<update id="updateToHx" parameterType="Map">
+	UPDATE WMS_HX_TO SET SS304DB = (NVL(SS304DB,0) - #{QTY_WMS},HX_QTY = (NVL(HX_QTY) - #{QTY_WMS} WHERE
+	WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} AND LIFNR = #{LIFNR}
+	</update>
+	
+	<delete id="delSapJobItem" parameterType="Map">
+	DELETE FROM WMS_JOB_SAP_ITEM WHERE SAP_JOB_NO = 
+	(SELECT SAP_JOB_NO FROM WMS_JOB_SAP_HEAD WHERE REF_WMS_NO = #{WMS_NO})
+	</delete>
+	<delete id="delSapJobHead" parameterType="Map">
+	DELETE FROM WMS_JOB_SAP_HEAD WHERE REF_WMS_NO = #{WMS_NO}
+	</delete>
+	<update id="updateCoreStockFreeze" parameterType="Map">
+	UPDATE WMS_CORE_STOCK SET FREEZE_QTY = FREEZE_QTY + #{QTY_WMS} WHERE
+	WERKS = #{WERKS} AND WH_NUMBER = #{WH_NUMBER} AND MATNR = #{MATNR} AND LIFNR = #{LIFNR} AND SOBKZ = #{SOBKZ}
+	</update>
+	
+	<select id="getCancelBussinessType" parameterType="Map" resultType="Map">
+	SELECT DISTINCT BUSINESS_TYPE AS BUSINESS_TYPE FROM WMS_IN_RECEIPT WHERE RECEIPT_NO = 
+	(SELECT RECEIPT_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	</select>
+	<update id="updateInReceiptWhReturnQty" parameterType="Map">
+	UPDATE WMS_IN_RECEIPT SET WH_RETURN_QTY = (NVL(WH_RETURN_QTY,0) + #{QTY_WMS} WHERE
+	RECEIPT_NO = 
+	(SELECT RECEIPT_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	AND RECEIPT_ITEM_NO = 
+	(SELECT RECEIPT_ITEM_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	</update>
+	<update id="updateInBoundCancelQty" parameterType="Map">
+	UPDATE WMS_IN_INBOUND_ITEM SET QTY_CANCEL = (NVL(QTY_CANCEL,0) + #{QTY_WMS} WHERE
+	INBOUND_NO = 
+	(SELECT INBOUND_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	AND INBOUND_ITEM_NO = 
+	(SELECT INBOUND_ITEM_NO FROM WMS_OUT_RETURN_ITEM WHERE RETURN_NO = #{RETURN_NO} AND RETURN_ITEM_NO = #{RETURN_ITEM_NO})
+	</update>
+	
+	<update id="updateInReceipt_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_IN_RECEIPT SET RETURN_QTY= cast(NVL(RETURN_QTY,0) as number)+cast(#{d.QTY_WMS} as number) ,
+			INABLE_QTY=case when INABLE_QTY>0 then  INABLE_QTY-cast(#{d.QTY_WMS} as number)
+				else INABLE_QTY end 
+			WHERE RECEIPT_NO=#{d.RECEIPT_NO} AND RECEIPT_ITEM_NO=#{d.RECEIPT_ITEM_NO}
+		</foreach>	
+	</update>
+	
+	<update id="updateQCItem_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_QC_INSPECTION_ITEM SET INSPECTION_QTY=cast(INSPECTION_QTY as number)-cast(#{d.QTY_WMS} as number) 
+			WHERE INSPECTION_NO=#{d.INSPECTION_NO} AND INSPECTION_ITEM_NO=#{d.INSPECTION_ITEM_NO}
+		</foreach>	
+	</update>
+	
+	<update id="updateQCResult_Batch" parameterType="list">
+		<foreach collection="list" item="d" open="begin" close=" ; end;" separator=";">
+			UPDATE WMS_QC_RESULT SET RESULT_QTY=cast(RESULT_QTY as number)-cast(#{d.QTY_WMS} as number) 
+			WHERE INSPECTION_NO=#{d.INSPECTION_NO} AND INSPECTION_ITEM_NO=#{d.INSPECTION_ITEM_NO}
+		</foreach>
+	</update>
+	
+</mapper>

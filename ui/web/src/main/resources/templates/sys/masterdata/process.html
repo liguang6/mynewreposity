@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>标准工序表-基础数据</title>
+	<#include "/header.html">
+	<style type="text/css">
+	  .btnList {
+	     padding:3px;
+	  }
+	  [v-cloak] { display: none }
+	</style>
+</head>
+<body>
+<div id="rrapp" v-cloak>
+    <div v-show="showList" v-cloak>
+			<div class="wrapper">
+				<div class="main-content">
+					<div class="box box-main">
+						<div class="box-body">
+							<form id="searchForm" 
+								class="form-inline" data-page-no=""
+								data-page-size="" data-order-by="" action="${request.contextPath}/masterdata/process/list">
+<!-- 								<div class="form-group">
+									<label class="control-label">部门：</label>
+									<div class="control-inline">
+										<input type="text" id="deptSel"  value="" readonly="readonly"
+											    @click="showDeptMenu"  style="width: 150px;background-color: white;" class="form-control width-250" />
+									    <input style="display: none;" name="deptIds" id="deptIds" />
+									</div>
+								</div> -->
+								
+								<div class="form-group">
+									<label class="control-label" style="width: 45px">工厂：</label>
+									<div class="control-inline" style="width: 60px;">
+										<select style="width: 70px;height: 28px;" name="WERKS" id="werks" v-model="WERKS">
+										   <#list tag.getUserAuthWerks("MASTERDATA_PROCESS") as factory>
+										      <option value="${factory.code}">${factory.code}</option>
+										   </#list>
+										</select>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label class="control-label" style="width: 45px">车间：</label>
+									<div class="control-inline" style="width: 60px;">
+										<select style="width: 70px;height: 28px;" name="WORKSHOP" id="workshop" v-model="WORKSHOP">
+											<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label class="control-label">工序代码：</label>
+									<div class="control-inline">
+										<input name="processCode" id="processCode" type="text" class="form-control" 
+							   	   @click="getProcessNoFuzzy()"  placeholder=" "/>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label">工序名称：</label>
+									<div class="control-inline">
+										<input name="processName" id="processName" type="text" class="form-control" />
+									</div>
+								</div>
+								<div class="form-group">
+			                        <label class="control-label">工序类别：</label>
+			                        <div class="control-inline">
+			                            <select  id="processType" name="processType" class="form-control">
+			                            	<option value=''>全部</option> 
+											<option value='00'>自制工序</option>
+											<option value='01'>委外工序</option>
+											<option value='02'>计划外工序</option>
+										</select>
+			                        </div>
+			                    </div>
+								<div class="form-group">
+									<label class="control-label">
+									  <div class="control-inline">
+									      <input  type="checkbox" value="X" id="monitoryPoint" name="isMonitoryPoint"/>
+									  </div>
+									  生产监控点
+									</label>
+								</div>
+								
+								<div class="form-group">
+									<label class="control-label">
+									 <div class="control-inline">
+										<input type="checkbox" value="X" id="planNode" name="isPlanNode"/>
+									 </div>
+									  计划节点
+									</label>
+								</div>
+								
+								<div class="form-group">
+									<button type="submit" class="btn btn-primary btn-sm">查询</button>
+									<button type="button" onClick="openFullWindow('新增工序','${request.contextPath}/sys/masterdata/process_new.html')" class="btn btn-primary btn-sm">新增</button>
+									<button type="reset" class="btn btn-default btn-sm">重置</button>
+								</div>
+							</form>
+							
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+    <div v-show="!showList" id="processInfo" class="panel panel-default" v-cloak>
+        <div class="panel-heading">{{title}}</div>
+        <form class="form-horizontal" style="padding:16px ">
+             <div class="row">
+                <div class="col-sm-6">
+                   
+                   	<div class="form-group">
+                        <div class="col-sm-2 control-label">*工厂</div>
+                        <div class="col-sm-10">
+                            
+                            <select name="factory">
+                                <#list tag.masterdataDictList('WERKS') as dict>
+                                   <option value="">请选择</option>
+                                   <option value="${dict.code}">${dict.value}</option>
+                                </#list>
+                            </select>
+                        </div>
+                    </div>
+                    
+					<div class="form-group">
+                        <div class="col-sm-2 control-label">工序编号</div>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" v-model="settingProcess.processCode" placeholder="工序代码"/>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">所属工段</div>
+                        <div class="col-sm-10">
+                          
+                             <select name="section">
+                               <#list tag.masterdataDictList('SECTION') as dict>
+                                <option value="">请选择</option>
+                                <option value="${dict.code}">${dict.value}</option>
+                               </#list>
+                             </select>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <div class="col-sm-6">
+                  <div class="form-group">
+                        <div class="col-sm-2 control-label">车间</div>
+                        <div class="col-sm-10">
+                        
+                            
+                            <select name="workshop">
+                               <#list tag.masterdataDictList('WORKSHOP') as dict>
+                                <option value="">请选择</option>
+                                <option value="${dict.code}">${dict.value}</option>
+                               </#list>
+                             </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">计划节点</div>
+                        <div class="col-sm-10">
+                            <select name="planNode">
+                               <#list tag.masterdataDictList('PLAN_NODE') as dict>
+                                <option value="">请选择</option>
+                                <option value="${dict.code}">${dict.value}</option>
+                               </#list>
+                             </select>
+                        </div>
+                    </div>
+                
+                  <div class="form-group">
+                        <div class="col-sm-2 control-label">工序名称</div>
+                        <div class="col-sm-10">
+                            <input type="text"   class="form-control" placeholder="工序名称"/>
+                        </div>
+                    </div>
+				   <div class="checkbox">
+				          <div class="col-sm-2"></div>
+                          <label class="col-sm-10"><input type="checkbox"/> 生产监控点</label>         
+                    </div>					                   
+                </div>
+                
+             </div>
+             
+            
+             <div class="form-group">
+                        <div class="col-sm-1 control-label">备注</div>
+                        <div class="col-sm-10">
+                            <textarea type="text" rows="3" class="form-control" v-model="settingProcess.memo" placeholder="备注"></textarea>
+                        </div>
+             </div>
+					
+					
+			<div class="form-group">
+                <div class="col-sm-2 control-label"></div>
+                <input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定"/>
+                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div id="menuContent" class="menuContent" style="display:none; position: absolute;z-index=999;background-color: #eee;border: 1px solid">
+	<ul id="treeDemo" class="ztree" style="margin-top:0; width:230px;"></ul>
+</div>
+<script type="text/javascript">
+var baseUrl = "${request.contextPath}/";
+</script>
+<script src="${request.contextPath}/statics/js/sys/masterdata/process.js?_${.now?long}"></script>
+</body>
+</html>

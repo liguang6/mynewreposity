@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>模板配置</title>
+    <#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:620px">
+    <div class="main-content">
+        <div class="box box-main">
+            <div class="box-body">
+
+
+                <form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text" style="display:none" id="TEMPLATE_ID" name="TEMPLATE_ID"  class="form-control "/>
+                                <input type="text" style="display:none" id="ID" name="ID"  class="form-control "/>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group" style="align:center;margin-top:15px">
+                        <div  style="float:left;width:100%">
+                            <!--<label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>${tag.getLocale("ROLEID","M")}
+                            </label>-->
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>业务类型
+                            </label>
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text" readonly="readonly" readonly="readonly" id="TEMP_TYPE" name="TEMP_TYPE"  class="form-control required" />
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                <font style="color:red;font-weight:bold">*</font>模板文件
+                            </label>
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text" readonly="readonly" id="TEMP_NAME" name="TEMP_NAME"  class="form-control required" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                客户权限值
+                            </label>
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text"  id = "KUNNR" name="KUNNR"  class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                工厂权限值
+                            </label>
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text"  id = "WERKS" name="WERKS"  class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                隐藏字段
+                            </label>
+
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <input type="text"  id = "HIDDEN_FIELD" name="HIDDEN_FIELD"  class="form-control" />
+                                <!--<select id="HIDDEN_FIELD" name="HIDDEN_FIELD" style="width:50%">
+                                    <option value="" > </option>
+                                    <option v-for="t in hiddenFieldList"  :key="t.CODE" :value="t.CODE" >
+                                        {{t.VALUE}}
+                                    </option>
+                                </select>-->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                包含二维码
+                            </label>
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <select id="QRCODE" name="QRCODE" style="width:50%">
+                                    <option value="N" >否</option>
+                                    <option value="Y" >是</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="align:center">
+                        <div  style="float:left;width:100%">
+                            <label style="float:left;width:25%" class="col-sm-3 control-label no-padding-right" >
+                                包含条形码
+                            </label>
+                            <div style="float:left;width:50%" class="col-sm-8">
+                                <select id="BARCODE" name="BARCODE" style="width:50%">
+                                    <option value="N" >否</option>
+                                    <option value="Y" >是</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="btnSubmit" type="submit" hidden="true"></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/print_template_config_edit.js?_${.now?long}"></script>
+</body>
+</html>

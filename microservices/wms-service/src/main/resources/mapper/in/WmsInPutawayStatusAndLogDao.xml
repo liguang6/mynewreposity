@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+  
+<mapper namespace="com.byd.wms.business.modules.in.dao.WmsInPutawayStatusAndLogDao">
+
+	<resultMap type="Map" id="logListMap">
+		<result property="LABEL_NO"  column="LABEL_NO" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap>
+	
+	<insert id="insertLog" parameterType="List">
+		insert into WMS_IN_PUTAWAY_LOG(ID,WH_NUMBER,TIME_STAMP_STR,WERKS,MATNR,QTY,UNIT,EBELN,EBELP,BATCH,FULL_BOX_QTY,GR_AREA,PRODUCT_DATE,ITEM_TEXT,LABEL_NO,MAKTX,DOC_ITEM_NO,HANDLE_FTU)
+		select SEQ_WMS_IN_PUTAWAY_LOG.nextval, m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select distinct #{d.WH_NUMBER},#{d.TIME_STAMP_STR},#{d.WERKS},#{d.MATNR},#{d.QTY},#{d.UNIT},#{d.EBELN},#{d.EBELP},#{d.BATCH},#{d.FULL_BOX_QTY},
+		#{d.GR_AREA},#{d.PRODUCT_DATE},#{d.ITEM_TEXT},#{d.LABEL_NO,jdbcType=CLOB},t.maktx,#{d.DOC_ITEM_NO},#{d.HANDLE_FTU}
+		from WMS_SAP_MATERIAL t
+       where t.matnr = #{d.MATNR}
+        and t.werks = #{d.WERKS}
+		</foreach>
+		) m
+	</insert>
+	
+	<update id="updatePutawayLog" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		UPDATE WMS_IN_PUTAWAY_LOG set
+		       EBELN = #{s.EBELN},
+		       EBELP = #{s.EBELP}
+		 WHERE WH_NUMBER = #{s.WH_NUMBER}
+		   AND TIME_STAMP_STR = #{s.TIME_STAMP_STR}
+		   AND WERKS = #{s.WERKS}
+		   AND MATNR = #{s.MATNR}
+		 </foreach>
+	</update>
+	
+	<insert id="insertStatus" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_IN_PUTAWAY_STATUS.nextval FROM dual
+		</selectKey>
+		insert into WMS_IN_PUTAWAY_STATUS (ID,WH_NUMBER,TIME_STAMP_STR,DOC_NO,WERKS_FROM,WERKS_TO,LGORT,PZ_DATE,JZ_DATE,
+		STEP1_STATUS,EBELN,MSG1,STEP2_STATUS,VBELN,MSG2,STEP3_STATUS,RECEIPT_NO,MSG3,EDITOR,EDIT_DATE,OPERATION_TIME)
+		values (#{ID},#{WH_NUMBER},#{TIME_STAMP_STR},#{DOC_NO},#{WERKS_FROM},#{WERKS_TO},#{LGORT},#{PZ_DATE},#{JZ_DATE},
+		#{STEP1_STATUS},#{EBELN},#{MSG1},#{STEP2_STATUS},#{VBELN},#{MSG2},#{STEP3_STATUS},#{RECEIPT_NO},#{MSG3},#{EDITOR},#{EDIT_DATE},#{OPERATION_TIME})
+	</insert>
+	
+	<select id="getLog" parameterType="Map" resultMap="logListMap">
+		select log.ID,
+			   log.WERKS,
+			   log.WH_NUMBER,
+			   log.TIME_STAMP_STR,
+			   log.MATNR,
+			   log.MAKTX,
+			   log.QTY,
+			   log.UNIT,
+			   log.BATCH,
+			   log.EBELN,
+			   log.EBELP,
+			   log.FULL_BOX_QTY,
+			   log.GR_AREA,
+			   log.PRODUCT_DATE,
+			   log.ITEM_TEXT,
+			   log.CREATOR,
+			   log.CREAT_DATE,
+			   log.DOC_ITEM_NO,
+			   (log.LABEL_NO) LABEL_NO
+		 from  WMS_IN_PUTAWAY_LOG log
+		 where WH_NUMBER = #{WH_NUMBER}
+		   and TIME_STAMP_STR = #{TIME_STAMP_STR}
+		   <if test="EBELN !=null and EBELN !=''">
+			 and EBELN = #{EBELN}
+		   </if>
+	</select>
+	
+	<update id="updatePutawayStatus" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		UPDATE WMS_IN_PUTAWAY_STATUS set
+		EDIT_DATE=#{s.EDIT_DATE}
+		<if test="s.STEP1_STATUS !=null and s.STEP1_STATUS !=''">
+			,STEP1_STATUS = #{s.STEP1_STATUS}
+		</if>
+		<if test="s.EBELN !=null and s.EBELN !=''">
+			,EBELN = #{s.EBELN}
+		</if>
+		<if test="s.MSG1 !=null and s.MSG1 !=''">
+			,MSG1 = #{s.MSG1}
+		</if>
+		<if test="s.STEP2_STATUS !=null and s.STEP2_STATUS !=''">
+			,STEP2_STATUS = #{s.STEP2_STATUS}
+		</if>
+		<if test="s.VBELN !=null and s.VBELN !=''">
+			,VBELN = #{s.VBELN}
+		</if>
+		<if test="s.MSG2 !=null and s.MSG2 !=''">
+			,MSG2 = #{s.MSG2}
+		</if>
+		<if test="s.STEP3_STATUS !=null and s.STEP3_STATUS !=''">
+			,STEP3_STATUS = #{s.STEP3_STATUS}
+		</if>
+		<if test="s.RECEIPT_NO !=null and s.RECEIPT_NO !=''">
+			,RECEIPT_NO = #{s.RECEIPT_NO}
+		</if>
+		<if test="s.MSG3 !=null and s.MSG3 !=''">
+			,MSG3 = #{s.MSG3}
+		</if>
+		<if test="s.INSPECTION_NO !=null and s.INSPECTION_NO !=''">
+			,INSPECTION_NO = #{s.INSPECTION_NO}
+		</if>
+		<if test="s.WMS_NO !=null and s.WMS_NO !=''">
+			,WMS_NO = #{s.WMS_NO}
+		</if>
+		<if test="s.MAT_DOC !=null and s.MAT_DOC !=''">
+			,MAT_DOC = #{s.MAT_DOC}
+		</if>
+		WHERE WH_NUMBER = #{s.WH_NUMBER}
+		  AND TIME_STAMP_STR = #{s.TIME_STAMP_STR}
+	    </foreach>
+	</update>
+	
+	<select id="getPutawayInfo" parameterType="Map" resultMap="logListMap">
+		select log.ID,
+			   log.WERKS,
+			   log.WH_NUMBER,
+			   log.TIME_STAMP_STR,
+			   log.MATNR,
+			   log.MAKTX,
+			   log.QTY,
+			   log.UNIT,
+			   log.BATCH,
+			   log.EBELN,
+			   log.EBELP,
+			   log.FULL_BOX_QTY,
+			   log.GR_AREA,
+			   log.PRODUCT_DATE,
+			   log.ITEM_TEXT,
+			   log.CREATOR,
+			   log.CREAT_DATE,
+			   log.DOC_ITEM_NO,
+			   (log.LABEL_NO) LABEL_NO,
+			   log.HANDLE_FTU,
+			   status.doc_no,status.werks_from,status.lgort,status.pz_date,status.jz_date,status.step1_status,
+	       	   status.msg1,status.step2_status,status.vbeln,status.msg2,status.step3_status,status.receipt_no,status.inspection_no,
+	           status.wms_no,status.mat_doc,status.msg3,c.lifnr,v.name1 LIKTX,status.OPERATION_TIME
+		  from WMS_IN_PUTAWAY_LOG log,
+		       WMS_IN_PUTAWAY_STATUS status,
+		       WMS_C_STEP_LINKAGE c
+          left join
+               WMS_SAP_VENDOR v
+            on c.lifnr = v.lifnr
+		 where log.time_stamp_str = status.time_stamp_str
+		   and log.wh_number = status.wh_number 
+		   and status.werks_from = c.werks_from
+       	   and status.werks_to = c.werks_to
+       	   and c.del != 'X' 
+		   and status.WH_NUMBER = #{WH_NUMBER}
+		   and status.TIME_STAMP_STR = #{TIME_STAMP_STR}
+	</select>
+	
+	<select id="getloglist" parameterType="Map" resultMap="logListMap">
+		SELECT * FROM ( 
+         	SELECT TMP.*, ROWNUM ROW_ID FROM (
+			select D.ID,
+			   D.WERKS,
+			   D.WH_NUMBER,
+			   D.TIME_STAMP_STR,
+			   D.MATNR,
+			   D.MAKTX,
+			   D.QTY,
+			   D.UNIT,
+			   D.BATCH,
+			   D.EBELN,
+			   D.EBELP,
+			   D.FULL_BOX_QTY,
+			   D.GR_AREA,
+			   D.PRODUCT_DATE,
+			   D.ITEM_TEXT,
+			   D.CREATOR,
+			   D.CREAT_DATE,
+			   D.DOC_ITEM_NO,
+			   (D.LABEL_NO) LABEL_NO,
+			   status.doc_no,status.werks_from,status.lgort,status.pz_date,status.jz_date,status.step1_status,
+	       		   status.msg1,status.step2_status,status.vbeln,status.msg2,status.step3_status,status.receipt_no,status.inspection_no,
+	               status.wms_no,status.mat_doc,status.msg3
+			  from WMS_IN_PUTAWAY_LOG D,
+			       WMS_IN_PUTAWAY_STATUS status
+			 where D.time_stamp_str = status.time_stamp_str
+			   and D.wh_number = status.wh_number
+			   and status.WH_NUMBER = #{WH_NUMBER}
+			   <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+			   <if test="TIME_STAMP_STR !=null and TIME_STAMP_STR !=''">
+				 and status.TIME_STAMP_STR = #{TIME_STAMP_STR}
+			   </if>
+			   <if test="WERKS !=null and WERKS !=''">
+				 and D.werks = #{WERKS}
+			   </if>
+			   <if test="MATNR !=null and MATNR !=''">
+				 and D.MATNR = #{MATNR}
+			   </if>
+			   <if test="logtype !=null and logtype !='' and logtype == 1">
+				   AND (status.step3_status != 'S' OR status.step3_status IS NULL)
+		       </if>
+		       <if test="logtype !=null and logtype !='' and logtype == 2">
+				   AND status.step3_status = 'S'
+		       </if>
+			   <if test="startDate !=null and startDate !=''">
+				 <![CDATA[and status.edit_date >= #{startDate}]]>
+			   </if>
+			   <if test="endDate !=null and endDate !=''">
+				 <![CDATA[and status.edit_date <= #{endDate}]]>
+			   </if>
+			   order by D.time_stamp_str
+		   ) TMP 
+		 WHERE ROWNUM  &lt;=#{END}
+		 )  
+	  WHERE ROW_ID > #{START} 
+	</select>
+	
+	<select id="getloglistCount" parameterType="Map" resultType="int">
+		select COUNT(1)
+			  from WMS_IN_PUTAWAY_LOG D,
+			       WMS_IN_PUTAWAY_STATUS status
+			 where D.time_stamp_str = status.time_stamp_str
+			   and D.wh_number = status.wh_number 
+			   and status.WH_NUMBER = #{WH_NUMBER}
+			   <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+			   <if test="TIME_STAMP_STR !=null and TIME_STAMP_STR !=''">
+				 and status.TIME_STAMP_STR = #{TIME_STAMP_STR}
+			   </if>
+			   <if test="WERKS !=null and WERKS !=''">
+				 and D.werks = #{WERKS}
+			   </if>
+			   <if test="MATNR !=null and MATNR !=''">
+				 and D.MATNR = #{MATNR}
+			   </if>
+			   <if test="logtype !=null and logtype !='' and logtype == 1">
+				   AND (status.step3_status != 'S' OR status.step3_status IS NULL)
+		       </if>
+		       <if test="logtype !=null and logtype !='' and logtype == 2">
+				   AND status.step3_status = 'S'
+		       </if>
+			   <if test="startDate !=null and startDate !=''">
+				 <![CDATA[and status.edit_date >= #{startDate}]]>
+			   </if>
+			   <if test="endDate !=null and endDate !=''">
+				 <![CDATA[and status.edit_date <= #{endDate}]]>
+			   </if>
+		 
+	</select>
+	
+	<select id="getSapMatDocEmpty"  resultType="Map">
+		select * from WMS_IN_PUTAWAY_STATUS t
+		 where t.step3_status = 'S'
+		   and t.wms_no is not null
+		   and t.mat_doc is null
+	</select>
+	
+	<select id="getReceivedQty" parameterType="List" resultType="Map">
+		<foreach collection="list" index="index" item="a" separator="UNION ALL" open="" close="">
+		select status.doc_no,d.doc_item_no,sum(d.qty) received_qty
+	        from WMS_IN_PUTAWAY_LOG D,
+	             WMS_IN_PUTAWAY_STATUS status
+	       where D.time_stamp_str = status.time_stamp_str
+	         and D.wh_number = status.wh_number
+	         and status.WH_NUMBER = #{a.WH_NUMBER}
+	         <if test="a.MAT_DOC !=null and a.MAT_DOC !='' and a.WMS_NO == null">
+	         	and status.doc_no = #{a.MAT_DOC}
+	         </if>
+	         <if test="a.MATDOC_ITM !=null and a.MATDOC_ITM !='' and a.WMS_ITEM_NO == null">
+	         	and d.doc_item_no = #{a.MATDOC_ITM}
+	         </if>
+	         <if test="a.WMS_NO !=null and a.WMS_NO !=''">
+	         	and status.doc_no = #{a.WMS_NO}
+	         </if>
+	         <if test="a.WMS_ITEM_NO !=null and a.WMS_ITEM_NO !=''">
+	         	and d.doc_item_no = #{a.WMS_ITEM_NO}
+	         </if>
+	         group by status.doc_no,d.doc_item_no
+	     </foreach>
+    </select>
+</mapper>

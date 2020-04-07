@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head><meta charset="utf-8">
+	<meta content="webkit" name="renderer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=1" name="viewport">
+	<meta content="WMS - Powered By csbyd" name="description">
+	<meta content="csbyd" name="author">
+	<title>WMS</title>
+	
+	<script src="${request.contextPath}/statics/js/global.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/jquery-1.12.4.min.js"></script>
+	
+	<link rel="stylesheet" href="${request.contextPath}/statics/fonts/font-icons.min.css">
+	<link rel="stylesheet" href="${request.contextPath}/statics/css/bootstrap.min.css">
+	<link rel="stylesheet" href="${request.contextPath}/statics/plugins/wdScrollTab/TabPanel.css">
+	<link rel="stylesheet" href="${request.contextPath}/statics/plugins/adminlte/css/AdminLTE.css">
+	<link rel="stylesheet" href="${request.contextPath}/statics/plugins/jquery-toastr/2.0/toastr.min.css">
+	<link rel="stylesheet" href="${request.contextPath}/statics/plugins/adminlte/css/skins/skin-green-light.css">
+	<link rel="stylesheet" href="${request.contextPath}/statics/css/index.css">
+	<link rel="stylesheet" href="${request.contextPath}/statics/css/wms.css">
+	<link rel="stylesheet" href="${request.contextPath}/statics/css/common.css">
+
+</head>
+<body class="hold-transition fixed noscroll2 sidebar-mini">
+	<div class="wrapper" id="wms_index" v-cloak >
+	
+		<header class="main-header">
+			<nav class="navbar navbar-static-top">
+				<div class="logo" data-toggle="push-menu" title="WMS">
+					<img style="width: 50px;height:30px;" alt="" src="${request.contextPath}/statics/images/BYD.png">
+					<b style="margin-left: 5px;">${tag.getLocale("WMS","M")}</b>
+					<small style="margin-left: 58px;">&nbsp; &nbsp;<i class="fa fa-bars"></i></small>
+				</div>
+				<div class="navbar-custom-menu">
+					<ul class="nav navbar-nav">
+						<li><a href="javascript:" id="fullScreen" title="全屏"><i class="fa fa-arrows-alt"></i></a></li>
+						<li><a href="javascript:" :title="user.FULL_NAME">{{user.FULL_NAME}}</a></li>
+						<!-- <li><a href="javascript:" id="switchSkin" title="切换主题" style="margin-top:-1px;"><i class="fa fa-dashboard"></i></a></li> -->
+<!-- 						<li>
+							<a href="javascript:" data-href="#" data-title="在线人员" title="在线人员"
+								class="addTabPage">
+								<i class="icon-people"></i><span id="onlineCount" class="label label-success">0</span>
+							</a>
+							<script>
+								function refreshOnlineCount(){
+									$.get('#', function(data){
+										try{$('#onlineCount').html(Number(data))}catch(e){}
+									})
+								}
+								refreshOnlineCount(); // 先执行一次
+								setInterval(refreshOnlineCount, 180000); // 3分钟执行一次
+							</script>
+						</li> -->
+						
+						<li class="dropdown user-menu mr5">
+							<a href="javascript:" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">
+								<img src="${request.contextPath}/statics/images/user.jpg" class="user-image">
+								<span class="hidden-xs">{{user.fullName}}</span>
+							</a>
+							<ul class="dropdown-menu">
+								<li class="mt5">
+									<a id="userInfo" href="javascript:" data-href="sys/user_center.html" class="addTabPage">
+									<i class="fa fa-user"></i> 个人中心</a>
+								</li>
+								<li class="divider"></li>
+								<li>
+									<a href="logout">
+									<i class="fa fa-sign-out"></i> 退出登录</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+
+			</nav>
+		</header>
+		<aside class="main-sidebar">
+			<section class="sidebar">
+				<ul class="sidebar-menu" data-widget="tree">
+					<!-- 左侧菜单 -->
+					<menu-item :item="item" v-for="item in menuList"></menu-item>
+				</ul>
+			</section>
+		</aside>
+		
+		<div class="content-wrapper">
+			<div id="tabpanel"></div>
+		</div>
+		<div id="modifyPasswordTip" class="hide" data-message="${modifyPasswordTip!}"></div>
+		<div id="desktopTabPage" class="hide" data-title="首页" data-url="main.html">
+		</div>
+		</div>
+		<input type="hidden" id="scanResult"> 
+		<input type="hidden" id="activeIframe">
+		
+	<a id="scroll-up" href="#" class="btn btn-sm"><i class="fa fa-angle-double-up"></i></a>
+	
+	<script src="${request.contextPath}/statics/js/global.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/jquery-migrate-1.4.1.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/vue.min.js"></script>
+	<script src="${request.contextPath}/statics/libs/router.js"></script>
+	<script src="${request.contextPath}/statics/libs/bootstrap.min.js"></script>
+	<!-- <script src="${request.contextPath}/statics/libs/app.js"></script> -->
+	<script src="${request.contextPath}/statics/plugins/layer/layer.js"></script>
+	
+	<script src="${request.contextPath}/statics/plugins/select2/4.0/select2.js"></script>
+	<script src="${request.contextPath}/statics/plugins/select2/4.0/i18n/zh_CN.js"></script>
+	<script src="${request.contextPath}/statics/plugins/my97/WdatePicker.js"></script>
+	<script src="${request.contextPath}/statics/plugins/wdScrollTab/TabPanel.js"></script>
+	<script src="${request.contextPath}/statics/plugins/wdScrollTab/TabPanel.extend.js?"></script>
+	<script src="${request.contextPath}/statics/plugins/jquery-toastr/2.0/toastr.min.js"></script>
+	<script src="${request.contextPath}/statics/plugins/jqGrid-4.7.1/js/jquery.jqGrid.js"></script>
+	<script src="${request.contextPath}/statics/plugins/jqGrid-4.7.1/jquery.jqGrid.extend.js"></script>
+	<script src="${request.contextPath}/statics/libs/jquery.slimscroll.js"></script>
+	<script type="text/javascript" src="${request.contextPath}/statics/libs/vue.min.js"></script>
+	<script src="${request.contextPath}/statics/js/wms.js"></script>
+	<script src="${request.contextPath}/statics/js/index.js"></script>
+</body>
+</html>

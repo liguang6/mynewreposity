@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.zzjmes.modules.produce.dao.MatHandoverDao">
+	
+	<select id="getMatInfo" parameterType="Map" resultType="Map">	
+		SELECT t.zzj_no,t.zzj_name,t.process,t.process_flow,t.assembly_position,t.order_no,t.zzj_pmd_items_id,t.demand_quantity,
+		CONCAT(o.order_no,o.order_name,o.bus_type_code,' ',o.order_qty,'台') order_desc,'${zzj_plan_batch}' zzj_plan_batch,
+		(SELECT CASE WHEN SUM(s.deliver_qty) IS NULL THEN 0 ELSE SUM(s.deliver_qty) END FROM ZZJ_MAT_HANDOVER s 
+			WHERE s.zzj_pmd_items_id = t.zzj_pmd_items_id AND s.order_no = t.order_no
+		    <if test="handover_type == '01'">
+			AND s.deliver_process_name = #{deliver_process_name} 
+			</if>
+			<if test="handover_type == '02'">
+			AND s.deliver_team_name = #{deliver_workgroup_name} 
+			</if>
+			<if test="handover_type == '03'">
+			AND s.deliver_workgroup_name = #{deliver_workgroup_name} 
+			</if>
+			AND s.zzj_plan_batch = #{zzj_plan_batch} ) already_handover_quantity
+			<if test="handover_type == '01'">
+            ,(SELECT ifnull(SUM(s.prod_quantity),0)  FROM ZZJ_MACHINE_PLAN_ITEMS s left join ZZJ_MACHINE_PLAN_HEAD ph on ph.id=s.machine_plan_head_id
+			WHERE   ph.order_no = t.order_no 
+			AND s.plan_process = #{deliver_process_name} AND ph.zzj_plan_batch =#{zzj_plan_batch} and s.zzj_pmd_items_id = t.zzj_pmd_items_id) prod_quantity
+			</if>
+		FROM
+		(SELECT m.zzj_no,m.zzj_name,m.process,m.process_flow,m.assembly_position,h.order_no,m.id zzj_pmd_items_id,
+		(case when ifnull(m.change_from,'')='' then m.quantity*p.quantity else
+	    	( select sum(
+							   case WHEN p.from_no >= t.from_no AND p.to_no &lt;= t.to_no 
+									THEN (p.to_no-p.from_no+1)*t.quantity
+									WHEN p.from_no >= t.from_no AND p.from_no &lt; t.to_no AND p.to_no > t.to_no 
+									THEN (t.to_no-p.from_no+1)*t.quantity
+									WHEN p.from_no &lt; t.from_no AND p.to_no > t.to_no 
+									THEN (t.to_no-t.from_no+1)*t.quantity
+									WHEN p.from_no &lt; t.from_no AND p.to_no > t.from_no  AND p.to_no &lt; t.to_no 
+									THEN (p.to_no-t.from_no+1)*t.quantity
+									else 0
+								end
+							)
+						from ZZJ_PMD_ECN t where t.zzj_pmd_items_id=m.id 
+				) end) demand_quantity
+				FROM ZZJ_PMD_ITEMS m
+				INNER JOIN ZZJ_PMD_HEAD h ON m.pmd_head_id = h.id 
+					AND h.order_no = #{order_no} AND h.werks = #{werks} AND h.workshop = #{workshop} <!-- AND h.line = #{line}  -->
+				LEFT JOIN ZZJ_PLAN p ON p.order_no = h.order_no  
+							AND p.werks = h.werks AND p.workshop = h.workshop and p.line = h.line
+				WHERE m.zzj_no = #{zzj_no}
+		        <if test="handover_type == '01'">
+				    and LOCATE(#{deliver_process_name},m.process_flow)>0
+<!-- 				    and LOCATE(#{receive_process_name},m.process_flow)>0 -->
+                </if>
+                <if test="line != null and line != ''">
+					and h.line = #{line} 
+				</if>
+				<if test="zzj_pmd_items_id != null and zzj_pmd_items_id != ''">
+					and m.id = #{zzj_pmd_items_id}
+				</if>
+		) t
+		LEFT JOIN ZZJ_WERKS_ORDER o ON t.order_no = o.order_no
+		GROUP BY t.zzj_pmd_items_id  
+	</select>
+	<select id="getSupplyMatInfo" parameterType="Map" resultType="Map">		
+      SELECT t.zzj_no,t.zzj_name,t.material_no,t.process,t.process_flow,t.assembly_position,t.order_no,t.zzj_pmd_items_id,t.use_workshop,
+		CONCAT(o.order_no,o.order_name,o.bus_type_code,' ',o.order_qty,'台') order_desc,t.werks,t.workshop_name,t.quantity,
+		(case when t.plan_quantity=0 then (select order_qty from ZZJ_WERKS_ORDER p 
+			where p.order_no=t.order_no and p.werks=t.werks)*t.quantity when t.plan_quantity>0 then t.plan_quantity end) as demand_quantity,
+        (SELECT ifnull(SUM(s.deliver_qty),0)  FROM ZZJ_WORKSHOPSUPPLY s where  s.order_no = t.order_no 
+		and s.zzj_pmd_items_id = t.zzj_pmd_items_id and s.werks=t.werks and t.workshop=s.workshop) already_supply_quantity,
+		(SELECT ifnull(SUM(s.prod_quantity),0)  FROM ZZJ_MACHINE_PLAN_ITEMS s where  s.zzj_pmd_items_id = t.zzj_pmd_items_id 
+		and s.plan_process=substring_index(t.process_flow,'-',-1)) prod_quantity
+		FROM
+		  (SELECT m.zzj_no,m.material_no,m.zzj_name,m.process,m.process_flow,m.assembly_position,h.order_no,m.id zzj_pmd_items_id,h.werks,h.workshop_name,h.workshop,
+				m.use_workshop,m.quantity,sum(substring_index(substring_index(substring_index(ifnull(m.change_from,''),';', b.help_topic_id + 1), ';', -1),':',-1)*
+		    	(substring_index(substring_index(substring_index(substring_index(ifnull(m.change_from,''),';', b.help_topic_id + 1), ';', -1),'-',2),'-',-1) -
+			    substring_index(substring_index(substring_index(ifnull(m.change_from,''),';', b.help_topic_id + 1), ';', -1),'-',1) +1)) plan_quantity
+				FROM ZZJ_PMD_ITEMS m
+				join mysql.help_topic b ON b.help_topic_id &lt;  (LENGTH(ifnull(m.change_from,'')) - LENGTH(REPLACE(ifnull(m.change_from,''), ';', '')) + 1)
+				INNER JOIN ZZJ_PMD_HEAD h ON m.pmd_head_id = h.id 
+				WHERE 1=1 AND h.order_no = #{order_no} AND h.werks = #{werks} AND h.workshop = #{workshop} 
+				<if test="line != null and line != ''">
+					and h.line = #{line} 
+				</if>
+				
+				<if test="process != null and process != ''">
+					and  m.process = #{process}
+				</if>
+				<if test="zzj_pmd_items_id == ''">
+					<if test="assembly_position != null and assembly_position != ''">
+						and  m.assembly_position = #{assembly_position}
+					</if>
+					<if test="use_workshop != null and use_workshop != ''">
+						and  m.use_workshop = #{use_workshop}
+					</if>
+				</if>
+				<if test="zzj_no != null and zzj_no != ''">
+					and  m.zzj_no = #{zzj_no}
+				</if>
+				<if test="zzj_pmd_items_id != null and zzj_pmd_items_id != ''">
+					and m.id = #{zzj_pmd_items_id}
+				</if>
+				group by m.id
+		) t
+		LEFT JOIN ZZJ_WERKS_ORDER o ON t.order_no = o.order_no
+		where zzj_pmd_items_id is not null
+	</select>
+	
+	<insert id="save" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_MAT_HANDOVER 
+			(werks,werks_name,workshop,workshop_name,line,line_name,order_no,zzj_plan_batch,zzj_pmd_items_id,
+			zzj_no,handover_type,deliver_process,deliver_process_name,deliver_workgroup,deliver_workgroup_name,deliver_team,
+			deliver_team_name,receive_process,receive_process_name,receive_workgroup,receive_workgroup_name,
+			receive_team,receive_team_name,receive_user,receive_date,deliver_qty,deliver_user,editor,edit_date)
+		values
+		<trim >
+		<foreach collection="matInfoList" item="detail" index="index" separator="," >
+			(
+				#{werks},#{werks_name},#{workshop},#{workshop_name},#{line},#{line_name},#{order_no},#{zzj_plan_batch},
+				#{detail.zzj_pmd_items_id},#{detail.zzj_no},#{handover_type},#{detail.deliver_process},#{detail.deliver_process_name},#{detail.deliver_workgroup},
+				#{detail.deliver_workgroup_name},#{detail.deliver_team},#{detail.deliver_team_name},#{detail.receive_process},
+				#{detail.receive_process_name},#{detail.receive_workgroup},#{detail.receive_workgroup_name},#{detail.receive_team},
+				#{detail.receive_team_name},#{detail.receive_user},#{detail.receive_date},#{detail.deliver_qty},#{detail.deliver_user},#{editor},#{edit_date}
+			)
+		</foreach>	
+		</trim>	
+	</insert>
+	
+	<insert id="saveSupply" parameterType="Map" useGeneratedKeys="true" keyProperty="id" >
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+		insert into ZZJ_WORKSHOPSUPPLY 
+			(werks,werks_name,workshop,workshop_name,line,line_name,order_no,zzj_pmd_items_id,zzj_no,
+			deliver_qty,deliver_user,deliver_date,receive_workshop,receive_workshop_name,receive_user,editor,edit_date)
+		values
+		<trim >
+		<foreach collection="matInfoList" item="detail" index="index" separator="," >
+			(
+				#{werks},#{werks_name},#{workshop},#{workshop_name},#{line},#{line_name},#{order_no},
+				#{detail.zzj_pmd_items_id},#{detail.zzj_no},#{detail.supply_quantity},#{detail.deliver_user},#{detail.deliver_date},
+				#{detail.receive_workshop},#{detail.receive_workshop_name},#{detail.receive_user},#{editor},#{edit_date}
+			)
+		</foreach>	
+		</trim>	
+	</insert>
+	<update id="updateItems" parameterType="List" >
+		update ZZJ_MAT_HANDOVER set
+		deliver_qty=
+		<foreach collection="detail_list" item="detail" index="index" separator="" open=" case id" close="end">
+			when #{detail.deliver_qty} then #{detail.deliver_qty}
+		</foreach>
+		where id in
+		<foreach collection="detail_list" item="detail" index="index" separator="," open=" (" close=")">
+			#{detail.id}
+		</foreach>
+	</update>
+	<update id="deleteItems" parameterType="List" >
+		delete from ZZJ_WORKSHOPSUPPLY where id in
+		<foreach collection="detail_list" item="detail" index="index" separator="," open=" (" close=")">
+			#{detail.id}
+		</foreach>
+	</update>
+	<select id="getMatHandoverList" resultType="Map" parameterType="Map">
+		select i.*,pi.process,pi.process_flow,pi.assembly_position,pi.zzj_name,
+		    pi.use_workshop,concat(o.order_no,' ',order_name,' ',bus_type_code,' ',order_qty,'台') order_desc,
+		    (case handover_type when '01' then i.deliver_process_name when '02' then i.deliver_team_name
+		    when '03' then i.deliver_workgroup_name end) deliver,
+		     (case handover_type when '01' then i.receive_process_name when '02' then i.receive_team_name
+		    when '03' then i.receive_workgroup_name end) receive,
+		    (case handover_type when '01' then '工序交接'  when '02' then '小班组交接'
+	         when '03' then '班组交接' end) handover_type_desc
+		from ZZJ_MAT_HANDOVER i
+		left join ZZJ_PMD_ITEMS pi on i.zzj_pmd_items_id = pi.id
+		left join ZZJ_WERKS_ORDER o on  o.order_no=i.order_no
+		where 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and i.zzj_plan_batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and i.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and i.workshop = #{workshop}
+		</if>
+		<if test="line != null and line !=''">
+			and i.line = #{line}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and i.order_no = #{order_no}
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+		  <if test="zzj_no.indexOf(',')==-1">
+               and i.zzj_no like concat('%',#{zzj_no},'%')  
+          </if>
+          <if test="zzj_no.indexOf(',')!=-1">
+               and find_in_set(i.zzj_no,#{zzj_no})	  
+          </if>
+		</if>
+		<if test="receive_user != null and receive_user !=''">
+			and i.receive_user = #{receive_user}
+		</if>
+		<if test="deliver_user != null and deliver_user !=''">
+			and i.deliver_user = #{deliver_user}
+		</if>
+		<if test="start_date != null and start_date != ''">
+			and i.receive_date &gt;= #{start_date}
+		</if>
+		<if test="end_date != null and end_date !=''">
+			and i.receive_date &lt;= #{end_date}
+		</if>
+		<if test="limit != null and limit !=''">
+		   LIMIT #{start},#{limit}
+		</if>
+	</select>
+	 <select id="getMatHandoverCount" resultType="int" parameterType="Map">
+	 select count(1)
+		from ZZJ_MAT_HANDOVER i where 1=1
+		<if test="zzj_plan_batch != null and zzj_plan_batch !=''">
+			and i.zzj_plan_batch = #{zzj_plan_batch}
+		</if>
+		<if test="werks != null and werks != ''">
+			and i.werks = #{werks}
+		</if>
+		<if test="workshop != null and workshop !=''">
+			and i.workshop = #{workshop}
+		</if>
+		<if test="line != null and line !=''">
+			and i.line = #{line}
+		</if>
+		<if test="order_no != null and order_no != ''">
+			and i.order_no = #{order_no}
+		</if>
+		<if test="zzj_no != null and zzj_no != ''">
+		  <if test="zzj_no.indexOf(',')==-1">
+               and i.zzj_no like concat('%',#{zzj_no},'%') 
+          </if>
+          <if test="zzj_no.indexOf(',')!=-1">
+               and find_in_set(i.zzj_no,#{zzj_no})	  
+          </if>
+		</if>
+		<if test="receive_user != null and receive_user !=''">
+			and i.receive_user = #{receive_user}
+		</if>
+		<if test="deliver_user != null and deliver_user !=''">
+			and i.deliver_user = #{deliver_user}
+		</if>
+		<if test="start_date != null and start_date != ''">
+			and i.receive_date &gt;= #{start_date}
+		</if>
+		<if test="end_date != null and end_date !=''">
+			and i.receive_date &lt;= #{end_date}
+		</if>
+	</select>
+	<select id="getSupplyList" resultType="Map" parameterType="Map">
+	  select * from (
+		SELECT zzj_no,zzj_name,material_no,process,process_flow,assembly_position,zzj_pmd_items_id,use_workshop,
+		 order_desc,werks_name,workshop_name,quantity,ifnull(deliver_qty,0) deliver_qty,
+		(case when plan_quantity=0 then order_qty*quantity when plan_quantity>0 then plan_quantity end) as demand_quantity,
+        (SELECT ifnull(SUM(s.prod_quantity),0)  FROM ZZJ_MACHINE_PLAN_ITEMS s where  s.zzj_pmd_items_id = t1.zzj_pmd_items_id 
+		and s.plan_process=substring_index(process_flow,'-',-1)) prod_quantity
+		 FROM  (select pi.id zzj_pmd_items_id,pi.process,pi.process_flow,pi.assembly_position,pi.zzj_no,pi.zzj_name,
+            pi.material_no,h.werks_name,h.workshop_name,t.deliver_qty,pi.use_workshop,pi.quantity,
+		    concat(o.order_no,' ',order_name,' ',bus_type_code,' ',order_qty,'台') order_desc,o.order_qty,
+		    sum(substring_index(substring_index(substring_index(ifnull(pi.change_from,''),';', b.help_topic_id + 1), ';', -1),':',-1)*
+		    	(substring_index(substring_index(substring_index(substring_index(ifnull(pi.change_from,''),';', b.help_topic_id + 1), ';', -1),'-',2),'-',-1) -
+			    substring_index(substring_index(substring_index(ifnull(pi.change_from,''),';', b.help_topic_id + 1), ';', -1),'-',1) +1)) plan_quantity
+			from ZZJ_PMD_ITEMS pi 
+            left join ZZJ_PMD_HEAD h ON pi.pmd_head_id = h.id 
+		    join mysql.help_topic b ON b.help_topic_id &lt;  (LENGTH(ifnull(pi.change_from,'')) - LENGTH(REPLACE(ifnull(pi.change_from,''), ';', '')) + 1)
+		    left join ZZJ_WERKS_ORDER o on o.order_no=h.order_no
+			left join (select sum(ifnull(deliver_qty,0)) deliver_qty,zzj_pmd_items_id from ZZJ_WORKSHOPSUPPLY s 
+				where s.order_no =#{order_no} AND s.werks = #{werks}  AND s.workshop = #{workshop} 
+                <if test="zzj_no != null and zzj_no !=''">
+				    AND   FIND_IN_SET(s.zzj_no,#{zzj_no})>0
+				</if>
+				 group by s.zzj_pmd_items_id) t on t.zzj_pmd_items_id=pi.id
+		        where h.order_no =#{order_no} AND h.werks = #{werks} AND h.workshop = #{workshop}
+		        <if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               and (pi.zzj_no like concat('%',#{zzj_no},'%') or pi.zzj_name like concat('%',#{zzj_no},'%'))	  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               and find_in_set(pi.zzj_no,#{zzj_no})	  
+		          </if>
+				</if>
+				<if test="use_workshop != null and use_workshop !=''">
+				    AND pi.use_workshop=#{use_workshop}
+				</if>
+				<if test="process != null and process !=''">
+				    AND pi.process=#{process}
+				</if>
+				<if test="assembly_position != null and assembly_position !=''">
+				    AND pi.assembly_position=#{assembly_position}
+				</if>
+		     group by pi.id
+		 ) t1
+		 ) t2 where 1=1
+		 <if test="status != null and status !='' and status=='00'">
+		   and deliver_qty=0
+		</if>
+		<if test="status != null and status !='' and status=='01'">
+		   and deliver_qty&lt;demand_quantity and deliver_qty&gt;0
+		</if>
+		<if test="status != null and status !='' and status=='02'">
+		   and deliver_qty&gt;=demand_quantity
+		</if>
+		<if test="limit != null and limit !=''">
+		   LIMIT #{start},#{limit}
+		</if>
+	</select>
+	 <select id="getSupplyCount" resultType="int" parameterType="Map">
+	 select count(1) from (
+		SELECT zzj_no,zzj_name,material_no,process,process_flow,assembly_position,zzj_pmd_items_id,use_workshop,
+		 order_desc,werks_name,workshop_name,quantity,deliver_qty,
+		(case when plan_quantity=0 then order_qty*quantity when plan_quantity>0 then plan_quantity end) as demand_quantity,
+        (SELECT ifnull(SUM(s.prod_quantity),0)  FROM ZZJ_MACHINE_PLAN_ITEMS s where  s.zzj_pmd_items_id = t1.zzj_pmd_items_id 
+		and s.plan_process=substring_index(process_flow,'-',-1)) prod_quantity
+		 FROM  (select pi.id zzj_pmd_items_id,
+            pi.process,pi.process_flow,pi.assembly_position,pi.zzj_no,pi.zzj_name,pi.material_no,h.werks_name,h.workshop_name,t.deliver_qty,
+		    pi.use_workshop,pi.quantity,concat(o.order_no,' ',order_name,' ',bus_type_code,' ',order_qty,'台') order_desc,o.order_qty,
+		    sum(substring_index(substring_index(substring_index(ifnull(pi.change_from,''),';', b.help_topic_id + 1), ';', -1),':',-1)*
+		    	(substring_index(substring_index(substring_index(substring_index(ifnull(pi.change_from,''),';', b.help_topic_id + 1), ';', -1),'-',2),'-',-1) -
+			    substring_index(substring_index(substring_index(ifnull(pi.change_from,''),';', b.help_topic_id + 1), ';', -1),'-',1) +1)) plan_quantity
+			from ZZJ_PMD_ITEMS pi 
+            left join ZZJ_PMD_HEAD h ON pi.pmd_head_id = h.id 
+		    join mysql.help_topic b ON b.help_topic_id &lt;  (LENGTH(ifnull(pi.change_from,'')) - LENGTH(REPLACE(ifnull(pi.change_from,''), ';', '')) + 1)
+		    left join ZZJ_WERKS_ORDER o on o.order_no=h.order_no
+			left join (select sum(deliver_qty) deliver_qty,zzj_pmd_items_id from ZZJ_WORKSHOPSUPPLY s 
+				where s.order_no =#{order_no} AND s.werks = #{werks}  AND s.workshop = #{workshop} 
+                <if test="zzj_no != null and zzj_no !=''">
+				    AND   FIND_IN_SET(s.zzj_no,#{zzj_no})>0
+				</if>
+				 group by s.zzj_pmd_items_id) t on t.zzj_pmd_items_id=pi.id
+		         where h.order_no =#{order_no} AND h.werks = #{werks} AND h.workshop = #{workshop}
+		        <if test="zzj_no != null and zzj_no != ''">
+				  <if test="zzj_no.indexOf(',')==-1">
+		               and (pi.zzj_no like concat('%',#{zzj_no},'%') or pi.zzj_name like concat('%',#{zzj_no},'%'))	  
+		          </if>
+		          <if test="zzj_no.indexOf(',')!=-1">
+		               and find_in_set(pi.zzj_no,#{zzj_no})	  
+		          </if>
+				</if>
+				<if test="use_workshop != null and use_workshop !=''">
+				    AND pi.use_workshop=#{use_workshop}
+				</if>
+				<if test="process != null and process !=''">
+				    AND pi.process=#{process}
+				</if>
+				<if test="assembly_position != null and assembly_position !=''">
+				    AND pi.assembly_position=#{assembly_position}
+				</if>
+		     group by pi.id
+		 ) t1
+		 ) t2 where 1=1
+		 <if test="status != null and status !='' and status=='00'">
+		   and deliver_qty=0
+		</if>
+		<if test="status != null and status !='' and status=='01'">
+		   and deliver_qty&lt;demand_quantity and deliver_qty&gt;0
+		</if>
+		<if test="status != null and status !='' and status=='02'">
+		   and deliver_qty&gt;=demand_quantity
+		</if>
+	</select>
+	<select id="getSupplyDetailList" resultType="Map" parameterType="Map">
+	  select s.*,i.zzj_name from ZZJ_WORKSHOPSUPPLY s left join ZZJ_PMD_ITEMS i on i.id=s.zzj_pmd_items_id
+	   where zzj_pmd_items_id=#{zzj_pmd_items_id}
+	</select>
+	<select id="getHandoverRuleList" resultType="Map" parameterType="Map">
+	 select handover_type code,(case handover_type when '01' then '工序交接'  when '02' then '小班组交接'
+	 when '03' then '班组交接' end) name
+	  from ZZJ_HANDOVER_RULE where del='0' and  werks=#{werks} and workshop=#{workshop}
+	</select>
+</mapper>

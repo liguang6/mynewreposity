@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.common.dao.WmsCDocNoDao">
+	 <select id="getDictByMap"  parameterType="Map" resultType="Map">
+	     SELECT * FROM SYS_DICT WHERE 1=1 AND DEL_FLAG='0' 
+	       <if test="CODE !=null and CODE !='' ">
+			AND CODE=#{CODE}
+		   </if>
+		   <if test="TYPE !=null and TYPE !='' ">
+			AND TYPE=#{TYPE}
+		   </if>
+
+	 </select>
+	 <update id="getDocNextNo" parameterType="com.byd.wms.business.modules.common.entity.WmsCDocNo" >
+	 	<selectKey keyProperty="currentNo" resultType="int" order="AFTER">
+		  SELECT (select CURRENT_NO from WMS_C_DOC_NO where id = #{id} ) currentNo from DUAL
+		</selectKey>
+		
+		UPDATE WMS_C_DOC_NO  
+			SET CURRENT_NO =  CASE WHEN 0 = CURRENT_NO THEN START_NO ELSE CURRENT_NO+ #{incrementNum} END 
+		WHERE ID = #{id}
+	 </update>
+	 
+	 <update id="updateDocNoById" parameterType="Map">
+		update WMS_C_DOC_NO set CURRENT_NO = CURRENT_NO+#{add_count} 
+		where DEL = '0' AND
+		DOC_TYPE = #{doc_type}
+		<if test="werks !=null and werks !=''">
+			AND EXISTS ( SELECT ID FROM WMS_C_DOC_NO WHERE DOC_TYPE = #{doc_type} AND (WERKS = #{werks} or WERKS is null) ) 
+		</if>
+	 </update>
+</mapper>

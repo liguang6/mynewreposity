@@ -1,0 +1,127 @@
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+                border:1px solid #6FACEF;
+            }
+
+            .btn{
+                border:1px solid #1271EF;background:transparent url(${request.contextPath}/statics/ins/btn_bg.jpg) repeat-x;/**/
+                padding:0 8px;line-height:22px;color: #fff; font-weight:bold;
+            }
+
+            body{text-align:center}
+        </style>
+        <title>收料</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <div id="global_content_smq">
+            <div id ="div1" class="smq_test">
+                <div style="background-color:#1d7bd3;color:white;height:30px;">
+                    <h2 style="font-size:13px;">
+                        <button style="float:left;" class="topBtn" onclick='window.location.replace("${request.contextPath}/index.html?m=1")'>首页</button>
+                        平面库余料退回（262）
+                        <button style="float:right;" class="topBtn" onclick='window.location.replace("${request.contextPath}/logout")'>注销</button></h2>
+                </div>
+                <div id="divInfo" style="color:red;text-align:center;visibility: hidden;">error</div>
+                <div>
+                    <div class="box">
+                        <label id="barcodeLabel" >标签</label>
+                        <div >
+                            <input id="LABEL_NO" name="LABEL_NO" placeholder="扫码或输入" type="text"/>
+                            <button class="btn"  class="btn" onClick="scanPre()"> 扫描</button>
+                        </div>
+                    </div>
+                    <div style=" line-height: 22px;width: auto;font-weight: lighter;clear:both;" >
+                        <label id="bincode" style="line-height: 18px;width: 33px;text-align: left;
+                        padding-left:10px;float: left;">储位</label>
+                        <div >
+                            <input id="BIN_CODE" name="BIN_CODE" placeholder="扫码或输入" style=" width: 111px;" type="text"/>
+                        </div>
+                    </div>
+                    <div style="width:100%;overflow:auto;">
+                    <table id="dataGrid1"></table>
+                    <div id='pager1'></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id ="div2" class="smq_test" style="display:none;">
+                <h2>退料确认</h2>
+                <div id="divInfo2" style="color:red;text-align:center;visibility: hidden;">error</div>
+                <div>
+                    <div class="box" style="margin-top: 50px;">
+                        <label id="document_d" >凭证日期</label>
+                        <div >
+                            <input id="docDate" name="docDate" placeholder="默认系统当前日期" type="text"/>
+                        </div>
+                    </div>
+                    <div class="box"style="margin-top: 20px;">
+                        <label id="book_d" >记账日期</label>
+                        <div >
+                            <input id="debitDate" name="debitDate" placeholder="默认系统当前日期" type="text"/>
+                        </div>
+                    </div>
+                    <div class="box"style="margin-top: 20px;margin-bottom: 50px">
+                        <label id="header_t" >抬头文本</label>
+                        <div >
+                            <input id="HEADER_TXT" name="HEADER_TXT" placeholder="文本配置带出" type="text"/>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id ="div3" class="smq_test" style="display:none;">
+                <h2>条码明细</h2>
+                <div id="divInfo3" style="color:red;text-align:center;visibility: hidden;">error</div>
+                <div style="margin-top: 20px">
+                    <table id="dataGrid" ></table>
+                    <div id='pager'></div>
+                </div>
+                </div>
+
+                <div id="div4" style="display:none;" class="smq_test">
+                    <h2>过账凭证</h2>
+                    <div id="divInfo4" style="color:red;text-align:center;visibility: hidden;">error</div>
+                    <div>
+                        <div class="box" style="margin-top: 50px;">
+                            <label style="width: 70px">WMS凭证号:</label>
+                            <div>
+                                <input id="WMS_NO" name="WMS_NO" type="text"/>
+                            </div>
+                        </div>
+                        <div class="box"style="margin-top: 20px;">
+                            <label>SAP凭证号:</label>
+                            <div >
+                                <input id="SAP_NO" name="SAP_NO" type="text"/>
+                            </div>
+                        </div>
+                        <div class="box"style="margin-top: 20px;margin-bottom: 50px">
+                            <label>作业时长：</label>
+                            <div >
+                                <input id="TIME_SLOT" name="TIME_SLOT"  type="text"/>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div style="text-align:center;">
+                    <button id="btn2" type="submit" class="btn" onClick="confirm()">确认</button>
+                    <button id="btn3" type="reset" class="btn" onclick='saveData()'>保存数据</button>
+                    <button id="btn7" class="btn"  class="btn" style="display:none;color:red"> 删除</button>
+                    <button id="btn4" class="btn"  class="btn" onClick="rback()" style="display:none;"> 返回</button>
+                    <button id="btn5" class="btn"  class="btn" style="display:none;"> 确认</button>
+                    <button id="btn6" class="btn"  class="btn" onClick="rback2()" style="display:none;"> 返回</button>
+
+                </div>
+        </div>
+        </div>
+        <script src="${request.contextPath}/statics/js/return/reMaterialTwo.js?_${.now?long}"></script>
+    </body>
+</html>

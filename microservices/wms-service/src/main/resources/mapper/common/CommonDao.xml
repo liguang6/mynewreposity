@@ -1,0 +1,1303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byd.wms.business.modules.common.dao.CommonDao">
+
+	<resultMap type="Map" id="docitem">
+		<result property="LABEL_NO"  column="LABEL_NO" jdbcType="CLOB" javaType = "java.lang.String" />
+	</resultMap>
+	
+	<!-- 模糊查找仓库信息 -->
+	<select id="getWhList" parameterType="string" resultType="Map">
+		SELECT W.WH_NUMBER AS whNumber,W.WERKS,A.WH_NAME AS whName,W.WH_NUMBER,A.WH_NAME FROM WMS_CORE_WH W LEFT JOIN WMS_CORE_WH_ADDRESS A
+		ON W.WERKS = A.WERKS AND W.WH_NUMBER = A.WH_NUMBER
+		WHERE W.WH_NUMBER LIKE '%' ||  upper(#{whNumber}) || '%' AND W.DEL='0'
+		<if test="Lang !=null and Lang !=''">
+			AND A.LANGUAGE = #{Lang}
+		</if>
+		<if test="Lang == null">
+			AND A.LANGUAGE = 'ZH_CN'
+		</if>
+	</select>
+
+	<select id="getMatPackageList" parameterType="List" resultType="Map">
+		SELECT DISTINCT (MATNR||'**'||LIFNR) MATNR,FULL_BOX_QTY
+		FROM WMS_C_MAT_PACKAGE_HEAD
+		where nvl(DEL,'0') !='X' and STATUS='00' and PACKAGE_TYPE = '01' and
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			WERKS=#{d.WERKS} and WH_NUMBER=#{d.WH_NUMBER}
+			and MATNR=#{d.MATNR} and LIFNR=#{d.LIFNR}
+		</foreach>
+	</select>
+
+	<!-- 模糊查找供应商信息 -->
+	<select id="getVendorList" parameterType="string" resultType="Map">
+		SELECT v.LIFNR AS lifnr,v.NAME1 AS name1,c.short_name,c.VENDOR_MANAGER
+		FROM wms_sap_vendor v
+		LEFT JOIN wms_c_vendor c on c.lifnr=v.lifnr and c.del_flag!='X'
+		WHERE v.LIFNR LIKE '%' ||  upper(#{lifnr}) || '%'
+	</select>
+
+	<select id="getVendor" parameterType="string" resultType="Map">
+		SELECT v.LIFNR AS lifnr,v.NAME1 AS name1
+		FROM wms_sap_vendor v
+		WHERE v.LIFNR = #{lifnr}
+	</select>
+
+	<!-- 模糊查找物料信息 -->
+	<select id="getMaterialList" parameterType="string" resultType="Map">
+		SELECT MATNR,MAKTX,WERKS FROM WMS_SAP_MATERIAL
+		WHERE MATNR LIKE upper(#{arg1}) || '%'  AND WERKS=#{arg0}
+	</select>
+
+	<!-- 精确查找物料信息 -->
+	<select id="getMaterialInfo" parameterType="string" resultType="Map">
+		SELECT * FROM WMS_SAP_MATERIAL
+		WHERE MATNR = #{arg1} AND WERKS=#{arg0}
+	</select>
+
+	<select id="getMatBatchFlag" parameterType="List" resultType="String">
+		<foreach collection="matList" item="d" index="no"  separator="union all" >
+			select #{no} || '#*' || NVL(XCHPF,'0') XCHPF
+			FROM WMS_SAP_MATERIAL WHERE 1=1
+			AND MATNR = #{d.MATNR}
+			AND WERKS = #{d.WERKS}
+		</foreach>
+	</select>
+
+	<!-- 精确批量查找物料信息 -->
+	<select id="getMaterialInfoBatch" parameterType="List" resultType="Map">
+		SELECT * FROM WMS_SAP_MATERIAL
+		WHERE 1=1 and
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			MATNR = #{d.MATNR} AND WERKS=#{d.WERKS}
+		</foreach>
+	</select>
+
+	<select id="getBusinessList" parameterType="Map" resultType="Map">
+		SELECT DISTINCT d.value BUSINESS_NAME,d.CODE,d.LANG_KEY
+		FROM WMS_C_PLANT_BUSINESS pb
+		LEFT JOIN WMS_C_WMS_BUSINESS b ON pb.business_code=b.business_code
+		LEFT JOIN SYS_DICT d ON b.business_name=d.code
+		WHERE d.type='BUSINESS_NAME' and b.business_class=#{business_class}
+		<if test="WERKS !=null and WERKS !=''">
+			and pb.WERKS=#{WERKS}
+		</if>
+		ORDER BY d.code
+	</select>
+
+	<select id="getLoList" parameterType="Map" resultType="Map">
+		select  lgort, lgort_name,NVL(SOBKZ,'0') SOBKZ from wms_sap_plant_lgort where  WERKS=#{WERKS}
+		<if test="SOBKZ !=null and SOBKZ !=''">
+			and (instr(#{SOBKZ},SOBKZ) >0 or SOBKZ is NULL or SOBKZ='')
+		</if>
+		<if test="PO_NO !=null and PO_ITEM_NO !=null and PO_NO !=''  and PO_ITEM_NO!='' ">
+			and (SOBKZ=(select nvl(i.sobkz,'Z') from wms_sap_po_item i
+			where i.ebeln=#{PO_NO} and to_number(i.ebelp)=to_number(#{PO_ITEM_NO}) ) or SOBKZ is NULL or SOBKZ='')
+		</if>
+		<if test="BAD_FLAG == null">
+			and BAD_FLAG !='X'
+		</if>
+		and DEL !='X'
+	</select>
+
+	<select id="getGrAreaList" parameterType="String" resultType="Map">
+		select area_code,area_name from WMS_C_GR_AREA where werks=#{WERKS} and del!='X' ORDER BY ID
+	</select>
+
+	<select id="getMatBinList" parameterType="Map" resultType="Map">
+		SELECT b.* FROM WMS_CORE_WH_BIN b
+		<!-- INNER JOIN WMS_CORE_WH_AREA a ON b.STORAGE_AREA_CODE = a.STORAGE_AREA_CODE -->
+		WHERE b.WH_NUMBER = #{WH_NUMBER} AND b.DEL = '0'
+		AND b.BIN_TYPE = #{BIN_TYPE} AND b.BIN_STATUS = #{BIN_STATUS} <!--  AND a.STORAGE_MODEL = #{STORAGE_MODEL} -->
+	</select>
+
+
+	<select id="getMoveAndSyn" parameterType="Map" resultType="Map">
+		select b.WMS_MOVE_TYPE,b.SAP_MOVE_TYPE,pb.SYN_FLAG,b.BUSINESS_CODE,b.GM_CODE,pb.LGORT
+	    from WMS_C_WMS_BUSINESS b
+	    left join WMS_C_PLANT_BUSINESS pb on pb.business_code=b.business_code
+	    where b.BUSINESS_CLASS=#{BUSINESS_CLASS} and b.BUSINESS_NAME=#{BUSINESS_NAME}
+	    and b.BUSINESS_TYPE=#{BUSINESS_TYPE}  and b.SOBKZ=nvl(#{SOBKZ},'Z') and pb.WERKS=#{WERKS}
+	</select>
+
+	<select id="getPlantToInfo" parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_C_PLANT_TO p WHERE
+		p.WERKS_F = #{WERKS}
+		AND p.WERKS_T = #{F_WERKS}
+		and NVL(p.DEL,'0')='0'
+	</select>
+
+	<select id="getPlantToInfoList" parameterType="List" resultType="Map">
+		<foreach collection="matList" item="d" index="no"  separator="union all" >
+			SELECT #{no} || '#*' ||p.WMS_MOVE_TYPE || '#*' ||p.SAP_MOVE_TYPE MOVE_TYPE
+			FROM WMS_C_PLANT_TO p WHERE
+			p.WERKS_F = #{d.WERKS}
+			AND p.WERKS_T = #{d.F_WERKS}
+			and NVL(p.DEL,'0')='0'
+		</foreach>
+	</select>
+
+	<select id="getMatUnit" parameterType="List" resultType="String">
+		<foreach collection="matList" item="d" index="no"  separator="union all" >
+			<if test="(d.ENTRY_UOM !=null and  d.ENTRY_UOM!='') and (d.UNIT ==null or  d.UNIT =='')">
+				select #{no} || '#*' ||UNIT_EN UNIT_EN
+				FROM WMS_C_UNIT WHERE nvl(DEL,'0') = '0'
+				AND UNIT_ZH = #{d.ENTRY_UOM}
+			</if>
+			<if test="d.UNIT !=null and  d.UNIT !=''">
+				select #{no} || '#*' ||UNIT_EN UNIT_EN
+				FROM WMS_C_UNIT WHERE nvl(DEL,'0') = '0'
+				AND UNIT_ZH = #{d.UNIT}
+			</if>
+		</foreach>
+	</select>
+
+	<select id="getSapMoveType" parameterType="List" resultType="Map">
+		<foreach collection="matList" item="d" index="no"  separator="union all" >
+			select #{no} || '#*' ||b.SAP_MOVE_TYPE || '#*' ||b.WMS_MOVE_TYPE SAP_MOVE_TYPE
+			from WMS_C_WMS_BUSINESS b
+			left join WMS_C_PLANT_BUSINESS pb on pb.business_code=b.business_code
+			where b.BUSINESS_CLASS=#{cdmap.BUSINESS_CLASS} and b.BUSINESS_NAME=#{cdmap.BUSINESS_NAME}
+			and b.BUSINESS_TYPE=#{cdmap.BUSINESS_TYPE}  and b.SOBKZ=nvl(#{d.SOBKZ},'Z') and pb.WERKS=#{cdmap.WERKS}
+		</foreach>
+	</select>
+
+	<!-- 根据工厂号获取全部仓库信息@YK20180829 -->
+	<select id="getWhDataByWerks" parameterType="String" resultType="Map">
+	SELECT * FROM WMS_CORE_WH WHERE WERKS = #{WERKS} AND DEL != 'X'
+	</select>
+
+	<insert id="insertWMSDocHead" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_CORE_WMSDOC_HEAD.nextval FROM dual
+		</selectKey>
+		insert into WMS_CORE_WMSDOC_HEAD (ID,PZ_DATE,PZ_YEAR,JZ_DATE,WMS_NO,HEADER_TXT,TYPE,CREATOR,CREATE_DATE,OPERATION_TIME)
+		values (#{ID},#{PZ_DATE},#{PZ_YEAR},#{JZ_DATE},#{WMS_NO},#{HEADER_TXT},#{TYPE},#{CREATOR},#{CREATE_DATE},#{OPERATION_TIME})
+	</insert>
+
+	<insert id="insertWMSDocDetail" parameterType="List">
+		<!-- 		insert into WMS_CORE_WMSDOC_ITEM (ID,WMS_NO,WMS_ITEM_NO,ITEM_TEXT,BUSINESS_NAME,BUSINESS_TYPE,BUSINESS_CLASS,
+                WMS_MOVE_TYPE,SAP_FLAG,SAP_MOVE_TYPE,REVERSAL_FLAG,CANCEL_FLAG,SOBKZ,F_WERKS,
+                F_WH_NUMBER,F_LGORT,MATNR,MAKTX,F_BATCH,WERKS,WH_NUMBER,LGORT,
+                BIN_CODE,UNIT,QTY_WMS,QTY_SAP,QTY_CANCEL,BATCH,BATCH_SAP,BEDNR,HANDOVER,
+                RECEIPT_NO,RECEIPT_ITEM_NO,ASNNO,ASNITM,PO_NO,PO_ITEM_NO,
+                LIFNR,LIKTX,COST_CENTER,IO_NO,WBS,SAKTO,ANLN1,PARTNER,RECEIVER,
+                MO_NO,MO_ITEM_NO,RSNUM,RSPOS,SO_NO,SO_ITEM_NO,
+                SAP_OUT_NO,SAP_OUT_ITEM_NO,SAP_MATDOC_NO,SAP_MATDOC_ITEM_NO,REF_WMS_NO,
+                REF_WMS_ITEM_NO,DISTRIBUTION_NO,DISTRIBUTION_ITEM_NO,INSPECTION_NO,
+                INSPECTION_ITEM_NO,RETURN_NO,RETURN_ITEM_NO,INBOUND_NO,
+                INBOUND_ITEM_NO,REQUIREMENT_NO,REQUIREMENT_ITEM_NO,PICK_NO,PICK_ITEM_NO,CREATOR,CREATE_DATE,LABEL_NO,CUSTOMER,MOVE_PLANT,MOVE_STLOC,MOVE_BATCH)
+                select SEQ_WMS_CORE_WMSDOC_ITEM.nextval,m.* from(
+                <foreach collection="list" item="d" index="index" separator="union all">
+                    select
+                    #{d.WMS_NO},#{d.WMS_ITEM_NO},#{d.ITEM_TEXT},#{d.BUSINESS_NAME},#{d.BUSINESS_TYPE},#{d.BUSINESS_CLASS},
+                    #{d.WMS_MOVE_TYPE},#{d.SAP_FLAG},#{d.SAP_MOVE_TYPE},#{d.REVERSAL_FLAG},#{d.CANCEL_FLAG},#{d.SOBKZ},#{d.F_WERKS},
+                    #{d.F_WH_NUMBER},#{d.F_LGORT},#{d.MATNR},#{d.MAKTX},#{d.F_BATCH},#{d.WERKS},#{d.WH_NUMBER},#{d.LGORT},
+                    #{d.BIN_CODE},#{d.UNIT},#{d.QTY_WMS},#{d.QTY_SAP},#{d.QTY_CANCEL},#{d.BATCH},#{d.BATCH_SAP},#{d.BEDNR},#{d.HANDOVER},
+                    #{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.ASNNO},#{d.ASNITM},#{d.PO_NO},#{d.PO_ITEM_NO},
+                    #{d.LIFNR},#{d.LIKTX},#{d.COST_CENTER},#{d.IO_NO},#{d.WBS},#{d.SAKTO},#{d.ANLN1},#{d.PARTNER},#{d.RECEIVER},
+                    #{d.MO_NO},#{d.MO_ITEM_NO},#{d.RSNUM},#{d.RSPOS},#{d.SO_NO},#{d.SO_ITEM_NO},
+                    #{d.SAP_OUT_NO},#{d.SAP_OUT_ITEM_NO},#{d.SAP_MATDOC_NO},#{d.SAP_MATDOC_ITEM_NO},#{d.REF_WMS_NO},
+                    #{d.REF_WMS_ITEM_NO},#{d.DISTRIBUTION_NO},#{d.DISTRIBUTION_ITEM_NO},#{d.INSPECTION_NO},
+                    #{d.INSPECTION_ITEM_NO},#{d.RETURN_NO},#{d.RETURN_ITEM_NO},#{d.INBOUND_NO},
+                    #{d.INBOUND_ITEM_NO},#{d.REQUIREMENT_NO},#{d.REQUIREMENT_ITEM_NO},#{d.PICK_NO},#{d.PICK_ITEM_NO},#{d.CREATOR},#{d.CREATE_DATE},#{d.LABEL_NO,jdbcType=CLOB},
+                    #{d.CUSTOMER},#{d.MOVE_PLANT},#{d.MOVE_STLOC},#{d.MOVE_BATCH}
+                    from dual
+                </foreach>
+                ) m -->
+		begin
+		<foreach collection="list" item="d" index="index" separator=";">
+			insert into WMS_CORE_WMSDOC_ITEM (ID,WMS_NO,WMS_ITEM_NO,ITEM_TEXT,BUSINESS_NAME,BUSINESS_TYPE,BUSINESS_CLASS,
+			WMS_MOVE_TYPE,SAP_FLAG,SAP_MOVE_TYPE,REVERSAL_FLAG,CANCEL_FLAG,SOBKZ,F_WERKS,
+			F_WH_NUMBER,F_LGORT,MATNR,MAKTX,F_BATCH,WERKS,WH_NUMBER,LGORT,
+			BIN_CODE,UNIT,QTY_WMS,QTY_SAP,QTY_CANCEL,BATCH,BATCH_SAP,BEDNR,HANDOVER,
+			RECEIPT_NO,RECEIPT_ITEM_NO,ASNNO,ASNITM,PO_NO,PO_ITEM_NO,
+			LIFNR,LIKTX,COST_CENTER,IO_NO,WBS,SAKTO,ANLN1,PARTNER,RECEIVER,
+			MO_NO,MO_ITEM_NO,RSNUM,RSPOS,SO_NO,SO_ITEM_NO,
+			SAP_OUT_NO,SAP_OUT_ITEM_NO,SAP_MATDOC_NO,SAP_MATDOC_ITEM_NO,REF_WMS_NO,
+			REF_WMS_ITEM_NO,DISTRIBUTION_NO,DISTRIBUTION_ITEM_NO,INSPECTION_NO,
+			INSPECTION_ITEM_NO,RETURN_NO,RETURN_ITEM_NO,INBOUND_NO,
+			INBOUND_ITEM_NO,REQUIREMENT_NO,REQUIREMENT_ITEM_NO,PICK_NO,PICK_ITEM_NO,CREATOR,CREATE_DATE,LABEL_NO,CUSTOMER,MOVE_PLANT,MOVE_STLOC,MOVE_BATCH,HANDLE_FTU)
+			values (SEQ_WMS_CORE_WMSDOC_ITEM.nextval,#{d.WMS_NO},#{d.WMS_ITEM_NO},#{d.ITEM_TEXT},#{d.BUSINESS_NAME},#{d.BUSINESS_TYPE},#{d.BUSINESS_CLASS},
+			#{d.WMS_MOVE_TYPE},#{d.SAP_FLAG},#{d.SAP_MOVE_TYPE},#{d.REVERSAL_FLAG},#{d.CANCEL_FLAG},#{d.SOBKZ},#{d.F_WERKS},
+			#{d.F_WH_NUMBER},#{d.F_LGORT},#{d.MATNR},#{d.MAKTX},#{d.F_BATCH},#{d.WERKS},#{d.WH_NUMBER},#{d.LGORT},
+			#{d.BIN_CODE},#{d.UNIT},#{d.QTY_WMS},#{d.QTY_SAP},#{d.QTY_CANCEL},#{d.BATCH},#{d.BATCH_SAP},#{d.BEDNR},#{d.HANDOVER},
+			#{d.RECEIPT_NO},#{d.RECEIPT_ITEM_NO},#{d.ASNNO},#{d.ASNITM},#{d.PO_NO},#{d.PO_ITEM_NO},
+			#{d.LIFNR},#{d.LIKTX},#{d.COST_CENTER},#{d.IO_NO},#{d.WBS},#{d.SAKTO},#{d.ANLN1},#{d.PARTNER},#{d.RECEIVER},
+			#{d.MO_NO},#{d.MO_ITEM_NO},#{d.RSNUM},#{d.RSPOS},#{d.SO_NO},#{d.SO_ITEM_NO},
+			#{d.SAP_OUT_NO},#{d.SAP_OUT_ITEM_NO},#{d.SAP_MATDOC_NO},#{d.SAP_MATDOC_ITEM_NO},#{d.REF_WMS_NO},
+			#{d.REF_WMS_ITEM_NO},#{d.DISTRIBUTION_NO},#{d.DISTRIBUTION_ITEM_NO},#{d.INSPECTION_NO},
+			#{d.INSPECTION_ITEM_NO},#{d.RETURN_NO},#{d.RETURN_ITEM_NO},#{d.INBOUND_NO},
+			#{d.INBOUND_ITEM_NO},#{d.REQUIREMENT_NO},#{d.REQUIREMENT_ITEM_NO},#{d.PICK_NO},#{d.PICK_ITEM_NO},#{d.CREATOR},#{d.CREATE_DATE},#{d.LABEL_NO,jdbcType=CLOB},
+			#{d.CUSTOMER},#{d.MOVE_PLANT},#{d.MOVE_STLOC},#{d.MOVE_BATCH},#{d.HANDLE_FTU})
+		</foreach>
+		;end;
+	</insert>
+
+	<select id="getQcReturnReason" parameterType="String" resultType="Map">
+	SELECT REASON_DESC FROM WMS_C_QC_RETURN_REASONS
+	WHERE REASON_DESC LIKE '%'||#{REASON_DESC}||'%'
+	</select>
+
+	<!-- 查询SAP过账任务信息 -->
+	<select id="getSapPostJob" parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_JOB_SAP_HEAD H WHERE  H.DEL = '0' AND instr(#{JOB_FLAG},H.JOB_FLAG) > 0 ORDER BY H.SAP_JOB_NO
+	</select>
+	<select id="getSapPostJobSeq" parameterType="Map" resultType="Map">
+		SELECT I.JOB_SEQ FROM WMS_JOB_SAP_ITEM I WHERE I.SAP_JOB_NO = #{SAP_JOB_NO} AND I.DEL = '0'
+		GROUP BY I.JOB_SEQ
+		ORDER BY I.JOB_SEQ
+	</select>
+	<!-- 查询SAP过账任务行项目信息 -->
+	<select id="getSapPostJobItem" parameterType="Map" resultType="Map">
+		SELECT I.*,I.REF_WMS_NO "WMS_NO",I.REF_WMS_ITEM_NO "WMS_ITEM_NO"
+		FROM WMS_JOB_SAP_ITEM I
+		INNER JOIN WMS_JOB_SAP_HEAD H ON I.SAP_JOB_NO = H.SAP_JOB_NO AND H.DEL = '0'
+		WHERE  1=1
+		AND I.DEL = '0'
+		AND I.JOB_FLAG = '01'
+		AND I.SAP_JOB_NO = #{SAP_JOB_NO}
+		AND I.JOB_SEQ = #{JOB_SEQ}
+		ORDER BY I.SAP_JOB_ITEM_NO
+	</select>
+
+	<update id="updateSapJobHead" parameterType="Map">
+		UPDATE WMS_JOB_SAP_HEAD H SET H.JOB_FLAG = #{JOB_FLAG}
+		<if test="ERROR !=null and ERROR !=''">
+			,H.ERROR = #{ERROR}
+		</if>
+		WHERE h.SAP_JOB_NO = #{SAP_JOB_NO}
+	</update>
+
+	<update id="updateSapJobItem" parameterType="Map">
+		update WMS_JOB_SAP_ITEM
+		<trim prefix="set" suffixOverrides=",">
+			<trim prefix="JOB_FLAG =case" suffix="end,">
+				<foreach collection="list" item="d" index="index">
+					when SAP_JOB_NO = #{d.SAP_JOB_NO} and SAP_JOB_ITEM_NO = #{d.SAP_JOB_ITEM_NO} then #{d.JOB_FLAG}
+				</foreach>
+			</trim>
+			<trim prefix="POST_QTY =case" suffix="end,">
+				<foreach collection="list" item="d" index="index">
+					when SAP_JOB_NO = #{d.SAP_JOB_NO} and SAP_JOB_ITEM_NO = #{d.SAP_JOB_ITEM_NO} then #{d.POST_QTY}
+				</foreach>
+			</trim>
+		</trim>
+		where
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			SAP_JOB_NO = #{d.SAP_JOB_NO} and SAP_JOB_ITEM_NO = #{d.SAP_JOB_ITEM_NO}
+		</foreach>
+
+	</update>
+
+	<select id="getSapPostJobListByJobFlag" parameterType="List" resultType="Map">
+		SELECT SAP_JOB_NO SAP_JOB_INFO
+		FROM WMS_JOB_SAP_ITEM
+		where nvl(DEL,'0') !='X' and
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			SAP_JOB_NO = #{d.SAP_JOB_NO} and SAP_JOB_ITEM_NO = #{d.SAP_JOB_ITEM_NO} and
+			JOB_FLAG = #{d.UPDATRE_JOB_FLAG}
+		</foreach>
+	</select>
+
+	<update id="updateSapJobItemJobFlag" parameterType="Map" >
+		update WMS_JOB_SAP_ITEM
+		<trim prefix="set" suffixOverrides=",">
+			<trim prefix="JOB_FLAG =case" suffix="end,">
+				<foreach collection="list" item="d" index="index">
+					when SAP_JOB_NO = #{d.SAP_JOB_NO} and SAP_JOB_ITEM_NO = #{d.SAP_JOB_ITEM_NO} then #{d.UPDATRE_JOB_FLAG}
+				</foreach>
+			</trim>
+		</trim>
+		where
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			SAP_JOB_NO = #{d.SAP_JOB_NO} and SAP_JOB_ITEM_NO = #{d.SAP_JOB_ITEM_NO}
+		</foreach>
+	</update>
+
+	<insert id="insertSapJobHead" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_WMS_JOB_SAP_HEAD.nextval FROM dual
+		</selectKey>
+		insert into WMS_JOB_SAP_HEAD(ID,SAP_JOB_NO,WERKS,REF_WMS_NO,PSTNG_DATE,DOC_DATE,SAP_MOVE_TYPE,HEADER_TXT,REF_DOC_NO,LGORT_CONFIG,JOB_FLAG,
+		DEL,CREATOR,CREATE_DATE)
+		values (#{ID},#{SAP_JOB_NO},#{WERKS},#{REF_WMS_NO},#{PSTNG_DATE},#{DOC_DATE},#{SAP_MOVE_TYPE},#{HEADER_TXT},#{REF_DOC_NO},#{LGORT_CONFIG},#{JOB_FLAG},
+		#{DEL},#{CREATOR},#{CREATE_DATE})
+	</insert>
+
+	<insert id="insertSapJobItems" parameterType="List">
+		insert into WMS_JOB_SAP_ITEM (ID,SAP_JOB_NO,SAP_JOB_ITEM_NO,JOB_SEQ,REF_WMS_NO,REF_WMS_ITEM_NO,REF_SAP_MATDOC_NO,REF_SAP_MATDOC_ITEM_NO,REF_SAP_MATDOC_YEAR,PLANT,WERKS,STGE_LOC,LGORT,MOVE_TYPE,GM_CODE,
+		MATERIAL,MATNR,BATCH,CHARG,ENTRY_UOM,ENTRY_QNT,LFIMG,UMREZ,UMREN,MEINS,MEINS_QNT,ITEM_TEXT,PO_NUMBER,PO_ITEM,NO_MORE_GR,VENDOR,CUSTOMER,
+		COSTCENTER,WBS_ELEM,GR_RCPT,ORDERID,ORDER_ITNO,RESERV_NO,VBELN_VL,POSNR_VL,RES_ITEM,VBELN,DELIVERY,MOVE_MAT,MOVE_PLANT,MOVE_STLOC,MOVE_BATCH,
+		WADAT_IST,JOB_FLAG,DEL,CREATOR,CREATE_DATE,PARENT_JOB_ITEM_NO,WMS_MOVE_TYPE
+		)
+		select SEQ_WMS_JOB_SAP_ITEM.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select #{d.SAP_JOB_NO},#{d.SAP_JOB_ITEM_NO},#{d.JOB_SEQ},#{d.REF_WMS_NO},#{d.REF_WMS_ITEM_NO},#{d.REF_SAP_MATDOC_NO},#{d.REF_SAP_MATDOC_ITEM_NO},#{d.REF_SAP_MATDOC_YEAR},#{d.PLANT},#{d.WERKS},#{d.STGE_LOC},#{d.LGORT},#{d.MOVE_TYPE},#{d.GM_CODE},
+			#{d.MATERIAL},#{d.MATNR},#{d.BATCH},#{d.CHARG},#{d.ENTRY_UOM},#{d.ENTRY_QNT},#{d.LFIMG},#{d.UMREZ},#{d.UMREN},#{d.MEINS},#{d.MEINS_QNT},#{d.ITEM_TEXT},#{d.PO_NUMBER},
+			#{d.PO_ITEM},#{d.NO_MORE_GR},#{d.VENDOR},#{d.CUSTOMER},#{d.COSTCENTER},#{d.WBS_ELEM},#{d.GR_RCPT},#{d.ORDERID},#{d.ORDER_ITNO},#{d.RESERV_NO},#{d.VBELN_VL},
+			#{d.POSNR_VL},#{d.RES_ITEM},#{d.VBELN},#{d.DELIVERY},#{d.MOVE_MAT},#{d.MOVE_PLANT},#{d.MOVE_STLOC},#{d.MOVE_BATCH},
+			#{d.WADAT_IST},#{d.JOB_FLAG},'0',#{d.CREATOR},#{d.CREATE_DATE},#{d.PARENT_JOB_ITEM_NO},#{d.WMS_MOVE_TYPE}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+	<update id="updateWMSDocItemSapDocInfo" parameterType="Map">
+		update WMS_CORE_WMSDOC_ITEM
+		<trim prefix="set" suffixOverrides=",">
+			<trim prefix="WMS_SAP_MAT_DOC =case" suffix="end,">
+				<foreach collection="list" item="d" index="index">
+					when WMS_NO = #{d.WMS_NO} and WMS_ITEM_NO = #{d.WMS_ITEM_NO} then CONCAT(nvl(WMS_SAP_MAT_DOC,''), #{d.WMS_SAP_MAT_DOC})
+				</foreach>
+			</trim>
+		</trim>
+		where
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			WMS_NO = #{d.WMS_NO} and WMS_ITEM_NO = #{d.WMS_ITEM_NO}
+		</foreach>
+
+	</update>
+
+	<update id="updateWMSDocHeadSapDocInfo" parameterType="Map">
+			update WMS_CORE_WMSDOC_HEAD set MAT_DOC = CONCAT(NVL(MAT_DOC,''), #{MAT_DOC})
+			where WMS_NO = #{WMS_NO}
+	</update>
+
+	<insert id="insertSapDocHead" parameterType="List">
+		insert into WMS_CORE_SAPDOC_HEAD (ID,REF_WMS_NO,MAT_DOC,DOC_DATE,DOC_YEAR,PSTNG_DATE,REF_DOC_NO,
+		HEADER_TXT,TR_EV_TYPE,CREATE_DATE)
+		select SEQ_WMS_CORE_SAPDOC_HEAD.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select #{d.REF_WMS_NO},#{d.MAT_DOC},#{d.DOC_DATE},#{d.DOC_YEAR},#{d.PSTNG_DATE},#{d.REF_DOC_NO},#{d.HEADER_TXT},#{d.TR_EV_TYPE},#{d.CREATE_DATE}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+	<insert id="insertSapDocItems" parameterType="List">
+		insert into WMS_CORE_SAPDOC_ITEM (ID,REF_WMS_ITEM_NO,MAT_DOC,MATDOC_ITM,DOC_YEAR,MOVE_TYPE,MATERIAL,
+		PLANT,STGE_LOC,ENTRY_QNT,ENTRY_UOM,BATCH,CREATE_DATE,REF_MATDOC_ITM)
+		select SEQ_WMS_CORE_SAPDOC_ITEM.nextval,m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select #{d.REF_WMS_ITEM_NO},#{d.MAT_DOC},#{d.MATDOC_ITM},#{d.DOC_YEAR},#{d.MOVE_TYPE},#{d.MATERIAL},
+			#{d.PLANT},#{d.STGE_LOC},cast(nvl(#{d.ENTRY_QNT},0) as number),#{d.ENTRY_UOM},#{d.BATCH},#{d.CREATE_DATE},#{d.REF_MATDOC_ITM}
+			from dual
+		</foreach>
+		) m
+	</insert>
+	<!-- 更新，插入库存 -->
+	<update id="updateWmsStock" parameterType="List">
+		merge into WMS_CORE_STOCK s using(
+		select m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,
+		m.BATCH,m.BIN_CODE,m.BIN_NAME,m.MEINS,sum(cast(nvl(m.STOCK_QTY,0) as number)) STOCK_QTY,sum(cast(nvl(m.VIRTUAL_QTY,0) as number)) VIRTUAL_QTY,
+		sum(cast(nvl(m.LOCK_QTY,0) as number)) LOCK_QTY,sum(cast(nvl(m.VIRTUAL_LOCK_QTY,0) as number)) VIRTUAL_LOCK_QTY,
+		sum(cast(nvl(m.FREEZE_QTY,0) as number)) FREEZE_QTY,sum(cast(nvl(m.XJ_QTY,0) as number)) XJ_QTY,
+		m.SOBKZ,m.LIFNR,m.LIKTX,m.EDITOR,m.EDIT_DATE,m.SO_NO,m.SO_ITEM_NO
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.WERKS} WERKS,#{d.WH_NUMBER} WH_NUMBER,#{d.LGORT} LGORT, #{d.MATNR} MATNR,#{d.MAKTX} MAKTX,
+			#{d.BATCH} BATCH,#{d.BIN_CODE} BIN_CODE,#{d.BIN_NAME} BIN_NAME,#{d.MEINS} MEINS,#{d.STOCK_QTY} STOCK_QTY,#{d.VIRTUAL_QTY} VIRTUAL_QTY,#{d.LOCK_QTY} LOCK_QTY,
+			#{d.VIRTUAL_LOCK_QTY} VIRTUAL_LOCK_QTY,#{d.FREEZE_QTY} FREEZE_QTY,#{d.XJ_QTY} XJ_QTY,
+			#{d.SOBKZ} SOBKZ,#{d.LIFNR} LIFNR,#{d.LIKTX} LIKTX,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE,#{d.SO_NO} SO_NO,#{d.SO_ITEM_NO} SO_ITEM_NO
+			from dual
+		</foreach>
+		) m
+		group by m.WERKS,m.WH_NUMBER,m.LGORT,m.MATNR,m.MAKTX,m.BATCH,m.BIN_CODE,m.BIN_NAME,m.MEINS,m.STOCK_QTY,m.VIRTUAL_QTY,m.LOCK_QTY,m.VIRTUAL_LOCK_QTY,m.FREEZE_QTY,m.XJ_QTY,m.SOBKZ,m.LIFNR,m.LIKTX,m.EDITOR,m.EDIT_DATE,m.SO_NO,m.SO_ITEM_NO
+		) tmp
+		on (tmp.WERKS=s.WERKS and tmp.WH_NUMBER=s.WH_NUMBER and tmp.LGORT=s.LGORT and tmp.BIN_CODE = s.BIN_CODE
+		and tmp.MATNR=s.MATNR  and tmp.BATCH=s.BATCH and tmp.SOBKZ=s.SOBKZ and (s.LIFNR IS NULL OR tmp.LIFNR=s.LIFNR)
+		and (s.SO_NO IS NULL OR tmp.SO_NO=s.SO_NO) and (s.SO_ITEM_NO IS NULL OR tmp.SO_ITEM_NO=s.SO_ITEM_NO) )
+		when matched then
+		update  set s.STOCK_QTY=s.STOCK_QTY+tmp.STOCK_QTY,s.VIRTUAL_QTY=s.VIRTUAL_QTY+tmp.VIRTUAL_QTY,
+		s.LOCK_QTY=s.LOCK_QTY+tmp.LOCK_QTY,s.VIRTUAL_LOCK_QTY=s.VIRTUAL_LOCK_QTY+tmp.VIRTUAL_LOCK_QTY,
+		s.FREEZE_QTY=s.FREEZE_QTY+tmp.FREEZE_QTY,s.XJ_QTY=s.XJ_QTY+tmp.XJ_QTY,
+		s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE,s.SO_NO=tmp.SO_NO,s.SO_ITEM_NO=tmp.SO_ITEM_NO
+		when not matched then
+		insert (ID,WERKS,WH_NUMBER,LGORT,MATNR,MAKTX,BATCH,BIN_CODE,BIN_NAME,MEINS,STOCK_QTY,VIRTUAL_QTY,LOCK_QTY,VIRTUAL_LOCK_QTY,FREEZE_QTY,XJ_QTY,SOBKZ,LIFNR,
+		LIKTX,EDITOR,EDIT_DATE,SO_NO,SO_ITEM_NO)
+		VALUES (SEQ_WMS_CORE_STOCK.nextval,tmp.WERKS,tmp.WH_NUMBER,tmp.LGORT,tmp.MATNR,tmp.MAKTX,
+		tmp.BATCH,tmp.BIN_CODE,tmp.BIN_NAME,tmp.MEINS,tmp.STOCK_QTY,tmp.VIRTUAL_QTY,tmp.LOCK_QTY,tmp.VIRTUAL_LOCK_QTY,tmp.FREEZE_QTY,tmp.XJ_QTY,
+		tmp.SOBKZ,tmp.LIFNR,tmp.LIKTX,tmp.EDITOR,tmp.EDIT_DATE,tmp.SO_NO,tmp.SO_ITEM_NO
+
+		)
+	</update>
+	<update id="modifyWmsStock" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_STOCK set
+			EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE}
+			<if test="s.STOCK_QTY !=null and s.STOCK_QTY !=''">
+				,STOCK_QTY = (nvl(STOCK_QTY,0) + #{s.STOCK_QTY})
+			</if>
+			<if test="s.VIRTUAL_QTY !=null and s.VIRTUAL_QTY !=''">
+				,VIRTUAL_QTY = (nvl(VIRTUAL_QTY,0) + #{s.VIRTUAL_QTY})
+			</if>
+			<if test="s.VIRTUAL_LOCK_QTY !=null and s.VIRTUAL_LOCK_QTY !=''">
+				,VIRTUAL_LOCK_QTY =(#{s.VIRTUAL_LOCK_QTY}+nvl(VIRTUAL_LOCK_QTY,0))
+			</if>
+			<if test="s.LOCK_QTY !=null and s.LOCK_QTY !=''">
+				,LOCK_QTY =( #{s.LOCK_QTY}+nvl(LOCK_QTY,0))
+			</if>
+			<if test="s.FREEZE_QTY !=null and s.FREEZE_QTY !=''">
+				,FREEZE_QTY = (nvl(FREEZE_QTY,0) + #{s.FREEZE_QTY})
+			</if>
+			<if test="s.XJ_QTY !=null and s.XJ_QTY !=''">
+				,XJ_QTY = (nvl(XJ_QTY,0) + #{s.XJ_QTY})
+			</if>
+			<if test="s.RSB_QTY !=null and s.RSB_QTY !=''">
+				,RSB_QTY = (nvl(RSB_QTY,0) + #{s.RSB_QTY})
+			</if>
+			where
+			WERKS=#{s.WERKS} and WH_NUMBER=#{s.WH_NUMBER} and LGORT=#{s.LGORT} and BIN_CODE = #{s.BIN_CODE}
+			and MATNR=#{s.MATNR}  and BATCH=#{s.BATCH} and SOBKZ=#{s.SOBKZ}
+			<if test="s.LIFNR !=null and s.LIFNR !=''">
+				AND LIFNR = #{s.LIFNR}
+			</if>
+			<if test="s.LIFNR ==null or s.LIFNR ==''">
+				AND LIFNR is null
+			</if>
+			<if test="s.SO_NO !=null and s.SO_NO !=''">
+				AND SO_NO = #{s.SO_NO}
+			</if>
+			<if test="s.SO_ITEM_NO !=null and s.SO_ITEM_NO !=''">
+				AND SO_ITEM_NO = #{s.SO_ITEM_NO}
+			</if>
+		</foreach>
+	</update>
+
+	<select id="getSapDocItemInfo" parameterType="Map" resultType="Map">
+		select * from WMS_CORE_SAPDOC_ITEM where MAT_DOC = #{SAP_DOC_NO}
+		<if test="item !=null and item.size()>0 ">
+			and
+			<foreach collection="item" index="index" item="s" separator="or" open="(" close=")">
+				MATDOC_ITM = #{s.MATDOC_ITEM}
+			</foreach>
+		</if>
+	</select>
+
+	<select id="getPlantSetting" parameterType="String" resultType="Map">
+		<!-- select * from WMS_C_WH where WH_NUMBER=#{WH_NUMBER} and DEL_FLAG!='X' and rownum= 1 -->
+		select w.WH_NUMBER,w.WERKS,
+		nvl(cw.VENDOR_FLAG,'0') VENDOR_FLAG,nvl(cw.IG_FLAG,'0') IG_FLAG,
+		nvl(cw.WMS_FLAG,'0') WMS_FLAG,nvl(cw.HX_FLAG,'0') HX_FLAG,
+		nvl(cw.PACKAGE_FLAG,'0') PACKAGE_FLAG,nvl(cw.BARCODE_FLAG,'0') BARCODE_FLAG,
+		nvl(cw.RESBD_FLAG,'0') RESBD_FLAG,nvl(cw.CMMS_FLAG,'0') CMMS_FLAG
+		from WMS_CORE_WH w
+		LEFT JOIN WMS_C_WH cw ON w.WH_NUMBER = cw.WH_NUMBER AND w.WERKS = cw.WERKS AND nvl(cw.DEL_FLAG,'0')!='X'
+		where w.WH_NUMBER = #{WH_NUMBER} and nvl(w.DEL,'0') !='X'
+		and rownum= 1
+	</select>
+
+	<select id="getDictList" parameterType="String" resultType="Map">
+		select * from SYS_DICT where type=#{TYPE} and DEL_FLAG !='X'
+	</select>
+	<select id="getSapMoveReasByMoveType" parameterType="String" resultType="Map">
+		SELECT r.* FROM WMS_C_GOODSMOV_REASONCODE r WHERE r.MOVE_TYPE = #{MOVE_TYPE} AND r.DEL = '0'
+	</select>
+
+	<select id="getMaterialStock" parameterType="List" resultType="Map">
+		SELECT tmp.* FROM(
+		<foreach collection="matList" index="index" item="a" separator="UNION ALL" open="" close="">
+			SELECT s.*
+			FROM WMS_CORE_STOCK s
+			WHERE s.MATNR = #{a.MATNR} AND s.WERKS = #{a.WERKS}
+			<if test="a.WH_NUMBER !=null and a.WH_NUMBER !=''">
+				AND s.WH_NUMBER =#{a.WH_NUMBER }
+			</if>
+			<if test="a.LGORT !=null and a.LGORT !=''">
+				AND s.LGORT in( SELECT REGEXP_SUBSTR (#{a.LGORT}, '[^,]+', 1,rownum)
+				FROM DUAL CONNECT BY ROWNUM &lt;=
+				LENGTH (#{a.LGORT}) - LENGTH (REPLACE (#{a.LGORT}, ',', ''))+1 )
+			</if>
+			<if test="a.LIFNR !=null and a.LIFNR !=''">
+				AND s.LIFNR =#{a.LIFNR }
+			</if>
+			<if test="a.BATCH !=null and a.BATCH !=''">
+				AND s.BATCH =#{a.BATCH }
+			</if>
+			<if test="a.binCodeList !=null and a.binCodeList !=''">
+				AND s.BIN_CODE IN
+				<foreach collection="binCodeList" item="i" open="(" close=")" separator=",">
+					#{i}
+				</foreach>
+			</if>
+			AND (cast(nvl(s.VIRTUAL_QTY,0) as number)>0 OR cast(nvl(s.STOCK_QTY,0) as number)>0 )
+		</foreach>
+		)tmp ORDER BY tmp.SOBKZ ASC，tmp.BATCH ASC
+	</select>
+
+
+	<!--  模糊查出入库策略控制标识 -->
+	<select id="getControlFlagList" parameterType="Map" resultType="Map">
+		SELECT CONTROL_FLAG AS control,TEXT AS controlDesc FROM WMS_S_CONTROL_FLAG
+		WHERE CONTROL_FLAG LIKE '%' ||  upper(#{controlFlag}) || '%'  AND DEL='0' AND WH_NUMBER=#{whNumber}
+		AND CONTROL_FLAG_TYPE=#{controlFlagType}
+	</select>
+
+	<!-- 拣配下架, 搜索库存推荐储位-->
+	<select id="searchBinForPick" parameterType="Map" resultType="Map">
+		SELECT distinct WCS.* ,WCWB.STORAGE_AREA_CODE ,WCWBS.SEQNO FROM WMS_CORE_STOCK WCS, WMS_CORE_WH_BIN WCWB, WMS_CORE_WH_BIN_SEQ WCWBS
+		WHERE WCS.BIN_CODE = WCWB.BIN_CODE
+		AND WCWB.BIN_CODE = WCWBS.BIN_CODE
+		AND wcs.wh_number = wcwb.wh_number
+		AND wcs.wh_number = wcwbs.wh_number
+		<choose>
+			<when test="hxFlag !=null and hxFlag !=''">
+				AND WCS.LOCK_QTY > 0
+			</when>
+			<otherwise>
+				AND WCS.STOCK_QTY > 0
+			</otherwise>
+		</choose>
+		<if test="HX_FLAG !=null and HX_FLAG !=''">
+			AND WCS.LOCK_QTY > 0
+		</if>
+		<if test="storageAreaCode !=null and storageAreaCode !=''">
+			AND WCWB.STORAGE_AREA_CODE = #{storageAreaCode}
+		</if>
+		<if test="whNumber !=null and whNumber !=''">
+			AND WCS.WH_NUMBER = #{whNumber}
+		</if>
+		<if test="werks !=null and werks !=''">
+			AND WCS.WERKS = #{werks}
+		</if>
+		<if test="matnr !=null and matnr !=''">
+			AND WCS.MATNR = #{matnr}
+		</if>
+		<if test="lgort !=null and lgort !=''">
+			AND WCS.LGORT = #{lgort}
+		</if>
+		<if test="lifnr !=null and lifnr !=''">
+			AND WCS.LIFNR = #{lifnr}
+		</if>
+		<if test="sobkz !=null and sobkz !=''">
+			AND WCS.SOBKZ = #{sobkz}
+		</if>
+		<choose>
+			<when test="soNo !=null and soNo !=''">
+				AND WCS.SO_NO = #{soNo}
+			</when>
+			<otherwise>
+				AND WCS.SO_NO IS NULL
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="soItemNo !=null and soItemNo !=''">
+				AND WCS.SO_ITEM_NO = #{soItemNo}
+			</when>
+			<otherwise>
+				AND WCS.SO_ITEM_NO IS NULL
+			</otherwise>
+		</choose>
+		ORDER BY WCS.BATCH
+	</select>
+
+	<!-- 检索库存-->
+	<select id="getWmsStock"  parameterType="List" resultType="Map">
+		SELECT tmp.* FROM(
+		<foreach collection="matList" index="index" item="a" separator="UNION ALL" open="" close="">
+			SELECT t.* FROM WMS_CORE_STOCK t
+			WHERE 1 = 1
+			<if test="a.WH_NUMBER !=null and a.WH_NUMBER !=''">
+				AND t.WH_NUMBER = #{a.WH_NUMBER}
+			</if>
+			<if test="a.WERKS !=null and a.WERKS !=''">
+				AND t.WERKS = #{a.WERKS}
+			</if>
+			<if test="a.MATNR !=null and a.MATNR !=''">
+				AND t.MATNR = #{a.MATNR}
+			</if>
+			<if test="a.LGORT !=null and a.LGORT !=''">
+				AND t.LGORT = #{a.LGORT}
+			</if>
+			<if test="a.BIN_CODE !=null and a.BIN_CODE !=''">
+				AND t.BIN_CODE = #{a.BIN_CODE}
+			</if>
+			<if test="a.BATCH !=null and a.BATCH !=''">
+				AND t.BATCH = #{a.BATCH}
+			</if>
+			<if test="a.LIFNR !=null and a.LIFNR !=''">
+				AND t.LIFNR = #{a.LIFNR}
+			</if>
+			<if test="a.LIFNR == null or a.LIFNR ==''">
+				AND t.LIFNR is null
+			</if>
+			<if test="a.SOBKZ !=null and a.SOBKZ !=''">
+				AND t.SOBKZ = #{a.SOBKZ}
+			</if>
+			<if test="a.SO_NO !=null and a.SO_NO !=''">
+				AND t.SO_NO = #{a.SO_NO}
+			</if>
+			<if test="a.SO_ITEM_NO !=null and a.SO_ITEM_NO !=''">
+				AND t.SO_ITEM_NO = #{a.SO_ITEM_NO}
+			</if>
+		</foreach>
+		)tmp
+	</select>
+
+	<!-- 检索库存-->
+	<select id="getWmsStockforMap"  parameterType="Map" resultType="Map">
+		SELECT t.* FROM WMS_CORE_STOCK t
+		WHERE 1 = 1
+		<if test="WH_NUMBER !=null and WH_NUMBER !=''">
+			AND t.WH_NUMBER = #{WH_NUMBER}
+		</if>
+		<if test="WERKS !=null and WERKS !=''">
+			AND t.WERKS = #{WERKS}
+		</if>
+		<if test="MATNR !=null and MATNR !=''">
+			AND t.MATNR = #{MATNR}
+		</if>
+		<if test="LGORT !=null and LGORT !=''">
+			AND t.LGORT = #{LGORT}
+		</if>
+		<if test="BIN_CODE !=null and BIN_CODE !=''">
+			AND t.BIN_CODE = #{BIN_CODE}
+		</if>
+		<if test="BATCH !=null and BATCH !=''">
+			AND t.BATCH = #{BATCH}
+		</if>
+		<if test="LIFNR !=null and LIFNR !=''">
+			AND t.LIFNR = #{LIFNR}
+		</if>
+		<if test="SOBKZ !=null and SOBKZ !=''">
+			AND t.SOBKZ = #{SOBKZ}
+		</if>
+	</select>
+
+	<select id="checkMatVirtualStock"  parameterType="List" resultType="Map">
+		SELECT tmp.* FROM(
+		<foreach collection="matList" index="index" item="a" separator="UNION ALL" open="" close="">
+			SELECT t.*
+			FROM WMS_CORE_STOCK t
+			WHERE t.VIRTUAL_QTY - #{a.QTY_WMS} &lt;0
+			<if test="a.WH_NUMBER !=null and a.WH_NUMBER !=''">
+				AND t.WH_NUMBER = #{a.WH_NUMBER}
+			</if>
+			<if test="a.WERKS !=null and a.WERKS !=''">
+				AND t.WERKS = #{a.WERKS}
+			</if>
+			<if test="a.MATNR !=null and a.MATNR !=''">
+				AND t.MATNR = #{a.MATNR}
+			</if>
+			<if test="a.LGORT !=null and a.LGORT !=''">
+				AND t.LGORT = #{a.LGORT}
+			</if>
+			<if test="a.BIN_CODE !=null and a.BIN_CODE !=''">
+				AND t.BIN_CODE = #{a.BIN_CODE}
+			</if>
+			<if test="a.BATCH !=null and a.BATCH !=''">
+				AND t.BATCH = #{a.BATCH}
+			</if>
+			<if test="a.LIFNR !=null and a.LIFNR !=''">
+				AND t.LIFNR = #{a.LIFNR}
+			</if>
+			<if test="a.LIFNR == null or a.LIFNR ==''">
+				AND t.LIFNR is null
+			</if>
+			<if test="a.SOBKZ !=null and a.SOBKZ !=''">
+				AND t.SOBKZ = #{a.SOBKZ}
+			</if>
+		</foreach>
+		)tmp
+	</select>
+
+	<select id="scanLabel"  parameterType="Map" resultType="Map">
+		select * from WMS_CORE_LABEL where del='0' and LABEL_NO = #{labelNo}
+		<if test="werks !=null and werks !=''">
+			and WERKS = #{werks}
+		</if>
+	</select>
+
+	<select id="querySeqNo"  parameterType="Map" resultType="Map">
+		select SEQNO from WMS_CORE_WH_BIN_SEQ where  BIN_CODE = #{binCode}
+	</select>
+
+	<update id="updateStockXJQty" parameterType="Map">
+		<!-- 更新库存下架数量 -->
+		update wms_core_stock s
+		<trim prefix="set" suffixOverrides=",">
+			<if test="qty != null and qty !=''">
+				s.stock_qty = s.stock_qty - #{qty},
+			</if>
+			<if test="xjBinCode != null and xjBinCode !=''">
+				s.xj_bin_code = #{xjBinCode},
+			</if>
+			<if test="xjQty != null and xjQty !=''">
+				s.xj_qty = #{xjQty},
+			</if>
+			EDITOR = #{EDITOR},
+			EDIT_DATE = #{EDIT_DATE}
+
+		</trim>
+		where  s.matnr = #{matnr}
+		<if test="batch != null and batch !=''">
+			and s.batch = #{batch}
+		</if>
+		<if test="werks != null and werks !=''">
+			and s.werks = #{werks}
+		</if>
+		<if test="binCode != null and binCode !=''">
+			and s.bin_code = #{binCode}
+		</if>
+		<if test="lgort != null and lgort !=''">
+			and s.lgort = #{lgort}
+		</if>
+		<if test="lifnr != null and lifnr !=''">
+			and s.lifnr = #{lifnr}
+		</if>
+		<if test="SOBKZ != null and SOBKZ !=''">
+			and s.SOBKZ = #{SOBKZ}
+		</if>
+	</update>
+
+	<select id="getWmsBusinessClass"  parameterType="Map" resultType="Map">
+	     SELECT BUSINESS_CLASS FROM WMS_C_WMS_BUSINESS WHERE
+	     BUSINESS_TYPE=#{BUSINESS_TYPE} AND BUSINESS_NAME=#{BUSINESS_NAME}
+	     AND SOBKZ=#{SOBKZ}
+	 </select>
+
+	<select id="getSapPostJobListCount" parameterType="Map" resultType="int">
+		SELECT count(I.REF_WMS_NO)
+		FROM WMS_JOB_SAP_ITEM I
+		LEFT JOIN WMS_JOB_SAP_HEAD H ON I.SAP_JOB_NO = H.SAP_JOB_NO AND H.DEL = '0'
+		WHERE I.DEL = '0'
+		<if test="JOB_FLAG ==null or JOB_FLAG ==''">
+			AND instr('01,03,05',I.JOB_FLAG) > 0
+		</if>
+		<if test="JOB_FLAG !=null and JOB_FLAG !=''">
+			AND instr(#{JOB_FLAG},I.JOB_FLAG) > 0
+		</if>
+		<if test="REF_WMS_NO !=null and REF_WMS_NO !=''">
+			AND I.REF_WMS_NO = #{REF_WMS_NO}
+		</if>
+		<if test="WERKS !=null and WERKS !=''">
+			AND I.WERKS = #{WERKS}
+		</if>
+		<if test="SAP_MOVE_TYPE !=null and SAP_MOVE_TYPE !=''">
+			AND I.MOVE_TYPE LIKE '%' ||#{SAP_MOVE_TYPE}|| '%'
+		</if>
+		<if test="MATNR !=null and MATNR !=''">
+			AND I.MATNR = #{MATNR}
+		</if>
+		<if test="CREATE_DATE_S !=null and CREATE_DATE_S !='' ">
+			AND I.CREATE_DATE &gt;= CONCAT(#{CREATE_DATE_S}, ' 00:00:00')
+		</if>
+		<if test="CREATE_DATE_E !=null and CREATE_DATE_E !='' ">
+			AND I.CREATE_DATE &lt;= CONCAT(#{CREATE_DATE_E}, ' 23:59:59')
+		</if>
+		<if test="REF_DOC_NO !=null and REF_DOC_NO !=''">
+			AND (I.PO_NUMBER = #{REF_DOC_NO} or I.VENDOR = #{REF_DOC_NO} or I.COSTCENTER = #{REF_DOC_NO}
+			or I.WBS_ELEM = #{REF_DOC_NO} or I.ORDERID = #{REF_DOC_NO} or I.RESERV_NO = #{REF_DOC_NO}
+			or I.DELIVERY = #{REF_DOC_NO}
+			)
+		</if>
+		<if test="WMS_CREATOR !=null and WMS_CREATOR !=''">
+			AND I.CREATOR LIKE '%' ||#{WMS_CREATOR}|| '%'
+		</if>
+	</select>
+	<select id="getSapPostJobList" parameterType="Map" resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT I.ENTRY_QNT ALL_ENTRY_QNT,I.ENTRY_QNT-NVL(I.POST_QTY,0) ENTRY_QNT,
+		I.ID,I.SAP_JOB_NO,I.SAP_JOB_ITEM_NO,I.PARENT_JOB_ITEM_NO,I.JOB_SEQ,
+		I.JOB_FLAG,I.REF_WMS_NO,I.REF_WMS_ITEM_NO,I.REF_SAP_MATDOC_NO,I.REF_SAP_MATDOC_ITEM_NO,
+		I.REF_SAP_MATDOC_YEAR,I.PLANT,I.WERKS,I.STGE_LOC,I.LGORT,I.WMS_MOVE_TYPE,I.MOVE_TYPE,
+		I.GM_CODE,I.MATERIAL,I.MATNR,I.BATCH,I.CHARG,I.ENTRY_UOM,I.LFIMG,I.POST_QTY,I.UMREZ,
+		I.UMREN,I.MEINS,I.MEINS_QNT,I.PO_NUMBER,I.PO_ITEM,I.NO_MORE_GR,I.VENDOR,I.CUSTOMER,
+		I.COSTCENTER,I.WBS_ELEM,I.GR_RCPT,I.ORDERID,I.ORDER_ITNO,I.RESERV_NO,I.RES_ITEM,
+		I.VBELN_VL,I.POSNR_VL,I.VBELN,I.DELIVERY,I.WADAT_IST,I.MOVE_MAT,I.MOVE_PLANT,I.MOVE_STLOC,
+		I.MOVE_BATCH,I.ITEM_TEXT,I.DEL,I.CREATOR,I.CREATE_DATE,
+		H.REF_DOC_NO,H.PSTNG_DATE,H.DOC_DATE,H.SAP_MOVE_TYPE,H.LGORT_CONFIG,H.HEADER_TXT,H.ERROR,
+		substr(I.CREATE_DATE,0,10) WMS_JZ_DATE,I.CREATOR WMS_CREATOR
+		FROM WMS_JOB_SAP_ITEM I
+		LEFT JOIN WMS_JOB_SAP_HEAD H ON I.SAP_JOB_NO = H.SAP_JOB_NO AND H.DEL = '0'
+		WHERE I.DEL = '0'
+		<if test="JOB_FLAG ==null or JOB_FLAG ==''">
+			AND instr('01,03,05',I.JOB_FLAG) > 0
+		</if>
+		<if test="JOB_FLAG !=null and JOB_FLAG !=''">
+			AND instr(#{JOB_FLAG},I.JOB_FLAG) > 0
+		</if>
+		<if test="REF_WMS_NO !=null and REF_WMS_NO !=''">
+			AND I.REF_WMS_NO = #{REF_WMS_NO}
+		</if>
+		<if test="WERKS !=null and WERKS !=''">
+			AND I.WERKS = #{WERKS}
+		</if>
+		<if test="SAP_MOVE_TYPE !=null and SAP_MOVE_TYPE !=''">
+			AND I.MOVE_TYPE LIKE '%' ||#{SAP_MOVE_TYPE}|| '%'
+		</if>
+		<if test="MATNR !=null and MATNR !=''">
+			AND I.MATNR = #{MATNR}
+		</if>
+		<if test="CREATE_DATE_S !=null and CREATE_DATE_S !='' ">
+			AND I.CREATE_DATE &gt;= CONCAT(#{CREATE_DATE_S}, ' 00:00:00')
+		</if>
+		<if test="CREATE_DATE_E !=null and CREATE_DATE_E !='' ">
+			AND I.CREATE_DATE &lt;= CONCAT(#{CREATE_DATE_E}, ' 23:59:59')
+		</if>
+		<if test="REF_DOC_NO !=null and REF_DOC_NO !=''">
+			AND (I.PO_NUMBER = #{REF_DOC_NO} or I.VENDOR = #{REF_DOC_NO} or I.COSTCENTER = #{REF_DOC_NO}
+			or I.WBS_ELEM = #{REF_DOC_NO} or I.ORDERID = #{REF_DOC_NO} or I.RESERV_NO = #{REF_DOC_NO}
+			or I.DELIVERY = #{REF_DOC_NO}
+			)
+		</if>
+		<if test="WMS_CREATOR !=null and WMS_CREATOR !=''">
+			AND I.CREATOR LIKE '%' ||#{WMS_CREATOR}|| '%'
+		</if>
+		ORDER BY I.SAP_JOB_NO,to_number(I.SAP_JOB_ITEM_NO),to_number(I.JOB_SEQ)
+		) TMP
+		<if test="END !=null ">
+			WHERE ROWNUM  &lt;=#{END}
+		</if>
+		)
+		<if test="START !=null ">
+			WHERE ROW_ID > #{START}
+		</if>
+
+	</select>
+
+	<select id="getWmsDocList"  parameterType="string"  resultMap="docitem">
+	    select ROWNUM indx,temp.* from (select item.*,head.type,head.pz_date,head.pz_year,head.jz_date,head.header_txt,head.mat_doc
+		  from WMS_CORE_WMSDOC_HEAD head, WMS_CORE_WMSDOC_ITEM item
+		 where head.wms_no = item.wms_no
+		   and item.del = 0
+		   and item.wms_no = #{WMS_NO}
+		 order by item.id desc) temp
+	 </select>
+
+	<update id="updateLabel" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_LABEL
+			<set>
+				<if test="s.LABEL_STATUS !=null and s.LABEL_STATUS !=''">
+					LABEL_STATUS =  #{s.LABEL_STATUS},
+				</if>
+				<if test="s.WMS_NO !=null and s.WMS_NO !=''">
+					WMS_NO =  #{s.WMS_NO},
+				</if>
+				<if test="s.WMS_ITEM_NO !=null and s.WMS_ITEM_NO !=''">
+					WMS_ITEM_NO =  #{s.WMS_ITEM_NO},
+				</if>
+				<if test="s.QC_RESULT_CODE !=null and s.QC_RESULT_CODE !=''">
+					QC_RESULT_CODE =  #{s.QC_RESULT_CODE},
+				</if>
+				<if test="s.RECEIPT_NO !=null and s.RECEIPT_NO !=''">
+					RECEIPT_NO =  #{s.RECEIPT_NO},
+				</if>
+				<if test="s.RECEIPT_ITEM_NO !=null and s.RECEIPT_ITEM_NO !=''">
+					RECEIPT_ITEM_NO =  #{s.RECEIPT_ITEM_NO},
+				</if>
+				<if test="s.WH_NUMBER !=null and s.WH_NUMBER !=''">
+					WH_NUMBER =  #{s.WH_NUMBER},
+				</if>
+				<if test="s.LIFNR !=null and s.LIFNR !=''">
+					LIFNR =  #{s.LIFNR},
+				</if>
+				<if test="s.LIKTX !=null and s.LIKTX !=''">
+					LIKTX =  #{s.LIKTX},
+				</if>
+				<if test="s.BOX_QTY !=null and s.BOX_QTY !=''">
+					BOX_QTY =  #{s.BOX_QTY}
+				</if>
+			</set>
+			where
+			LABEL_NO=#{s.LABEL_NO}
+		</foreach>
+	</update>
+
+	<update id="saveUnSyncVendor" parameterType="Map">
+		merge into SCHEDULE_JOB_MSG j
+		using(
+		SELECT t.*
+		FROM(
+		SELECT distinct h.BUKRS,h.LIFNR,i.WERKS
+		FROM WMS_SAP_PO_HEAD h
+		LEFT JOIN WMS_SAP_PO_ITEM i on i.EBELN=h.EBELN
+		WHERE h.IMPORT_DATE>=#{date_from} and nvl(h.LIFNR,'0')!='0'
+		) t
+		WHERE not exists (SELECT ID FROM WMS_SAP_VENDOR WHERE LIFNR = t.LIFNR)
+		)tmp
+		ON (j.BASIC_DATA=tmp.LIFNR and j.MEG_TYPE='00')
+		WHEN NOT MATCHED THEN
+		 insert(ID,MEG_TYPE,WERKS,BUKRS,BASIC_DATA,CREATE_TIME) values (SEQ_SCHEDULE_JOB_MSG.nextval,'00',tmp.WERKS,tmp.BUKRS,tmp.LIFNR,#{create_time})
+	</update>
+
+	<delete id="deleteSyncVendor">
+		DELETE FROM SCHEDULE_JOB_MSG j
+		WHERE j.MEG_TYPE='00' and EXISTS (SELECT ID FROM WMS_SAP_VENDOR WHERE LIFNR = j.BASIC_DATA)
+	</delete>
+
+	<update id="saveUnSyncMat" parameterType="Map">
+		merge into SCHEDULE_JOB_MSG j
+		using(
+		SELECT DISTINCT i.MATNR,i.WERKS,'物料主数据未同步' MSG
+		FROM WMS_SAP_PO_ITEM i
+		WHERE i.IMPORT_DATE >='2019-05-01'
+		and not exists (SELECT ID FROM WMS_SAP_MATERIAL WHERE MATNR = i.MATNR and WERKS=i.WERKS)
+		union ALL
+		SELECT DISTINCT i.MATNR,i.WERKS,'物料固定储位未配置' MSG
+		FROM WMS_SAP_PO_ITEM i
+		WHERE i.IMPORT_DATE >=#{date_from}
+		and not exists (SELECT ID FROM WMS_C_MAT_FIXED_STORAGE WHERE MATNR = i.MATNR and WERKS = i.WERKS and nvl(DEL,'0')!='X')
+		)tmp
+		ON ((j.BASIC_DATA=tmp.MATNR||' 物料主数据未同步' or j.BASIC_DATA=tmp.MATNR||' 物料固定储位未配置')
+		and j.MEG_TYPE='01' and j.WERKS=tmp.WERKS)
+		WHEN NOT MATCHED THEN
+		 insert(ID,MEG_TYPE,WERKS,BUKRS,BASIC_DATA,CREATE_TIME)
+		values (SEQ_SCHEDULE_JOB_MSG.nextval,'01',tmp.WERKS,'',tmp.MATNR||' '||tmp.MSG,#{create_time})
+	</update>
+
+	<delete id="deleteSyncMat">
+		DELETE FROM SCHEDULE_JOB_MSG j
+		WHERE j.MEG_TYPE='01' and
+		EXISTS (SELECT ID FROM WMS_C_MAT_FIXED_STORAGE WHERE MATNR||' 物料固定储位未配置' = j.BASIC_DATA and WERKS = j.WERKS and nvl(DEL,'0')!='X')
+
+	</delete>
+
+	<select id="getMatStockInfo" parameterType="Map" resultType="Map">
+		select s.MATNR,s.MAKTX,s.BIN_CODE,s.BATCH,nvl(s.LIFNR,' ') LIFNR,s.LIKTX,s.BIN_NAME,s.MEINS UNIT,s.STOCK_QTY
+		from WMS_CORE_STOCK s
+		where s.WERKS=#{WERKS} and s.WH_NUMBER=#{WH_NUMBER} and s.LGORT=#{LGORT}
+		and s.MATNR=#{MATNR} and s.STOCK_QTY>0 and s.BIN_CODE not in ('9010','BBBB')
+		<if test="SOBKZ !=null and SOBKZ !=''">
+			and s.SOBKZ=#{SOBKZ}
+		</if>
+		<if test="LIFNR !=null and LIFNR !=''">
+			and s.LIFNR=#{LIFNR}
+		</if>
+		<if test="BIN_CODE !=null and BIN_CODE !=''">
+			and s.BIN_CODE=#{BIN_CODE}
+		</if>
+		<if test="BATCH !=null and BATCH !=''">
+			and s.BATCH=#{BATCH}
+		</if>
+		<if test="SO_NO !=null and SO_NO !=''">
+			and s.SO_NO=#{SO_NO}
+		</if>
+		<if test="SO_ITEM_NO !=null and SO_ITEM_NO !=''">
+			and s.SO_ITEM_NO=  LPAD (#{SO_ITEM_NO} , 6 , '0')
+		</if>
+	</select>
+
+	<select id="getAllLoList" parameterType="Map" resultType="Map">
+		select  lgort, lgort_name from wms_sap_plant_lgort where  WERKS=#{WERKS} AND DEL !='X'
+	</select>
+
+	<select id="getBinCode" parameterType="Map" resultType="Map">
+		select BIN_CODE,BIN_NAME from WMS_CORE_WH_BIN where WH_NUMBER=#{WH_NUMBER} and BIN_CODE=#{BIN_CODE} and BIN_STATUS='01'
+	</select>
+
+	<select id="getMatManager" parameterType="Map" resultType="Map">
+		SELECT m.MANAGER_STAFF,m.MANAGER
+		FROM WMS_C_MAT_MANAGER_TYPE m
+		LEFT JOIN WMS_CORE_WH w ON w.WH_NUMBER= m.WH_NUMBER AND w.WERKS = m.WERKS
+		WHERE NVL(m.DEL,'0')='0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND m.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND m.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="MANAGER_TYPE !=null and MANAGER_TYPE !='' ">
+			AND m.MANAGER_TYPE= #{MANAGER_TYPE}
+		</if>
+		<if test="STAFF_NUMBER !=null and STAFF_NUMBER !='' ">
+			AND (m.MANAGER_STAFF = #{STAFF_NUMBER} OR m.LEADER_STAFF = #{STAFF_NUMBER})
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			AND m.AUTHORIZE_CODE=#{AUTHORIZE_CODE}
+		</if>
+		GROUP BY m.MANAGER_STAFF,m.MANAGER
+	</select>
+
+	<select id="getMatManagerAuthCodeList" parameterType="Map" resultType="Map">
+		SELECT NVL(m.AUTHORIZE_CODE, '') AUTHORIZE_CODE,m.MAT_MANAGER_TYPE,m.WERKS,m.WH_NUMBER
+		FROM WMS_C_MAT_MANAGER_TYPE m
+		LEFT JOIN WMS_CORE_WH w ON w.WH_NUMBER= m.WH_NUMBER AND w.WERKS = m.WERKS
+		WHERE NVL(m.DEL,'0')='0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND m.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND m.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="MANAGER_TYPE !=null and MANAGER_TYPE !='' ">
+			AND m.MANAGER_TYPE= #{MANAGER_TYPE}
+		</if>
+		<if test="MAT_MANAGER !=null and MAT_MANAGER !='' ">
+			AND (INSTR(#{MAT_MANAGER},m.MANAGER_STAFF) >0 OR m.LEADER_STAFF = #{MAT_MANAGER})
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			AND m.AUTHORIZE_CODE=#{AUTHORIZE_CODE}
+		</if>
+		GROUP BY m.AUTHORIZE_CODE,m.MAT_MANAGER_TYPE,m.WERKS,m.WH_NUMBER
+	</select>
+
+	<select id="getMatByAuthCode" parameterType="Map" resultType="Map">
+		SELECT *
+		FROM WMS_C_MAT_MANAGER m
+		WHERE nvl(m.DEL,'0')='0'
+		<if test="WERKS !=null and WERKS !='' ">
+			AND m.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND m.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="AUTHORIZE_CODE !=null and AUTHORIZE_CODE !='' ">
+			AND INSTR(#{AUTHORIZE_CODE},m.AUTHORIZE_CODE) >0
+		</if>
+	</select>
+
+	<select id="getLabelInfo" parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_CORE_LABEL 
+		WHERE LABEL_NO = #{LABEL_NO} AND DEL != 'X'
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+	</select>
+
+	<delete id="deleteStockforZero">
+		DELETE FROM wms_core_stock t
+		WHERE nvl(t.stock_qty,0) = 0
+		and nvl(t.virtual_qty,0) = 0
+		and nvl(t.lock_qty,0) = 0
+		and nvl(t.virtual_lock_qty,0) = 0
+		and nvl(t.freeze_qty,0) = 0
+		and nvl(t.xj_qty,0) = 0
+		and nvl(t.rsb_qty,0) = 0
+		<if test="EDIT_DATE !=null and EDIT_DATE !='' ">
+			AND t.edit_date&lt;= #{EDIT_DATE}
+		</if>
+	</delete>
+
+	<delete id="deleteStockLableforZero">
+		delete from wms_core_stock_label where id in
+		(select distinct t.id from wms_core_stock_label t,wms_core_stock t1
+		where t.werks = t1.werks
+		and t.wh_number = t1.wh_number
+		and t.matnr = t1.matnr
+		and t.batch = t1.batch
+		and t.bin_code = t1.bin_code
+		and nvl(t1.stock_qty,0) = 0
+		and nvl(t1.virtual_qty,0) = 0
+		and nvl(t1.lock_qty,0) = 0
+		and nvl(t1.virtual_lock_qty,0) = 0
+		and nvl(t1.freeze_qty,0) = 0
+		and nvl(t1.xj_qty,0) = 0
+		and nvl(t1.rsb_qty,0) = 0
+		<if test="EDIT_DATE !=null and EDIT_DATE !='' ">
+			AND t1.edit_date&lt;= #{EDIT_DATE}
+		</if>
+		)
+	</delete>
+
+	<select id="selectPlantBusiness" parameterType="Map" resultType="Map">
+		select t.werks,t.business_code,t1.sobkz,t.syn_flag,t.approval_flag,t.overstep_req_flag,t.overstep_hx_flag
+		  from WMS_C_PLANT_BUSINESS t,
+		       WMS_C_WMS_BUSINESS t1
+		 where t1.business_name = #{BUSINESS_NAME}
+		   and t1.business_type = #{BUSINESS_TYPE}
+		   and t.werks = #{WERKS}
+		   and t.business_code = t1.business_code
+	</select>
+
+	<update id="updateSapFlagItem" parameterType="Map">
+		update WMS_CORE_WMSDOC_ITEM
+			set SAP_FLAG ='00'
+		where
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			WMS_NO = #{d.REF_WMS_NO} and WMS_ITEM_NO = #{d.REF_WMS_ITEM_NO}
+		</foreach>
+
+	</update>
+
+	<select id="getSAPMatDetail" parameterType="Map" resultType="Map">
+		SELECT MATNR,MAKTX,MAKTX_EN,MEINS,BSTME,AUSME,WERKS,BESKZ,IMPORT_DATE,MMSTA,EDIT_DATE,PRFRQ FROM WMS_SAP_MATERIAL WHERE 1=1
+		<if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND MATNR = #{MATNR}
+		</if>
+		ORDER BY IMPORT_DATE DESC
+    </select>
+    
+    <select id="getMatManagerList" parameterType="List" resultType="Map">
+		select t.werks,t.wh_number,t.matnr,t1.manager_staff,t1.manager from wms_c_mat_manager t, wms_c_mat_manager_type t1
+		where t.del = '0' 
+		  and t.werks = t1.werks 
+		  and t.wh_number = t1.wh_number 
+		  and t.authorize_code = t1.authorize_code
+		  and t1.manager_type = '01' and 
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			(t.WERKS=#{d.WERKS} and t.WH_NUMBER=#{d.WH_NUMBER}
+			and t.MATNR=#{d.MATNR})
+		</foreach>
+	</select>
+	
+	<select id="getLabelCacheInfo" parameterType="Map" resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT C.* FROM WMS_PDA_SCAN_CACHE C
+        WHERE 
+        WH_NUMBER=#{WH_NUMBER}
+		AND C.CREATOR =#{CREATOR}
+		AND C.MENU_KEY=#{MENU_KEY}
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND C.LABEL_NO = #{LABEL_NO}
+		</if>
+		<if test="REF_DOC_NO !=null and REF_DOC_NO !='' ">
+			AND C.REF_DOC_NO = #{REF_DOC_NO}
+		</if>
+		<if test="REF_DOC_ITEM !=null and REF_DOC_ITEM !='' ">
+			AND C.REF_DOC_ITEM = #{REF_DOC_ITEM}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND C.MATNR = #{MATNR}
+		</if>
+		) TMP WHERE ROWNUM &lt;=#{end}) WHERE ROW_ID > #{start}
+	</select>
+	
+	<select id="getLabelCacheInfoNoPage" parameterType="Map" resultType="Map">
+		SELECT C.* FROM WMS_PDA_SCAN_CACHE C
+        WHERE 
+        WH_NUMBER=#{WH_NUMBER}
+		AND C.CREATOR =#{CREATOR}
+		AND C.MENU_KEY=#{MENU_KEY}
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND C.LABEL_NO = #{LABEL_NO}
+		</if>
+		<if test="REF_DOC_NO !=null and REF_DOC_NO !='' ">
+			AND C.REF_DOC_NO = #{REF_DOC_NO}
+		</if>
+		<if test="REF_DOC_ITEM !=null and REF_DOC_ITEM !='' ">
+			AND C.REF_DOC_ITEM = #{REF_DOC_ITEM}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND C.MATNR = #{MATNR}
+		</if>
+	</select>
+	
+	<insert id="insertLabelCacheInfo" parameterType="List" >
+		insert into WMS_PDA_SCAN_CACHE
+			(id,SAP_OUT_NO,werks,wh_number,business_name,label_no,matnr,maktx,qty,
+			 unit,creator,create_date,postvehicleid,batch,business_code,menu_key,REF_DOC_NO,REF_DOC_ITEM,TYPE_NO)
+		SELECT WMS_PDA_SCAN_CACHE_SEQ.NEXTVAL,M.* FROM(
+		<foreach collection="list" item="detail" index="index" separator="UNION ALL">
+		SELECT
+			#{detail.SAP_OUT_NO},#{detail.WERKS},#{detail.WH_NUMBER},#{detail.BUSINESS_NAME},
+	        #{detail.LABEL_NO},#{detail.MATNR},#{detail.MAKTX},#{detail.QTY},
+	        #{detail.UNIT},#{detail.CREATOR},#{detail.CREATE_DATE},
+	        #{detail.POSTVEHICLEID},#{detail.BATCH},#{detail.BUSINESS_CODE},
+	        #{detail.MENU_KEY},#{detail.REF_DOC_NO},#{detail.REF_DOC_ITEM},#{detail.TYPE_NO}
+		FROM DUAL
+		</foreach>
+		) M
+	</insert>
+	<delete id="deleteLabelCacheInfo" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			DELETE FROM WMS_PDA_SCAN_CACHE C
+			WHERE 
+			WH_NUMBER=#{s.WH_NUMBER}
+			AND C.CREATOR =#{s.CREATOR}
+			AND C.MENU_KEY=#{s.MENU_KEY}
+			<if test="s.LABEL_NO !=null and s.LABEL_NO !='' ">
+				AND C.LABEL_NO = #{s.LABEL_NO}
+			</if>
+		</foreach>
+	</delete>
+
+	<delete id="batchDeleteLabelCacheInfo">
+		DELETE FROM WMS_PDA_SCAN_CACHE C
+		WHERE
+		C.LABEL_NO IN
+		<foreach collection="list" item="label" index="index" separator="," open="(" close=")">
+			#{label}
+		</foreach>
+	</delete>
+	
+	<select id="getLabelCacheInfoCount" parameterType="Map" resultType="int">
+		SELECT count(1) FROM WMS_PDA_SCAN_CACHE C
+        WHERE 
+        WH_NUMBER=#{WH_NUMBER}
+		AND C.CREATOR =#{CREATOR}
+		AND C.MENU_KEY=#{MENU_KEY}
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND C.LABEL_NO = #{LABEL_NO}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND C.MATNR = #{MATNR}
+		</if>
+    </select>
+    
+    <insert id="insertBarcodeLog" parameterType="List" >
+		insert into wms_report_barcode_log
+			(id,LABEL_NO,werks,wh_number,PACKAGE_LEVEL,BUSINESS_NAME,ASNNO,ASNITM,matnr,maktx,qty,
+			unit,creator,create_date,CLIENT,WMS_NO,WMS_ITEM_NO,WMS_MOVE_TYPE,BUSINESS_NO,BUSINESS_ITEM_NO,
+			RECEIPT_NO,RECEIPT_ITEM_NO)
+		SELECT SEQ_WMS_REPORT_BARCODE_LOG.NEXTVAL,M.* FROM(
+		<foreach collection="list" item="detail" index="index" separator="UNION ALL">
+		SELECT
+			#{detail.LABEL_NO},#{detail.WERKS},#{detail.WH_NUMBER},#{detail.PACKAGE_LEVEL},
+	        #{detail.BUSINESS_NAME},#{detail.ASNNO},#{detail.ASNITM},#{detail.MATNR},#{detail.MAKTX},
+	        #{detail.QTY},#{detail.UNIT},#{detail.CREATOR},#{detail.CREATE_DATE},#{detail.CLIENT},
+	        #{detail.WMS_NO},#{detail.WMS_ITEM_NO},#{detail.WMS_MOVE_TYPE},#{detail.BUSINESS_NO},
+	        #{detail.BUSINESS_ITEM_NO},#{detail.RECEIPT_NO},#{detail.RECEIPT_ITEM_NO}
+		FROM DUAL
+		</foreach>
+		) M
+	</insert>
+	
+	<select id="getBarcodeLog" parameterType="Map" resultType="Map">
+		SELECT C.* FROM WMS_REPORT_BARCODE_LOG C
+        WHERE 1=1
+        <if test="WERKS !=null and WERKS !='' ">
+			AND WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND C.WH_NUMBER = #{WH_NUMBER}
+		</if>
+		<if test="LABEL_NO !=null and LABEL_NO !='' ">
+			AND C.LABEL_NO = #{LABEL_NO}
+		</if>
+		<if test="BUSINESS_NO !=null and BUSINESS_NO !='' ">
+			AND C.BUSINESS_NO = #{BUSINESS_NO}
+		</if>
+		<if test="BUSINESS_ITEM_NO !=null and BUSINESS_ITEM_NO !='' ">
+			AND C.BUSINESS_ITEM_NO = #{BUSINESS_ITEM_NO}
+		</if>
+		<if test="WMS_NO !=null and WMS_NO !='' ">
+			AND C.WMS_NO = #{WMS_NO}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			AND C.MATNR = #{MATNR}
+		</if>
+		<if test="ASNNO !=null and ASNNO !='' ">
+			AND C.ASNNO = #{ASNNO}
+		</if>
+		<if test="ASNITM !=null and ASNITM !='' ">
+			AND C.ASNITM = #{ASNITM}
+		</if>
+		<if test="RECEIPT_NO !=null and RECEIPT_NO !='' ">
+			AND C.RECEIPT_NO = #{RECEIPT_NO}
+		</if>
+		<if test="RECEIPT_ITEM_NO !=null and RECEIPT_ITEM_NO !='' ">
+			AND C.RECEIPT_ITEM_NO = #{RECEIPT_ITEM_NO}
+		</if>
+	</select>
+	
+	<select id="getLabelInfoBatch" parameterType="List" resultType="Map">
+		SELECT * FROM WMS_CORE_LABEL
+		WHERE DEL != 'X' and
+		<foreach collection="list" index="index" item="d" separator="or" open="(" close=")">
+			LABEL_NO = #{d.LABEL_NO}
+		</foreach>
+	</select>
+</mapper>
+

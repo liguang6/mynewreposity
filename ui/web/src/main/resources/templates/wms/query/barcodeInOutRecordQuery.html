@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>WMS事务条码信息</title>
+	<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak>
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/report/wmsReportBarcodeLog/list">
+
+					<input type="text" v-model="werks" id="WERKS" name="WERKS" style="width: 100px;display:none;" class="form-control width-300" />
+					<input type="text" v-model="wh_number" id="WH_NUMBER" name="WH_NUMBER" style="width: 100px;display:none;" class="form-control width-300" />
+					<input type="text" v-model="wms_no" id="WMS_NO" name="WMS_NO" style="width: 100px;display:none;" class="form-control width-300" />
+					<input type="text" v-model="wms_item_no" id="WMS_ITEM_NO" name="WMS_ITEM_NO" style="width: 100px;display:none;" class="form-control width-300" />
+
+				</form>
+				<table id="dataGrid"></table>
+				<div id="dataGridPage"></div>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/report/barcodeInOutRecordQuery.js?_${.now?long}"></script>
+</body>
+</html>

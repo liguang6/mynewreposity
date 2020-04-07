@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>配送标签</title>
+    <meta charset="UTF-8"/>
+    <style>
+        @page {
+            size: 105mm 98mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            margin: 0.05in;
+            padding: 0.1em;
+/*             @bottom-center{
+                content:"BYDCC © 版权所有";
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            }; */
+            @top-center { content: element(header) };
+/*             @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;
+            }; */
+        }
+    </style>
+    
+  </head>
+  <body style="font-family: SimSun;width: 100%;height: 100%;">
+    <div style="width: 100%;height: 90mm;font-size: 11px;">
+		<table style="border:solid #000000; border-width:0px 0px 0px 0px;width: 100%;height: 85%;">
+				<tr style="width: 100%;">
+					<td style="width: 80px;height: 50px;text-align: left;border:solid #000000; border-width:0px 0px 0px 0px;">
+						  <img src="${contextPath}/statics/images/byd_logo.png" style="width: 80px;height: 50px;"></img>
+					</td>
+					<td style="width: 160px;height: 50px;text-align: center;border:solid #000000; border-width:0px 0px 0px 0px;" colspan="3">
+						<label class="control-label" style="width: 160px;font-size: 18px">${VALUE}</label>
+					</td>
+					<td style="width: 103px;height: 50px;text-align: center;border:solid #000000; border-width:0px 0px 0px 0px;" >
+						<label class="control-label" style="width: 103px">${REQUIREMENT_NO}</label>
+					</td>
+				</tr>
+				<tr style="width: 100%;">
+					<td style="text-align: center;width: 110px;height: 50px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${WERKS} / ${WH_NUMBER}
+					</td>
+					<td style="width: 2px;"></td>
+					<td style="text-align: center;width: 160px;height: 50px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${QTY_XJ} / ${QTY}
+					</td>
+					<td style="width: 2px;"></td>
+					<td rowspan="2" style="border:solid #000000; border-width:0px 0px 0px 0px;">
+						<img src="${barCode}" style="width: 103px;height: 100px;"></img>
+					</td>
+				</tr>
+				<tr style="width: 100%;">
+					<td style="text-align: center;width: 110px;height: 50px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${LIFNR}
+					</td>
+					<td style="width: 2px;"></td>
+					<td style="text-align: center;width: 160px;height: 50px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${LIKTX}
+					</td>
+					<td style="width: 2px;"></td>
+				</tr>
+				<tr style="width: 100%;">
+					<td style="text-align: center;width: 110px;height: 38px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${BATCH}
+					</td>
+					<td style="width: 2px;"></td>
+					<td style="text-align: center;width: 133px;height: 45px;border:solid #000000; border-width:2px 2px 2px 2px;" rowspan="2" colspan="3">
+						${MAKTX}
+					</td>
+				</tr>
+				<tr style="width: 100%;">
+					<td style="text-align: center;width: 110px;height: 38px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${MATNR}
+					</td>
+					<td style="width: 2px;"></td>
+				</tr>	
+				<tr style="width: 100%;">
+					<td style="text-align: center;width: 110px;height: 38px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${FULL_NAME}
+					</td>
+					<td style="width: 2px;"></td>
+					<td style="text-align: center;width: 160px;height: 38px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${BIN_NAME}
+					</td>
+					<td style="width: 2px;"></td>
+					<td style="text-align: center;width: 103px;height: 38px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${BIN_CODE}
+					</td>
+				</tr>
+				<tr style="width: 100%;">
+					<td style="text-align: center;width: 262px;height: 38px;border:solid #000000; border-width:2px 2px 2px 2px;" colspan="3">
+						${REQUIRED_DATE}
+					</td>
+					<td style="width: 2px;"></td>
+					<td style="text-align: center;width: 103px;height: 38px;border:solid #000000; border-width:2px 2px 2px 2px;" >
+						${STATION}
+					</td>
+				</tr>
+				
+			</table>
+    </div>
+  </body>
+</html>

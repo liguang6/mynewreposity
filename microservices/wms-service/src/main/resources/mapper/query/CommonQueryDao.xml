@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao">
+
+	<sql id="sql">
+      <if test="RECEIPT_NO_IN!=null ">
+          AND D.RECEIPT_NO IN
+       <foreach collection="RECEIPT_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="RECEIPT_NO_NOT_IN!=null">
+          AND D.RECEIPT_NO NOT IN
+       <foreach collection="RECEIPT_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="RECEIPT_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="RECEIPT_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.RECEIPT_NO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="RECEIPT_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="RECEIPT_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.RECEIPT_NO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="INBOUND_NO_IN!=null ">
+          AND D.INBOUND_NO IN
+       <foreach collection="INBOUND_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="INBOUND_NO_NOT_IN!=null">
+          AND D.INBOUND_NO NOT IN
+       <foreach collection="INBOUND_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="INBOUND_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="INBOUND_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.INBOUND_NO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="INBOUND_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="INBOUND_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.INBOUND_NO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="PO_NO_IN!=null ">
+          AND D.PO_NO IN
+       <foreach collection="PO_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="PO_NO_NOT_IN!=null">
+          AND D.PO_NO NOT IN
+       <foreach collection="PO_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="PO_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="PO_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.PO_NO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="PO_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="PO_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.PO_NO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+       <if test="ASN_NO_IN!=null ">
+          AND D.ASNNO IN
+       <foreach collection="ASN_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="ASN_NO_NOT_IN!=null">
+          AND D.ASNNO NOT IN
+       <foreach collection="ASN_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="ASN_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="ASN_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.ASNNO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="ASN_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="ASN_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.ASNNO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+    </if>
+    <if test="SAP_OUT_NO_IN!=null ">
+          AND S.SAP_OUT_NO IN
+       <foreach collection="SAP_OUT_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="SAP_OUT_NO_NOT_IN!=null">
+          AND D.SAP_OUT_NO NOT IN
+       <foreach collection="SAP_OUT_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="SAP_OUT_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="SAP_OUT_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.SAP_OUT_NO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="SAP_OUT_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="SAP_OUT_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.SAP_OUT_NO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+       </if>
+       <if test="SAP_OUT_NO_IN!=null ">
+          AND D.SAP_OUT_NO IN
+       <foreach collection="SAP_OUT_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="SAP_OUT_NO_NOT_IN!=null">
+          AND D.SAP_OUT_NO NOT IN
+       <foreach collection="SAP_OUT_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="SAP_OUT_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="SAP_OUT_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.SAP_OUT_NO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="SAP_OUT_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="SAP_OUT_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.SAP_OUT_NO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="RETURN_NO_IN!=null ">
+          AND D.RETURN_NO IN
+       <foreach collection="RETURN_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="RETURN_NO_NOT_IN!=null">
+          AND D.RETURN_NO NOT IN
+       <foreach collection="RETURN_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="RETURN_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="RETURN_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.RETURN_NO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="RETURN_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="RETURN_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.RETURN_NO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+       </if>
+       <if test="WMS_NO_IN!=null ">
+          AND D.WMS_NO IN
+       <foreach collection="WMS_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="WMS_NO_NOT_IN!=null">
+          AND D.WMS_NO NOT IN
+       <foreach collection="WMS_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="WMS_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="WMS_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.WMS_NO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="WMS_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="WMS_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.WMS_NO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+       </if>
+       <if test="REF_WMS_NO_IN!=null ">
+          AND D.REF_WMS_NO IN
+       <foreach collection="REF_WMS_NO_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="REF_WMS_NO_NOT_IN!=null">
+          AND D.REF_WMS_NO NOT IN
+       <foreach collection="REF_WMS_NO_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="REF_WMS_NO_BETWEEN!=null">
+          AND 
+       <foreach collection="REF_WMS_NO_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.REF_WMS_NO BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="REF_WMS_NO_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="REF_WMS_NO_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.REF_WMS_NO NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+       </if>
+       <if test="MAT_DOC_IN!=null ">
+          AND D.MAT_DOC IN
+       <foreach collection="MAT_DOC_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="MAT_DOC_NOT_IN!=null">
+          AND D.MAT_DOC NOT IN
+       <foreach collection="MAT_DOC_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="MAT_DOC_BETWEEN!=null">
+          AND 
+       <foreach collection="MAT_DOC_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.MAT_DOC BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="MAT_DOC_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="MAT_DOC_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.MAT_DOC NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+       </if>
+    <if test="MATNR_IN!=null ">
+          AND D.MATNR IN
+       <foreach collection="MATNR_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="MATNR_NOT_IN!=null">
+          AND D.MATNR NOT IN
+       <foreach collection="MATNR_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="MATNR_BETWEEN!=null">
+          AND 
+       <foreach collection="MATNR_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.MATNR BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="MATNR_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="MATNR_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.MATNR NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="LIFNR_IN!=null ">
+          AND D.LIFNR IN
+       <foreach collection="LIFNR_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="LIFNR_NOT_IN!=null">
+          AND D.LIFNR NOT IN
+       <foreach collection="LIFNR_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="LIFNR_BETWEEN!=null">
+          AND 
+       <foreach collection="LIFNR_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.LIFNR BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="LIFNR_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="LIFNR_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.LIFNR NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+       </if>
+       <if test="BATCH_IN!=null ">
+          AND D.BATCH IN
+       <foreach collection="BATCH_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="BATCH_NOT_IN!=null">
+          AND D.BATCH NOT IN
+       <foreach collection="BATCH_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="BATCH_BETWEEN!=null">
+          AND 
+       <foreach collection="BATCH_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.BATCH BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="BATCH_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="BATCH_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.BATCH NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <!--移动类型  -->
+      <if test="MOVE_TYPE_IN!=null ">
+          AND D.MOVE_TYPE IN
+       <foreach collection="MOVE_TYPE_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="MOVE_TYPE_NOT_IN!=null">
+          AND D.MOVE_TYPE NOT IN
+       <foreach collection="MOVE_TYPE_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="MOVE_TYPE_BETWEEN!=null">
+          AND 
+       <foreach collection="MOVE_TYPE_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.MOVE_TYPE BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="MOVE_TYPE_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="MOVE_TYPE_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.MOVE_TYPE NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      
+      <if test="WMS_MOVE_TYPE_IN!=null ">
+          AND D.WMS_MOVE_TYPE IN
+       <foreach collection="WMS_MOVE_TYPE_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="WMS_MOVE_TYPE_NOT_IN!=null">
+          AND D.WMS_MOVE_TYPE NOT IN
+       <foreach collection="WMS_MOVE_TYPE_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="WMS_MOVE_TYPE_BETWEEN!=null">
+          AND 
+       <foreach collection="WMS_MOVE_TYPE_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.WMS_MOVE_TYPE BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="WMS_MOVE_TYPE_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="WMS_MOVE_TYPE_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.WMS_MOVE_TYPE NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <!--成本中心  -->
+      <if test="COST_CENTER_IN!=null ">
+          AND D.COST_CENTER IN
+       <foreach collection="COST_CENTER_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="COST_CENTER_NOT_IN!=null">
+          AND D.COST_CENTER NOT IN
+       <foreach collection="COST_CENTER_NOT_IN" item="detail" index="index" open="(" close=")" separator=",">
+            #{detail}
+       </foreach>
+      </if>
+      <if test="COST_CENTER_BETWEEN!=null">
+          AND 
+       <foreach collection="COST_CENTER_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.COST_CENTER BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+      <if test="COST_CENTER_NOT_BETWEEN!=null">
+          AND 
+       <foreach collection="COST_CENTER_NOT_BETWEEN" item="detail" index="index" open="(" close=")" separator="OR">
+         D.COST_CENTER NOT BETWEEN SUBSTRING_INDEX(#{detail},'~',1) AND SUBSTRING_INDEX(#{detail},'~',-1)
+       </foreach>
+      </if>
+    </sql>
+</mapper>

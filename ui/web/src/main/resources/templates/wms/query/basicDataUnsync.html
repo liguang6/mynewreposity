@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库存查询</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<script type="text/javascript" src="${request.contextPath}/statics/js/dynamicColum.js"></script>
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/basicDataUnsync/list" >
+						<div class="row">					
+							<div class="form-group">
+								<label class="control-label" style="width: 45px">工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select name="WERKS" id="WERKS" v-model="WERKS" class="input-medium" style="width:100%;height:25px">
+										<option value=''>全部</option>
+									   <#list tag.getUserAuthWerks("BASIC_DATA_UNSYNC") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label">公司代码：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   <input type="text" id="BUKRS" name="BUKRS" v-model='BUKRS' style="width: 120px;" class="form-control" />
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+							 <label class="control-label">消息类别：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:120px">
+									   <select id="MEG_TYPE"  name="MEG_TYPE" v-model="MEG_TYPE">
+											<option value="">全部</option>
+											<option value="00">供应商主数据</option>
+											<option value="01">物料主数据</option>
+										</select> 
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" onclick="query()">查询</button>								
+							</div>	
+					</div>
+					</form>
+						<div id="divDataGrid" style="width:100%;overflow:auto;">
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+						</div>	
+					</div>
+				</div>
+							
+			</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/basicDataUnsync.js?_${.now?long}"></script>
+</body>
+</html>

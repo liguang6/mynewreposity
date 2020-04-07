@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>收货</title>  
+<#include "/web_header.html">
+<style type="text/css">
+	.ui-jqgrid tr.jqgrow td {
+  white-space: normal !important;
+  height:auto;
+  vertical-align:text-top;
+  padding-top:2px;
+  word-break:break-all;
+ }
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper" id="page_div">
+		<div class="main-content">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" :action="formUrl">
+						<div class="form-group">
+							<label class="control-label">检验节点：</label>
+							<div class="control-inline" >
+							<input type="text"  name="TEST_NODE" v-model="TEST_NODE" readonly class="input-medium" style="width: 100px; height: 30px;"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" v-if="TEST_TYPE=='01' ">车号：</label>
+							<label class="control-label" v-if="TEST_TYPE=='02' ">VIN：</label>
+							<div class="control-inline" >
+							<input type="text"  name="BUS_NO" v-model="BUS_NO" readonly v-if="TEST_TYPE=='01' "  
+							class="input-medium" style="width: 180px; height: 30px;"/>
+							<input type="text"  name="VIN" v-model="VIN" readonly v-if="TEST_TYPE=='02' " 
+							class="input-medium" style="width: 180px; height: 30px;"/>
+							</div>
+						</div>
+						<div class="form-group">	
+							<label class="control-label" >订单：</label>
+							<div class="control-inline" >	
+							<input type="text"  v-model="ORDER_TEXT" readonly />				
+							<input type="hidden"  name="ORDER_NO" v-model="ORDER_NO"  />	
+							</div>
+						</div>
+						<div class="form-group">
+						<label class="control-label" >检验类别：</label>
+							<div class="control-inline">
+								<select style="height: 30px;width:90px;" class="input-medium"  name="TEST_GROUP" id="TEST_GROUP"  v-model="TEST_GROUP">	
+									<option value='品质'>品质</option>	
+									<option value='生产'>生产</option>								
+								</select>
+								
+							</div>
+						</div>
+					<!-- 	<div class="form-group">	
+							<label class="control-label" >检具编号：</label>
+							<div class="control-inline" >	
+							<input type="text"  v-model="TEST_TOOL_NO" readonly />				
+							</div>
+						</div> -->
+						<input type="hidden" name="WERKS" v-model="WERKS" />	
+						<input type="hidden" name="TEST_TYPE" v-model="TEST_TYPE" />				
+						<input type="hidden" name="TEST_CLASS"  value="整车"> 
+					</form>
+					
+					<div id="divDataGrid" style="width:100%;overflow:auto;" >
+					<table id="dataGrid"></table>
+					<!-- <div id="dataGridPage"></div> -->
+				</div>	
+					
+				</div>
+			</div>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/qms/processQuality/qms_process_test_detail.js?_${.now?long}"></script>
+</body>
+</html>

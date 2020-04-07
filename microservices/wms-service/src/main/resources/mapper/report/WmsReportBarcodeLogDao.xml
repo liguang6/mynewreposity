@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.report.dao.WmsReportBarcodeLogDao">
+	<resultMap type="Map" id="wmsDocMap">
+		<result property="LABEL_NO" column="LABEL_NO" jdbcType="VARCHAR"
+			javaType="java.lang.String" />
+	</resultMap>
+	<select id="queryWmsReportBarcodeLog" parameterType="Map"
+		resultMap="wmsDocMap">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+
+		select * from
+		wms_report_barcode_log a
+		where 1=1
+		<if test="WERKS !=null and WERKS !='' ">
+			and a.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			and a.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and a.MATNR=#{MATNR}
+		</if>
+		<if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND a.CREATE_DATE&gt;=#{CREATE_DATE_START}
+		</if>
+		<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND a.CREATE_DATE&lt;=#{CREATE_DATE_END}
+		</if>
+		<if test="WMS_NO !=null and WMS_NO != '' and WMS_ITEM_NO !=null and WMS_ITEM_NO != '' ">
+			AND a.WMS_NO=#{WMS_NO}
+			AND a.WMS_ITEM_NO=#{WMS_ITEM_NO}
+		</if>
+
+		)TMP
+		<if test="END !=null ">
+			WHERE ROWNUM &lt;=#{END}
+		</if>
+		)
+		<if test="START !=null ">
+			WHERE ROW_ID > #{START}
+		</if>
+	</select>
+
+	<select id="selectWmsReportBarcodeLogCount" parameterType="Map"
+		resultType="int">
+		SELECT count(*)
+		FROM (
+		select * from wms_report_barcode_log a
+		where 1=1
+
+		<if test="WERKS !=null and WERKS !='' ">
+			and a.WERKS=#{WERKS}
+		</if>
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			and a.WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="MATNR !=null and MATNR !='' ">
+			and a.MATNR=#{MATNR}
+		</if>
+		<if test="CREATE_DATE_START !=null and CREATE_DATE_START !='' ">
+			AND a.CREATE_DATE&gt;=#{CREATE_DATE_START}
+		</if>
+		<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			AND a.CREATE_DATE&lt;=#{CREATE_DATE_END}
+		</if>
+		<if test="WMS_NO !=null and WMS_NO != '' and WMS_ITEM_NO !=null and WMS_ITEM_NO != '' ">
+			AND a.WMS_NO=#{WMS_NO}
+			AND a.WMS_ITEM_NO=#{WMS_ITEM_NO}
+		</if>
+		)
+	</select>
+</mapper>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.qc.dao.WmsQcRecordDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+	<resultMap type="com.byd.wms.business.modules.qc.entity.WmsQcRecordEntity"
+		id="wmsQcRecordMap">
+		<result property="id" column="ID" />
+		<result property="qcRecordNo" column="QC_RECORD_NO" />
+		<result property="qcRecordItemNo" column="QC_RECORD_ITEM_NO" />
+		<result property="inspectionNo" column="INSPECTION_NO" />
+		<result property="inspectionItemNo" column="INSPECTION_ITEM_NO" />
+		<result property="qcRecordType" column="QC_RECORD_TYPE" />
+		<result property="stockSource" column="STOCK_SOURCE" />
+		<result property="werks" column="WERKS" />
+		<result property="whNumber" column="WH_NUMBER" />
+		<result property="lgort" column="LGORT" />
+		<result property="matnr" column="MATNR" />
+		<result property="maktx" column="MAKTX" />
+		<result property="unit" column="UNIT" />
+		<result property="recordQty" column="RECORD_QTY" />
+		<result property="batch" column="BATCH" />
+		<result property="qcDate" column="QC_DATE" />
+		<result property="qcResultCode" column="QC_RESULT_CODE" />
+		<result property="qcResultText" column="QC_RESULT_TEXT" />
+		<result property="qcResult" column="QC_RESULT" />
+		<result property="destroyQty" column="DESTROY_QTY" />
+		<result property="iqcCostCenter" column="IQC_COST_CENTER" />
+		<result property="qcPeople" column="QC_PEOPLE" />
+		<result property="del" column="DEL" />
+		<result property="creator" column="CREATOR" />
+		<result property="createDate" column="CREATE_DATE" />
+		<result property="editor" column="EDITOR" />
+		<result property="editDate" column="EDIT_DATE" />
+	</resultMap>
+
+	<select id="selectRecordList" parameterType="Map" resultType="Map">
+		select t.*,
+		i.RECEIPT_DATE,
+		i.RECEIPT_NO,
+		i.Liktx,
+		i.INSPECTION_QTY,
+		i.BEDNR,
+		i.BIN_CODE
+		FROM
+		(
+			select * from wms_qc_record
+		   <if test="params.queryHistory == 0">
+		   <!-- 最后一次记录，取最新的质检记录 -->
+			where qc_record_no  in
+			(	select distinct qc_record_no
+				from wms_qc_record where id in
+				(select max(id) from wms_qc_record group by (inspection_no, inspection_item_no,batch)) 
+				and qc_record_no is not null
+			)
+		    </if>
+		) t
+		left join wms_qc_inspection_item i on t.inspection_no =
+		i.inspection_no and t.inspection_item_no = i.inspection_item_no and
+		i.batch = t.batch where 1 = 1
+		<if test="params.werks != null and params.werks != ''">
+			and t.werks = #{params.werks}
+		</if>
+		<if test="params.whNumber != null and params.whNumber !=''">
+			and t.WH_NUMBER = #{params.whNumber}
+		</if>
+		<if test="params.INSPECTION_NO != null and params.INSPECTION_NO !=''">
+			and t.INSPECTION_NO = #{params.INSPECTION_NO}
+		</if>		
+		<if test="params.lifnr != null and params.lifnr != ''">
+			and i.lifnr like '%' || #{params.lifnr} || '%'
+		</if>
+		<if test="params.dateStart != null and params.dateStart != ''">
+			and t.qc_date &gt;= #{params.startDate}
+		</if>
+		<if test="params.dateEnd != null and params.dateEnd !=''">
+			and t.qc_date &lt;= #{params.dateEnd}
+		</if>
+		<if test="params.batch !=null and params.batch !=''">
+			and t.batch like '%' || #{params.batch} || '%'
+		</if>
+		<if test="params.matnr !=null and params.matnr !=''">
+			and t.matnr like '%' || #{params.matnr} || '%'
+		</if>
+		<if test="params.stockSource != null and params.stockSource !=''">
+			and t.stock_source = #{params.stockSource}
+		</if>
+		<if test="params.binCode != null and params.binCode !=''">
+			and i.bin_code = #{params.binCode}
+		</if>
+		<if test="params.BEDNR != null and params.BEDNR !=''">
+			and i.BEDNR = #{params.BEDNR}
+		</if>
+		order by i.receipt_date desc,t.matnr,i.lifnr
+	</select>
+
+</mapper>

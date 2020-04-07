@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>参数管理</title>
+<#include "/header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak>
+	<div class="main-content" v-show="showList">
+		<div class="box box-main">
+			<div class="box-header" >
+				<div class="box-title">
+					<i class="fa fa-file-text-o"></i> 参数管理
+				</div>
+				<div class="box-tools pull-right">
+					<a href="#" class="btn btn-default" id="btnSearch" title="查询"><i class="fa fa-filter"></i> 查询</a>
+					<a href="#" class="btn btn-default" id="btnRefresh" @click="refresh" title="刷新"><i class="fa fa-refresh"></i> 刷新</a> 
+						<#if checkAuthTag.hasPermission("sys:config:save")>
+                             <a href="#" class="btn btn-default " @click="add" title="新增"><i class="fa fa-plus"></i> 新增</a>
+					    </#if>
+				</div>
+			</div>
+			<div class="box-body">
+				<form id="searchForm" v-model="page.list" action="${request.contextPath}/sys/config/list" method="post" class="form-inline hide">
+					<div class="form-group">
+						<label class="control-label">参数名：</label>
+						<div class="control-inline">
+							<input type="text" class="form-control" name="paramKey" @keyup.enter="query" placeholder="参数名">
+						</div>
+					</div>
+					<div class="form-group">
+						<button type="submit"  class="btn btn-primary btn-sm">查询</button>
+						<button type="reset" class="btn btn-default btn-sm">重置</button>
+					</div>
+				</form>
+				<table id="dataGrid"></table>
+				<div id="dataGridPage"></div>
+			</div>
+		</div>
+	</div>
+	<div v-show="!showList" class="panel panel-default">
+		<div class="form-unit">{{title}}</div>
+			<form class="form-horizontal">
+				<div class="form-group">
+				   	<div class="col-sm-2 control-label">参数名</div>
+				   	<div class="col-sm-6">
+				      <input type="text" class="form-control" v-model="config.paramKey" placeholder="参数名"/>
+				    </div>
+				</div>
+				<div class="form-group">
+				   	<div class="col-sm-2 control-label">参数值</div>
+				   	<div class="col-sm-6">
+				      <input type="text" class="form-control" v-model="config.paramValue" placeholder="参数值"/>
+				    </div>
+				</div>
+				<div class="form-group">
+				   	<div class="col-sm-2 control-label">备注</div>
+				   	<div class="col-sm-6">
+				      <input type="text" class="form-control" v-model="config.remark" placeholder="备注"/>
+				    </div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-2 control-label"></div> 
+					<input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定"/>
+					&nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="关闭"/>
+				</div>
+			</form>
+		</div>
+	</div>	
+<script>
+$(function () {
+    $("#dataGrid").dataGrid({
+    	searchForm: $("#searchForm"),
+        columnModel: [			
+			{ label: '参数名', name: 'paramKey', sortable: false, width: 120 },
+			{ label: '参数值', name: 'paramValue', width: 180 },
+			{ label: '备注', name: 'remark', width: 150 },
+			{ label: '操作', name: 'id', index: 'id', formatter: function(item, index){
+        		if(item != ""){
+        			return '<i class="fa fa-pencil" title="编辑" onclick="fun_edit('+item+');" style="font-size:16px;color:green;cursor: pointer;"></i> '
+            		+'&nbsp;<i class="fa fa-trash-o" onclick="fun_del('+item+');" title="删除" style="font-size:16px;color:red;cursor: pointer;"></i>';
+        		}else{
+        			return "-";
+        		}
+        	}
+        },
+		],
+    });
+});
+
+var vm = new Vue({
+	el:'#rrapp',
+	data:{
+		showList: true,
+		title: null,
+		config: {}
+	},
+	methods: {
+		query: function () {
+			// 默认form表单submit提交
+		},
+		refresh:function(){
+			$("#dataGrid").trigger("reloadGrid");
+        },
+        add: function(){
+			vm.showList = false;
+			vm.title = "新增";
+			vm.config = {};
+		},
+		saveOrUpdate: function (event) {
+			var url = vm.config.id == null ? "sys/config/save" : "sys/config/update";
+			$.ajax({
+				type: "POST",
+			    url: baseURL + url,
+                contentType: "application/json",
+			    data: JSON.stringify(vm.config),
+			    success: function(r){
+			    	if(r.code === 0){
+						alert('操作成功', function(index){
+							vm.showList = true;
+							$("#dataGrid").trigger("reloadGrid");
+						});
+					}else{
+						alert(r.msg);
+					}
+				}
+			});
+		},
+		reload: function (event) {
+			vm.showList = true;
+			$("#dataGrid").trigger("reloadGrid");
+		}
+	}
+});
+function fun_edit(id){
+	$.get(baseURL + "sys/config/info/"+id, function(r){
+        vm.showList = false;
+        vm.title = "修改";
+        vm.config = r.config;
+    });
+}
+
+function fun_del(id){
+	confirm('确定要删除选中的记录？', function(){
+		$.ajax({
+			type: "POST",
+		    url: baseURL + "sys/config/deleteById?id="+id,
+            contentType: "application/json",
+		    success: function(r){
+				if(r.code == 0){
+					alert('操作成功', function(index){
+						$("#dataGrid").trigger("reloadGrid");
+					});
+				}else{
+					alert(r.msg);
+				}
+			}
+		});
+	});
+}
+</script>
+</body>
+</html>

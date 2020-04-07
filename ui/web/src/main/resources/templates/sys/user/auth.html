@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>用户分配权限</title>
+<#include "/header.html">
+<style>
+  .rolelist li span {
+    padding-left: 16px;
+  }
+</style>
+</head>
+<body class="hold-transition ">
+	<div class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-header">
+					<div class="box-title">
+						<i class="fa icon-people"></i> 用户分配权限
+					</div>
+					<div class="box-tools pull-right">
+						<button type="button" class="btn btn-box-tool"
+							data-widget="collapse">
+							<i class="fa fa-minus"></i>
+						</button>
+					</div>
+				</div>
+				<div id="inputForm" method="post" class="form-horizontal">
+					<input type="hidden" id="userId" name="userId"
+						value="${user.userId}" />
+					<div class="box-body">
+						<br />
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required ">*</span> 登录账号：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<input type="text" id="loginCode" name="username"
+											value="${user.username}" maxlength="32" readonly="true"
+											class="form-control required " />
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="control-label col-sm-4" title=""> <span
+										class="required ">*</span> 用户姓名：<i
+										class="fa icon-question hide"></i></label>
+									<div class="col-sm-8">
+										<input type="text" id="userName" name="fullName" value="${user.fullName!''}"
+											maxlength="32" readonly="true" class="form-control required " />
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="form-unit">数据权限</div>
+						
+						<div class="row" id="dataScopeTrees">
+						     <!-- <div class="col-sm-6">
+						          <div style="padding-bottom: 36px;">
+						            <span style="padding-right: 16px;">部门分配</span> <a href="#" id="expandDept">展开</a>/<a href="#" id="collapseDept">折叠</a>
+						          </div>
+						          <div id="dept" class="ztree"></div>
+						     </div> -->
+						     
+						     <div class="col-sm-3">
+						         <div style="padding-bottom: 36px;">
+						             <span>角色分配</span>
+						         </div>
+						         
+						         <ul style="list-style: none;" class="rolelist">
+						           <#list roles as role>
+						                <#if role.remark?? && role.remark == "checked">
+						                    <li><input type="checkbox"  name="roles" value="${role.roleId}" checked="checked" /><span>${role.roleName}</span> </li>
+						                  <#else>
+						                   <li><input type="checkbox"  name="roles" value="${role.roleId}"  /><span>${role.roleName}</span> </li>
+						                </#if>
+						           </#list>
+						         </ul>
+						         
+						     </div>
+						     <div class="col-sm-9">
+						     	<div style="padding-bottom: 1px;">
+						        	<span>&nbsp;&nbsp;&nbsp;用户特殊数据权限（不配时，取角色的数据权限）</span>
+						        </div>
+							    <iframe id="mainFrame" name="mainFrame" class="ui-layout-content" style="height:370px" 
+							            src="${request.contextPath}/sys/userPermissionList.html"></iframe>
+							</div>
+						</div>
+						
+					</div>
+					<div class="row" id="dataPermission">
+							
+					</div>
+					
+					<div class="box-footer">
+						<div class="row">
+							<div class="col-sm-offset-2 col-sm-10">
+								<button  class="btn btn-sm btn-primary"
+									id="btnSubmit"
+									onclick="submitForm()"
+									>
+									<i class="fa fa-check"></i> 保 存
+								</button>
+								&nbsp;
+								<button type="button" class="btn btn-sm btn-default"
+									id="btnCancel" onclick="js.closeCurrentTabPage()">
+									<i class="fa fa-reply-all"></i> 关 闭
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<a id="scroll-up" href="#" class="btn btn-sm"><i
+		class="fa fa-angle-double-up"></i></a>
+		<script type="text/javascript">
+			
+		   var ztreeDept;
+		   var settingDept = {
+				data:{
+					simpleData:{
+						enable:true,
+						idKey:"deptId",
+						pIdKey:"parentId",
+						rootPid:0
+					}
+				},
+				check:{
+					enable: true,
+					//自动关联
+					autoCheckTrigger: false,
+					//设置不做父子关联
+					chkboxType : { "Y" : "", "N" : "" }
+				}
+		   }
+		   //var testData = [{"deptId":"1","parentId":"0","code":"BYD","name":"比亚迪","treeSort":"0","treeLeaf":"0","treeLevel":"0","treeNames":"比亚迪","deptType":"1","deptTypeName":null,"deptKind":"0","leader":null,"status":"0","createBy":"","createDate":1527056766000,"updateBy":"","updateDate":1527056766000,"remarks":null,"parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null},{"deptId":"2","parentId":"1","code":"CS","name":"长沙工厂","treeSort":"0","treeLeaf":"0","treeLevel":"1","treeNames":"比亚迪 长沙工厂","deptType":"1","deptTypeName":null,"deptKind":"0","leader":null,"status":"0","createBy":"123","createDate":1527128346000,"updateBy":"123","updateDate":1527128346000,"remarks":null,"parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null},{"deptId":"3","parentId":"1","code":"WH","name":"武汉工厂","treeSort":"1","treeLeaf":"1","treeLevel":"1","treeNames":"比亚迪 武汉工厂","deptType":"1","deptTypeName":null,"deptKind":"0","leader":null,"status":"0","createBy":"123","createDate":1527495863000,"updateBy":"123","updateDate":1527495863000,"remarks":null,"parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null},{"deptId":"22","parentId":"1","code":"QD","name":"青岛工厂","treeSort":"2","treeLeaf":"1","treeLevel":"1","treeNames":"比亚迪 青岛工厂","deptType":"1","deptTypeName":null,"deptKind":"0","leader":null,"status":"0","createBy":"123","createDate":1527214544000,"updateBy":"123","updateDate":1527214544000,"remarks":null,"parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null},{"deptId":"23","parentId":"2","code":"CSZZ","name":"总装车间","treeSort":"1","treeLeaf":"1","treeLevel":"2","checked":true,"treeNames":"比亚迪 长沙工厂 总装车间","deptType":"1","deptTypeName":null,"deptKind":"1","leader":null,"status":"0","createBy":"123","createDate":1527227559000,"updateBy":"123","updateDate":1527227559000,"remarks":null,"parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null},{"deptId":"25","parentId":"1","code":"DL","name":"大连工厂","treeSort":"3","treeLeaf":"1","treeLevel":"1","treeNames":"比亚迪 大连工厂","deptType":"1","deptTypeName":null,"deptKind":"1","leader":null,"status":"0","createBy":"admin","createDate":1527473272000,"updateBy":"admin","updateDate":1527473272000,"remarks":"备注信息","parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null},{"deptId":"32","parentId":"1","code":"TEST","name":"测试部门","treeSort":"99","treeLeaf":"1","treeLevel":"1","treeNames":"比亚迪 测试部门","deptType":"0","deptTypeName":null,"deptKind":"1","leader":"负责人","status":"0","createBy":"admin","createDate":1527497342000,"updateBy":"admin","updateDate":1527497587000,"remarks":"测试2","parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null},{"deptId":"33","parentId":"1","code":"DIV11","name":"11事业部","treeSort":"2","treeLeaf":"1","treeLevel":"1","treeNames":"比亚迪 11事业部","deptType":"0","deptTypeName":null,"deptKind":"0","leader":null,"status":"0","createBy":"admin","createDate":1527474715000,"updateBy":"admin","updateDate":1527474959000,"remarks":null,"parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null},{"deptId":"34","parentId":"1","code":"CC","name":"信息中心","treeSort":"80","treeLeaf":"1","treeLevel":"1","treeNames":"比亚迪 信息中心","deptType":"0","deptTypeName":null,"deptKind":"0","leader":"AAA","status":"0","createBy":"admin","createDate":1527553939000,"updateBy":"admin","updateDate":1527554185000,"remarks":null,"parentName":null,"isParent":null,"id":null,"parentCode":null,"isRoot":null,"isTreeLeaf":null,"open":null,"list":null}]
+			 $(document).ready(function(){
+				 
+			  
+				loadDeptCheckTree();
+
+			   //展开
+			   $("#expandDept").click(function(){
+				   ztreeDept.expandAll(true); 
+				   
+			   });
+			   //折叠
+			   $("#collapseDept").click(function(){
+				   ztreeDept.expandAll(false); 
+			   });
+		   });
+		   //加载用户部门树
+		   function loadDeptCheckTree(){
+				 $.ajax({
+					  url:baseURL + "masterdata/dept/listall",
+					  success:function(data){
+						  $.ajax({
+							  //获取用户所属部门
+							  url:baseURL + "sys/user/userDepts",
+							  data:{
+								userId:"${user.userId}"  
+							  },
+							  success:function(depts){
+								  for(var i in data){
+									  if($.inArray(data[i].deptId,depts)!==-1){
+										  //选中节点
+										  data[i].checked = true;
+									  }
+								  }
+								 ztreeDept = $.fn.zTree.init($("#dept"),settingDept,data); 
+								 ztreeDept.expandAll(true);
+							  }
+						  })
+						  
+					  }
+				   });
+		   }
+		   //提交表单
+		   function submitForm(){
+			   var deptNodes = ztreeDept.getCheckedNodes();
+			   var depts = [];
+			   var roles = [];
+			   
+			   for(var node in deptNodes){
+				   depts.push(deptNodes[node].deptId);
+			   }
+			   $("input[name='roles']:checked").each(function(i){
+				   roles[i] = $(this).val();
+			   });
+			   //alert(JSON.stringify(depts));
+			   //return false;
+			   $.ajax({
+				   url:baseURL+'sys/user/updateAuthAndRole',
+				   method:"post",
+				   data:{
+					   userId:$("#userId").val(),
+					   roles:JSON.stringify(roles)
+				   },
+				   success:function(rep){
+					   if(rep.code === 0){
+						   alert("更新成功")
+						   js.initTabPage();
+						   
+					   }else{
+						   alert("更新失败")
+					   }
+					   
+				   }
+			   })
+		   }
+		   
+		window.onload=function (){
+		   	var mainFrame = $(window.frames['mainFrame'].document);
+		   	var uname = $("#loginCode").val();
+		   	var userid = $("#userId").val();
+			mainFrame.find("#userId").val(userid);
+			mainFrame.find("#username").val(uname);
+			//mainFrame.find("#userName").val(${user.username}); 
+			//mainFrame.find("#btn").submit();
+		}
+		   
+		</script>
+</body>
+</html>

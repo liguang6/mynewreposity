@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCQcResultDao">
+
+    <select id="getListByPage"  parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+        SELECT tmp.ID,tmp.WERKS,tmp.QC_RESULT_CODE,TMP.QC_RESULT_NAME,tmp.QC_STATUS,
+        NVL(tmp.WH_FLAG,'') WH_FLAG,tmp.RETURN_FLAG,NVL(tmp.REVIEW_FLAG,'') REVIEW_FLAG,tmp.GOOD_FLAG,tmp.QC_STATUS_DESC,
+        tmp.GOOD_FLAG_DESC,tmp.WH_FLAG_DESC,tmp.RETURN_FLAG_DESC,tmp.REVIEW_FLAG_DESC,
+        tmp.CREATOR,tmp.CREATE_DATE,tmp.EDITOR,tmp.EDIT_DATE,
+         ROWNUM ROW_ID FROM (
+		     SELECT b.*,d1.value,DECODE(b.QC_STATUS,'00','未质检','01','质检中','02','已质检') QC_STATUS_DESC,
+		     DECODE(b.GOOD_FLAG,'0','良品','X','不良品') GOOD_FLAG_DESC,
+		     DECODE(b.WH_FLAG,'0','不能进仓','X','可进仓') WH_FLAG_DESC,
+		     DECODE(b.RETURN_FLAG,'0','不能退货','X','可退货') RETURN_FLAG_DESC,
+		     DECODE(b.REVIEW_FLAG,'0','不需评审','X','需评审') REVIEW_FLAG_DESC, ROWNUM
+		     FROM WMS_C_QC_RESULT b
+		     LEFT JOIN SYS_DICT d1 ON d1.CODE=b.QC_RESULT_CODE AND d1.TYPE='QC_RESULT'
+	         WHERE b.DEL='0'
+	         <if test="werks !=null and werks !='' ">
+				AND b.WERKS=#{werks}
+			 </if> 
+             <if test="werks =='' ">
+				AND b.WERKS IS NULL
+			 </if> 
+			 <if test="qcResultCode !=null and qcResultCode !='' ">
+				AND b.QC_RESULT_CODE=#{qcResultCode}
+			 </if>
+			 ) tmp 
+		 WHERE ROWNUM  &lt;=#{end})  
+	  WHERE ROW_ID > #{start} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		order by ${orderBy}
+	  </if>
+	  </select>
+	  <select id="getListCount"  parameterType="Map" resultType="int">
+	     SELECT  COUNT(1) FROM WMS_C_QC_RESULT b 
+	      WHERE b.DEL='0'
+	      <if test="werks !=null and werks !='' ">
+            AND b.WERKS=#{werks}
+            </if> 
+            <if test="werks =='' ">
+            AND b.WERKS IS NULL
+            </if> 
+		 <if test="qcResultCode !=null and qcResultCode !='' ">
+			AND b.QC_RESULT_CODE=#{qcResultCode}
+		 </if>
+	 </select>
+	 <insert id="saveCopyData" parameterType="List" >
+		INSERT INTO WMS_C_QC_RESULT
+		(ID,WERKS,QC_RESULT_CODE,QC_RESULT_NAME,QC_STATUS,WH_FLAG,RETURN_FLAG,
+		REVIEW_FLAG,GOOD_FLAG,DEL,CREATOR,CREATE_DATE) 
+		SELECT SEQ_WMS_C_PLANT_BUSINESS.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="detail" index="index" separator="union all">
+		SELECT SEQ_WMS_C_QC_RESULT.nextval,
+		    #{detail.WERKS},#{detail.QC_RESULT_CODE},#{detail.QC_RESULT_NAME},#{detail.QC_STATUS},
+		    #{detail.WH_FLAG}, #{detail.RETURN_FLAG}, #{detail.REVIEW_FLAG}, #{detail.GOOD_FLAG},
+		    '0',#{detail.CREATOR},#{detail.CREATE_DATE}
+		FROM DUAL
+		</foreach>
+		) m
+	</insert>
+	<update id="updateCopyData" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_C_QC_RESULT SET 
+			  WH_FLAG=#{detail. WH_FLAG},RETURN_FLAG=#{detail.RETURN_FLAG},
+		      REVIEW_FLAG=#{detail. REVIEW_FLAG},GOOD_FLAG=#{detail.GOOD_FLAG},
+		      EDITOR=#{detail.EDITOR},EDIT_DATE=#{detail.EDIT_DATE}
+			WHERE ID=#{detail.ID}
+		</foreach>
+	</update>
+	<!-- 更新or插入 -->
+	<update id="merge" parameterType="List">
+		merge into WMS_C_QC_RESULT s using(
+		select m.WERKS,m.QC_RESULT_CODE,m.QC_RESULT_NAME,m.QC_STATUS,m.WH_FLAG,
+		m.RETURN_FLAG,m.REVIEW_FLAG,m.GOOD_FLAG,m.DEL,m.CREATOR,m.CREATE_DATE,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.WERKS} WERKS,#{d.QC_RESULT_CODE} QC_RESULT_CODE,#{d.QC_RESULT_NAME} QC_RESULT_NAME, 
+			#{d.QC_STATUS} QC_STATUS,#{d.WH_FLAG} WH_FLAG,
+			#{d.RETURN_FLAG} RETURN_FLAG,#{d.REVIEW_FLAG} REVIEW_FLAG,#{d.GOOD_FLAG} GOOD_FLAG,
+			#{d.DEL} DEL,#{d.CREATOR} CREATOR,#{d.CREATE_DATE} CREATE_DATE,#{d.EDITOR} EDITOR,#{d.EDIT_DATE} EDIT_DATE
+			from dual
+		</foreach>
+		) m ) tmp
+		on (tmp.WERKS=s.WERKS and tmp.QC_RESULT_CODE=s.QC_RESULT_CODE AND s.DEL='0' )
+		when matched then
+		update  set s.QC_RESULT_NAME=tmp.QC_RESULT_NAME,s.QC_STATUS=tmp.QC_STATUS,
+		s.WH_FLAG=tmp.WH_FLAG,s.RETURN_FLAG=tmp.RETURN_FLAG,
+		s.REVIEW_FLAG=tmp.REVIEW_FLAG,s.GOOD_FLAG=tmp.GOOD_FLAG,
+		s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then
+		insert (ID,WERKS,QC_RESULT_CODE,QC_RESULT_NAME,QC_STATUS,WH_FLAG,
+		RETURN_FLAG,REVIEW_FLAG,GOOD_FLAG,DEL,CREATOR,CREATE_DATE,EDITOR,EDIT_DATE)
+		VALUES (SEQ_WMS_C_QC_RESULT.nextval,tmp.WERKS,tmp.QC_RESULT_CODE,tmp.QC_RESULT_NAME,tmp.QC_STATUS
+		,tmp.WH_FLAG,tmp.RETURN_FLAG,tmp.REVIEW_FLAG,tmp.GOOD_FLAG,'0',tmp.CREATOR,tmp.CREATE_DATE,tmp.EDITOR,tmp.EDIT_DATE
+		)
+	</update>
+</mapper>

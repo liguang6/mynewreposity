@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.sys.dao.SysNewsDao">
+    <select id="queryNoticeMailList" resultType="Map" parameterType="Map">
+        SELECT * FROM (
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+        select a.ID,a.WERKS,a.WH_NUMBER,a.STORAGE_AREA_CODE,a.KANBAN_MSG,a.START_DATE,a.END_DATE,a.EDITOR,a.EDIT_DATE,S.VALUE KANBAN_TYPE from SYS_NEWS a
+        LEFT JOIN MASTERDATA_DICT S ON a.KANBAN_TYPE=S.CODE  AND S.TYPE='KANBAN_TYPE'
+        where 1=1
+        <if test="werks != '' and werks != null">
+            AND a.WERKS = #{werks}
+        </if>
+        <if test="whNumber != '' and whNumber != null">
+            AND a.WH_NUMBER  = #{whNumber}
+        </if>
+        <if test="kanbanType != '' and kanbanType != null">
+            AND a.KANBAN_TYPE = #{kanbanType}
+        </if>
+        order by a.id
+        )TMP
+        WHERE ROWNUM  &lt;=#{END})
+        WHERE ROW_ID > #{START}
+    </select>
+    
+    <select id="query" resultType="Map" parameterType="Map">
+       select rownum ,temp.* from (select * from SYS_NEWS t where instr(START_DATE , to_char(sysdate,'yyyy-MM-dd') ) &gt; 0) temp where rownum &lt; 6
+    </select>
+
+    <select id="getListCount" parameterType="Map" resultType="int">
+        select count(1) from sys_kanban a
+        where 1=1
+        <if test="werks != '' and werks != null">
+            AND a.WERKS = #{werks}
+        </if>
+        <if test="whNumber != '' and whNumber != null">
+            AND a.WH_NUMBER  = #{whNumber}
+        </if>
+        <if test="kanbanType != '' and kanbanType != null">
+            AND a.KANBAN_TYPE = #{kanbanType}
+        </if>
+
+    </select>
+
+
+    <insert id="insertNoticeMail" parameterType="Map">
+        <selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+            SELECT SEQ_SYS_KANBAN.nextval FROM dual
+        </selectKey>
+        insert into sys_kanban (ID,WERKS,WH_NUMBER,STORAGE_AREA_CODE,KANBAN_TYPE,KANBAN_MSG,START_DATE,END_DATE,EDITOR,EDIT_DATE)
+        values (#{ID},#{WERKS},#{WH_NUMBER},#{STORAGE_AREA_CODE},#{KANBAN_TYPE},#{KANBAN_MSG},#{START_DATE},#{END_DATE},#{Editor},#{Edit_Date})
+    </insert>
+
+    <select id="selectById" resultType="Map" parameterType="Long">
+        select a.* from sys_kanban a
+        where a.id=#{id}
+    </select>
+    
+    <select id="getUserNews" resultType="Map" parameterType="Map">
+    	SELECT k.*
+			FROM SYS_NEWS k
+			WHERE 1=1 
+			<if test="KANBAN_TYPE !=null and KANBAN_TYPE !=''" >
+				AND k.KANBAN_TYPE = #{KANBAN_TYPE} 
+			</if>
+			AND (INSTR(k.WERKS, 'C161') >=0 OR NVL(k.WERKS,'-1') = '-1')
+			AND (INSTR(k.WH_NUMBER, 'C161') >=0 OR NVL(k.WH_NUMBER,'-1') = '-1')
+			AND (NVL(k.START_DATE,'-1') = '-1' OR k.START_DATE &lt; = to_char(TRUNC(sysdate),'yyyy-mm-dd') )
+			AND (NVL(k.END_DATE,'-1') = '-1' OR k.END_DATE >= to_char(TRUNC(sysdate),'yyyy-mm-dd') ) 
+			ORDER BY k.EDIT_DATE DESC
+    </select>
+    
+
+    <update id="updateById" parameterType="Map">
+        update sys_kanban set WERKS=#{WERKS},WH_NUMBER=#{WH_NUMBER},STORAGE_AREA_CODE=#{STORAGE_AREA_CODE},KANBAN_TYPE=#{KANBAN_TYPE},
+        KANBAN_MSG=#{KANBAN_MSG},START_DATE=#{START_DATE},END_DATE=#{END_DATE},EDITOR=#{Editor},EDIT_DATE=#{Edit_Date}
+        where ID=#{ID}
+    </update>
+
+    <delete id="delById"  parameterType="Long">
+        delete  from sys_kanban a
+        where a.id=#{id}
+    </delete>
+</mapper>

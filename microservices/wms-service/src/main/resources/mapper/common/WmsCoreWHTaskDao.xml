@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+  
+<mapper namespace="com.byd.wms.business.modules.common.dao.WmsCoreWHTaskDao">
+
+	<select id="selectCoreWHTask" parameterType="Map" resultType="Map">
+		select * from WMS_CORE_WH_TASK 
+		 where 1=1
+		 <if test="WH_NUMBER !=null and WH_NUMBER !=''">
+			and WH_NUMBER = #{WH_NUMBER}
+		 </if>
+		 <if test="TASK_NUM !=null and TASK_NUM !=''">
+			and TASK_NUM = #{TASK_NUM}
+		 </if>
+		 <if test="PROCESS_TYPE !=null and PROCESS_TYPE !=''">
+			and PROCESS_TYPE = #{PROCESS_TYPE}
+		 </if>
+		 <if test="WT_STATUS !=null and WT_STATUS !=''">
+			and WT_STATUS = #{WT_STATUS}
+		 </if>
+		 <if test="PRIORITY_LEVEL !=null and PRIORITY_LEVEL !=''">
+			and PRIORITY_LEVEL = #{PRIORITY_LEVEL}
+		 </if>
+		 <if test="MATNR !=null and MATNR !=''">
+			and MATNR = #{MATNR}
+		 </if>
+		 <if test="SOBKZ !=null and SOBKZ !=''">
+			and SOBKZ = #{SOBKZ}
+		 </if>
+		 <if test="BATCH !=null and BATCH !=''">
+			and BATCH = #{BATCH}
+		 </if>
+		 <if test="REFERENCE_DELIVERY_NO !=null and REFERENCE_DELIVERY_NO !=''">
+			and REFERENCE_DELIVERY_NO = #{REFERENCE_DELIVERY_NO}
+		 </if>
+		 <if test="REFERENCE_DELIVERY_ITEM !=null and REFERENCE_DELIVERY_ITEM !=''">
+			and REFERENCE_DELIVERY_ITEM = #{REFERENCE_DELIVERY_ITEM}
+		 </if>
+		 <if test="WAVE !=null and WAVE !=''">
+			and WAVE = #{WAVE}
+		 </if>
+		 <if test="WAVE_ITEM !=null and WAVE_ITEM !=''">
+			and WAVE_ITEM = #{WAVE_ITEM}
+		 </if>
+		 <if test="LIFNR !=null and LIFNR !=''">
+			and LIFNR = #{LIFNR}
+		 </if>
+		 <if test="MOULD_NO !=null and MOULD_NO !=''">
+			and MOULD_NO = #{MOULD_NO}
+		 </if>
+		 <if test="CONFIRMOR !=null and CONFIRMOR !=''">
+			and CONFIRMOR = #{CONFIRMOR}
+		 </if>
+		 <if test="CONFIRM_TIME !=null and CONFIRM_TIME !=''">
+			and CONFIRM_TIME = #{CONFIRM_TIME}
+		 </if>
+		 <if test="CREATOR !=null and CREATOR !=''">
+			and CREATOR = #{CREATOR}
+		 </if>
+		 <if test="CREATE_DATE !=null and CREATE_DATE !=''">
+			and CREATE_DATE = #{CREATE_DATE}
+		 </if>
+		 <if test="EDITOR !=null and EDITOR !=''">
+			and EDITOR = #{EDITOR}
+		 </if>
+		 <if test="EDIT_DATE !=null and EDIT_DATE !=''">
+			and EDIT_DATE = #{EDIT_DATE}
+		 </if>
+		 ORDER BY WMS_CORE_WH_TASK.ID
+		
+	</select>
+	
+	<insert id="insertCoreWHTask" parameterType="List">
+		insert into WMS_CORE_WH_TASK(ID,WH_NUMBER,TASK_NUM,PROCESS_TYPE,WT_STATUS,PRIORITY_LEVEL,MATNR,MAKTX,QUANTITY,CONFIRM_QUANTITY,
+		UNIT,SOBKZ,BATCH,LABEL_NO,FROM_STORAGE_AREA,FROM_BIN_CODE,TO_STORAGE_AREA,TO_BIN_CODE,REFERENCE_DELIVERY_NO,REFERENCE_DELIVERY_ITEM,
+		WAVE,WAVE_ITEM,CONFIRMOR,CONFIRM_TIME,EXCEPTION_CODE,REMARK,CREATE_DATE,CREATOR,EDITOR,EDIT_DATE,LIFNR,MOULD_NO,LGORT,HX_FLAG,SO_NO,SO_ITEM_NO,WERKS)
+		select SEQ_WMS_CORE_WH_TASK.nextval, m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select #{d.WH_NUMBER},#{d.TASK_NUM},#{d.PROCESS_TYPE},#{d.WT_STATUS},#{d.PRIORITY_LEVEL},#{d.MATNR},#{d.MAKTX},#{d.QUANTITY},#{d.CONFIRM_QUANTITY},
+		#{d.UNIT},#{d.SOBKZ},#{d.BATCH},#{d.LABEL_NO},#{d.FROM_STORAGE_AREA},#{d.FROM_BIN_CODE},#{d.TO_STORAGE_AREA},#{d.TO_BIN_CODE},#{d.REFERENCE_DELIVERY_NO},
+		#{d.REFERENCE_DELIVERY_ITEM},#{d.WAVE},#{d.WAVE_ITEM},#{d.CONFIRMOR},#{d.CONFIRM_TIME},#{d.EXCEPTION_CODE},#{d.REMARK},#{d.CREATE_DATE},#{d.CREATOR},#{d.EDITOR},
+		#{d.EDIT_DATE},#{d.LIFNR},#{d.MOULD_NO},#{d.LGORT},#{d.HX_FLAG},#{d.SO_NO},#{d.SO_ITEM_NO},#{d.WERKS}  
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<update id="updateCoreWHTask" parameterType="List">
+        <foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+        	update WMS_CORE_WH_TASK set
+			EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE},VERIFY=VERIFY+1 
+			<if test="s.WT_STATUS !=null and s.WT_STATUS !=''">
+				,WT_STATUS = #{s.WT_STATUS}
+			</if>
+			<if test="s.QUANTITY !=null and s.QUANTITY !=''">
+				,QUANTITY = #{s.QUANTITY}
+			</if>
+			<if test="s.REAL_QUANTITY !=null and s.REAL_QUANTITY !=''">
+				,REAL_QUANTITY = (nvl(REAL_QUANTITY,0) + #{s.REAL_QUANTITY})
+			</if>
+			<if test="s.CONFIRM_QUANTITY !=null and s.CONFIRM_QUANTITY !=''">
+				,CONFIRM_QUANTITY = (nvl(CONFIRM_QUANTITY,0) + #{s.CONFIRM_QUANTITY})
+			</if>
+			<if test="s.BATCH !=null and s.BATCH !=''">
+				,BATCH = #{s.BATCH}
+			</if>
+			<if test="s.LABEL_NO !=null and s.LABEL_NO !=''">
+				,LABEL_NO = #{s.LABEL_NO}
+			</if>	
+			<if test="s.FROM_STORAGE_AREA !=null and s.FROM_STORAGE_AREA !=''">
+				,FROM_STORAGE_AREA = #{s.FROM_STORAGE_AREA}
+			</if>
+			<if test="s.FROM_BIN_CODE !=null and s.FROM_BIN_CODE !=''">
+				,FROM_BIN_CODE = #{s.FROM_BIN_CODE}
+			</if>
+			<if test="s.TO_STORAGE_AREA !=null and s.TO_STORAGE_AREA !=''">
+				,TO_STORAGE_AREA = #{s.TO_STORAGE_AREA}
+			</if>
+			<if test="s.TO_BIN_CODE !=null and s.TO_BIN_CODE !=''">
+				,TO_BIN_CODE = #{s.TO_BIN_CODE}
+			</if>
+			<if test="s.CONFIRMOR !=null and s.CONFIRMOR !=''">
+				,CONFIRMOR = #{s.CONFIRMOR}
+			</if>
+			<if test="s.CONFIRM_TIME !=null and s.CONFIRM_TIME !=''">
+				,CONFIRM_TIME = #{s.CONFIRM_TIME}
+			</if>
+			<if test="s.EXCEPTION_CODE !=null and s.EXCEPTION_CODE !=''">
+				,EXCEPTION_CODE = #{s.EXCEPTION_CODE}
+			</if>
+			<if test="s.LIFNR !=null and s.LIFNR !=''">
+				,LIFNR = #{s.LIFNR}
+			</if>
+			<if test="s.MOULD_NO !=null and s.MOULD_NO !=''">
+				,MOULD_NO = #{s.MOULD_NO}
+			</if>
+			<if test="s.LGORT !=null and s.LGORT !=''">
+				,LGORT = #{s.LGORT}
+			</if>
+			<if test="s.SOBKZ !=null and s.SOBKZ !=''">
+				,SOBKZ = #{s.SOBKZ}
+			</if>
+			<if test="s.REMARK !=null and s.REMARK !=''">
+				,REMARK = #{s.REMARK}
+			</if>
+	        where WH_NUMBER = #{s.WH_NUMBER} 
+              and TASK_NUM = #{s.TASK_NUM}
+        </foreach>
+	</update>
+	
+	<update id="updateCoreWHTaskStatus" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		UPDATE WMS_CORE_WH_TASK SET WT_STATUS=
+		(
+		CASE
+		<![CDATA[
+		WHEN NVL(REAL_QUANTITY,0)>0 AND NVL(REAL_QUANTITY,0)<NVL(QUANTITY,0)
+			THEN '04'
+		WHEN NVL(REAL_QUANTITY,0)>0 AND NVL(REAL_QUANTITY,0)=NVL(QUANTITY,0)
+			THEN '05'
+			ELSE WT_STATUS END
+			)
+		]]>
+		where WH_NUMBER = #{s.WH_NUMBER} 
+              and TASK_NUM = #{s.TASK_NUM}
+        </foreach>
+	</update>
+	
+	<update id="updateCoreWHTaskByReq" parameterType="List">
+        <foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+        	update WMS_CORE_WH_TASK set
+			EDITOR = #{s.EDITOR},EDIT_DATE=#{s.EDIT_DATE}
+			<if test="s.WT_STATUS !=null and s.WT_STATUS !=''">
+				,WT_STATUS = #{s.WT_STATUS}
+			</if>
+			<if test="s.LABEL_NO !=null and s.LABEL_NO !=''">
+				,LABEL_NO = #{s.LABEL_NO}
+			</if>
+			<if test="s.REMARK !=null and s.REMARK !=''">
+				,REMARK = #{s.REMARK}
+			</if>
+	        where WH_NUMBER = #{s.WH_NUMBER} 
+              and REFERENCE_DELIVERY_NO = #{s.REFERENCE_DELIVERY_NO}
+              and REFERENCE_DELIVERY_ITEM = #{s.REFERENCE_DELIVERY_ITEM}
+              <if test="s.TASK_NUM !=null and s.TASK_NUM !=''">
+				  and TASK_NUM = #{s.TASK_NUM}
+			  </if>
+        </foreach>
+	</update>
+	
+	<update id="mergeWmsOutPicking" parameterType="List">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		merge into WMS_OUT_PICKING p using (
+	    select m.*
+	    from WMS_CORE_WH_TASK m
+	    where m.task_num = #{s.TASK_NUM}
+	    ) task
+	    on (task.TASK_NUM=p.TASK_NUM)
+	    when matched then
+	    update  set p.REAL_QUANTITY= (nvl(p.REAL_QUANTITY,0) + #{s.REAL_QUANTITY})
+	    when not matched then
+	    insert (ID,TASK_NUM,PROCESS_TYPE, PRIORITY_LEVEL ,WH_NUMBER , WT_STATUS , MATNR , MAKTX,
+	            UNIT,LIFNR,LGORT,QUANTITY,CONFIRM_QUANTITY,BATCH,LABEL_NO,SOBKZ,HX_FLAG,CREATOR,CREATE_DATE,EDITOR,EDIT_DATE,
+	            FROM_STORAGE_AREA,FROM_BIN_CODE,TO_STORAGE_AREA,TO_BIN_CODE,REFERENCE_DELIVERY_NO,REFERENCE_DELIVERY_ITEM,WAVE,
+	            WAVE_ITEM,CONFIRMOR,CONFIRM_TIME,EXCEPTION_CODE,MOULD_NO,REAL_QUANTITY,WERKS )
+	                VALUES (SEQ_WMS_OUT_PICKING.NEXTVAL,task.TASK_NUM, task.PROCESS_TYPE, task.PRIORITY_LEVEL,task.WH_NUMBER, task.WT_STATUS, task.MATNR, task.MAKTX,
+	            task.UNIT,task.LIFNR,task.LGORT,task.QUANTITY,task.CONFIRM_QUANTITY,task.BATCH,task.LABEL_NO,task.SOBKZ,task.HX_FLAG,task.CREATOR,task.CREATE_DATE,
+	            task.EDITOR,task.EDIT_DATE,task.FROM_STORAGE_AREA,task.FROM_BIN_CODE,task.TO_STORAGE_AREA,task.TO_BIN_CODE,task.REFERENCE_DELIVERY_NO,task.REFERENCE_DELIVERY_ITEM,
+	            task.WAVE,task.WAVE_ITEM,task.CONFIRMOR,task.CONFIRM_TIME,task.EXCEPTION_CODE,task.MOULD_NO,task.REAL_QUANTITY,task.WERKS )
+	   </foreach>
+	</update>
+	
+	<select id="selectCoreWHTaskList"  parameterType="List" resultType="Map">
+		SELECT tmp.* FROM(
+			<foreach collection="list" index="index" item="a" separator="UNION ALL" open="" close="">
+			select * from WMS_CORE_WH_TASK 
+			 where 1=1
+			 <if test="a.WH_NUMBER !=null and a.WH_NUMBER !=''">
+				and WH_NUMBER = #{a.WH_NUMBER}
+			 </if>
+			 <if test="a.TASK_NUM !=null and a.TASK_NUM !=''">
+				and TASK_NUM = #{a.TASK_NUM}
+			 </if>
+			 <if test="a.PROCESS_TYPE !=null and a.PROCESS_TYPE !=''">
+				and PROCESS_TYPE = #{a.PROCESS_TYPE}
+			 </if>
+			 <if test="a.WT_STATUS !=null and a.WT_STATUS !=''">
+				and WT_STATUS = #{a.WT_STATUS}
+			 </if>
+			 <if test="a.PRIORITY_LEVEL !=null and a.PRIORITY_LEVEL !=''">
+				and PRIORITY_LEVEL = #{a.PRIORITY_LEVEL}
+			 </if>
+			 <if test="a.MATNR !=null and a.MATNR !=''">
+				and MATNR = #{a.MATNR}
+			 </if>
+			 <if test="a.SOBKZ !=null and a.SOBKZ !=''">
+				and SOBKZ = #{a.SOBKZ}
+			 </if>
+			 <if test="a.BATCH !=null and a.BATCH !=''">
+				and BATCH = #{a.BATCH}
+			 </if>
+			 <if test="a.REFERENCE_DELIVERY_NO !=null and a.REFERENCE_DELIVERY_NO !=''">
+				and REFERENCE_DELIVERY_NO = #{a.REFERENCE_DELIVERY_NO}
+			 </if>
+			 <if test="a.REFERENCE_DELIVERY_ITEM !=null and a.REFERENCE_DELIVERY_ITEM !=''">
+				and REFERENCE_DELIVERY_ITEM = #{a.REFERENCE_DELIVERY_ITEM}
+			 </if>
+			 <if test="a.WAVE !=null and a.WAVE !=''">
+				and WAVE = #{a.WAVE}
+			 </if>
+			 <if test="a.WAVE_ITEM !=null and a.WAVE_ITEM !=''">
+				and WAVE_ITEM = #{a.WAVE_ITEM}
+			 </if>
+			 <if test="a.LIFNR !=null and a.LIFNR !=''">
+				and LIFNR = #{a.LIFNR}
+			 </if>
+			 <if test="a.MOULD_NO !=null and a.MOULD_NO !=''">
+				and MOULD_NO = #{a.MOULD_NO}
+			 </if>
+			 <if test="a.CONFIRMOR !=null and a.CONFIRMOR !=''">
+				and CONFIRMOR = #{a.CONFIRMOR}
+			 </if>
+			 <if test="a.VERIFY !=null and a.VERIFY !=''">
+				and VERIFY = #{a.VERIFY}
+			 </if>
+			 </foreach>
+		 ) tmp 
+		 ORDER BY tmp.ID
+	</select>
+</mapper>

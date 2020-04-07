@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>编辑工序</title> <#include "/header.html">
+</head>
+<body>
+   
+	<div id="processInfo" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="processNewForm">
+                    <input name="id" style="display: none;" value="${entity.id}">
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label">工厂</label>
+									<div class="col-xs-8">
+										<div style="padding-top:3px;">
+										  <input disabled="disabled" value='${(entity.werksName)!""}' id="werksName" />
+										</div>
+										<input value='${(entity.werks)!""}' id="werks" style="display: none;" name="werks"/>
+										<input value='${(entity.werksName)!""}' id="werksName_" style="display: none;" name="werksName"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+
+								
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										车间
+									</div>
+									<div class="col-sm-8">
+										<div style="padding-top:3px;">
+											<input disabled="disabled" value='${(entity.workshopName)!""}' id="workshopName" />
+										</div>
+										<input value='${(entity.workshop)!""}' id="workshop" style="display: none;" name="workshop"/>
+										<input value='${(entity.workshopName)!""}' id="workshopName_" style="display: none;" name="workshopName"/>
+									</div>
+								</div>
+								
+							</div>
+
+						</div>
+
+					<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required">*</span>工序编号
+									</div>
+									<div class="col-sm-8">
+										<input disabled="disabled" type="text" class="form-control required" name="processCode_show" id="processCode_show"
+											placeholder="工序代码" value="${entity.processCode}"/>
+										<input type="text" style="display: none;" name="processCode" id="processCode"
+											placeholder="工序代码" value="${entity.processCode}"/>
+									</div>
+								</div>
+
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required">*</span>工序名称
+									</div>
+									<div class="col-sm-8">
+										<input type="text" name="processName" class="form-control required"
+											placeholder="工序名称" value="${entity.processName}"/>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										所属工段
+									</div>
+									<div class="col-sm-8">
+
+										<select name="sectionCode" class="form-control">
+										  <option value="">请选择</option> 
+										   <#list tag.masterdataDictList('SECTION') as dict> 
+										    <#if entity.sectionCode?? && dict.code == entity.sectionCode >
+												<option value="${dict.code}"  selected="selected">${dict.value}</option>
+											<#else>
+												<option value="${dict.code}">${dict.value}</option> </#if>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-sm-4 control-label">计划节点</label>
+									<div class="col-sm-8">
+
+										<select name="planNodeCode" class="form-control"> 
+										 <option value="">请选择</option>
+                                          <#list tag.masterdataDictList('PLAN_NODE') as dict>
+                                           <#if entity.planNodeCode?? && dict.code == entity.planNodeCode >
+                                                <option value="${dict.code}" selected="selected">${dict.value}</option>
+                                            <#else>
+                                                <option value="${dict.code}">${dict.value}</option>
+                                            </#if>
+                                          </#list>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4"></div>
+									<label class="col-sm-8"> <#if entity.monitoryPointFlag?? && entity.monitoryPointFlag == 'X'>
+										<input type="checkbox" checked="checked"
+										name="monitoryPointFlag" /> <#else> <input type="checkbox"
+										name="monitoryPointFlag" /> </#if> 生产监控点
+									</label>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-sm-4 control-label">工序类别</label>
+									<div class="col-sm-8">
+									<select  id="processType" name="processType"> 
+											<#if entity.processType?? && '00' == entity.processType >
+                                               <option value='00' selected="selected">自制工序</option>
+											   <option value='01'>委外工序</option>
+											   <option value='02'>计划外工序</option>
+                                            <#else>
+                                            	<#if entity.processType?? && '01' == entity.processType >
+                                               <option value='00' >自制工序</option>
+											   <option value='01' selected="selected">委外工序</option>
+											   <option value='02'>计划外工序</option>
+                                            	<#else>
+                                            	<#if entity.processType?? && '02' == entity.processType >
+                                               <option value='00' >自制工序</option>
+											   <option value='01' >委外工序</option>
+											   <option value='02' selected="selected">计划外工序</option>
+                                            	<#else>
+											   <option value='00'>自制工序</option>
+											   <option value='01'>委外工序</option>
+											   <option value='02'>计划外工序</option>
+											   </#if>
+											   </#if>
+											 </#if>
+									</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="form-group">
+									<label class="col-sm-2 control-label">备注</label>
+									<div class="col-sm-10">
+										<textarea rows="3" class="form-control" name="memo"
+											placeholder="备注">${entity.memo!''}</textarea>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+
+							<div class="col-sm-offset-2 col-sm-10">
+								<button class="btn btn-sm btn-primary" id="btnSubmit"
+									type="submit">
+									<i class="fa fa-check"></i> 保 存
+								</button>
+
+								<button type="button" class="btn btn-sm btn-default"
+									id="btnCancel" type="reset" >
+									<i class="fa fa-reply-all"></i> 关 闭
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+
+
+	<div id="menuContent" class="menuContent"
+		style="display: none; position: absolute; z-index =999; background-color: #eee; border: 1px solid">
+		<ul id="treeDemo" class="ztree" style="margin-top: 0; width: 200px;"></ul>
+	</div>
+	<script type="text/javascript">
+		var setting = {
+			view : {
+				dblClickExpand : false
+			},
+			data : {
+				simpleData : {
+					enable : true,
+					idKey : "deptId",
+					pIdKey : "parentId",
+					rootPId : "0"
+				}
+			},
+			callback : {
+				beforeClick : beforeClick,
+				onClick : onClick
+			}
+		};
+
+		var zNodes = [];
+
+		function beforeClick(treeId, treeNode) {
+			console.info(treeNode);
+			var check = (treeNode && treeNode.deptType=='LINE');
+			if (!check)
+				alert("只能选择生产线...");
+			return check;
+			return true;
+		}
+
+		function onClick(e, treeId, treeNode) {
+			var zTree = $.fn.zTree.getZTreeObj("treeDemo"), nodes = zTree
+					.getSelectedNodes(), v = "";
+			nodes.sort(function compare(a, b) {
+				return a.id - b.id;
+			});
+			for (var i = 0, l = nodes.length; i < l; i++) {
+				v += nodes[i].name + ",";
+			}
+			if (v.length > 0)
+				v = v.substring(0, v.length - 1);
+			var cityObj = $("#deptSel");
+			cityObj.attr("value", v);
+			//线别Id
+			$("input[name='deptId']").val(nodes[0].deptId);
+			$("#line").val(nodes[0].code);
+			//车间名
+			var workShopDeptId = nodes[0].parentId;
+			var workShopNode = zTree.getNodeByParam("deptId", workShopDeptId,
+					null);
+			$("#workshopName").val(workShopNode.name);
+			$("#workshopName_").val(workShopNode.name);
+			$("#workshop").val(workShopNode.code);
+			//工厂名
+			var factoryDeptId = workShopNode.parentId;
+			//console.log(workShopDeptId+" __ "+factoryDeptId);
+			var factoryNode = zTree.getNodeByParam("deptId", factoryDeptId,
+					null);
+			$("#werksName").val(factoryNode.name);
+			$("#werksName_").val(factoryNode.name);
+			$("#werks").val(factoryNode.code);
+			hideMenu();
+		}
+
+		function showMenu() {
+			var cityObj = $("#deptSel");
+			var cityOffset = $("#deptSel").offset();
+			$("#menuContent").css({
+				left : cityOffset.left + "px",
+				top : cityOffset.top + cityObj.outerHeight() + "px"
+			}).slideDown("fast");
+
+			$("body").bind("mousedown", onBodyDown);
+		}
+		function hideMenu() {
+			$("#menuContent").fadeOut("fast");
+			$("body").unbind("mousedown", onBodyDown);
+		}
+		function onBodyDown(event) {
+			if (!(event.target.id == "menuBtn"
+					|| event.target.id == "menuContent" || $(event.target)
+					.parents("#menuContent").length > 0)) {
+				hideMenu();
+			}
+		}
+
+		function close() {
+			var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+			parent.layer.close(index); //再执行关闭 
+		}
+
+		$(document).ready(
+				function() {
+					$.ajax({
+						url :baseURL + "masterdata/dept/ztreeDepts",
+						success : function(data) {
+							zNodes = data;
+							$.fn.zTree.init($("#treeDemo"), setting, zNodes);
+						}
+					});
+
+					$("#deptSel").click(function() {
+						showMenu();
+					});
+					
+					$("#processCode").change(function(){
+						$("#processCode").val($(this).val().toUpperCase())
+					})
+
+					$("#processNewForm").validate({
+						submitHandler:function(e) {
+							$.ajax({
+								url : baseURL+ "masterdata/process/update",
+								type : "POST",
+								contentType : "application/json",
+								data : JSON.stringify($("#processNewForm")
+										.serializeObject()),
+								success : function(rep) {
+									if (rep.code === 0) {
+										close();
+									} else {
+										alert(rep.msg);
+									}
+								}
+							})
+
+						}
+					});
+					
+					$("#btnCancel").click(function(){close();})
+
+				});
+	</script>
+</body>
+</html>

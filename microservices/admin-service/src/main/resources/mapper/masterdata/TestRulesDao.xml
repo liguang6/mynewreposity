@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.TestRulesDao">
+	
+	
+	<select id="getQmsTestRules" resultType="Map" parameterType="Map">
+		SELECT r.* 
+		FROM MASTERDATA_TEST_RULES r 
+		WHERE r.STATUS ='0' 
+		<if test="WERKS != '' and WERKS != null">
+			AND r.WERKS = #{WERKS} 
+		</if>
+		<if test="werks != '' and werks != null">
+			AND r.WERKS = #{werks} 
+		</if>
+		<if test="WORKSHOP != '' and WORKSHOP != null">
+			AND (r.WORKSHOP like '%' ||#{WORKSHOP}|| '%' OR r.WORKSHOP_NAME like '%' ||#{WORKSHOP}|| '%' )
+		</if>
+		<if test="workshop != '' and workshop != null">
+			AND (r.WORKSHOP like '%' ||#{workshop}|| '%' OR r.WORKSHOP_NAME like '%' ||#{workshop}|| '%' )
+		</if>
+		<if test="ORDER_AREA_CODE != '' and ORDER_AREA_CODE != null">
+			AND r.ORDER_AREA_CODE = #{ORDER_AREA_CODE} 
+		</if>
+		<if test="order_area_code != '' and order_area_code != null">
+			AND r.ORDER_AREA_CODE = #{order_area_code} 
+		</if>
+		
+	</select>
+	
+	<select id="getQmsTestRulesListByPage" resultType="Map" parameterType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT t.* 
+		FROM MASTERDATA_TEST_RULES t 
+		WHERE t.STATUS ='0' 
+		<if test="WERKS != '' and WERKS != null">
+			AND t.WERKS = #{WERKS} 
+		</if>
+		<if test="workshoplist !=null and workshoplist !='' ">
+			AND workshop in 
+			<foreach collection="workshoplist" item="workshop" separator="," open="(" close=")">
+				 #{workshop}
+			</foreach>
+		</if>
+		<if test="ORDER_AREA_CODE != '' and ORDER_AREA_CODE != null">
+			AND ORDER_AREA_CODE=#{ORDER_AREA_CODE}
+		</if>
+		
+		) TMP 
+	   WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START}
+	</select>
+	
+	<select id="getQmsTestRulesListCount" parameterType="Map" resultType="int">
+		SELECT COUNT(*) 
+		FROM MASTERDATA_TEST_RULES t 
+		WHERE t.STATUS ='0' 
+		<if test="WERKS != '' and WERKS != null">
+			AND t.WERKS = #{WERKS} 
+		</if>
+		<if test="workshoplist !=null and workshoplist !='' ">
+			AND workshop in 
+			<foreach collection="workshoplist" item="workshop" separator="," open="(" close=")">
+				 #{workshop}
+			</foreach>
+		</if>
+		<if test="ORDER_AREA_CODE != '' and ORDER_AREA_CODE != null">
+			AND ORDER_AREA_CODE=#{ORDER_AREA_CODE}
+		</if>
+	</select>
+	
+	<select id="selectById" parameterType="Map" resultType="Map">
+		SELECT * FROM MASTERDATA_TEST_RULES WHERE STATUS ='0' 
+		<if test="ID != '' and ID != null">
+			AND ID = #{ID}
+		</if>
+	</select>
+	
+	<insert id="insertQmsTestRules" parameterType="Map">
+		<selectKey keyProperty="ID" order="BEFORE" resultType="Integer">
+			SELECT SEQ_MASTERDATA_TEST_RULES.NEXTVAL FROM dual
+		</selectKey>
+		INSERT INTO MASTERDATA_TEST_RULES
+		(ID,WERKS,WERKS_NAME,WORKSHOP_NAME,WORKSHOP,ORDER_AREA_CODE,ORDER_AREA_NAME,TEST_RULES,MEMO,
+		STATUS,EDITOR,EDIT_DATE)
+		
+		VALUES (#{ID},#{WERKS},#{WERKS_NAME},#{WORKSHOP_NAME},#{WORKSHOP},#{ORDER_AREA_CODE},#{ORDER_AREA_NAME},
+		#{TEST_RULES},#{MEMO},
+		#{STATUS},#{EDITOR},#{EDIT_DATE})
+	</insert>
+	
+	<update id="updateQmsTestRules" parameterType="Map">
+		UPDATE MASTERDATA_TEST_RULES
+		SET WERKS=#{WERKS},WERKS_NAME=#{WERKS_NAME},WORKSHOP_NAME=#{WORKSHOP_NAME},
+		WORKSHOP=#{WORKSHOP},ORDER_AREA_CODE=#{ORDER_AREA_CODE},ORDER_AREA_NAME=#{ORDER_AREA_NAME},
+		TEST_RULES=#{TEST_RULES},MEMO=#{MEMO},
+		EDITOR=#{EDITOR},EDIT_DATE=#{EDIT_DATE}
+		WHERE ID=#{ID}
+	</update>
+	
+	<delete id="delQmsTestRules" parameterType="Map">
+		DELETE FROM MASTERDATA_TEST_RULES WHERE ID = #{ID}
+	</delete>
+	
+</mapper>

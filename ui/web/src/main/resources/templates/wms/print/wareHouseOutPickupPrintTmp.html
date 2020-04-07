@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+    <title>库房退货拣配单</title>
+    <style>
+        @page {
+            size: 210mm 297mm; /*设置纸张大小:A4(210mm 297mm)、A3(297mm 420mm) 横向则反过来*/
+            /*margin: 0.15in; */
+            margin-top:200px;
+            padding: 0.1em;
+            @top-left{ content:element(header_left)};
+            @top-center{ content: element(header_center)};
+            @top-right{ content: element(header_right)};
+            @bottom-center{
+                content:"CSCC © 版权所有";
+                font-family: SimSun;
+                font-size: 12px;
+                color:red;
+            };
+            /* @bottom-right{
+                content:"第" counter(page) "页  共 " counter(pages) "页";
+                font-family: SimSun;
+                font-size: 12px;
+                color:#000;
+            }; */
+        }
+        #page-header-left {
+		    position:running(header_left);
+		    margin-bottom:50px;
+     	}
+        
+	    #page-header-center {
+	    	position:running(header_center);
+	    }
+
+	   	#page-header-right {
+		    position:running(header_right);
+	    }
+	    
+	    
+    </style>
+</head>
+<body style="font-family: SimSun">
+	<div id="page-header-left">
+		<table style="width: 100%;height: 90px;">
+			
+			<tr style="width: 100%;">
+				<td style="text-align: left;width:15%;height: 40px;" >
+					<img src="${contextPath}/statics/images/byd_logo.png" style="height: 40px;"></img>
+				</td>
+				<td style="width:70%;text-align: center;height: 40px;float: none;" colspan="5">
+					<label style="width: 100%;font-size: 18px;">拣配单</label>
+				</td>
+				<td style="width:15%;text-align: content;height: 40px;float: none;">
+					NO:<label style="width: 100%;font-size: 18px;"></label>
+				</td>
+				
+			</tr>
+			<tr style="width: 100%;font-size: 13px;" >
+				<td style="text-align: content;width: 15%;height: 40px;" >
+					<p style="width:45px; height:15px;border:solid 1px; ">${WERKS}</p>
+				</td>
+				<td style="text-align: content;width: 30%;height: 40px;" colspan="2">
+					<p style="width:200px; height:15px;border:solid 1px; "></p>
+				</td>
+				<td style="text-align: content;width: 15%;height: 40px;" colspan="2">
+					<p style="width:180px; height:15px;border:solid 1px; "></p>
+				</td>
+				<td style="text-align: content;width: 15%;height: 40px;">
+					<p style="width:100px; height:15px;border:solid 1px; "></p>
+				</td>
+				<td style="text-align: right;width:15%;height: 40px;" rowspan="2">
+					<img src="${barCode}" style="height: 70px;"></img>
+				</td>
+			</tr>
+			<tr style="width: 100%;font-size: 13px;">
+				<td style="text-align: content;width: 15%;height: 40px;" >
+					<p style="width:45px; height:15px;border:solid 1px; "></p>
+				</td>
+				<td style="text-align: content;width: 15%;height: 40px;" >
+					<p style=" height:15px;border:solid 1px;border-radius:50%;text-align:center;"></p>
+				</td>
+				<td style="text-align: content;width: 15%;height: 40px;" >
+					<p style=" height:15px;border:solid 1px;border-radius:50%;text-align:center;"></p>
+				</td>
+				<td style="text-align: content;width: 15%;height: 40px;" >
+					<p style="width:65px; height:15px;border:solid 1px; "></p>
+				</td>
+				<td style="text-align: content;width: 15%;height: 40px;" >
+					<p style="width:85px; height:15px;border:solid 1px; "></p>
+				</td>
+				<td style="text-align: content;width: 30%;height: 40px;" colspan="2">
+					<p style="width:110px; height:15px;border:solid 1px; "></p>
+				</td>
+			</tr>
+			<tr style="width: 100%;">
+				<td style="text-align: content;width: 15%;height: 40px;" >
+					<p style="width:45px; height:25px;border:solid 1px;text-align:center; font-size: 25px;"></p>
+				</td>
+				<td style="text-align: content;width: 30%;height: 40px;" colspan="3">
+					
+				</td>
+				<td style="text-align: content;width: 30%;height: 40px;" colspan="3">
+					<p style="width:200px; height:25px;border:solid 1px; ">最晚交接时间:</p>
+				</td>
+			</tr>
+		</table>
+	</div>
+		<table style="border:solid #000000; border-width:1px 0px 0px 1px;width: 100%;">
+			<tr style="width: 100%;font-size: 12px;">
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">车位</td>
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">SPS号</td>
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">车辆VIN号</td>
+	            <td style="width: 4%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">车系</td>
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">物料号</td>
+	            <td style="width: 12%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">物料描述</td>
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">数量</td>
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">车型</td>
+	            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">供应商简称</td>
+	            <td style="width: 6%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">拣配位</td>
+	            <td style="width: 8%;border:solid #000000; border-width:0px 1px 1px 0px; font-weight: bold;">备注</td>
+	        </tr>
+	        <#list itemList as item>
+		        <tr style="width: 100%;font-size: 12px;">
+		            <td style="width: 5%;border:solid #000000; border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 2%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 10%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 2%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 5%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		            <td style="width: 8%;border:solid #000000;border-width:0px 1px 1px 0px;"></td>
+		        </tr>
+	       </#list>
+	    </table>
+</body>
+</html>

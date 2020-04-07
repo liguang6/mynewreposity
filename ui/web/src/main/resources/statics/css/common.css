@@ -1,0 +1,72 @@
+/*!
+ * 项目自定义的公共CSS，可覆盖vmes.css里的样式
+ */
+.circle {
+	display: inline-block;
+	height: 35px;
+	width: 50px;
+	text-align: center;
+	border-radius: 50%/50%; 
+	font-size: 11px;
+	/* font-weight: bold; */
+	/* padding: 8px; */
+	background: #c9b0b0;
+	/* overflow:hidden */
+	cursor:pointer;
+}
+.arrow-rigth-xjw {
+	display: inline-block;vertical-align: middle;margin-top: -20px;
+}
+
+/* .circle :hover {
+	transform: border:1px solid yellow;
+	transition: all 0.5s linear;
+}
+ */
+.circle span{
+  display: block;
+  width: 50px;
+  height: 35px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* ����������ʽ */
+  #links {padding:3px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;margin-bottom: 6px; }
+  #links a {color:#707070;}
+  #links a:hover {color: #ca0c16;}
+  #links .active {box-shadow:none;}
+  .fa-plus {color:#e1735f}
+  .fa-pencil-square-o {color: #7fb662}
+  .fa-trash {color:#e1735f}
+  .fa-search {color:#f7aa2f}
+  .fa-upload {color:#e1735f}
+  
+  span.input-icon {
+    display: inline-block;
+}
+.input-icon {
+    position: relative;
+}
+.input-icon.input-icon-right > input {
+    padding-left: 6px;
+    padding-right: 24px;
+}
+
+.input-icon.input-icon-right > .ace-icon {
+    left: auto;
+    right: 3px;
+}
+.input-icon > .ace-icon {
+    padding: 0 3px;
+    z-index: 2;
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    left: 3px;
+    line-height: 28px;
+    display: inline-block;
+    color: #909090;
+    font-size: 16px;
+}
+  

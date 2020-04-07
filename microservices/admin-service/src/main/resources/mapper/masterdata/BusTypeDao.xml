@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.BusTypeDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.admin.modules.masterdata.entity.BusTypeEntity" id="settingBusTypeMap">
+        <result property="id" column="id"/>
+        <result property="busTypeCode" column="bus_type_code"/>
+        <result property="internalName" column="internal_name"/>
+        <result property="brand" column="brand"/>
+        <result property="manufacturer" column="manufacturer"/>
+        <result property="vehicleType" column="vehicle_type"/>
+        <result property="powerType" column="power_type"/>
+        <result property="memo" column="memo"/>
+        <result property="editor" column="editor"/>
+        <result property="editDate" column="edit_date"/>
+    </resultMap>
+	
+	<select id="getBusTypeList" parameterType="Map" resultType="Map">
+		SELECT t.* 
+			FROM MASTERDATA_BUS_TYPE t 
+			<if test="VEHICLE_TYPE != '' and CODE != VEHICLE_TYPE">
+				LEFT JOIN MASTERDATA_DICT d ON t.VEHICLE_TYPE = d.VALUE  AND d.TYPE = 'VEHICLE_TYPE'
+			</if>
+			WHERE 1=1
+			<if test="VEHICLE_TYPE != '' and CODE != VEHICLE_TYPE">
+				AND (d.CODE = #{VEHICLE_TYPE} OR d.VALUE = #{VEHICLE_TYPE})
+			</if>
+	</select>
+	
+
+</mapper>

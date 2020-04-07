@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>欢迎页</title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="${request.contextPath}/statics/css/bootstrap.min.css">
+	<script src="${request.contextPath}/statics/libs/jquery-1.12.4.min.js"></script>
+	<#include '/header.html'/>
+	<style>
+		li{
+			padding-top:7px
+		}
+	</style>
+</head>
+<body class="hold-transition ">
+	<div id="rrapp" class="wrapper">
+		<div class="content pb0">
+			<div class="row">
+				<section id="section_m" class="col-md-12 ui-sortable">
+					
+				</section>
+				<section id="section_l" class="col-md-7 ui-sortable">
+					<div  class="box box-widget">
+			            <div class="box-header ui-sortable-handle" style="cursor: move;">
+			              <i class="fa fa-flag-o"></i>
+			              <h3 class="box-title">我的任务</h3>
+			              	仓库号：
+		    <!--           		<select :id="'WH_NUMBER_'+contentDynamic.ID" class="input-medium" style="height: 22px;width:65px;" >
+								<#list tag.getUserAuthWh("QC_GR") as WH>
+							      <option value="${WH.code}">${WH.code}</option>
+							   </#list>
+							</select> -->
+			              <div class="box-tools pull-right">
+				                <!-- button with a dropdown 
+				                <div class="btn-group open">
+				                  <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+				                    <i class="fa fa-bars"></i></button>
+				                  <ul class="dropdown-menu pull-right" role="menu">
+				                    <li><a href="#">Add new event</a></li>
+				                    <li><a href="#">Clear events</a></li>
+				                    <li class="divider"></li>
+				                    <li><a href="#">View calendar</a></li>
+				                  </ul> -->
+	<!-- 			                <button type="button" class="btn btn-success btn-sm" data-widget="remove" style="cursor: pointer;"><i class="fa fa-times"></i>
+				                </button> -->
+				           </div>
+			            </div>
+			            <!-- /.box-header -->
+			            <div class="box-body" style="overflow: scroll;" >
+			              <!-- See dist/js/pages/dashboard.js to activate the todoList plugin -->
+			              <ul class="todo-list ui-sortable">
+			                <li>
+			                  <!-- drag handle -->
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <!-- checkbox -->
+			                  <input type="checkbox" value="">
+			                  <!-- todo text -->
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <!-- Emphasis label -->
+			                  <small class="label label-danger"><i class="fa fa-clock-o"></i> 2 mins</small>
+			                  <!-- General tools such as edit or delete-->
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-info"><i class="fa fa-clock-o"></i> 4 hours</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-warning"><i class="fa fa-clock-o"></i> 1 day</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-success"><i class="fa fa-clock-o"></i> 3 days</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-primary"><i class="fa fa-clock-o"></i> 1 week</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-default"><i class="fa fa-clock-o"></i> 1 month</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">Let theme shine like a star</span>
+			                  <small class="label label-default"><i class="fa fa-clock-o"></i> 1 month</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>	
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-default"><i class="fa fa-clock-o"></i> 1 month</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>			
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-default"><i class="fa fa-clock-o"></i> 1 month</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>		
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-default"><i class="fa fa-clock-o"></i> 1 month</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>	
+			                <li>
+			                  <span class="handle">
+			                    <i class="fa fa-ellipsis-v"></i>
+			                    <i class="fa fa-ellipsis-v"></i>
+			                  </span>
+			                  <input type="checkbox" value="">
+			                  <span class="text">C161 100340-00 来料待质检</span>
+			                  <small class="label label-default"><i class="fa fa-clock-o"></i> 1 month</small>
+			                  <div class="tools">
+			                    <i class="fa fa-edit"></i>
+			                    <i class="fa fa-trash-o"></i>
+			                  </div>
+			                </li>			                		                	                                		                
+			              </ul>
+			            </div>
+			    	</div>
+					
+				</section>
+				
+				<section id="section_r" class="col-md-5 ui-sortable">
+					<div v-for="cd_r in contentDynamic_R"  class="box box-success box-widget">
+			        	<div class="box-header ui-sortable-handle" style="cursor: move;">
+			            	<i class="fa fa-comments-o"></i>
+			              	<h3 class="box-title">{{cd_r.KANBAN_MSG}}</h3>
+<!-- 				              <div class="box-tools pull-right" data-toggle="tooltip" title="" data-original-title="Status">
+				                <div class="btn-group" data-toggle="btn-toggle">
+				                  <button type="button" class="btn btn-default btn-sm active"><i class="fa fa-square text-green"></i>
+				                  </button>
+				                  <button type="button" class="btn btn-default btn-sm"><i class="fa fa-square text-red"></i></button>
+				                </div>
+				              </div> -->
+			        	</div>
+				       	<div v-if="cd_r.KANBAN_CLASS =='02' " class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; ">
+				        	<div class="box-body chat" style="overflow: scroll; width: auto;" v-bind:style="{height: cd_r.MIN_HIGH}" >
+				              <!-- chat item -->
+				              	<div v-for="cData in cd_r.contentData " class="item">
+				                	<p class="message">
+				                  		<a href="javascript:void(0);" @click ="showMessage(cData.KANBAN_MSG)" class="name">
+				                    		<small class="text-muted pull-right"><i class="fa fa-clock-o"></i> {{cData.EDIT_DATE}}</small>
+				                    		{{cData.KANBAN_MSG}}
+				                  		</a>
+				               	 	</p>
+				                <!-- /.attachment -->
+				              	</div>
+				              <!-- /.item -->
+				            </div>
+				            <div class="slimScrollBar" style="background: rgb(0, 0, 0); width: 7px; position: absolute; top: 0px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; right: 1px; height: 188.822px;"></div>
+				            <div class="slimScrollRail" style="width: 7px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; right: 1px;"></div>
+						</div>
+					</div>
+				</section>
+				
+			</div>
+		</div>
+	</div>
+	
+	<div id="KB_CONTENT_01" style="display: none;">
+		<div class="box box-solid " >  <!-- bg-teal-gradient -->
+			 <div class="box-header ui-sortable-handle" style="cursor: move;">
+	              <i class="fa fa-comments-o"></i>
+	              <h3 class="box-title">技术支持</h3>
+	              <div class="box-tools pull-right">
+	       <!--         <button type="button" class="btn btn-success btn-sm" data-widget="collapse" style="cursor: pointer;"><i class="fa fa-minus"></i>
+	                </button>
+	                 <button type="button" class="btn bg-teal btn-sm" data-widget="remove" style="cursor: pointer;"><i class="fa fa-times"></i>
+	                </button> -->
+	              </div>
+			 </div>
+			 <div class="box-body" >
+			  	<div class="item">
+	                <p class="message">
+	                  <a href="javascript:alert('请详细描述系统问题/截图并发送邮件至如下邮箱，谢谢！');void(0);" class="name">
+	                    <small class="text-muted pull-right"><i class="fa fa-etsy"></i> 唐春城：tang.chuncheng@byd.com</small>
+	                    WMS系统问题反馈：
+	                  </a>
+	                </p>
+	         	</div>
+	         	<div class="item">
+	                <p class="message">
+	                  <a href="javascript:alert('请详细描述系统问题/截图并发送邮件至如下邮箱，谢谢！');void(0);" class="name">
+	                    <small class="text-muted pull-right"><i class="fa fa-etsy"></i> 张东：zhang.dong16@byd.com</small>
+	                                                                   品质无纸化问题反馈：
+	                  </a>
+	               </p>
+	         	</div>
+	         	<div class="item">
+	                <p class="message">
+	                  <a href="javascript:alert('请详细描述系统问题/截图并发送邮件至如下邮箱，谢谢！');void(0);" class="name">
+	                    <small class="text-muted pull-right"><i class="fa fa-etsy"></i> 代冬梅：dai.dongmei@byd.com</small>
+	                                                                   自制件无纸化问题反馈：
+	                  </a>
+	                </p>
+	         	</div>	
+	         	<div class="item">
+	                <p class="message">
+	                  <a href="javascript:alert('请详细描述系统问题/截图并发送邮件至如下邮箱，谢谢！');void(0);" class="name">
+	                    <small class="text-muted pull-right"><i class="fa fa-etsy"></i> 张东：zhang.dong16@byd.com</small>
+	                                                                   计件工资问题反馈：
+	                  </a>
+	                </p>
+	         	</div>		         				         	
+			 </div>
+		</div>
+	</div>
+	<div id="KB_CONTENT_02" style="display: none;">
+		<div class="box box-solid " > <!-- bg-teal-gradient -->
+		 <div class="box-header ui-sortable-handle" style="cursor: move;">
+              <i class="fa fa-bars"></i>
+              <h3 class="box-title">常用资源</h3>
+              <div class="box-tools pull-right">
+<!--		                <button type="button" class="btn btn-success btn-sm" data-widget="collapse" style="cursor: pointer;"><i class="fa fa-minus"></i>
+		                </button>
+ 		                <button type="button" class="btn bg-teal btn-sm" data-widget="remove" style="cursor: pointer;"><i class="fa fa-times"></i>
+		                </button> -->
+              </div>
+		 </div>
+		 <div class="box-body">
+				  	<div class="item">
+		                <p class="message">
+		                  <a href="${request.contextPath}/statics/guide/新WMS操作手册.pdf" download="guide" class="name">
+		                    <small class="text-muted pull-right"><i class="fa fa-file-pdf-o"></i> 下载</small>
+		                    WMS操作文档-V1.0
+		                  </a>
+		                </p>
+		         	</div>
+				  	<div class="item">
+		                <p class="message">
+		                  <a href="javascript:alert('正在努力编写中...');void(0);" download="guide" class="name">
+		                    <small class="text-muted pull-right"><i class="fa fa-file-pdf-o"></i> 下载</small>
+		                   	 品质无纸化操作文档-V1.0
+		                  </a>
+		                </p>
+		         	</div>		
+		         	<div class="item">
+		                <p class="message">
+		                  <a href="${request.contextPath}/statics/guide/浏览器缓存清除文档.docx" download="guide" class="name">
+		                    <small class="text-muted pull-right"><i class="fa fa-file-pdf-o"></i> 下载</small>
+		                                                                   浏览器缓存清除文档
+		                  </a>
+		                </p>
+		         	</div>
+		         	<div class="item" style="margin-top: 10px;">
+		                <p class="message">
+		                  <a href="http://webcloud.byd.com.cn/icloud/login.htm" target="_blank" class="name">
+		                    <small class="text-muted pull-right"><i class="fa fa-hand-o-right "></i> 跳转</small>
+		                    BYD应用云平台系统
+		                  </a>
+		                </p>
+		         	</div>
+				 </div>
+			</div>
+		</div>
+</body>
+
+<script>
+	var baseUrl = '${request.contextPath}/';
+	
+	var vm = new Vue({
+		el : '#rrapp',
+		data : {
+			userKanbanMap: new Map(),
+			contentFixedKB_L: [],
+			contentFixedKB_R: [],
+			contentDynamic_L: [],
+			contentDynamic_R: [],
+			contentDynamic_M: [],
+			
+			WERKS:"",
+			WH_NUMBER:"",
+		},
+		watch:{
+			WERKS:{
+				handler:function(newVal,oldVal){
+					
+				}
+			}
+		},
+		methods : {
+			getUserKanban: function(){
+				js.loading();
+				$.ajax({
+					url:baseUrl+"sys/user/getUserKanban",
+					type:"post",
+					async: false,
+					dataType:"json",
+					data:{
+					},
+					success:function(response){
+						if(response.code==500){
+							js.showErrorMessage(response.msg);
+							return false;
+						}
+						if(response.code=='0'){
+							for(var i=0;i<response.data.length;i++){
+								var row = response.data[i];
+								//获取看板查询条件
+								if(row.WERKS == undefined || row.WERKS == null || row.WERKS =='null' || row.WERKS ==''){
+									var QUERY_REQUIRED = row.QUERY_REQUIRED;
+									if( QUERY_REQUIRED != null && QUERY_REQUIRED !='null' && QUERY_REQUIRED!='' && QUERY_REQUIRED.indexOf("WERKS") != -1){
+										//工厂查询条件为必填项，获取工厂列表
+										if(row.MENU_KEY == null || row.MENU_KEY =='null' || row.MENU_KEY ==''){
+											js.showErrorMessage("工厂为获取看板内容的必须查询条件，需维护获取看板内容工厂权限的菜单KEY！");
+											return false;
+										}
+										var userAuthWerksList = getUserAuthWerksList(row.MENU_KEY);
+										row['WERKS'] = userAuthWerksList[0].CODE;
+										row['userAuthWerksList'] = userAuthWerksList;
+									}
+								}
+								if(row.WH_NUMBER == undefined || row.WH_NUMBER == null || row.WH_NUMBER =='null' || row.WH_NUMBER ==''){
+									if(QUERY_REQUIRED != null && QUERY_REQUIRED !='null' && QUERY_REQUIRED!='' && QUERY_REQUIRED.indexOf("WH_NUMBER") != -1){
+										//仓库号查询条件为必填项，获取仓库号列表
+										if(row.MENU_KEY == null || row.MENU_KEY =='null' || row.MENU_KEY ==''){
+											js.showErrorMessage("仓库号为获取看板内容的必须查询条件，需维护获取看板内容仓库号权限的菜单KEY！");
+											return false;
+										}
+										var userAuthWhList = getUserAuthWhList(row.MENU_KEY);
+										row['WH_NUMBER'] = userAuthWhList[0].CODE;
+										row['userAuthWhList'] = userAuthWhList;
+									}
+								}
+								//获取动态内容
+								row = getContentData(row);
+								
+								if(row.KANBAN_CLASS=="01"){
+									//固定内容
+									if(row.FLOAT1=="L"){
+										vm.contentFixedKB_L.push(row);
+									}
+									if(row.FLOAT1=="R"){
+										vm.contentFixedKB_R.push(row);
+									}
+								}else{
+									if(row.FLOAT1=="L"){
+										vm.contentDynamic_L.push(row);
+									}
+									if(row.FLOAT1=="R"){
+										vm.contentDynamic_R.push(row);
+									}
+									if(row.FLOAT1=="M"){
+										vm.contentDynamic_M.push(row);
+									}
+								}
+								
+								vm.userKanbanMap.set(row.ID,row);
+							}
+							
+							if(contentDynamic_L.length <=0){
+								vm.contentDynamic_L.push({KANBAN_MSG:"我的任务"});
+							}
+							
+						}
+					}
+				})
+				js.closeLoading();
+			},
+		},
+		created:function(){
+			//this.WERKS=$("#WERKS").find("option").first().val();
+			this.getUserKanban();
+		}
+	});
+
+	function getContentData(contentObj) {
+		var queryData = {};
+		var QUERY_REQUIRED = contentObj.QUERY_REQUIRED;
+		
+		if( QUERY_REQUIRED != null && QUERY_REQUIRED !='null' && QUERY_REQUIRED!=''){
+			var qArr = QUERY_REQUIRED.split(",");
+			for(var i=0;i<qArr.length; i++){
+				var q = qArr[i];
+				if( q.length > 0){
+					queryData[q] = contentObj[q];
+				}
+			}
+		}
+		if( contentObj.CONTENT_URL != null && contentObj.CONTENT_URL !='null' && contentObj.CONTENT_URL!=''){
+			$.ajax({
+				url:baseUrl+contentObj.CONTENT_URL,
+				type:"post",
+				async:false,
+				dataType:"json",
+				data: queryData,
+				success:function(response){
+					if(response.code==500){
+						js.showErrorMessage("获取动态内容失败："+response.msg);
+						return false;
+					}
+					if(response.code=='0'){
+						contentObj['contentData'] = response.data;
+					}
+				}
+			});
+			
+			return contentObj;
+		}else{
+			return [];
+		}
+	}
+	
+	function showMessage(KANBAN_MSG){
+		layer.open({
+			  type: 1, 
+			  content: '<br>'+
+				  '&nbsp;&nbsp;&nbsp;'+KANBAN_MSG,
+		   	  title : "系统公告",
+		   	  offset : [ '500px', '250px' ],
+		   	  area : [ '400px', '300px' ],
+		   	  shade : 0,
+		   	  shadeClose : false,
+		   	btn : [ '确定', '取消' ],
+			btn1 : function(index) {
+				layer.close(index);
+			}
+		});
+	}
+
+	function getUserAuthWhList(MENU_KEY){
+		var userAuthWhList = [];
+		js.loading('获取用户权限仓库号...');
+		$.ajax({
+			url:baseUrl+"sys/user/getUserAuthWh",
+			type:"post",
+			async: false,
+			dataType:"json",
+			data:{
+				'MENU_KEY':MENU_KEY
+			},
+			success:function(response){
+				if(response.code==500){
+					js.showErrorMessage(response.msg);
+					return false;
+				}
+				if(response.code=='0'){
+					userAuthWhList = response.data;
+				}
+			}
+		});
+		js.closeLoading();
+		return userAuthWhList;
+	}
+
+	function getUserAuthWerksList(MENU_KEY){
+		var userAuthWerksList = [];
+		js.loading('获取用户权限工厂...');
+		$.ajax({
+			url:baseUrl+"sys/user/getUserAuthWerks",
+			type:"post",
+			async: false,
+			dataType:"json",
+			data:{
+				'MENU_KEY':MENU_KEY
+			},
+			success:function(response){
+				if(response.code==500){
+					js.showErrorMessage(response.msg);
+					return false;
+				}
+				if(response.code=='0'){
+					userAuthWerksList = response.data;
+				}
+			}
+		});
+		js.closeLoading();
+		return userAuthWerksList;
+	}
+	
+</script>
+</html>

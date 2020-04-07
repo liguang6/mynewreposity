@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCAssemblyLogisticsDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.wms.business.modules.config.entity.WmsCAssemblyLogisticsEntity" id="wmsCAssemblyLogisticsMap">
+        <result property="id" column="ID"/>
+        
+        <result property="del" column="DEL"/>
+        <result property="creator" column="CREATOR"/>
+        <result property="createDate" column="CREATE_DATE"/>
+        <result property="editor" column="EDITOR"/>
+        <result property="editDate" column="EDIT_DATE"/>
+    </resultMap>
+
+   <!-- 更新，插入总装物流参数配置 -->
+	<update id="merge" parameterType="List">
+		MERGE INTO WMS_C_ASSEMBLY_LOGISTICS s USING (
+		select m.ASSEMBLY_WERKS,m.WERKS_F,m.WMS_FLAG_F,m.LGORT_F,m.SOBKZ,
+		m.WMS_MOVE_TYPE,m.SAP_FLAG_F,m.SAP_MOVE_TYPE,
+		m.DEL,m.EDITOR,m.EDIT_DATE
+		from (
+		<foreach collection="list" item="d" index="index" separator="union all">
+		SELECT 
+		#{d.assemblyWerks} ASSEMBLY_WERKS,#{d.werksF} WERKS_F,#{d.wmsFlagF} WMS_FLAG_F, #{d.lgortF} LGORT_F,
+		#{d.sobkz} SOBKZ,#{d.wmsMoveType} WMS_MOVE_TYPE,#{d.sapFlagF} SAP_FLAG_F,#{d.sapMoveType} SAP_MOVE_TYPE,
+		'0' DEL,#{d.editor} EDITOR,#{d.editDate} EDIT_DATE
+		from dual
+		</foreach>
+		) m  ) tmp 
+		on (tmp.ASSEMBLY_WERKS=s.ASSEMBLY_WERKS and tmp.WERKS_F=s.WERKS_F )
+		when matched then 
+			UPDATE  SET
+			s.LGORT_F=tmp.LGORT_F,s.SOBKZ=tmp.SOBKZ,s.WMS_MOVE_TYPE=tmp.WMS_MOVE_TYPE,
+			s.SAP_FLAG_F=tmp.SAP_FLAG_F,s.SAP_MOVE_TYPE=tmp.SAP_MOVE_TYPE,
+			s.EDITOR=tmp.EDITOR,s.EDIT_DATE=tmp.EDIT_DATE
+		when not matched then 
+			insert (ID,ASSEMBLY_WERKS,WERKS_F,WMS_FLAG_F,LGORT_F,SOBKZ,WMS_MOVE_TYPE,
+			SAP_FLAG_F,SAP_MOVE_TYPE,DEL,CREATOR,CREATE_DATE) 
+		    VALUES (SEQ_WMS_C_ASSEMBLY_LOGISTICS.nextval,tmp.ASSEMBLY_WERKS,tmp.WERKS_F,
+		    tmp.WMS_FLAG_F,tmp.LGORT_F,tmp.SOBKZ,tmp.WMS_MOVE_TYPE,
+		    tmp.SAP_FLAG_F,tmp.SAP_MOVE_TYPE,
+		    tmp.DEL,tmp.EDITOR,tmp.EDIT_DATE)
+	</update>
+</mapper>

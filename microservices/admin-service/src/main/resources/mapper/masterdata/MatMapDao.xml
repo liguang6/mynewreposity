@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.admin.modules.masterdata.dao.MatMapDao">
+	
+	
+	<select id="getMatMapUrl" resultType="String" parameterType="Map">
+		<!-- 这是admin服务数据库-oracle 写法 
+		SELECT * FROM (
+			SELECT REPLACE(REPLACE(REPLACE(map_url,'\\10.23.1.23\客研院plm图纸\',''),'\\10.23.1.8\各事业部文档\第十九事业部\客研院PLM图纸\',''),'\','/')  MAP_URL
+			FROM MASTERDATA_PDM_MAP 
+			WHERE "MAP_NO" = #{material_no}
+			ORDER BY TO_NUMBER("VERSION") DESC ) t
+		WHERE ROWNUM = 1
+		-->
+
+		<!-- 这是第三方BMS系统-mysql 写法 -->
+		SELECT REPLACE(REPLACE(REPLACE(map_url,'\\\\10.23.1.23\\客研院plm图纸\\',''),'\\\\10.23.1.8\\各事业部文档\\第十九事业部\\客研院PLM图纸\\',''),'\\','/') MAP_URL 
+		FROM BMS_PDM_MAP 
+		WHERE map_no = #{material_no} ORDER BY version DESC LIMIT 1 
+		
+	</select>
+	
+	<!-- 这是admin服务数据库-oracle 写法 
+	<select id="getPmdMapList"  parameterType="List" resultType="Map">
+	  	SELECT * 
+	  		FROM 
+	  		( 
+		         SELECT TMP.*, ROWNUM ROW_ID FROM (
+			     SELECT *
+			     FROM MASTERDATA_PDM_MAP 
+			     WHERE 1=1
+			      <if test="MAP_NO != null and MAP_NO !=''">
+			        AND MAP_NO like '%' || #{MAP_NO} || '%'
+			      </if>
+			      <if test="MAP_NAME != null and MAP_NAME !=''">
+			        AND MAP_NAME like '%' || #{MAP_NAME} || '%'
+			      </if>
+				  <if test="start_date !=null and start_date !='' ">
+					AND EDIT_DATE&gt;= CONCAT(#{start_date}, ' 00:00:00') 
+				   </if>
+				   <if test="end_date !=null and end_date !='' ">
+					AND EDIT_DATE&lt;= CONCAT(#{end_date}, ' 23:59:59') 
+				   </if> 
+		     	  ) TMP 
+		     	 <if test="END !=null and END !='' ">
+		 		 	WHERE ROWNUM  &lt;=#{END}
+		 		 </if>
+		 	)  
+		 	<if test="START !=null and START !='' ">
+	 	 		WHERE ROW_ID > #{START} 
+	 	 	</if>
+		  	<if test="orderBy !=null and orderBy !='' ">
+				ORDER BY  ${orderBy}
+		  	</if>
+		  	<if test="orderBy ==null or orderBy =='' ">
+				ORDER BY  EDIT_DATE desc
+		  	</if>
+	 </select>
+	 -->
+
+	<select id="getPmdMapList"  parameterType="List" resultType="Map">
+		SELECT id ID,map_no MAP_NO,map_name MAP_NAME,map_sheet MAP_SHEET,version VERSION,
+				map_url MAP_URL,editor EDITOR,edit_date EDIT_DATE,status STATUS,publisher PUBLISHER,publish_date PUBLISH_DATE
+			FROM BMS_PDM_MAP 
+			WHERE 1=1
+			<if test="MAP_NO != null and MAP_NO !=''">
+				AND MAP_NO like CONCAT('%', #{MAP_NO}, '%') 
+			</if>
+			<if test="MAP_NAME != null and MAP_NAME !=''">
+				AND MAP_NAME like CONCAT('%', #{MAP_NAME}, '%')  
+			</if>
+			<if test="start_date !=null and start_date !='' ">
+				AND EDIT_DATE&gt;= CONCAT(#{start_date}, ' 00:00:00') 
+			</if>
+			<if test="end_date !=null and end_date !='' ">
+				AND EDIT_DATE&lt;= CONCAT(#{end_date}, ' 23:59:59') 
+			</if>
+		  	<if test="orderBy !=null and orderBy !='' ">
+				ORDER BY  ${orderBy}
+		  	</if>
+		  	<if test="orderBy ==null or orderBy =='' ">
+				ORDER BY  EDIT_DATE desc
+		  	</if>
+			<if test="END !=null and END !='' ">
+	 	 		LIMIT #{START} , #{END}
+	 	 	</if>
+	 </select>
+	
+	<!-- 这是admin服务数据库-oracle 写法 
+	<select id="getPmdMapCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM MASTERDATA_PDM_MAP 
+      	WHERE 1=1 
+      <if test="MAP_NO != null and MAP_NO !=''">
+        AND MAP_NO like '%' || #{MAP_NO} || '%'
+      </if>
+      <if test="MAP_NAME != null and MAP_NAME !=''">
+        AND MAP_NAME like '%' || #{MAP_NAME} || '%'
+      </if>
+	  <if test="start_date !=null and start_date !='' ">
+		AND EDIT_DATE&gt;= CONCAT(#{start_date}, ' 00:00:00') 
+	   </if>
+	   <if test="end_date !=null and end_date !='' ">
+		AND EDIT_DATE&lt;= CONCAT(#{end_date}, ' 23:59:59') 
+	   </if>     
+    </select>
+	-->
+
+	<select id="getPmdMapCount" parameterType="Map" resultType="int">
+		SELECT COUNT(1)  FROM BMS_PDM_MAP 
+			WHERE 1=1 
+		<if test="MAP_NO != null and MAP_NO !=''">
+			AND MAP_NO like CONCAT('%', #{MAP_NO}, '%') 
+		</if>
+		<if test="MAP_NAME != null and MAP_NAME !=''">
+			AND MAP_NAME like CONCAT('%', #{MAP_NAME}, '%')  
+		</if>
+		<if test="start_date !=null and start_date !='' ">
+			AND EDIT_DATE&gt;= CONCAT(#{start_date}, ' 00:00:00') 
+		</if>
+		<if test="end_date !=null and end_date !='' ">
+			AND EDIT_DATE&lt;= CONCAT(#{end_date}, ' 23:59:59') 
+		</if>     
+    </select>
+	
+</mapper>

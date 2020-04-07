@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>盘点表创建</title>
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css"></link>
+<style type="text/css">
+       .multiselect-container{ /*下拉框的样式*/
+           width:195px;
+       }
+       .multiselect-container>li>a>label{
+           line-height: 28px;
+           font-size: 12px;
+       }
+       .multiselect-container>li>a>label>input[type='checkbox'] {
+            margin-top: 7px;
+       }
+       .multiselect-item.multiselect-all.active{
+           border-bottom:1px solid #ccc !important;
+       }
+       /* .multiselect-container.dropdown-menu li{
+           width:49%;
+           display: inline-block;
+       }
+       .multiselect-container.dropdown-menu li:first-child{
+           width:100%;
+       } */
+       .multiselect.dropdown-toggle.btn.btn-default:link,.multiselect.dropdown-toggle.btn.btn-default:visited,.multiselect.dropdown-toggle.btn.btn-default:focus,.multiselect.dropdown-toggle.btn.btn-default:hover,.multiselect.dropdown-toggle.btn.btn-default:active, .btn-default.active, .btn-default:active, .open>.dropdown-toggle.btn-default{
+         background: #fff;
+         outline: none;
+         border:1px solid #ccc;
+         box-shadow: none;
+       }
+       .dropdown-menu>.active>a, .dropdown-menu>.active>a:focus, .dropdown-menu>.active>a:hover{
+           background: #474752;
+       }
+       .multiselect-selected-text{
+           font-size:13px;
+           font-family: '微软雅黑','宋体';
+           width:100%;
+           float: left;
+           text-align: left;
+       }
+       .btn.btn-default{
+           padding-right:15px;
+       }
+   </style>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/kn/inventory/list" v-model="page.list">
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select  name="werks" id="werks"
+										 v-model="WERKS" style="width: 100%;height: 26px;" > 
+										<#list tag.getUserAuthWerks("INVENTORY_CREATE") as factory> 
+										 <#if params?? && params.werks?? && params.werks == factory.code>
+										   <option value="${factory.code}" selected="selected">${factory.code}</option>
+										   <#else>
+										   <option value="${factory.code}">${factory.code}</option>
+										 </#if> 
+										</#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">&nbsp;&nbsp;&nbsp; 仓库号：</label>
+								<div class="control-inline" style="width: 60px;">
+<!-- 	                                <select  name="whNumber" id="whNumber" v-model="whNumber" @change="onWhChange(event)"  style="width:100%;height:28px"> -->
+<!-- 										<#list tag.getUserAuthWh("INVENTORY_CREATE") as factory>  -->
+<!-- 											<option value="${factory.code}">${factory.code}</option> -->
+<!-- 										</#list> -->
+<!-- 									</select> -->
+                                   <select v-model="whNumber" class="" style="width: 100%;height: 26px;" name="whNumber" id="whNumber" >
+ 									 	<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+ 									</select>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" style="width: 60px">盘点状态：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:70px">
+									<select class="form-control" name="status" id="status">
+									   <option value=''>全部</option>
+									   <#list tag.wmsDictList('INVENTORY_TYPE') as d> 
+									     <option value="${d.code}">${d.value}</option> 
+									   </#list>
+									  </select>
+									</div>
+								</div>
+							</div>
+							 <div class="form-group">
+                                <label class="control-label" style="width: 50px">仓管员：</label>
+								<div class="control-inline">
+									<div  style="width:80px">
+		                                <select  name="whManager" id="whManager" class="form-control">
+										 <option value="" >全部</option>
+										 <option v-for="w in relatedareaname" :value="w.MANAGER_STAFF" :key="w.MANAGER">{{ w.MANAGER }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+							<label class="control-label">库 位：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+									<select name="lgort" id="lgort"  class="form-control">
+									</select>
+								</div>
+							</div>
+							</div>
+							<div class="form-group">
+							<label class="control-label">创建时间：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:90px">
+                                     <input type="text" style="height: 30px;width:100%" id="startDate"  
+								        name="startDate" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})"  class="form-control"/>						    
+								 </div>
+								<div class="input-group" style="width:90px">
+								    <input type="text" style="height: 30px;width:100%" id="endDate"  
+								        name="endDate" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})"  class="form-control"/>							
+								 </div>
+							</div>
+							</div>
+<!-- 						</div> -->
+<!-- 						<div class="row"> -->
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-sm">查询</button>
+								<button type="button" class="btn btn-primary btn-sm" id="btnAdd">新增盘点表</button>
+<!-- 								<button type="reset" class="btn btn-default btn-sm">重置</button> -->
+							</div>
+						</div>
+						</form>
+<!-- 						<div id="divDataGrid" style="width:100%;overflow:auto;"> -->
+							<table id="dataGrid"></table>
+							<div id="dataGridPage"></div>
+<!-- 						</div>	 -->
+                            <table id="tb_excel" style="display:none"></table>	
+					</div>
+				</div>
+			</div>
+			<form id="keyPartsPrint" target="_blank" method="post" action="${request.contextPath}/kn/inventory/printPreview" >
+				<button hidden="hidden" id="printButton" type="submit"></button>
+				<input name="werks" id="printWerks" type="text" hidden="hidden">
+				<input name="whNumber" id="printWhNumber" type="text" hidden="hidden">
+				<input name="inventoryNo" id="printInventoryNo" type="text" hidden="hidden">
+				<input name="status" id="printStatus" type="text" hidden="hidden">
+				<input name="dataList" id="dataList" type="text" hidden="hidden">
+			</form>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/kn/inventory.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js?_${.now?long}"></script>
+</body>
+</html>

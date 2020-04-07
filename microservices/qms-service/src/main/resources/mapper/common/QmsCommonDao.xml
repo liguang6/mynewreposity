@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.qms.modules.common.dao.QmsCommonDao">
+	 <!-- 模糊查找车型信息 -->
+	<select id="getBusTypeCodeList" parameterType="string" resultType="Map">
+		SELECT BUS_TYPE_CODE busTypeCode,TEST_TYPE testType,
+	    (CASE TEST_TYPE WHEN '01' THEN '大巴' WHEN '02' THEN '专用车' END) testTypeDesc
+		FROM QMS_C_BUS_TYPE_TEST_TYPE WHERE BUS_TYPE_CODE like CONCAT('%', upper(#{busTypeCode}),'%')  
+	</select>
+	
+	<select id="getTestNodes" parameterType="String" resultType="Map">
+		select n.TEST_NODE,n.VIN_FLAG,n.CUSTOM_NO_FLAG
+		from QMS_C_TEST_NODE n
+		where n.TEST_TYPE=#{testType} 
+		<if test="TEST_CLASS=='整车' ">
+		and n.VIN_FLAG='X'
+		</if>
+		<if test="TEST_CLASS=='零部件' ">
+		and n.VIN_FLAG !='X' and n.CUSTOM_NO_FLAG='X'
+		</if>
+	</select>
+
+	<!-- 模糊查找订单信息 -->
+	<select id="getOrderNoList" parameterType="string" resultType="Map">
+		SELECT o.ORDER_NO orderNo,o.ORDER_TEXT orderText,t.TEST_TYPE,o.WERKS
+		FROM QMS_MES_ORDER o
+		LEFT JOIN QMS_C_BUS_TYPE_TEST_TYPE t on t.BUS_TYPE_CODE=o.BUS_TYPE_CODE
+		WHERE o.ORDER_NO like CONCAT('%', upper(#{orderNo}),'%')  or o.BUS_TYPE_CODE like CONCAT('%', upper(#{orderNo}),'%')  
+	</select>
+	
+	<select id="getBusList" parameterType="string" resultType="Map">
+		SELECT BUS_NO,VIN,ORDER_TEXT,ORDER_NO,b.BUS_TYPE_CODE,CAB_NO,t.TEST_TYPE
+		FROM QMS_MES_BUS b
+		LEFT JOIN QMS_C_BUS_TYPE_TEST_TYPE t on t.BUS_TYPE_CODE=b.BUS_TYPE_CODE
+		WHERE WERKS=#{factory} 
+		<if test="busType !=null and busType !='' ">
+		and t.TEST_TYPE=#{busType}
+		</if>
+		<if test="busNo !=null and busNo !='' ">
+		AND (BUS_NO like CONCAT('%', upper(#{busNo}),'%') or VIN like CONCAT('%', upper(#{busNo}),'%') )
+		</if>
+		<if test="cabNo !=null and cabNo !=''  and busType=='02' ">
+		AND CAB_NO like CONCAT('%', upper(#{cabNo}),'%')
+		</if>
+		 
+	</select>
+	
+	<select id="getTestTools" parameterType="Map" resultType="Map">
+		select *
+		from QMS_C_TEST_TOOL
+		where WERKS=#{WERKS} and ifnull(STATUS,'0')!='X' 
+		and TEST_TOOL_NO like CONCAT('%', upper(#{testToolNo}),'%')  		
+	</select>
+	
+	<select id="getQmsTestRecords" parameterType="Map" resultType="Map">
+		SELECT r.WERKS,r.ORDER_NO,o.ORDER_TEXT,r.BUS_NO,r.VIN,r.CAB_NO,r.CUSTOM_NO,
+		case r.TEST_TYPE when '01' then '大巴' when '02' then '专用车' end as TEST_TYPE,
+		r.TEST_NODE,r.TEST_GROUP,r.TEST_TOOL_NO,r.PROCESS_NAME,r.TEST_ITEM,
+		r.TEST_STANDARD,r.TEST_RESULT,r.JUDGE,r.RE_TEST_RESULT,r.RE_JUDGE,
+		a.RESP_UNIT,a.RESP_WORKGROUP,a.BAD_CLASS,
+		case r.ONE_PASSED_FLAG when 'X' then '是' else '否' end as ONE_PASSED_FLAG,
+		r.CONFIRMOR,r.CONFIRM_DATE,r.CREATOR,r.CREATE_DATE,r.EDITOR,r.EDIT_DATE
+		FROM QMS_PROCESS_TEST_RECORD r
+		left join QMS_PROCESS_TEST_RECORD_ABNORMAL a on r.ABNORMAL_ID=a.ID
+		left join QMS_MES_ORDER o on o.ORDER_NO=r.ORDER_NO
+		where ifnull(r.EDIT_DATE,r.CREATE_DATE) like concat(#{STR_MONTH},'%')
+		<if test="WERKS !=null and WERKS !='' " >
+		and r.WERKS=#{WERKS}
+		</if>
+		<if test="TEST_TYPE !=null and TEST_TYPE !='' " >
+		and r.TEST_TYPE=#{TEST_TYPE}
+		</if>
+		order by r.TEST_TYPE,r.TEST_GROUP,r.ORDER_NO
+	</select>
+
+</mapper>

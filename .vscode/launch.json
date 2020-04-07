@@ -1,0 +1,94 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-EurekaServerApplication<eureka-server>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.ibeetl.cloud.eurekaserver.EurekaServerApplication",
+            "projectName": "eureka-server",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-AdminServiceApplication<admin-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.byd.admin.AdminServiceApplication",
+            "projectName": "admin-service",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-WebApplication<web>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.byd.web.WebApplication",
+            "projectName": "web",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-SapServiceApplication<sap-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.byd.sap.SapServiceApplication",
+            "projectName": "sap-service",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-QmsServiceApplication<qms-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.byd.qms.QmsServiceApplication",
+            "projectName": "qms-service",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-WmsServiceApplication<wms-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.byd.wms.business.WmsServiceApplication",
+            "projectName": "wms-service",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ZzjMesServiceApplication<zzjmes-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.byd.zzjmes.ZzjMesServiceApplication",
+            "projectName": "zzjmes-service",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-BjMesServiceApplication<bjmes-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.byd.bjmes.BjMesServiceApplication",
+            "projectName": "bjmes-service",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-WebServiceApplication<wms-webservice>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.byd.wms.webservice.WebServiceApplication",
+            "projectName": "wms-webservice",
+            "args": ""
+        }
+    ]
+}

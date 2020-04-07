@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>新增 编辑 客户信息</title>
+<#include "/web_header.html">
+<style>
+    .wms-select {width: 100%;}
+</style>
+</head>
+<body>
+<div id="vue" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="newForm">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label"> <span class="required"> * </span> 公司代码</label>
+									<div class="col-xs-8">
+										<input v-model="entity.bukrs"  id="bukrs" name="werks" class="form-control required" placeholder="公司代码"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+
+								
+								<div class="form-group">
+									<div class="col-sm-4 control-label"> <span class="required"> * </span> 客户代码
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.kunnr" id="kunnr"  name="kunnr" class="form-control required" placeholder="客户代码"/>
+									</div>
+								</div>
+								
+							</div>
+
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span>  客户名称
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="name1" class="form-control required"
+											name="name1" placeholder="客户名称" v-model="entity.name1"/> 
+											
+									</div>
+								</div>
+
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										客户简称
+									</div>
+									<div class="col-sm-8">
+									<input type="text" id="sortl" class="form-control required"
+											name="sortl" placeholder="客户简称" v-model="entity.sortl"/>
+										
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 销售组织
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="vkorg" class="form-control required"
+											name="vkorg" placeholder="销售组织" v-model="entity.vkorg"/>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 分销渠道
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="vtweg" class="form-control required"
+											name="vtweg" placeholder="分销渠道" v-model="entity.vtweg"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 部门
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="spart" class="form-control required"
+											name="spart" placeholder="部门" v-model="entity.spart"/>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 地址
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="address" class="form-control required"
+											name="address" placeholder="地址" v-model="entity.address"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 客户管理者
+									</div>
+									<div class="col-sm-8">
+										<input type="text" id="manager" class="form-control required"
+											name="manager" placeholder="客户管理者" v-model="entity.manager"/>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+								
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+	   var vm = new Vue({
+		   el:"#vue",
+		   data:{
+			   entity:{}
+		   },
+		   methods:{
+			   save:function(){
+				   $("#newForm").trigger("submit");
+			   },
+			   init:function(id){
+				   $.ajax({
+						url:baseUrl + "config/sapCustomer/info",
+						data:{"id":id},
+						success:function(resp){
+							if(resp.code === 0){
+								this.entity = resp.data;
+							}else{
+								alert(resp.msg);
+							}
+						}.bind(this)
+					})
+			   }
+		   }
+	   });
+	   
+	   $(function(){
+			$("#newForm").validate({
+			submitHandler:function(e) {
+				$.ajax({
+					url : baseUrl + "config/sapCustomer/save",
+					type : "POST",
+					contentType : "application/json",
+					data : JSON.stringify(vm.entity),
+					success : function(rep) {
+						if (rep.code === 0) {
+							close();
+						} else {
+							alert(rep.msg);
+						}
+					}
+				})
+
+			}
+		   });
+		});
+	</script>
+</body>
+</html>

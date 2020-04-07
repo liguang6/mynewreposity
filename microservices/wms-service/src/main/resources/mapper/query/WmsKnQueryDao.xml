@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.query.dao.WmsKnQueryDao">
+     <select id="getStorageMoveList" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT ID,WERKS,WH_NUMBER,MATNR ,MAKTX,BATCH,LGORT,MEINS,
+		      SOBKZ,LIFNR,LIKTX,F_BIN_CODE,F_BIN_NAME,BIN_CODE,BIN_NAME,
+		      MOVE_QTY,EDITOR,EDIT_DATE
+		       FROM WMS_KN_MOVE_STORAGE D
+		      WHERE  D.WERKS=#{WERKS} 
+		      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="LGORT != null and LGORT !=''">
+		        AND D.LGORT = #{LGORT}
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND D.BATCH = #{BATCH}
+		      </if>
+		      <if test="MATNR!= null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND D.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="BIN_CODE != null and BIN_CODE !=''">
+		        AND D.BIN_CODE = #{BIN_CODE}
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getStorageMoveCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_KN_MOVE_STORAGE D
+      WHERE  D.WERKS=#{WERKS} 
+      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+         <if test="WH_NUMBER != null and WH_NUMBER !=''">
+	        AND D.WH_NUMBER = #{WH_NUMBER}
+	      </if>
+	      <if test="LGORT != null and LGORT !=''">
+	        AND D.LGORT = #{LGORT}
+	      </if>
+	      <if test="BATCH != null and BATCH !=''">
+	        AND D.BATCH = #{BATCH}
+	      </if>
+	      <if test="MATNR != null and MATNR !=''">
+	        AND D.MATNR = #{MATNR}
+	      </if>
+	      <if test="LIFNR != null and LIFNR !=''">
+	        AND D.LIFNR = #{LIFNR}
+	      </if>
+	      <if test="BIN_CODE != null and BIN_CODE !=''">
+	        AND D.BIN_CODE = #{BIN_CODE}
+	      </if>
+    </select>
+    <select id="getInventoryList" parameterType="Map" resultType="Map">
+      SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT D.WERKS,D.WH_NUMBER,H.INVENTORY_NO,H.INVENTORY_TYPE,H.WH_MANAGER,
+		      D.LGORT,H.PROPORTION,H.CREATOR,H.CREATE_DATE,H.EDITOR,H.EDIT_DATE,H.STATUS,S.VALUE STATUS_DESC,
+		       D.INVENTORY_ITEM_NO,D.MATNR,D.MAKTX,D.LIFNR,D.LIKTX,D.STOCK_QTY,D.MEINS,D.INVENTORY_QTY,
+		       D.INVENTORY_QTY_REPEAT,D.DIFFERENCE_REASON,D.FREEZE_QTY,D.INVENTORY_PEOPLE,
+		       D.INVENTORY_DATE,D.INVENTORY_PEOPLE_REPEAT,D.INVENTORY_DATE_REPEAT,D.CONFIRMOR,D.CONFIRM_DATE
+		       FROM WMS_KN_INVENTORY_HEAD H
+		       LEFT JOIN WMS_KN_INVENTORY_ITEM D ON H.INVENTORY_NO=D.INVENTORY_NO AND D.DEL='0'
+		       LEFT JOIN SYS_DICT S ON S.DEL_FLAG='0' AND S.CODE=H.STATUS AND S.TYPE='INVENTORY_TYPE' 
+		      WHERE H.DEL='0'
+		      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+		      <if test="START_DATE != null and START_DATE !=''">
+		        AND H.CREATE_DATE &gt;=#{START_DATE}
+		      </if>
+		      <if test="END_DATE != null and END_DATE !=''">
+		        AND H.CREATE_DATE &lt;=#{END_DATE}
+		      </if>
+		      <if test="WH_MANAGER != null and WH_MANAGER !=''">
+		        AND H.WH_MANAGER = #{WH_MANAGER}
+		      </if>
+		      <if test="LGORT != null and LGORT !=''">
+		        AND H.LGORT = #{LGORT} 
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND H.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      AND H.WERKS=#{WERKS} 
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getInventoryCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_KN_INVENTORY_HEAD H 
+       LEFT JOIN WMS_KN_INVENTORY_ITEM D ON H.INVENTORY_NO=D.INVENTORY_NO AND D.DEL='0'
+      WHERE H.DEL='0'
+             <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+		      <if test="START_DATE != null and START_DATE !=''">
+		        AND H.CREATE_DATE &gt;=#{START_DATE}
+		      </if>
+		      <if test="END_DATE != null and END_DATE !=''">
+		        AND H.CREATE_DATE &lt;=#{END_DATE}
+		      </if>
+		      <if test="WH_MANAGER != null and WH_MANAGER !=''">
+		        AND H.WH_MANAGER = #{WH_MANAGER}
+		      </if>
+		      <if test="LGORT != null and LGORT !=''">
+		        AND H.LGORT = #{LGORT} 
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND H.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      AND H.WERKS=#{WERKS} 
+    </select>
+    <select id="getFreezeRecordList" parameterType="Map" resultType="Map">
+      SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT D.ID,D.WERKS,D.WH_NUMBER,D.MATNR,D.MAKTX,D.F_BATCH,D.BATCH,D.LGORT,
+		      D.BIN_CODE,D.BIN_NAME,D.LIFNR,D.LIKTX,D.SOBKZ,D.MEINS,D.FREEZE_QTY,D.REASON,
+		      DECODE(FREEZE_TYPE,'00','冻结','01','解冻') FREEZE_TYPE
+		       FROM WMS_KN_FREEZE_RECORD D
+		      WHERE 1=1
+		      <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+		       <if test="FREEZE_TYPE != null and FREEZE_TYPE !=''">
+		        AND D.FREEZE_TYPE = #{FREEZE_TYPE} 
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND D.LIFNR = #{LIFNR} 
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND D.BATCH = #{BATCH} 
+		      </if>
+		      <if test="LGORT != null and LGORT !=''">
+		        AND D.LGORT = #{LGORT}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      AND D.WERKS=#{WERKS} 
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getFreezeRecordCount" parameterType="Map" resultType="int">
+      SELECT COUNT(1)  FROM WMS_KN_FREEZE_RECORD D WHERE 1=1
+             <include refid="com.byd.wms.business.modules.query.dao.WmsCommonQueryDao.sql"/>
+              <if test="FREEZE_TYPE != null and FREEZE_TYPE !=''">
+		        AND D.FREEZE_TYPE = #{FREEZE_TYPE} 
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND D.LIFNR = #{LIFNR} 
+		      </if>
+		      <if test="BATCH != null and BATCH !=''">
+		        AND D.BATCH = #{BATCH} 
+		      </if>
+		      <if test="LGORT != null and LGORT !=''">
+		        AND D.LGORT = #{LGORT}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      AND D.WERKS=#{WERKS} 
+    </select>
+</mapper>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>委外加工编辑</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<div id="searchDiv" method="post" class="form-inline" action = "#">
+					<table>
+						<tr>
+							<td>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">工厂：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+										<select name="search_werks" id="search_werks" onchange="vm.onWerksChange(event)" style="width: 100px;" class="form-control">
+											<!-- <option value="0">全部</option> -->
+											<#list tag.getUserAuthWerks("ZZJMES_PMD_MANAGE") as factory>
+											<option value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">*订单：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+										<input type="text" name="search_order" id="search_order" @click="getOrderNoFuzzy()" class="form-control" placeholder="订单名称">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">车间：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+										<select name="search_workshop" id="search_workshop" onchange="vm.onWorkshopChange(event)" style="width: 100px;height:25px;background-color:white">
+										<option v-for="w in workshoplist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">线别：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 50px" id="parentDiv">
+										<select name="search_line" id="search_line" onchange="vm.onLineChange(event)" style="width: 50px;height:25px;background-color:white">
+										<option v-for="w in linelist" :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px">计划批次：</label>
+								<div class="control-inline">
+									<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+										<input type="text" name="search_zzj_plan_batch" id="search_zzj_plan_batch" class="form-control" placeholder="计划批次">
+									</div>
+								</div>
+							</div>
+							
+							</td>
+							<td width="200px">
+								<div class="form-group">
+									<input type="button" @click="query" id="btnSearchData" class="btn btn-primary btn-sm" value="查询" />
+									<!-- <input type="button" id="btnExport" @click="exportExcel()" class="btn btn-success btn-sm" value="导出" />
+									<input type="button" @click="editSubcontracting" id="btnSave" class="btn btn-info btn-sm" value="保存" /> -->
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="form-group">
+									<label class="control-label" style="width: 60px">零部件号：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 150px" id="parentDiv">
+											<!-- <input type="text" name="search_zzj_no" id="search_zzj_no" class="form-control" placeholder="零部件号/名称"> -->
+										<span class="input-icon input-icon-right" style="width: 150px;">
+										<input type="text" name="search_zzj_no" id="search_zzj_no" placeholder="零部件号/名称" class="form-control" style="width: 150px;"/>
+										<i class="ace-icon glyphicon glyphicon-plus black bigger-120 btn_scan " style="cursor: pointer" @click="moreZzjNo();"> </i>
+										</span>
+										</div>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label class="control-label" style="width: 60px">SAP工单：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 120px" id="parentDiv">
+											<input type="text" name="search_product_order" id="search_product_order" class="form-control" placeholder="SAP工单">
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label" style="width: 60px">发料人：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 100px" id="parentDiv">
+											<input type="text" name="search_sender" id="search_sender" class="form-control" placeholder="发料人">
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label" style="width: 60px">发货日期：</label>
+									<div class="control-inline">
+										<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+											<input type="text" name="search_business_date_start" id="search_business_date_start" style="width: 80px" class="form-control" placeholder="开始">
+										</div>-
+										<div class="input-group treeselect" style="width: 80px" id="parentDiv">
+											<input type="text" name="search_business_date_end" id="search_business_date_end" style="width: 80px" class="form-control" placeholder="开始">
+										</div>
+									</div>
+								</div>
+							</td>
+							<td>
+								<div class="form-group">
+									
+								</div>
+							</td>
+						</tr>
+					</table>
+					</div>
+					<!-- <div id="pgtoolbar1">
+						<div class="form-group" id="links">
+							<a href='#' class='btn' id='btn_delete'><i class='fa fa-trash' aria-hidden='true'></i> 删除</a> 
+							<a href='#' class='btn' id='btn_print'><i class='fa fa-print' aria-hidden='true'></i> 打印</a> 
+						</div>
+					</div> -->
+					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>
+					<table id="tb_excel" style="display: none"></table>
+				</div>
+			</div>
+    </div>
+    <div id="subLayer" class="box-body" style="display: none; padding: 10px;">
+      <table id="subTable" class="table">
+				<thead>
+					<tr>
+						<th width="50px">编号</th>
+						<th width="80px">订单编号</th>
+						<th width="80px">批次计划</th>
+						<th width="80px">工序代码</th>
+						<th width="80px">零部件图号</th>
+						<th width="80px">SAP工单</th>
+						<th width="50px">委外数量</th>
+						<th width="50px">单重</th>
+						<th width="50px">总重</th>
+						<th width="50px">发货人</th>
+						<th width="50px">备注</th>
+					</tr>
+				</thead>
+				<tbody id="subtbody" class="exp-table">
+				</tbody>
+			</table>
+    </div>
+	
+	<form id="searchPageForm"  method="post" action="${request.contextPath}/zzjmes/pmdManager/getSubcontractingHeadPage" style="display:none">
+		<input name="werks" id="searchPage_werks" type="text"  hidden="hidden">
+		<input name="order_no" id="searchPage_order" type="text"  hidden="hidden">
+		<input name="workshop" id="searchPage_workshop" type="text"  hidden="hidden">
+		<input name="line" id="searchPage_line" type="text"  hidden="hidden">
+		<input name="zzj_plan_batch" id="searchPage_zzj_plan_batch" type="text"  hidden="hidden">
+		<input name="ZZJ_NO" id="searchPage_zzj_no" type="text"  hidden="hidden">
+		<input name="product_order" id="searchPage_product_order" type="text"  hidden="hidden">
+		<input name="sender" id="searchPage_sender" type="text"  hidden="hidden">
+		<input name="business_date_start" id="searchPage_business_date_start" type="text"  hidden="hidden">
+		<input name="business_date_end" id="searchPage_business_date_end" type="text"  hidden="hidden">
+	</form>
+	
+	</div>
+
+	<style>
+	.jqgrow {
+		height: 35px
+	}
+	</style>
+	<script src="${request.contextPath}/statics/js/zzjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/zzjmes/product/subcontractingManage.js?_${.now?long}"></script>
+</body>
+</html>

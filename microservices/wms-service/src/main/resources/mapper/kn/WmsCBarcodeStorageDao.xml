@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.kn.dao.WmsCBarcodeStorageDao">
+	<select id="getBarcodeStorageCount" parameterType="Map"
+		resultType="int">
+		select COUNT(1) from WMS_CORE_WH_BIN
+		WHERE 1=1
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="BIN_CODE !=null and BIN_CODE !='' ">
+			AND BIN_CODE=#{BIN_CODE}
+		</if>
+	</select>
+
+	<select id="queryBarcodeStorage" parameterType="Map"
+		resultType="Map">
+		SELECT * FROM (
+		SELECT TMP.*, ROWNUM ROW_ID FROM (
+		SELECT *
+		FROM
+		WMS_CORE_WH_BIN
+		WHERE 1=1
+		<if test="WH_NUMBER !=null and WH_NUMBER !='' ">
+			AND WH_NUMBER=#{WH_NUMBER}
+		</if>
+		<if test="BIN_CODE !=null and BIN_CODE !='' ">
+			AND BIN_CODE=#{BIN_CODE}
+		</if>
+		) TMP
+		WHERE ROWNUM &lt;=#{end})
+		WHERE ROW_ID > #{start}
+		<if test="orderBy !=null and orderBy !='' ">
+			ORDER BY ${orderBy}
+		</if>
+	</select>
+
+	<select id="queryAll" resultType="Map">
+		SELECT
+		WH_NUMBER,BIN_CODE,BIN_NAME 
+		FROM WMS_CORE_WH_BIN
+
+	</select>
+
+
+
+
+
+</mapper>

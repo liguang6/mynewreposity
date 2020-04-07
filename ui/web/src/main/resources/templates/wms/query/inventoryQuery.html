@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>盘点查询</title>
+<#include "/web_header.html">
+</head>
+<body>
+	<div id="rrapp" v-cloak>
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/knQuery/getInventoryList" >
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 50px">工厂：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select class="form-control" name="WERKS" id="werks" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("QUERY_INVENTORY") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">&nbsp;&nbsp;&nbsp; 仓库号：</label>
+								<div class="control-inline" style="width: 60px;">
+	                                <select class="form-control" v-model="whNumber" name="WH_NUMBER" id="whNumber">
+									 <option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">盘点任务号：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:120px">
+	                                     <input type="text"  id="inventoryNo"  name="INVENTORY_NO" v-on:keyup.enter="enter()"  class="form-control"/>						    
+									 </div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">物料号：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:120px">
+	                                     <input type="text"  id="MATNR"  name="MATNR"   class="form-control"/>						    
+									 </div>
+								</div>
+							</div>
+							<div class="form-group">
+                                <label class="control-label" style="width: 50px">仓管员：</label>
+								<div class="control-inline">
+									<div  style="width:80px">
+		                                <select class="form-control" name="WH_MANAGER" id="whManager">
+										 <option value="" >全部</option>
+										 <option v-for="w in relatedareaname" :value="w.MANAGER" :key="w.MANAGER">{{ w.RELATED_AREA_NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+							    <label class="control-label">创建时间：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width:90px">
+	                                     <input type="text" style="height: 30px;width:100%" id="startDate"  
+									        name="START_DATE" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})"  class="form-control"/>						    
+									 </div>
+									<div class="input-group" style="width:90px">
+									    <input type="text" style="height: 30px;width:100%" id="endDate"  
+									        name="END_DATE" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})"  class="form-control"/>							
+									 </div>
+								</div>
+							</div>
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-sm" id="btnQuery">查询</button>
+								<button type="button" class="btn btn-primary btn-sm"  @click="exp">导出</button>
+							</div>
+						</div>
+					</form>
+					<div id="divDataGrid" style="width:100%;overflow:auto;">
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>	
+					<table id="tb_excel" style="display:none"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="${request.contextPath}/statics/js/wms/query/inventoryQuery.js?_${.now?long}"></script>
+</body>
+</html>

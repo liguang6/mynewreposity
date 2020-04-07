@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.account.dao.WmsAccountReceiptHxToDao">
+
+	<select id="getHxToListByMatDocItem" parameterType="List" resultType="Map">
+        <!-- SELECT m.MAKTX,m.MEINS,t.*,t.ID HX_TO_ID FROM  WMS_SAP_MATERIAL m 
+				 LEFT JOIN WMS_HX_TO t ON  t.MATNR = m.MATNR AND m.WERKS = t.WERKS
+				  AND (
+				    <foreach collection="list" index="index" item="a" separator="or" open="(" close=")">
+			            to_number(t.SAP_MATDOC_NO) = to_number(#{a.SAP_MATDOC_NO}) AND to_number(t.SAP_MATDOC_ITEM_NO) = to_number(#{a.SAP_MATDOC_ITEM_NO})
+			        </foreach>	
+			     )			 
+				 WHERE 1=1 
+				 AND(
+				    <foreach collection="list" index="index" item="b" separator="or" open="(" close=")">
+			            m.MATNR = #{b.MATNR} and m.WERKS = #{b.MOVE_PLANT} 
+			        </foreach>
+				 ) -->
+				  <foreach collection="list" index="index" item="a" separator="union" open="" close="">
+				 SELECT m.MAKTX,m.MEINS,#{a.SAP_MATDOC_NO} SAP_MATDOC_NO,#{a.SAP_MATDOC_ITEM_NO} SAP_MATDOC_ITEM_NO,t.*,t.ID HX_TO_ID FROM  WMS_SAP_MATERIAL m 
+				 LEFT JOIN WMS_HX_TO t ON  t.MATNR = m.MATNR AND m.WERKS = t.WERKS
+				  AND (
+				   
+			            to_number(t.SAP_MATDOC_NO) = to_number(#{a.SAP_MATDOC_NO}) AND to_number(t.SAP_MATDOC_ITEM_NO) = to_number(#{a.SAP_MATDOC_ITEM_NO})
+			        
+			     )			 
+				 WHERE 1=1 
+				 AND(
+			            m.MATNR = #{a.MATNR} and m.WERKS = #{a.MOVE_PLANT} 
+				 )
+				 </foreach>	
+	</select>
+
+	<select id="checkHxToInfo" parameterType="List" resultType="Map">
+		<foreach collection="list" item="d" index="index" separator="union all ">
+			SELECT HP.* FROM 
+				WMS_HX_TO HP WHERE 1=1 
+				AND HP.WERKS = #{d.WERKS} AND HP.WH_NUMBER = #{d.WH_NUMBER} 
+				AND HP.SAP_MATDOC_NO = #{d.SAP_MATDOC_NO} AND HP.SAP_MATDOC_ITEM_NO = #{d.SAP_MATDOC_ITEM_NO}
+				AND HP.HX_QTY_XS-#{d.QTY_WMS} &lt;0 
+		</foreach>
+	</select>
+	
+</mapper>

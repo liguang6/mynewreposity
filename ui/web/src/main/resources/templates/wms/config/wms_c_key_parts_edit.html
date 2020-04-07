@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>关键零部件</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+					<div class="form-group" style="align:center;margin-top:15px">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>工厂代码：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+							      <!-- <input type="text" name="werks"  class="form-control required" v-model="keyparts.werks"  id="werks"  @click="getPlantNoFuzzy()" placeholder="工厂代码"/> -->
+								  <select  name="werks" id="werks" v-model="keyparts.werks"  class="required" style="width:100%;height:25px">
+									<#list tag.getUserAuthWerks("WMS_C_KEY_PARTS") as factory> 
+										<option value="${factory.code}">${factory.code}</option>
+									</#list>
+								</select>
+								</div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>零部件编号：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="keypartsNo" name="keypartsNo" class="form-control required"  v-model="keyparts.keyPartsNo"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     <font style="color:red;font-weight:bold">*</font>零部件名称：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="keypartsName" name="keypartsName" class="form-control required"  v-model="keyparts.keyPartsName"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>SAP物料号：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="matnr" name="matnr" class="form-control required"  v-model="keyparts.matnr" @click="getMaterialNoFuzzy"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     <font style="color:red;font-weight:bold">*</font>物料描述：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <input type="text"  id="maktx" name="maktx" class="form-control required"  v-model="keyparts.maktx" readonly="readonly"/>
+							    </div>
+						</div>
+					</div>
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_c_key_parts_edit.js?_${.now?long}"></script>
+</body>
+</html>

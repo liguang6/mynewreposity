@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库存转移</title>  
+<#include "/web_header.html">
+<style type="text/css">
+	.control-label{
+		width:75px;
+		text-align:right;
+	}
+	.form-group > .control-inline{
+		width:110px;	
+	}
+	.frozen-bdiv .ui-jqgrid-bdiv {
+    position: absolute;
+    left: 0px;
+    top: 35px;
+    overflow: hidden;
+    height: 95%;
+}
+	
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition " style="overflow: hidden;">
+
+	<div class="wrapper" id="page_div">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" >
+						<!-- 411K 寄售转自有 -->
+						<div v-if="WMS_MOVE_TYPE =='411_K' " v-cloak>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">移动类型：</label>
+							<div class="control-inline"  style="width:120px;">
+								<select id="WMS_MOVE_TYPE" name="WMS_MOVE_TYPE" v-model="WMS_MOVE_TYPE" class="input-medium" style="height: 28px;width:100%">
+									<option value="411_K">411K(寄售转换自有)</option>
+									<option value="412_K">412K(自有转寄售)</option>
+									<option value="309">309(物料转移)</option>
+									<option value="310">310(物料转移)</option>
+									<option value="413">413(自有转销售)</option>
+									<option value="413_E">413E(销售转销售)</option>
+									<option value="411_E">411E(销售转自有)</option>
+								</select>
+							</div>
+						</div>	
+						<div class="form-group" >
+							<label class="control-label" style="width:40px;">工厂：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WERKS" name="WERKS" class="input-medium" style="height: 28px;width:100%;" v-model="WERKS" >
+									<#list tag.getUserAuthWerks("OTHER_ACCOUNTS") as WERKS>
+								      <option value="${WERKS.code}">${WERKS.code}</option>
+								   </#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">仓库号：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WH_NUMBER" name="WH_NUMBER"  class="input-medium" style="height: 28px;width:100%;" v-model="WH_NUMBER" >
+									<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">库存类型：</label>
+							<div class="control-inline" style="width:50px;">
+								<select id="SOBKZ" name="SOBKZ" v-model="SOBKZ"  disabled  class="input-medium"  style="height: 28px;width:100%">
+									<option value="K">寄售</option>
+									<option value="Z">自有</option>
+									<option value="E">销售</option>
+								</select>
+							</div>
+						</div>
+						<!-- <div class="form-group" >	
+							<label class="control-label" style="width:60px;">接收库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div>  -->
+						<!-- <div class="form-group" >	
+							<label class="control-label" style="width:70px;">接收库位：</label>
+							<div class="control-inline" style="width:50px;">
+								<input type="text" id="LGORT" name="LGORT" v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> -->
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">抬头文本：</label>
+							<div class="control-inline" style="width:150px;">
+								<input type="text" id="HEADER_TXT" name="HEADER_TXT" v-model="HEADER_TXT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>  
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">凭证日期：</label>
+							<div class="control-inline" style="width:80px;">
+								<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">记账日期：</label>
+							<div class="control-inline"  style="width:80px;">
+								<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>														
+						</div>
+						<div class="form-group">
+							<input type="button" id="btnReset"  @click="reset" value="重置" class="btn btn-info btn-sm" autocomplete="off">
+							<button id="btnConfirm" type="button" class="btn btn-success btn-sm" @click="confirm">确认</button>						
+						</div>
+						</div>
+						
+						<!-- 412K自有转寄售 -->
+						<div v-if="WMS_MOVE_TYPE =='412_K' " v-cloak>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">移动类型：</label>
+							<div class="control-inline"  style="width:120px;">
+								<select id="WMS_MOVE_TYPE" name="WMS_MOVE_TYPE" v-model="WMS_MOVE_TYPE" class="input-medium" style="height: 28px;width:100%">
+									<option value="411_K">411K(寄售转换自有)</option>
+									<option value="412_K">412K(自有转寄售)</option>
+									<option value="309">309(物料转移)</option>
+									<option value="310">310(物料转移)</option>
+									<option value="413">413(自有转销售)</option>
+									<option value="413_E">413E(销售转销售)</option>
+									<option value="411_E">411E(销售转自有)</option>
+								</select>
+							</div>
+						</div>	
+						<div class="form-group" >
+							<label class="control-label" style="width:40px;">工厂：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WERKS" name="WERKS" class="input-medium" style="height: 28px;width:100%;" v-model="WERKS" >
+									<#list tag.getUserAuthWerks("OTHER_ACCOUNTS") as WERKS>
+								      <option value="${WERKS.code}">${WERKS.code}</option>
+								   </#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">仓库号：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WH_NUMBER" name="WH_NUMBER"  class="input-medium" style="height: 28px;width:100%;" v-model="WH_NUMBER" >
+									<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">库存类型：</label>
+							<div class="control-inline" style="width:50px;">
+								<select id="SOBKZ" name="SOBKZ" v-model="SOBKZ"  disabled  class="input-medium"  style="height: 28px;width:100%">
+									<option value="K">寄售</option>
+									<option value="Z">自有</option>
+									<option value="E">销售</option>
+								</select>
+							</div>
+						</div>
+						<!-- <div class="form-group" >	
+							<label class="control-label" style="width:45px;">库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div> --> 
+			<!-- 			<div class="form-group" >	
+							<label class="control-label" style="width:70px;">接收库位：</label>
+							<div class="control-inline" style="width:50px;">
+								<input type="text" id="LGORT" name="LGORT" v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> -->
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">抬头文本：</label>
+							<div class="control-inline" style="width:150px;">
+								<input type="text" id="HEADER_TXT" name="HEADER_TXT" v-model="HEADER_TXT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>  
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">凭证日期：</label>
+							<div class="control-inline" style="width:80px;">
+								<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">记账日期：</label>
+							<div class="control-inline"  style="width:80px;">
+								<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>														
+						</div>
+						<div class="form-group">
+							<input type="button" id="btnReset" value="重置" @click="reset"  class="btn btn-info btn-sm" autocomplete="off">
+							<button id="btnConfirm" type="button" class="btn btn-success btn-sm" @click="confirm">确认</button>						
+						</div>
+						</div>
+						
+						<!-- 309(物料转移) -->
+						<div v-if="WMS_MOVE_TYPE =='309' " v-cloak>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">移动类型：</label>
+							<div class="control-inline"  style="width:120px;">
+								<select id="WMS_MOVE_TYPE" name="WMS_MOVE_TYPE" v-model="WMS_MOVE_TYPE" class="input-medium" style="height: 28px;width:100%">
+									<option value="411_K">411K(寄售转换自有)</option>
+									<option value="412_K">412K(自有转寄售)</option>
+									<option value="309">309(物料转移)</option>
+									<option value="310">310(物料转移)</option>
+									<option value="413">413(自有转销售)</option>
+									<option value="413_E">413E(销售转销售)</option>
+									<option value="411_E">411E(销售转自有)</option>
+								</select>
+							</div>
+						</div>	
+						<div class="form-group" >
+							<label class="control-label" style="width:40px;">工厂：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WERKS" name="WERKS" class="input-medium" style="height: 28px;width:100%;" v-model="WERKS" >
+									<#list tag.getUserAuthWerks("OTHER_ACCOUNTS") as WERKS>
+								      <option value="${WERKS.code}">${WERKS.code}</option>
+								   </#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">仓库号：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WH_NUMBER" name="WH_NUMBER"  class="input-medium" style="height: 28px;width:100%;" v-model="WH_NUMBER" >
+									<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:70px;">库存类型：</label>
+							<div class="control-inline" style="width:50px;">
+								<select id="SOBKZ" name="SOBKZ" v-model="SOBKZ"  disabled  class="input-medium"  style="height: 28px;width:100%">
+									<option value="K">寄售</option>
+									<option value="Z">自有</option>
+									<option value="E">销售</option>
+								</select>
+							</div>
+						</div>
+		<!-- 				<div class="form-group" >	
+							<label class="control-label" style="width:45px;">库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div>  -->
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">接收方：</label>
+							<div class="control-inline" style="width:70px;">
+								<input type="text" id="RECEIVER" name="RECEIVER" v-model="RECEIVER" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>  
+						<div class="form-group" >	
+							<label class="control-label" style="width:70px;">接收库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<!-- <input type="text" id="LGORT" name="LGORT" v-model="LGORT" class="input-medium" style="height: 28px;width:100%;"> -->
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:40px;">储位：</label>
+							<div class="control-inline" style="width:60px;">
+								<input type="text" id="BIN_CODE" name="BIN_CODE" v-model="BIN_CODE" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">收货料号：</label>
+							<div class="control-inline" style="width:120px;">
+								<input type="text" id="MATNR_T" name="MATNR" v-model="MATNR_T" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">凭证日期：</label>
+							<div class="control-inline" style="width:80px;">
+								<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">记账日期：</label>
+							<div class="control-inline"  style="width:80px;">
+								<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>														
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">抬头文本：</label>
+							<div class="control-inline" style="width:130px;">
+								<input type="text" id="HEADER_TXT" name="HEADER_TXT" v-model="HEADER_TXT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>						
+						
+						<div class="form-group">
+							<input type="button" id="btnReset"  @click="reset"  value="重置" class="btn btn-info btn-sm" autocomplete="off">
+							<button id="btnConfirm" type="button" class="btn btn-success btn-sm" @click="confirm">确认</button>						
+						</div>
+						</div>
+						
+						<!-- 310(物料转移) -->
+						<div v-if="WMS_MOVE_TYPE =='310' " v-cloak>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">移动类型：</label>
+							<div class="control-inline"  style="width:120px;">
+								<select id="WMS_MOVE_TYPE" name="WMS_MOVE_TYPE" v-model="WMS_MOVE_TYPE" class="input-medium" style="height: 28px;width:100%">
+									<option value="411_K">411K(寄售转换自有)</option>
+									<option value="412_K">412K(自有转寄售)</option>
+									<option value="309">309(物料转移)</option>
+									<option value="310">310(物料转移)</option>
+									<option value="413">413(自有转销售)</option>
+									<option value="413_E">413E(销售转销售)</option>
+									<option value="411_E">411E(销售转自有)</option>
+								</select>
+							</div>
+						</div>	
+						<div class="form-group" >
+							<label class="control-label" style="width:40px;">工厂：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WERKS" name="WERKS" class="input-medium" style="height: 28px;width:100%;" v-model="WERKS" >
+									<#list tag.getUserAuthWerks("OTHER_ACCOUNTS") as WERKS>
+								      <option value="${WERKS.code}">${WERKS.code}</option>
+								   </#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">仓库号：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WH_NUMBER" name="WH_NUMBER"  class="input-medium" style="height: 28px;width:100%;" v-model="WH_NUMBER" >
+									<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:70px;">库存类型：</label>
+							<div class="control-inline" style="width:50px;">
+								<select id="SOBKZ" name="SOBKZ" v-model="SOBKZ"  disabled  class="input-medium"  style="height: 28px;width:100%">
+									<option value="K">寄售</option>
+									<option value="Z">自有</option>
+									<option value="E">销售</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:45px;">库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div> 
+						<!-- <div class="form-group" >	
+							<label class="control-label" style="width:50px;">接收方：</label>
+							<div class="control-inline" style="width:70px;">
+								<input type="text" id="RECEIVER" name="RECEIVER" v-model="RECEIVER" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>  
+						<div class="form-group" >	
+							<label class="control-label" style="width:70px;">接收库位：</label>
+							<div class="control-inline" style="width:50px;">
+								<input type="text" id="LGORT" name="LGORT" v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> -->
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">凭证日期：</label>
+							<div class="control-inline" style="width:80px;">
+								<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">记账日期：</label>
+							<div class="control-inline"  style="width:80px;">
+								<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>														
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">发货料号：</label>
+							<div class="control-inline" style="width:120px;">
+								<input type="text" id="MATNR_T" name="MATNR" v-model="MATNR_T"  @keyup.enter="getStockInfo"
+								class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>						  
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;margin-left:-20px;">供应商：</label>
+							<div class="control-inline" style="width:80px;">
+								<select id="LIFNR" name="LIFNR"  v-model="LIFNR" class="input-medium" style="height: 28px;width:100%;">
+									<option value="">请选择</option>
+								</select>
+							</div>
+						</div>		
+						<div class="form-group" >	
+							<label class="control-label" style="width:40px;">批次：</label>
+							<div class="control-inline" style="width:100px;">
+								<select id="BATCH" name="BATCH"  v-model="BATCH" class="input-medium" style="height: 28px;width:100%;">
+									<option value="">请选择</option>
+								</select>
+							</div>
+						</div>		
+						<div class="form-group" >	
+							<label class="control-label" style="width:40px;">储位：</label>
+							<div class="control-inline" style="width:100px;">
+								<select id="BIN_CODE" name="BIN_CODE"  v-model="BIN_CODE" class="input-medium" style="height: 28px;width:100%;">
+									<option value="">请选择</option>
+								</select>							
+							</div>
+						</div>
+						
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">抬头文本：</label>
+							<div class="control-inline" style="width:120px;">
+								<input type="text" id="HEADER_TXT" name="HEADER_TXT" v-model="HEADER_TXT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>		
+						
+						<div class="form-group">
+							<input type="button" id="btnReset"  @click="reset"  value="重置" class="btn btn-info btn-sm" autocomplete="off">
+							<button id="btnConfirm" type="button" class="btn btn-success btn-sm" @click="confirm">确认</button>						
+						</div>
+						
+						<span style="color:red" title="非限制库存" v-if="showStock" v-cloak>非限制库存：{{STOCK_QTY}}</span>
+						</div>
+					
+						<!-- 413(自有转销售) -->
+						<div v-if="WMS_MOVE_TYPE =='413' " v-cloak>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">移动类型：</label>
+							<div class="control-inline"  style="width:120px;">
+								<select id="WMS_MOVE_TYPE" name="WMS_MOVE_TYPE" v-model="WMS_MOVE_TYPE" class="input-medium" style="height: 28px;width:100%">
+									<option value="411_K">411K(寄售转换自有)</option>
+									<option value="412_K">412K(自有转寄售)</option>
+									<option value="309">309(物料转移)</option>
+									<option value="310">310(物料转移)</option>
+									<option value="413">413(自有转销售)</option>
+									<option value="413_E">413E(销售转销售)</option>
+									<option value="411_E">411E(销售转自有)</option>
+								</select>
+							</div>
+						</div>	
+						<div class="form-group" >
+							<label class="control-label" style="width:40px;">工厂：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WERKS" name="WERKS" class="input-medium" style="height: 28px;width:100%;" v-model="WERKS" >
+									<#list tag.getUserAuthWerks("OTHER_ACCOUNTS") as WERKS>
+								      <option value="${WERKS.code}">${WERKS.code}</option>
+								   </#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">仓库号：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WH_NUMBER" name="WH_NUMBER"  class="input-medium" style="height: 28px;width:100%;" v-model="WH_NUMBER" >
+									<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">库存类型：</label>
+							<div class="control-inline" style="width:50px;">
+								<select id="SOBKZ" name="SOBKZ" v-model="SOBKZ"  disabled  class="input-medium"  style="height: 28px;width:100%">
+									<option value="K">寄售</option>
+									<option value="Z">自有</option>
+									<option value="E">销售</option>
+								</select>
+							</div>
+						</div>
+<!-- 						<div class="form-group" >	
+							<label class="control-label" style="width:45px;">库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div>  -->
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">接收方：</label>
+							<div class="control-inline" style="width:70px;">
+								<input type="text" id="RECEIVER" name="RECEIVER" v-model="RECEIVER" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:70px;">接收库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<!-- <input type="text" id="LGORT" name="LGORT" v-model="LGORT" class="input-medium" style="height: 28px;width:100%;"> -->
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">抬头文本：</label>
+							<div class="control-inline" style="width:150px;">
+								<input type="text" id="HEADER_TXT" name="HEADER_TXT" v-model="HEADER_TXT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> 
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">销售订单：</label>
+							<div class="control-inline" style="width:120px;">
+								<input type="text" id="SO_NO" name="SO_NO" v-model="SO_NO" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:40px;">行号：</label>
+							<div class="control-inline" style="width:60px;">
+								<input type="text" id="SO_ITEM_NO" name="SO_ITEM_NO" v-model="SO_ITEM_NO" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> 
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">凭证日期：</label>
+							<div class="control-inline" style="width:80px;">
+								<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">记账日期：</label>
+							<div class="control-inline"  style="width:80px;">
+								<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>														
+						</div>
+						<div class="form-group">
+							<input type="button" id="btnReset"  @click="reset"  value="重置" class="btn btn-info btn-sm" autocomplete="off">
+							<button id="btnConfirm" type="button" class="btn btn-success btn-sm" @click="confirm">确认</button>						
+						</div>
+						</div>
+						
+						<!-- 413E(销售转销售)-->
+						<div v-if="WMS_MOVE_TYPE =='413_E' " v-cloak>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">移动类型：</label>
+							<div class="control-inline"  style="width:120px;">
+								<select id="WMS_MOVE_TYPE" name="WMS_MOVE_TYPE" v-model="WMS_MOVE_TYPE" class="input-medium" style="height: 28px;width:100%">
+									<option value="411_K">411K(寄售转换自有)</option>
+									<option value="412_K">412K(自有转寄售)</option>
+									<option value="309">309(物料转移)</option>
+									<option value="310">310(物料转移)</option>
+									<option value="413">413(自有转销售)</option>
+									<option value="413_E">413E(销售转销售)</option>
+									<option value="411_E">411E(销售转自有)</option>
+								</select>
+							</div>
+						</div>	
+						<div class="form-group" >
+							<label class="control-label" style="width:40px;">工厂：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WERKS" name="WERKS" class="input-medium" style="height: 28px;width:100%;" v-model="WERKS" >
+									<#list tag.getUserAuthWerks("OTHER_ACCOUNTS") as WERKS>
+								      <option value="${WERKS.code}">${WERKS.code}</option>
+								   </#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">仓库号：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WH_NUMBER" name="WH_NUMBER"  class="input-medium" style="height: 28px;width:100%;" v-model="WH_NUMBER" >
+									<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">库存类型：</label>
+							<div class="control-inline" style="width:50px;">
+								<select id="SOBKZ" name="SOBKZ" v-model="SOBKZ"  disabled  class="input-medium"  style="height: 28px;width:100%">
+									<option value="K">寄售</option>
+									<option value="Z">自有</option>
+									<option value="E">销售</option>
+								</select>
+							</div>
+						</div>
+						<!-- <div class="form-group" >	
+							<label class="control-label" style="width:45px;">库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div> --> 
+						
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">销售订单：</label>
+							<div class="control-inline" style="width:90px;">
+								<input type="text" id="SO_NO" name="SO_NO" v-model="SO_NO" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:40px;">行号：</label>
+							<div class="control-inline" style="width:50px;">
+								<input type="text" id="SO_ITEM_NO" name="SO_ITEM_NO" v-model="SO_ITEM_NO" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> 					
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">抬头文本：</label>
+							<div class="control-inline" style="width:130px;">
+								<input type="text" id="HEADER_TXT" name="HEADER_TXT" v-model="HEADER_TXT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> 
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">凭证日期：</label>
+							<div class="control-inline" style="width:80px;">
+								<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">记账日期：</label>
+							<div class="control-inline"  style="width:80px;">
+								<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>														
+						</div>
+						<div class="form-group">
+							<input type="button" id="btnReset"  @click="reset"  value="重置" class="btn btn-info btn-sm" autocomplete="off">
+							<button id="btnConfirm" type="button" class="btn btn-success btn-sm" @click="confirm">确认</button>						
+						</div>
+						</div>
+					
+						<!-- 411E(销售转自有)-->
+						<div v-if="WMS_MOVE_TYPE =='411_E' " v-cloak>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">移动类型：</label>
+							<div class="control-inline"  style="width:120px;">
+								<select id="WMS_MOVE_TYPE" name="WMS_MOVE_TYPE" v-model="WMS_MOVE_TYPE" class="input-medium" style="height: 28px;width:100%">
+									<option value="411_K">411K(寄售转换自有)</option>
+									<option value="412_K">412K(自有转寄售)</option>
+									<option value="309">309(物料转移)</option>
+									<option value="310">310(物料转移)</option>
+									<option value="413">413(自有转销售)</option>
+									<option value="413_E">413E(销售转销售)</option>
+									<option value="411_E">411E(销售转自有)</option>
+								</select>
+							</div>
+						</div>	
+						<div class="form-group" >
+							<label class="control-label" style="width:40px;">工厂：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WERKS" name="WERKS" class="input-medium" style="height: 28px;width:100%;" v-model="WERKS" >
+									<#list tag.getUserAuthWerks("OTHER_ACCOUNTS") as WERKS>
+								      <option value="${WERKS.code}">${WERKS.code}</option>
+								   </#list>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:50px;">仓库号：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="WH_NUMBER" name="WH_NUMBER"  class="input-medium" style="height: 28px;width:100%;" v-model="WH_NUMBER" >
+									<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">库存类型：</label>
+							<div class="control-inline" style="width:50px;">
+								<select id="SOBKZ" name="SOBKZ" v-model="SOBKZ"  disabled  class="input-medium"  style="height: 28px;width:100%">
+									<option value="K">寄售</option>
+									<option value="Z">自有</option>
+									<option value="E">销售</option>
+								</select>
+							</div>
+						</div>
+						<!-- <div class="form-group" >	
+							<label class="control-label" style="width:45px;">库位：</label>
+							<div class="control-inline" style="width:60px;">
+								<select id="LGORT" name="LGORT"  v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+									<option v-for="l in lgortList" :value="l.LGORT" >{{ l.LGORT }}</option>
+								</select>
+							</div>
+						</div> --> 
+		<!-- 				<div class="form-group" >	
+							<label class="control-label" style="width:70px;">接收库位：</label>
+							<div class="control-inline" style="width:50px;">
+								<input type="text" id="LGORT" name="LGORT" v-model="LGORT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>	 -->				
+						
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">销售订单：</label>
+							<div class="control-inline" style="width:120px;">
+								<input type="text" id="SO_NO" name="SO_NO" v-model="SO_NO" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div>
+						<div class="form-group" >	
+							<label class="control-label" style="width:40px;">行号：</label>
+							<div class="control-inline" style="width:60px;">
+								<input type="text" id="SO_ITEM_NO" name="SO_ITEM_NO" v-model="SO_ITEM_NO" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> 
+						<div class="form-group" >	
+							<label class="control-label" style="width:60px;">抬头文本：</label>
+							<div class="control-inline" style="width:120px;">
+								<input type="text" id="HEADER_TXT" name="HEADER_TXT" v-model="HEADER_TXT" class="input-medium" style="height: 28px;width:100%;">
+							</div>
+						</div> 
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">凭证日期：</label>
+							<div class="control-inline" style="width:80px;">
+								<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width:60px;">记账日期：</label>
+							<div class="control-inline"  style="width:80px;">
+								<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 28px;width:100%" />
+							</div>														
+						</div>
+						<div class="form-group">
+							<input type="button" id="btnReset"  @click="reset"  value="重置" class="btn btn-info btn-sm" autocomplete="off">
+							<button id="btnConfirm" type="button" class="btn btn-success btn-sm" @click="confirm">确认</button>						
+						</div>
+						</div>			
+					
+					</form>
+					
+					<table id="dataGrid"></table>
+				</div>
+			</div>
+		</div>
+	</div>			
+
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4><span id="resultMsg"></span></h4>
+		<br/>
+	</div>
+
+<script src="${request.contextPath}/statics/js/wms/account/wms_stock_convert.js?_${.now?long}"></script>
+</body>
+</html>

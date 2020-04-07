@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>订单产品</title>
+<#include "/web_header.html">
+<style type="text/css">
+   .selectBG{
+       color:red;
+    };
+    jqgrow {
+		height: 35px
+	}
+    </style>
+</head>
+<body>
+	<div id="rrapp">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+						<form id="searchForm" action="${request.contextPath}/config/bjMesOrderProducts/list" method="post" class="form-inline" >
+						<div class="row">
+						
+							<div class="form-group">
+								<label class="control-label" style="width:70px;"><span style="color:red">*</span>订单编号：</label>
+								<div class="control-inline" style="width:150px;">
+									<span class="input-icon input-icon-right" style="width:100%">
+										<input  v-model="order_no" id="order_no" name="order_no" type="text" class="form-control" autocomplete="off" style="width:100%">
+										
+									</span>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 70px;"><span style="color:red">*</span>工厂：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 80px" id="parentDiv">
+										<select v-model="werks" name="werks" id="werks" style="width: 80px;height: 25px;" >
+											<#list tag.getUserAuthWerks("MACHINE_MNG") as factory>
+												<option value="${factory.code}">${factory.code}</option>
+											</#list>
+										</select>
+										
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label"  style="width: 70px;"><span style="color:red">*</span>车间：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 80px">
+										<select v-model="workshop" name="workshop" id="workshop" style="width: 100%;height: 25px;">
+											<option v-for="w in workshopList " :value="w.CODE">{{ w.NAME }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label">产品类别：</label>
+									<div class="control-inline">
+										<select name="product_type_code" id="product_type_code" v-model="product_type_code"> 
+											<option value="">请选择</option>
+												<#list tag.masterdataDictList('PRODUCT_TYPE') as dict>
+														<option value="${dict.code}">${dict.value}</option>
+												</#list>
+										</select>
+									</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width:70px;">产品：</label>
+								<div class="control-inline" style="width:150px;">
+									<span class="input-icon input-icon-right" style="width:100%">
+										<input  v-model="product_code" id="product_code" name="product_code" type="text" class="form-control" autocomplete="off" style="width:100%">
+										
+									</span>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<button type="button" class="btn btn-primary btn-sm" id="btnQuery" @click="query">查询</button>
+								<input type="button" id="btnSave"  class="btn btn-success btn-sm" @click="scInfo" value="生成" /> 
+								<input type="button" id="btnClear" @click="clearTable"  class="btn btn-default btn-sm" value="清空" />
+							</div>
+						</div>
+					</form>	
+					<div id="pgtoolbar1">
+							<div id="links" >
+							<a href='#' class='btn' id='addNewRow' onclick="addNewRow()" title="新增"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a>
+							
+							<a href='#' class='btn' id='editOperation' title="保存" @click="save"><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 保存</a>
+
+							<a href='#' class='btn' id='listComp' title="组件" @click="listComp"><i class='fa fa-pencil-square-o' aria-hidden='true'></i>组件</a>
+							
+							<a href='#' class='btn' id='deleteOperation'  title="删除" @click="deleteById"><i class='fa fa-trash' aria-hidden='true'></i> 删除</a>
+							</div>
+						 </div>
+ 					<div id="divDataGrid" style="width: 100%; overflow: auto;">
+						<table id="dataGrid"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	
+	<script src="${request.contextPath}/statics/js/bjmes/common/common.js?_${.now?long}"></script>
+	<script src="${request.contextPath}/statics/js/bjmes/config/orderProduct.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>物料质检抽样配置编辑</title>
+<#include "/web_header.html">
+</head>
+<body>
+<div id="vue" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<form class="form-horizontal" style="padding: 16px"
+					id="newForm">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<label class="col-xs-4 control-label"> <span class="required"> * </span> 工厂代码</label>
+									<div class="col-xs-8">
+										<!-- <input v-model="entity.werks" onclick="getPlantNoSelect('#werks',null,function(werks){vm.entity.werks = $(werks).val();});" id="werks" name="werks" class="form-control required" placeholder="工厂代码"/> -->
+                                        <select  id="werks" name="werks" class="required" v-model="entity.werks" style="width:100%;height:25px">
+                                            <option value="">请选择</option>
+                                            <#list tag.getUserAuthWerks("WMS_C_QC_MAT_SAMPLE") as factory> 
+                                                <option value="${factory.code}">${factory.code}</option>
+                                            </#list>
+                                        </select>
+                                    </div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+
+								
+								<div class="form-group">
+									<div class="col-sm-4 control-label"> <span class="required"> * </span> 物料号
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.matnr" id="matnr"  name="matnr" class="form-control required" placeholder="物料号"@click="getMaterialNoFuzzy"/>
+									</div>
+								</div>
+								
+							</div>
+
+						</div>
+
+						<div class="row">
+							
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										供应商代码
+									</div>
+									<div class="col-sm-8">
+									<input v-model="entity.lifnr" id="lifnr"  name="lifnr"  @click="getVendorNoFuzzy()" @blur="getVerdorName()" class="form-control required" placeholder="供应商代码"/>
+										
+									</div>
+								</div>
+								</div>
+								<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 物料描述
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.maktx" id="maktx"  name="maktx" class="form-control required" placeholder="物料描述" readonly="readonly"/>
+									</div>
+								</div>
+
+
+							</div>
+							
+						</div>
+                        
+
+
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 供应商名称
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.liktx" id="liktx"  name="liktx" class="form-control required" placeholder="供应商名称" readonly="readonly"/> 
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+							<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 抽样率(%)
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.sampling" id="sampling"  name="sampling" class="form-control required number" placeholder="抽样率"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 最小抽样数量
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.minSample" id="minSample"  name="minSample" class="form-control required number" placeholder="最小抽样数量"/>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+							<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 最大抽样数量
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.maxSample" id="maxSample"  name="maxSample" class="form-control required number" placeholder="最大抽样数量"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 开箱率(%)
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.unpacking" id="unpacking"  name="unpacking" class="form-control required number" placeholder="开箱率(%)"/>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+							<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 最小开箱数
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.minUnpacking" id="minUnpacking"  name="minUnpacking" class="form-control required number" placeholder=" 最小开箱数"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+
+								<div class="form-group">
+									<div class="col-sm-4 control-label">
+										<span class="required"> * </span> 最大开箱数
+									</div>
+									<div class="col-sm-8">
+										<input v-model="entity.maxUnpacking" id="maxUnpacking"  name="maxUnpacking" class="form-control required number" placeholder="最大开箱数"/>
+									</div>
+								</div>
+
+							</div>
+
+							<div class="col-xs-6">
+							
+							</div>
+						</div>
+				
+						
+						<div class="row">
+							<div class="col-xs-12">
+
+								<div class="form-group">
+									<div class="col-sm-2 control-label">
+										备注
+									</div>
+									<div class="col-sm-10">
+											<textarea v-model="entity.memo" class="form-control" rows="3">
+											  {{entity.memo}}
+											</textarea>
+									</div>
+								</div>
+
+							</div>
+
+							
+						</div>
+						
+						
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+	</div>
+	
+	<script type="text/javascript">
+	
+	
+	  var vm = new Vue({
+		  el:"#vue",
+		  data:{entity:{}},
+		  methods:{
+			  save:function(){
+				  $("#newForm").trigger("submit");
+			  },
+			  getMaterialNoFuzzy:function(){
+					/*
+					 * $("#werks").val() : 工厂代码
+					 * "#matnr" ： 物料号ID
+					 * "#maktx" : 物料描述ID ;根据料号带出描述
+					 */
+					getMaterialNoSelect($("#werks").val(),"#matnr","#maktx",null,null);
+				},
+				getVendorNoFuzzy:function(){
+					getVendorNoSelect("#lifnr","#name1",null,null);
+				},
+				getVerdorName:function(){
+					mapcond={lifnr:$("#lifnr").val()};
+					$.ajax({
+				        url: baseURL + "config/CVendor/listVendortName",
+				        dataType : "json",
+						type : "post",
+				        data: mapcond,
+				        async:false,
+				        success: function(data){
+				        	if(data.code == 0){
+				        		vm.entity.liktx=data.vendorName;
+				        		$("#liktx").val(data.vendorName);
+				        	}
+				        }
+					})
+				},
+			  init:function(id){
+				  //更新操作，初始化加载数据
+				  $.ajax({
+						url:baseUrl + "config/wmscqcmatsample/info/"+id+"/",
+						success:function(resp){
+							if(resp.code === 0){
+								this.entity = resp.data;
+								$("#werks").attr("disabled",true);
+								$("#matnr").attr("readonly",true);
+							}else{
+								alert(resp.msg);
+							}
+						}.bind(this)
+					})
+			  }
+		  }
+	  })
+	  
+	  $(function(){			
+			$("#newForm").validate({
+				submitHandler:function(e) {
+					vm.entity.werks=$("#werks").val();
+					vm.entity.matnr=$("#matnr").val();
+					vm.entity.maktx=$("#maktx").val();
+					vm.entity.lifnr=$("#lifnr").val();
+					var url = baseUrl + "config/wmscqcmatsample/save";
+					//默认为新增操作
+					if(vm.entity.id !== undefined && vm.entity.id !== null && vm.entity.id !== ''){
+						//如果ID不为空，则表示是更新操作。
+						url = baseUrl + "config/wmscqcmatsample/update";
+					}
+					$.ajax({//提交更新数据
+						url : url,
+						type : "POST",
+						contentType : "application/json",
+						data : JSON.stringify(vm.entity),
+						success : function(rep) {
+							if (rep.code === 0) {
+								close();
+							} else {
+								alert("保存失败，"+rep.msg);
+							}
+						}
+					})
+
+				}
+			});
+		})
+	</script>
+</body>
+</html>

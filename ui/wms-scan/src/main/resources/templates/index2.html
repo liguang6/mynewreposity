@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_menu.css" />
+        <title></title>
+        <script type="text/javascript">
+	        $(function () {
+            	if (getQueryVariable("m") == "1") {
+            		document.getElementById("divMenu1").style.display="";
+            	}
+            	if (getQueryVariable("m") == "2") {
+            		document.getElementById("divMenu2").style.display="";
+            	}
+            	if (getQueryVariable("m") == "3") {
+            		document.getElementById("divMenu3").style.display="";
+            	}
+            	if (getQueryVariable("m") == "4") {
+            		document.getElementById("divMenu4").style.display="";
+            	}
+            	if (getQueryVariable("m") == "5") {
+            		document.getElementById("divMenu5").style.display="";
+            	}
+                if (getQueryVariable("m") == "6") {
+                    document.getElementById("divMenu6").style.display="";
+                }
+        	});
+
+        </script>
+    </head>
+    <body>
+        <div id="global_content_smq">
+            <div class="smq_test" >
+                <div class="smq_menu" id="divMenu1" style="display:none;">
+                    <div class="smq_menu_h2">收货</div>
+                    <ul align="center">
+                        <li><a href="${request.contextPath}/in/asnReceipt.html">送货单收货</a></li>
+                        <li><a href="${request.contextPath}/in/poreceiptpda.html">按采购订单收货</a></li>
+                        <li><a href="${request.contextPath}/in/autoPutaway.html">一步联动收货</a></li>
+                        <li><a href="${request.contextPath}/in/stoReceipt.html">STO交货单收货</a></li>
+
+                    </ul>
+                </div>
+                <div class="smq_menu" id="divMenu2" style="display:none;">
+                    <div class="smq_menu_h2">进仓</div>
+                    <ul align="center">
+                        <li><a href="#">按进仓单进仓</a></li>
+                    </ul>
+                </div>
+                <div class="smq_menu" id="divMenu3" style="display:none;">
+                    <div class="smq_menu_h2">出仓</div>
+                    <ul align="center">
+                        <li><a href="#">原料拣配单备料</a></li>
+                        <li><a href="${request.contextPath}/account/postAccount.html">出库过账</a> </li>
+                    </ul>
+                </div>
+
+				<div class="smq_menu" id="divMenu4" style="display:none;">
+                    <div class="smq_menu_h2">库内</div>
+                    <ul align="center">
+                        <li><a href="${request.contextPath}/kn/labelRecord_cf.html">条码拆分打印</a></li>
+                        <li><a href="${request.contextPath}/kn/storageMove.html">手持调仓</a></li>
+                        <li><a href="${request.contextPath}/kn/matTransfer.html">309料号转移</a></li>
+                        <li><a href="${request.contextPath}/kn/stockTransferA.html">寄售转自有411K</a></li>
+                        <li><a href="${request.contextPath}/kn/stockTransferB.html">自有转寄售412K</a></li>
+                        <li><a href="${request.contextPath}/kn/stockTransferC.html">非限制转销售订单</a></li>
+                        <li><a href="${request.contextPath}/kn/stockTransferD.html">销售订单转非限制</a></li>
+
+                    </ul>
+                </div>
+                <div class="smq_menu" id="divMenu5" style="display:none;">
+                    <div class="smq_menu_h2">退货</div>
+                    <ul align="center">
+                        <li><a href="${request.contextPath}/return/reMaterial.html">平面余料退回(312)</a></li>
+                        <li><a href="${request.contextPath}/return/reMaterialTwo.html">平面余料退回(262)</a></li>
+                        <li><a href="${request.contextPath}/return/reMaterialWarehouse.html">立库余料退回(312)</a></li>
+                        <li><a href="${request.contextPath}/return/reMaterialWarehouseTwo.html">立库余料退回(262)</a></li>
+                    </ul>
+                </div>
+
+                <div class="smq_menu" id="divMenu6" style="display:none;">
+                    <div class="smq_menu_h2">盘点</div>
+                    <ul align="center">
+                        <li><a href="#">抽样盘点</a></li>
+                        <li><a href="#">全盘</a></li>
+                    </ul>
+                </div>
+
+                <div class="smq_menu" id="divMenu7" style="display:none;">
+                    <div class="smq_menu_h2">其他</div>
+                    <ul align="center">
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </body>
+</html>

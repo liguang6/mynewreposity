@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>单据编号规则</title> <#include "/web_header.html">
+</head>
+<body>
+
+<div id="rrapp" v-cloak class="wrapper" >
+		<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+					<div class="box-body">
+
+						<div class="row">
+							<!--  <div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span class="required"> * </span>系统代码</div>
+									<div class="col-xs-8">
+										<input  id="sys" name="sys" class="form-control required"   v-model="cdocno.sys"/>
+									</div>
+								</div>
+							</div>-->
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label">工厂代码</div>
+									<div class="col-xs-8">
+										<input  id="werks" name="werks" class="form-control" @click="getPlantNoFuzzy()"  v-model="cdocno.werks"/>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> <span class="required"> * </span>单据类型</div>
+									<div class="col-xs-8">
+										<!--  <input  id="docType" name="docType" class="form-control required"   v-model="cdocno.docType"/>-->
+										<select name="docType"  id="docType" class="required" v-model="cdocno.docType">
+									        <option value="">请选择</option>
+									        <#list tag.wmsDictList("WMS_DOC_TYPE") as dict>
+									           <option value="${dict.code}">${dict.value}</option>
+									        </#list>
+									   	</select>
+									</div>
+								</div>
+							</div>
+							
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"><span class="required"> * </span>编号长度</div>
+									<div class="col-xs-8">
+										<input  id="noLength" name="noLength" class="form-control number required"   v-model="cdocno.noLength"/>
+									</div>
+								</div>
+							</div>
+
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> 编号前缀</div>
+									<div class="col-xs-8">
+										<input  id="preNo" name="preNo" class="form-control"   v-model="cdocno.preNo"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"> 编号后缀</div>
+									<div class="col-xs-8">
+										<input  id="backNo" name="backNo" class="form-control"   v-model="cdocno.backNo"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label"><span class="required"> * </span> 起始号</div>
+									<div class="col-xs-8">
+										<input  id="startNo" name="startNo" class="form-control number required"   v-model="cdocno.startNo"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label">递增</div>
+									<div class="col-xs-8">
+										<input  id="incrementNum" name="incrementNum" class="form-control number"   v-model="cdocno.incrementNum"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-xs-4 control-label">备注</div>
+									<div class="col-xs-8">
+										<textarea id="memo" name="memo" class="form-control"   v-model="cdocno.memo">
+										</textarea>
+									</div>
+								</div>
+							</div>
+						</div>
+
+					</div>
+					
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+				</div>
+			</div>
+		</div>
+
+
+	</div>
+
+	<script src="${request.contextPath}/statics/js/wms/common/wms_c_doc_no_edit.js?_${.now?long}"></script>
+</body>
+
+
+
+</html>

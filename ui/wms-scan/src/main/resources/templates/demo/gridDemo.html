@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html>
+<head>
+<meta charset="UTF-8">
+<title>test</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+<link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+<style type="text/CSS">
+            #global_content_smq{
+                border:1px solid #6FACEF;
+            }
+           
+            .btn{
+                border:1px solid #1271EF;background:transparent url(${request.contextPath}/statics/ins/btn_bg.jpg) repeat-x;/**/
+                padding:0 3px;line-height:22px;color: #fff; font-weight:bold;
+            }
+ 
+            body{text-align:center}
+        </style>
+</head>
+<body>
+	<body>
+        <div id="global_content_smq">
+            <div class="smq_test" >
+                <h2>批次合并收货</h2>
+                <div id="divSysInfo"></div>
+                <div id="divSysError" style="color:red ;text-align:center;"></div>
+                <div id="div1" >
+					<table id="dataGrid"></table>
+					<div id='pager'></div>
+                </div>
+                
+                <div style="text-align:center;">
+					<button class="btn" onclick="scanPre();" >查询</button>
+				    <button class="btn" id='delete' >删除</button>
+					<button type="reset" class="btn" onClick="javascript:history.back(-1);"> 取消</button>
+				</div>
+            </div>
+        </div>
+	<script src="${request.contextPath}/statics/js/gridDemo.js?_${.now?long}"></script>
+</body>

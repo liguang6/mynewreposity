@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>按凭证进行冲销</title>
+    <#include "/web_header.html">
+</head>
+<body class="hold-transition ">
+<div id="rrapp" v-cloak>
+    <div class="wrapper">
+        <div class="main-content">
+            <div class="box box-main">
+                <div class="box-body">
+                    <form id="searchForm" class="form-inline" action="${request.contextPath}/kn/barcodeSterilisation/list">
+
+						<div class="form-group">
+							<label class="control-label" style="width: 45px"><span
+								class="required"> *</span>工厂：</label>
+							<div class="control-inline" style="width: 80px;">
+								<select class="form-control" name="werks" id="werks"
+									onchange="vm.onPlantChange(event)"> 
+									<#list tag.getUserAuthWerks("A43") as factory> 
+										<option value="${factory.code}">${factory.code}</option> 
+									</#list>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label" style="width: 70px"><span class="required">
+									*</span>仓库号：</label>
+							<div class="control-inline" style="width: 80px;">
+								<select class="form-control" v-model="whNumber" name="whNumber" id="whNumber" style="height: 28px;width: 60px;">
+									<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+
+                        <div class="form-group">
+                            <label class="control-label">凭证号：</label>
+                            <div class="control-inline" >
+                                <input  id="credentialsNum" name="credentialsNum" class="form-control"  />
+                            </div>
+                            <label class="control-label">凭证年份：</label>
+                            <div class="control-inline" >
+                                <input  id="credentialsYear" name="credentialsYear" class="form-control"  />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit"  class="btn btn-primary btn-sm">查询</button>
+                            <button type="reset" class="btn btn-default btn-sm">重置</button>
+                        </div>
+                    </form>
+
+
+                    <div id="pgtoolbar1">
+                        <div id="links" >
+                            <a href='#' class='btn' id='editOperation'><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 打印</a>
+                        </div>
+                    </div>
+                    <table id="dataGrid"></table>
+                    <div id="dataGridPage"></div>
+
+                </div>
+                <table id="tb_excel" style="display:none"></table>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/kn/wms_c_barcode_sterilisation_list.js?_${.now?long}"></script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.webservice.ws.dao.ReceiveOtherSystemReqDao">
+
+	<select id="selectOtherSystemREQ" parameterType="Map" resultType="Map">
+		select * from WMS_WS_CALL_MATERIAL 
+		 where 1=1
+		 <if test="WH_NUMBER !=null and WH_NUMBER !=''">
+			and WH_NUMBER = #{WH_NUMBER}
+		 </if>
+		 <if test="WERKS !=null and WERKS !=''">
+			and WERKS = #{WERKS}
+		 </if>
+		 <if test="ORIGIN_SYS !=null and ORIGIN_SYS !=''">
+			and ORIGIN_SYS = #{ORIGIN_SYS}
+		 </if>
+		 <if test="DELIVERY_NO !=null and DELIVERY_NO !=''">
+			and DELIVERY_NO = #{DELIVERY_NO}
+		 </if>
+		 <if test="DLV_ITEM !=null and DLV_ITEM !=''">
+			and DLV_ITEM = #{DLV_ITEM}
+		 </if>
+		 <if test="DELIVERY_TYPE !=null and DELIVERY_TYPE !=''">
+			and DELIVERY_TYPE = #{DELIVERY_TYPE}
+		 </if>
+		 <if test="STATUS !=null and STATUS !=''">
+			and STATUS = #{STATUS}
+		 </if>
+		 <if test="MATNR !=null and MATNR !=''">
+			and MATNR = #{MATNR}
+		 </if>
+		 <if test="KANBAN_NO !=null and KANBAN_NO !=''">
+			and KANBAN_NO = #{KANBAN_NO}
+		 </if>
+		 <if test="KANBAN_ITEM !=null and KANBAN_ITEM !=''">
+			and KANBAN_ITEM = #{KANBAN_ITEM}
+		 </if>
+		 <if test="EMERGENCY !=null and EMERGENCY !=''">
+			and EMERGENCY = #{EMERGENCY}
+		 </if>
+		 <if test="DEL !=null and DEL !=''">
+			and DEL = #{DEL}
+		 </if>
+		
+	</select>
+	
+	
+	<insert id="saveOtherSystemREQ" parameterType="List">
+		insert into WMS_WS_CALL_MATERIAL (ID,WERKS,WH_NUMBER,ORIGIN_SYS,DELIVERY_NO,DLV_ITEM,DELIVERY_TYPE,STATUS,MATNR,MAKTX,LGORT,QTY,
+		UNIT,SORT_VALUE,KANBAN_NO,KANBAN_ITEM,EMERGENCY,BOX_COUNT,REQ_TYPE,REQUEST_AREA,POINT_OF_USE,DELIVERY_ROUTE,BATCH,LIFNR,POU,
+		START_SHIPPING_TIME,DEMAND_TIME,DELIVERY_ADDR,CONTAINER_MODEL,START_LINE_FEEDING_TIME,LINE_NO,IS_START_LINE,DELIVERY_LEAD_TIME,
+		DELIVERY_STRATEGY,COMPLETENESS_STRATEGY,WORKSHOP_NO,REFERENCE_NO,REFERENCE_TYPE,END_MATERIAL_CODE,MACHINE_NO,PARTS_NO,PROCESS,
+		DELIVERY_CARRIER_TYPE,DELIVERY_CARRIER_CAPACITY,DOSAGE,SURFACE_TYPE,IS_MAIN_MATERIAL,IS_HK_MATERIAL,DELIVERY_DESTINATION,SCHEDULE_NO,
+		START_DELIVERY,LINE_FEEDING_ROUTE,RECEIVE_PLCD,RECEIVE_WH_NUMBER,CREATOR,CREATE_DATE,EDITOR,EDIT_DATE,RMARK)
+		select SEQ_WMS_WS_CALL_MATERIAL.nextval, m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+		select #{d.WERKS},#{d.WH_NUMBER},#{d.ORIGIN_SYS},#{d.DELIVERY_NO},#{d.DLV_ITEM},#{d.DELIVERY_TYPE},#{d.STATUS},#{d.MATNR},#{d.MAKTX},
+		#{d.LGORT},#{d.QTY},#{d.UNIT},#{d.SORT_VALUE},#{d.KANBAN_NO},#{d.KANBAN_ITEM},#{d.EMERGENCY},#{d.BOX_COUNT},#{d.REQ_TYPE},#{d.REQUEST_AREA},
+		#{d.POINT_OF_USE},#{d.DELIVERY_ROUTE},#{d.BATCH},#{d.LIFNR},#{d.POU},#{d.START_SHIPPING_TIME},#{d.DEMAND_TIME},#{d.DELIVERY_ADDR},
+		#{d.CONTAINER_MODEL},#{d.START_LINE_FEEDING_TIME},#{d.LINE_NO},#{d.IS_START_LINE},#{d.DELIVERY_LEAD_TIME},#{d.DELIVERY_STRATEGY},
+		#{d.COMPLETENESS_STRATEGY},#{d.WORKSHOP_NO},#{d.REFERENCE_NO},#{d.REFERENCE_TYPE},#{d.END_MATERIAL_CODE},#{d.MACHINE_NO},#{d.PARTS_NO},
+		#{d.PROCESS},#{d.DELIVERY_CARRIER_TYPE},#{d.DELIVERY_CARRIER_CAPACITY},#{d.DOSAGE},#{d.SURFACE_TYPE},#{d.IS_MAIN_MATERIAL},#{d.IS_HK_MATERIAL},
+		#{d.DELIVERY_DESTINATION},#{d.SCHEDULE_NO},#{d.START_DELIVERY},#{d.LINE_FEEDING_ROUTE},#{d.RECEIVE_PLCD},#{d.RECEIVE_WH_NUMBER},#{d.CREATOR},
+		#{d.CREATE_DATE},#{d.EDITOR},#{d.EDIT_DATE},#{d.RMARK} 
+		from dual
+		</foreach>
+		) m
+	</insert>
+	
+	<update id="updateOtherSystemREQ" parameterType="List">
+        <foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+        	update WMS_WS_CALL_MATERIAL set
+			EDIT_DATE=#{s.EDIT_DATE}
+			<if test="s.DELIVERY_TYPE !=null and s.DELIVERY_TYPE !=''">
+				,DELIVERY_TYPE = #{s.DELIVERY_TYPE}
+			</if>
+			<if test="s.STATUS !=null and s.STATUS !=''">
+				,STATUS = #{s.STATUS}
+			</if>
+			<if test="s.LGORT !=null and s.LGORT !=''">
+				,LGORT = #{s.LGORT}
+			</if>
+			<if test="s.QTY !=null and s.QTY !=''">
+				,QTY = #{s.QTY}
+			</if>
+			<if test="s.SORT_VALUE !=null and s.SORT_VALUE !=''">
+				,SORT_VALUE = #{s.SORT_VALUE}
+			</if>
+			<if test="s.KANBAN_NO !=null and s.KANBAN_NO !=''">
+				,KANBAN_NO = #{s.KANBAN_NO}
+			</if>	
+			<if test="s.KANBAN_ITEM !=null and s.KANBAN_ITEM !=''">
+				,KANBAN_ITEM = #{s.KANBAN_ITEM}
+			</if>
+			<if test="s.EMERGENCY !=null and s.EMERGENCY !=''">
+				,EMERGENCY = #{s.EMERGENCY}
+			</if>
+			<if test="s.BOX_COUNT !=null and s.BOX_COUNT !=''">
+				,BOX_COUNT = #{s.BOX_COUNT}
+			</if>
+			<if test="s.REQ_TYPE !=null and s.REQ_TYPE !=''">
+				,REQ_TYPE = #{s.REQ_TYPE}
+			</if>
+			<if test="s.REQUEST_AREA !=null and s.REQUEST_AREA !=''">
+				,REQUEST_AREA = #{s.REQUEST_AREA}
+			</if>
+			<if test="s.POINT_OF_USE !=null and s.POINT_OF_USE !=''">
+				,POINT_OF_USE = #{s.POINT_OF_USE}
+			</if>
+			<if test="s.DELIVERY_ROUTE !=null and s.DELIVERY_ROUTE !=''">
+				,DELIVERY_ROUTE = #{s.DELIVERY_ROUTE}
+			</if>
+			<if test="s.BATCH !=null and s.BATCH !=''">
+				,BATCH = #{s.BATCH}
+			</if>
+			<if test="s.LIFNR !=null and s.LIFNR !=''">
+				,LIFNR = #{s.LIFNR}
+			</if>
+			<if test="s.POU !=null and s.POU !=''">
+				,POU = #{s.POU}
+			</if>
+			<if test="s.START_SHIPPING_TIME !=null and s.START_SHIPPING_TIME !=''">
+				,START_SHIPPING_TIME = #{s.START_SHIPPING_TIME}
+			</if>
+			<if test="s.DEMAND_TIME !=null and s.DEMAND_TIME !=''">
+				,DEMAND_TIME = #{s.DEMAND_TIME}
+			</if>
+			<if test="s.DELIVERY_ADDR !=null and s.DELIVERY_ADDR !=''">
+				,DELIVERY_ADDR = #{s.DELIVERY_ADDR}
+			</if>
+			<if test="s.CONTAINER_MODEL !=null and s.CONTAINER_MODEL !=''">
+				,CONTAINER_MODEL = #{s.CONTAINER_MODEL}
+			</if>
+			<if test="s.START_LINE_FEEDING_TIME !=null and s.START_LINE_FEEDING_TIME !=''">
+				,START_LINE_FEEDING_TIME = #{s.START_LINE_FEEDING_TIME}
+			</if>
+			<if test="s.LINE_NO !=null and s.LINE_NO !=''">
+				,LINE_NO = #{s.LINE_NO}
+			</if>
+			<if test="s.IS_START_LINE !=null and s.IS_START_LINE !=''">
+				,IS_START_LINE = #{s.IS_START_LINE}
+			</if>
+			<if test="s.DELIVERY_LEAD_TIME !=null and s.DELIVERY_LEAD_TIME !=''">
+				,DELIVERY_LEAD_TIME = #{s.DELIVERY_LEAD_TIME}
+			</if>
+			<if test="s.DELIVERY_STRATEGY !=null and s.DELIVERY_STRATEGY !=''">
+				,DELIVERY_STRATEGY = #{s.DELIVERY_STRATEGY}
+			</if>
+			<if test="s.COMPLETENESS_STRATEGY !=null and s.COMPLETENESS_STRATEGY !=''">
+				,COMPLETENESS_STRATEGY = #{s.COMPLETENESS_STRATEGY}
+			</if>
+			<if test="s.WORKSHOP_NO !=null and s.WORKSHOP_NO !=''">
+				,WORKSHOP_NO = #{s.WORKSHOP_NO}
+			</if>
+			<if test="s.REFERENCE_NO !=null and s.REFERENCE_NO !=''">
+				,REFERENCE_NO = #{s.REFERENCE_NO}
+			</if>
+			<if test="s.REFERENCE_TYPE !=null and s.REFERENCE_TYPE !=''">
+				,REFERENCE_TYPE = #{s.REFERENCE_TYPE}
+			</if>
+			<if test="s.END_MATERIAL_CODE !=null and s.END_MATERIAL_CODE !=''">
+				,END_MATERIAL_CODE = #{s.END_MATERIAL_CODE}
+			</if>
+			<if test="s.MACHINE_NO !=null and s.MACHINE_NO !=''">
+				,MACHINE_NO = #{s.MACHINE_NO}
+			</if>
+			<if test="s.PARTS_NO !=null and s.PARTS_NO !=''">
+				,PARTS_NO = #{s.PARTS_NO}
+			</if>
+			<if test="s.PROCESS !=null and s.PROCESS !=''">
+				,PROCESS = #{s.PROCESS}
+			</if>
+			<if test="s.DELIVERY_CARRIER_TYPE !=null and s.DELIVERY_CARRIER_TYPE !=''">
+				,DELIVERY_CARRIER_TYPE = #{s.DELIVERY_CARRIER_TYPE}
+			</if>
+			<if test="s.DELIVERY_CARRIER_CAPACITY !=null and s.DELIVERY_CARRIER_CAPACITY !=''">
+				,DELIVERY_CARRIER_CAPACITY = #{s.DELIVERY_CARRIER_CAPACITY}
+			</if>
+			<if test="s.DOSAGE !=null and s.DOSAGE !=''">
+				,DOSAGE = #{s.DOSAGE}
+			</if>
+			<if test="s.SURFACE_TYPE !=null and s.SURFACE_TYPE !=''">
+				,SURFACE_TYPE = #{s.SURFACE_TYPE}
+			</if>
+			<if test="s.IS_MAIN_MATERIAL !=null and s.IS_MAIN_MATERIAL !=''">
+				,IS_MAIN_MATERIAL = #{s.IS_MAIN_MATERIAL}
+			</if>
+			<if test="s.IS_HK_MATERIAL !=null and s.IS_HK_MATERIAL !=''">
+				,IS_HK_MATERIAL = #{s.IS_HK_MATERIAL}
+			</if>
+			<if test="s.DELIVERY_DESTINATION !=null and s.DELIVERY_DESTINATION !=''">
+				,DELIVERY_DESTINATION = #{s.DELIVERY_DESTINATION}
+			</if>
+			<if test="s.SCHEDULE_NO !=null and s.SCHEDULE_NO !=''">
+				,SCHEDULE_NO = #{s.SCHEDULE_NO}
+			</if>
+			<if test="s.START_DELIVERY !=null and s.START_DELIVERY !=''">
+				,START_DELIVERY = #{s.START_DELIVERY}
+			</if>
+			<if test="s.LINE_FEEDING_ROUTE !=null and s.LINE_FEEDING_ROUTE !=''">
+				,LINE_FEEDING_ROUTE = #{s.LINE_FEEDING_ROUTE}
+			</if>
+			<if test="s.RECEIVE_PLCD !=null and s.RECEIVE_PLCD !=''">
+				,RECEIVE_PLCD = #{s.RECEIVE_PLCD}
+			</if>
+			<if test="s.RECEIVE_WH_NUMBER !=null and s.RECEIVE_WH_NUMBER !=''">
+				,RECEIVE_WH_NUMBER = #{s.RECEIVE_WH_NUMBER}
+			</if>
+			<if test="s.DEL !=null and s.DEL !=''">
+				,DEL = #{s.DEL}
+			</if>
+			<if test="s.REMARK !=null and s.REMARK !=''">
+				,REMARK = #{s.REMARK}
+			</if>
+	        where DELIVERY_NO = #{s.DELIVERY_NO} 
+              and DLV_ITEM = #{s.DLV_ITEM}
+        </foreach>
+	</update>
+
+</mapper>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库存复检之未质检</title> 
+<#include "/web_header.html">
+<script src="${request.contextPath}/statics/js/wms/common/wms_web_common.js"></script>
+</head>
+<body>
+	<div class="wrapper" id="vue-app">
+		<div class="main-content">
+			<div class="box box-main">
+
+				<div class="box-body">
+					<form id="searchForm" class="form-inline">
+					    <input id="pageNo" value="10000000" name="pageSize" hidden="hidden"/>
+						<input id="pageNo" value="1" name="pageNo" hidden="hidden"/>
+						<div class="row">
+						
+							<div class="form-group">
+								<label class="control-label" style="width: 101px">工厂：</label>
+								<div class="control-inline" style="width: 100px;">
+									<select class="form-control" name="WERKS" id="WERKS" onchange="vm.updateWoreHourse()">
+										<#list tag.getUserAuthWerks("QC_REVIEW") as factory>
+											<#if params??>
+												<#if params.WERKS == factory.code>
+													<option value="${factory.code}" selected="selected">${factory.code}</option>
+													<#else>
+														<option value="${factory.code}">${factory.code}</option>
+												 </#if>
+												<#else>
+											    <option value="${factory.code}">${factory.code}</option>
+											</#if>
+										</#list>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 101px">仓库号：</label>
+								<div class="control-inline" style="width: 100px;">
+									<select class="form-control" name="WH_NUMBER" id="WH_NUMBER">
+										<option v-for="w in warehourse" :key="w.WH_NUMBER"> {{w.WH_NUMBER}} </option>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 101px">供应商代码：</label>
+								<div class="control-inline" >
+									<#if params??>
+									   <input style="width: 100px;" type="text" class="form-control" value="${params.LIFNR!''}" name="LIFNR" id="LIFNR" />
+								       <#else>
+								      	<input style="width: 100px;" type="text" class="form-control"  name="LIFNR" id="LIFNR" />
+								    </#if>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 101px">复检单创建日期：</label>
+								<div class="control-inline">
+								    <#if params??>
+									<input style="width: 100px;" id="receiptDateStart" type="text" name="CREATE_DATE_START" value="${params.CREATE_DATE_START!''}" onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"/>
+								    <#else>
+								    <input style="width: 100px;" id="receiptDateStart" type="text" name="CREATE_DATE_START"  onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"/>
+								    </#if>
+								</div>
+								-
+								<div class="control-inline">
+								<#if params??>
+									<input style="width: 100px;" id="receiptDateEnd" type="text" name="CREATE_DATE_END" value="${params.CREATE_DATE_END!''}" onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"/>
+								 <#else>
+								 		<input style="width: 100px;" id="receiptDateEnd" type="text" name="CREATE_DATE_END"  onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});"/>
+								 
+								</#if>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 101px">料号：</label>
+								<div class="control-inline" >
+									<#if params??>
+									<input style="width: 100px;" type="text" class="form-control" name="MATNR" id="MATNR" value="${params.MATNR!''}"/>
+								    <#else>
+								    <input style="width: 100px;" type="text" class="form-control" name="MATNR" id="MATNR" />
+								    </#if>
+								</div> 
+							</div>
+
+							<div class="form-group">
+								<label class="control-label" style="width: 101px">复检单号：</label>
+								<div class="control-inline" >
+								<#if params??>
+									<input style="width: 100px;" type="text" class="form-control" name="INSPECTION_NO" id="INSPECTION_NO" value="${params.INSPECTION_NO!''}"/>
+								  
+								  <#else>
+								  <input style="width: 100px;" type="text" class="form-control" name="INSPECTION_NO" id="INSPECTION_NO"/>
+								</#if>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 101px">批次：</label>
+								<div class="control-inline" >
+								<#if params??>
+									<input style="width: 100px;" type="text" class="form-control" name="BATCH" id="BATCH" value="${params.BATCH!''}"/>
+									<#else>
+									<input style="width: 100px;" type="text" class="form-control" name="BATCH" id="BATCH" />
+								</#if>
+								</div> 
+							</div>
+							
+							
+							
+							<div class="form-group">
+								<label class="control-label" style="width: 101px">质检状态：</label>
+								<div class="control-inline" style="width: 100px;" >
+									<select class="form-control"  id="inspectionStatus" onchange="vm.query()">
+									   <option value="00">未质检</option>
+									   <option value="01">质检中</option>
+									   
+									</select>
+								</div> 
+							</div>
+							
+							<button type="reset" class="btn btn-default">重置</button>
+						</div>
+					</form>
+					
+					<div id="pgtoolbar1">
+						<div id="links">
+							<a href='#'
+								class='btn' id='query' @click="query()"><i class='fa fa-search'
+								aria-hidden='true'></i> 查询</a> 
+								
+						   <a href='#'
+								class='btn' id='save' @click="save()"><i class='fa fa-check'
+								aria-hidden='true'></i> 保存</a> 
+								
+							<a href="#" class='btn' @click="exportExcel()"><i class='fa fa-file-excel-o' aria-hidden='true' ></i> 导出</a>
+						</div>
+					</div>
+					<table id="dataGrid"></table>
+				</div>
+			</div>
+		</div>
+		<div id="wmscqcreturnreasons" hidden="hidden">
+		   <div style="text-align: center">
+		     <select name="returnReason" id="returnReason">
+		       <option v-for="r in returnreasons" :value="r.reasonDesc">{{r.reasonDesc}}</option>
+		     </select>
+		   </div>
+		</div>
+		
+		<div id="return_resons" hidden="hidden">
+		   <div style="text-align: center">
+		     <select name="returnReason" id="returnReason">
+		       <option value='07'>退货</option>
+		     </select>
+		   </div>
+		</div>
+		
+	</div>
+	
+	<script
+		src="${request.contextPath}/statics/js/wms/qc/wms_qc_stock_re_judge_inited.js?_${.now?long}"></script>
+</body>
+</html>

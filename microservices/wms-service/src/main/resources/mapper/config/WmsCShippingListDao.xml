@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.byd.wms.business.modules.config.dao.WmsCShippingListDao">
+	<select id="queryNoticeMailList" resultType="Map"
+		parameterType="Map">
+		select * from(
+		select TMP.* ,ROWNUM ROW_ID from
+		(select
+		a.FACT_NO,a.DELIVERY_NO,a.ITEM_NO,a.FULL_BOX_QTY,ceil(a.ITEM_QTY/a.FULL_BOX_QTY) BOXNO,a.MAT_NO,a.MAT_DESC,a.ITEM_QTY,a.UNIT_NO,a.PO_NO,a.SAP_OUT_NO,
+		b.REQUIREMENT_NO,b.REMARK,c.FREIGHT_COMPANY,c.FREIGHT_LICENSE_PLATE,c.FREIGHT_DRIVER,c.RECEIVING_CARGO,c.RECEIVING_ADDRESS,c.RECEIVING_TELEPHONE,
+		c.CONSIGNMENT_NUMBER,c.DELIVER_DATE,c.SHIPMENT_DATE,c.EXPECTED_SERVICE,c.VOLUME_UNIT_PRICE,c.WEIGHT_UNIT_PRICE,c.VOLUME,c.WEIGHT,c.FREIGHE_ADDITIONAL,c.FREIGHE,
+		c.FREIGHE_EXTRA,c.DNNO
+		from
+		WMS_IN_DELIVERY_ITEM a
+		LEFT JOIN
+		WMS_IN_DELIVERY b
+		ON a.DELIVERY_NO =
+		b.DELIVERY_NO 
+		LEFT JOIN
+		WMS_OUT_SHIPPING_LIST c
+		ON a.DELIVERY_NO = c.DELIVERY_NO
+		and a.ITEM_NO = c.ITEM_NO
+		where 1=1 and a.DEL = '0'
+		<if test="DELIVERY_NO != '' and DELIVERY_NO != null">
+			AND a.DELIVERY_NO = #{DELIVERY_NO}
+		</if>
+		<if test="FACT_NO != '' and FACT_NO != null">
+			AND a.FACT_NO = #{FACT_NO}
+		</if>
+		order by a.DELIVERY_NO
+		)TMP 
+	<![CDATA[
+		WHERE ROWNUM  <=#{END}
+		)
+		WHERE ROW_ID > #{START}
+		]]>
+	</select>
+
+	<select id="getListCount" parameterType="Map" resultType="int">
+		select count(1) from WMS_IN_DELIVERY_ITEM
+		where 1=1 
+		<if test="DELIVERY_NO != '' and DELIVERY_NO != null">
+			AND DELIVERY_NO = #{DELIVERY_NO}
+		</if>
+		<if test="FACT_NO != '' and FACT_NO != null">
+			AND FACT_NO = #{FACT_NO}
+		</if>
+	</select>
+
+	<insert id="insertNoticeMail" parameterType="List">
+		insert into WMS_OUT_SHIPPING_LIST
+		(ID,
+		FREIGHT_COMPANY ,
+		FREIGHT_LICENSE_PLATE,
+		FREIGHT_DRIVER ,
+		RECEIVING_CARGO ,
+		RECEIVING_ADDRESS ,
+		RECEIVING_TELEPHONE ,
+		CONSIGNMENT_NUMBER ,
+		DELIVER_DATE ,
+		SHIPMENT_DATE ,
+		EXPECTED_SERVICE ,
+		VOLUME ,
+		VOLUME_UNIT_PRICE ,
+		WEIGHT ,
+		WEIGHT_UNIT_PRICE ,
+		FREIGHE ,
+		FREIGHE_EXTRA ,
+		FREIGHE_ADDITIONAL ,
+		FACT_NO ,
+		DNNO ,
+		DELIVERY_NO ,
+		ITEM_NO )
+		SELECT SEQ_WMS_OUT_SHIPPING_LIST.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="d" index="index"
+			separator="union all">
+			SELECT
+			#{d.freight_company },
+			#{d.freight_license_plate },
+			#{d.freight_driver },
+			#{d.receiving_cargo },
+			#{d.receiving_address },
+			#{d.receiving_telephone },
+			#{d.consignment_number },
+			#{d.deliver_date },
+			#{d.shipment_date },
+			#{d.expected_service },
+			#{d.VOLUME },
+			#{d.volume_unit_price },
+			#{d.WEIGHT },
+			#{d.weight_unit_price },
+			#{d.FREIGHE },
+			#{d.FREIGHE_EXTRA },
+			#{d.FREIGHE_ADDITIONAL },
+			#{d.FACT_NO },
+			#{d.DNNo},#{d.DELIVERY_NO},#{d.ITEM_NO}
+			FROM DUAL
+		</foreach>
+		) m
+	</insert>
+
+
+	<select id="selectById" resultType="Map">
+		select
+		a.* from WMS_OUT_SHIPPING_LIST a
+		where
+		a.DNNO=#{id} and a.ITEM_NO=#{itemNo}
+	</select>
+
+	<update id="updateById" parameterType="Map">
+		<foreach item="d" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+	UPDATE WMS_OUT_SHIPPING_LIST SET
+	FREIGHT_COMPANY =#{d.freight_company },
+	FREIGHT_LICENSE_PLATE =#{d.freight_license_plate },
+	FREIGHT_DRIVER =#{d.freight_driver },
+	RECEIVING_CARGO =#{d.receiving_cargo },
+	RECEIVING_ADDRESS =#{d.receiving_address },
+	RECEIVING_TELEPHONE =#{d.receiving_telephone },
+	CONSIGNMENT_NUMBER =#{d.consignment_number },
+	DELIVER_DATE =#{d.deliver_date },
+	SHIPMENT_DATE =#{d.shipment_date },
+	EXPECTED_SERVICE =#{d.expected_service },
+	VOLUME =#{d.VOLUME },
+	VOLUME_UNIT_PRICE =#{d.volume_unit_price },
+	WEIGHT =#{d.WEIGHT },
+	WEIGHT_UNIT_PRICE =#{d.weight_unit_price },
+	FREIGHE =#{d.FREIGHE },
+	FREIGHE_EXTRA =#{d.FREIGHE_EXTRA },
+	FREIGHE_ADDITIONAL =#{d.FREIGHE_ADDITIONAL },
+	FACT_NO =#{d.FACT_NO }
+	WHERE DNNO=#{d.DNNO} and ITEM_NO = #{d.ITEM_NO}
+		</foreach>
+	</update>
+
+</mapper>

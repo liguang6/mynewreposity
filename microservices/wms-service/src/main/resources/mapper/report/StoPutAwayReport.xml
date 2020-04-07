@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.report.dao.StoPutAwayReportDao">
+
+	<select id="getStoPutAwayInfoList" parameterType="Map" resultType="Map">
+	SELECT * FROM ( 
+        SELECT TMP.*, ROWNUM ROW_ID FROM (
+			select distinct a.requirement_no, a.werks ,a.wh_number,a.lgort,b.receive_werks,a.matnr,a.maktx,
+			    (nvl(a.qty_wms,0)-nvl(a.qty_cancel,0))qty,a.unit,(a.wms_no||'/'||a.wms_item_no)wms_doc,
+			    a.wms_sap_mat_doc,c.doc_no,decode(c.doc_no,null,0,c.qty)receive_qty,
+			    decode(c.doc_no,null,(nvl(a.qty_wms,0)-nvl(a.qty_cancel,0)),(nvl(a.qty_wms,0)-nvl(a.qty_cancel,0)-nvl(c.qty,0)))exception_qty,
+			    a.create_date,a.creator,c.creat_date receive_date
+			from   WMS_CORE_WMSDOC_ITEM a
+			    join WMS_OUT_REQUIREMENT_HEAD b on a.requirement_no =b.requirement_no   
+			    left join (select e.doc_no,d.doc_item_no,d.qty,d.creat_date from WMS_IN_PUTAWAY_STATUS e
+			               join WMS_IN_PUTAWAY_LOG d on e.time_stamp_str=d.time_stamp_str) c 
+			    on substr(a.wms_sap_mat_doc,1,instr(a.wms_sap_mat_doc,':',-1)-1) = c.doc_no	
+			    and substr(a.wms_sap_mat_doc,
+                              instr(a.wms_sap_mat_doc, ':', -1) + 1,
+                              length(a.wms_sap_mat_doc) -
+                              instr(a.wms_sap_mat_doc, ':', -1) - 1) =
+                       c.doc_item_no	    
+			where 
+			a.WERKS=#{WERKS}
+			and a.business_name='75'
+            and a.business_type='18'
+            and a.business_class='08'			
+			<if test="WH_NUMBER != null and WH_NUMBER !=''">
+			    AND a.WH_NUMBER = #{WH_NUMBER}
+			</if>
+		    <if test="matnrList !=null  ">
+		        AND a.matnr in
+		    	<foreach collection="matnrList" item="item" open="(" close=")" separator=",">
+					#{item}
+				</foreach>		        
+		    </if>
+		    <if test="wmsList !=null  ">
+		        AND a.WMS_NO in
+		    	<foreach collection="wmsList" item="item" open="(" close=")" separator=",">
+					#{item}
+				</foreach>		        
+		    </if>
+		    <if test="sapList !=null  ">
+		        AND 
+		    	<foreach collection="sapList" item="item" open=" (" close=")" separator="or">
+					a.wms_sap_mat_doc like '%'||#{item}||'%'
+				</foreach>		        
+		    </if>
+			<if test="CREATE_DATE_START !=null and CREATE_DATE_START !=''">
+			    AND to_date(a.create_date,'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{CREATE_DATE_START}||' 00:00:00','yyyy-mm-dd hh24:mi:ss') 
+			</if>
+			<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			    AND to_date(a.create_date,'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{CREATE_DATE_END}||' 00:00:00','yyyy-mm-dd hh24:mi:ss')+1
+			</if>
+			order by a.create_date
+		
+		)TMP 
+		WHERE ROWNUM  &lt;=#{end} 
+		) 
+	WHERE ROW_ID > #{start} 
+			
+	</select>
+	<select id="getStoPutAwayInfoCount" parameterType="Map" resultType="int">
+	
+			select distinct COUNT(1)
+			from   WMS_CORE_WMSDOC_ITEM a	
+			join WMS_OUT_REQUIREMENT_HEAD b on a.requirement_no =b.requirement_no     
+			where 
+			a.WERKS=#{WERKS}			
+			<if test="WH_NUMBER != null and WH_NUMBER !=''">
+			    AND a.WH_NUMBER = #{WH_NUMBER}
+			</if>
+			
+		    <if test="matnrList !=null  ">
+		        AND a.matnr in
+		    	<foreach collection="matnrList" item="item" open="(" close=")" separator=",">
+					#{item}
+				</foreach>		        
+		    </if>
+		    <if test="wmsList !=null  ">
+		        AND a.WMS_NO in
+		    	<foreach collection="wmsList" item="item" open="(" close=")" separator=",">
+					#{item}
+				</foreach>		        
+		    </if>
+		    <if test="sapList !=null  ">
+		         AND 
+		    	<foreach collection="sapList" item="item" open=" (" close=")" separator="or">
+					a.wms_sap_mat_doc like '%'||#{item}||'%'
+				</foreach>		        
+		    </if>
+			<if test="CREATE_DATE_START !=null and CREATE_DATE_START !=''">
+			    AND to_date(a.create_date,'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{CREATE_DATE_START}||' 00:00:00','yyyy-mm-dd hh24:mi:ss') 
+			</if>
+			<if test="CREATE_DATE_END !=null and CREATE_DATE_END !='' ">
+			    AND to_date(a.create_date,'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{CREATE_DATE_END}||' 00:00:00','yyyy-mm-dd hh24:mi:ss')+1
+			</if>
+		 
+	</select>
+</mapper>

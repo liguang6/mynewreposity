@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.config.dao.WmsCMatManagerDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.wms.business.modules.config.entity.WmsCMatManagerEntity" id="wmsCMatManagerMap">
+        <result property="memo" column="MEMO"/>
+        <result property="id" column="ID"/>
+        <result property="werks" column="WERKS"/>
+        <result property="whNumber" column="WH_NUMBER"/>
+        <result property="matnr" column="MATNR"/>
+        <result property="maktx" column="MAKTX"/>
+        <result property="lifnr" column="LIFNR"/>
+        <result property="liktx" column="LIKTX"/>
+        <result property="authorizeCode" column="AUTHORIZE_CODE"/>
+        <result property="del" column="DEL"/>
+        <result property="creator" column="CREATOR"/>
+        <result property="createDate" column="CREATE_DATE"/>
+        <result property="editor" column="EDITOR"/>
+        <result property="editDate" column="EDIT_DATE"/>
+    </resultMap>
+    <select id="getListByPage" parameterType="Map" resultType="Map">
+     SELECT * FROM ( 
+         SELECT TMP.*, ROWNUM ROW_ID FROM (
+		      SELECT D.ID,D.WERKS,D.WH_NUMBER,D.MATNR,D.MAKTX,D.LIFNR,D.LIKTX,
+		      D.AUTHORIZE_CODE ,S.AUTHORIZE_NAME,D.MEMO,D.CREATOR ,D.CREATE_DATE
+		       FROM WMS_C_MAT_MANAGER D
+		       LEFT JOIN WMS_C_MAT_MANAGER_TYPE S ON D.AUTHORIZE_CODE=S.AUTHORIZE_CODE
+		       WHERE 1=1 AND D.DEL='0'
+		        <if test="WERKS != null and WERKS !=''">
+		        AND D.WERKS=#{WERKS} 
+		      </if>
+              <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND D.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="AUTHORIZE_CODE != null and AUTHORIZE_CODE !=''">
+		        AND D.AUTHORIZE_CODE = #{AUTHORIZE_CODE}
+		      </if>
+           ) TMP 
+		 WHERE ROWNUM  &lt;=#{END})  
+	  WHERE ROW_ID > #{START} 
+	  <if test="orderBy !=null and orderBy !='' ">
+		ORDER BY  ${orderBy}
+	  </if>
+    </select>
+    <select id="getListCount" parameterType="Map" resultType="int">
+         SELECT COUNT(1) FROM WMS_C_MAT_MANAGER D
+		       WHERE 1=1 AND D.DEL='0'
+		      <if test="WERKS != null and WERKS !=''">
+		        AND D.WERKS=#{WERKS} 
+		      </if>
+              <if test="WH_NUMBER != null and WH_NUMBER !=''">
+		        AND D.WH_NUMBER = #{WH_NUMBER}
+		      </if>
+		      <if test="MATNR != null and MATNR !=''">
+		        AND D.MATNR = #{MATNR}
+		      </if>
+		      <if test="LIFNR != null and LIFNR !=''">
+		        AND D.LIFNR = #{LIFNR}
+		      </if>
+		      <if test="AUTHORIZE_CODE != null and AUTHORIZE_CODE !=''">
+		        AND D.AUTHORIZE_CODE = #{AUTHORIZE_CODE}
+		      </if>
+    </select>
+    <select id="validateMat"  parameterType="Map" resultType="Map">
+	     SELECT MATNR,MAKTX  FROM WMS_SAP_MATERIAL
+	        WHERE WERKS=#{WERKS}  AND MATNR IN
+	       <foreach collection="matnrList" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+	 </select>
+	 <select id="validateLifnr"  parameterType="Map" resultType="Map">
+	     SELECT LIFNR ,NAME1  FROM WMS_SAP_VENDOR
+	        WHERE  LIFNR  IN
+	       <foreach collection="lifnrList" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+	 </select>
+	 <select id="validateAuthorizeCode"  parameterType="Map" resultType="Map">
+	     SELECT AUTHORIZE_CODE FROM WMS_C_MAT_MANAGER_TYPE
+	        WHERE WERKS=#{WERKS} AND WH_NUMBER=#{WH_NUMBER} AND  AUTHORIZE_CODE  IN
+	       <foreach collection="authorizeCodeList" index="index" item="item" open="(" close=")" separator=",">
+			     #{item}
+			</foreach>
+	 </select>
+	 <!-- 更新，插入库存仓库人料关系 -->
+	<update id="merge" parameterType="List">
+		MERGE INTO WMS_C_MAT_MANAGER S USING(
+		select M.WERKS,M.WH_NUMBER,M.MATNR,M.MAKTX,M.AUTHORIZE_CODE,M.LIFNR,
+		M.LIKTX,M.MEMO,M.DEL,M.CREATOR,M.CREATE_DATE,M.EDITOR,M.EDIT_DATE
+		from (
+		<foreach collection="list" item="D" index="index" separator="UNION  ALL">
+		SELECT 
+		#{D.werks} WERKS,#{D.whNumber}  WH_NUMBER,#{D.matnr} MATNR, #{D.maktx} MAKTX,#{D.authorizeCode} AUTHORIZE_CODE,
+		#{D.lifnr} LIFNR,	#{D.liktx} LIKTX,#{D.memo} MEMO,'0' DEL,#{D.creator} CREATOR,#{D.createDate} CREATE_DATE,#{D.editor} EDITOR,#{D.editDate} EDIT_DATE
+		from dual
+		</foreach>
+		) M  ) TMP 
+		on (TMP.WERKS=S.WERKS and TMP.WH_NUMBER=S.WH_NUMBER 
+		and TMP.MATNR=S.MATNR AND TMP.LIFNR=S.LIFNR )  <!-- and TMP.AUTHORIZE_CODE=S.AUTHORIZE_CODE  -->
+		when matched then 
+			UPDATE  SET S.AUTHORIZE_CODE=TMP.AUTHORIZE_CODE,S.MEMO=TMP.MEMO,
+			S.EDITOR=TMP.EDITOR,S.EDIT_DATE=TMP.EDIT_DATE
+		when not matched then 
+			insert (ID,WERKS,WH_NUMBER,MATNR,MAKTX,AUTHORIZE_CODE,LIFNR,
+		    LIKTX,MEMO,DEL,CREATOR,CREATE_DATE) 
+		    VALUES (SEQ_WMS_C_MAT_MANAGER.nextval,TMP.WERKS,TMP.WH_NUMBER,TMP.MATNR,TMP.MAKTX,
+		    TMP.AUTHORIZE_CODE,TMP.LIFNR,TMP.LIKTX,TMP.MEMO,TMP.DEL,TMP.EDITOR,TMP.EDIT_DATE)
+	</update>
+</mapper>

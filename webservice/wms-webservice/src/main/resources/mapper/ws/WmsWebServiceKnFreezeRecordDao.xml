@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.webservice.ws.dao.WmsWebServiceKnFreezeRecordDao">
+
+    <select id="getStockInfoList" parameterType="Map" resultType="Map">
+       
+			SELECT s.ID,s.WERKS,s.WH_NUMBER,MATNR matnr,MAKTX,BATCH,LGORT,BIN_CODE,MEINS,
+			SOBKZ,LIFNR,LIKTX,DECODE(#{FREEZE_TYPE},'00',STOCK_QTY,'01',FREEZE_QTY) as QUANTITY,wh.BARCODE_FLAG
+			FROM WMS_CORE_STOCK s
+			       LEFT JOIN WMS_C_WH wh ON s.WERKS=wh.WERKS AND s.WH_NUMBER=wh.WH_NUMBER AND wh.DEL_FLAG='0'
+			WHERE s.BIN_CODE!='9010'  <!-- 9010储位是上架缓存的储位，做冻结会影响上架任务处理 -->
+			<if test="FREEZE_TYPE=='00'">
+			  AND s.STOCK_QTY >0
+			</if>
+			<if test="FREEZE_TYPE=='01'">
+			  AND s.FREEZE_QTY >0
+			</if>
+			<if test="LGORT != null and LGORT !=''">
+			  AND s.LGORT = #{LGORT}
+			</if>
+			<if test="BATCH != null and BATCH !=''">
+			  AND s.BATCH = #{BATCH}
+			</if>
+			<if test="MATNR != null and MATNR !=''"> 
+			  AND s.MATNR = #{MATNR} 
+			 </if> 
+			<if test="MAKTX != null and MAKTX !=''">
+			  AND s.MAKTX LIKE '%' ||  #{MAKTX} || '%'
+			</if>
+			<if test="LIFNR != null and LIFNR !=''">
+			  AND s.LIFNR = #{LIFNR}
+			</if>
+			<if test="BIN_CODE != null and BIN_CODE !=''">
+			  AND s.BIN_CODE = #{BIN_CODE}
+			</if>
+			<if test="WH_NUMBER != null and WH_NUMBER !=''">
+			  AND s.WH_NUMBER = #{WH_NUMBER}
+			</if>
+			<if test="WERKS != null and WERKS !=''">
+			  AND s.WERKS=#{WERKS} 
+			</if>
+    </select>
+    
+    <!-- 冻结、解冻操作，库存表数据更新 -->
+    <update id="batchUpdateStock" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_CORE_STOCK SET 
+			  <if test="detail.FREEZE_TYPE=='00'"><!-- 冻结：减少非限制库存数量，增加冻结数量 -->
+		         STOCK_QTY=STOCK_QTY-to_number(#{detail.QUANTITY}),FREEZE_QTY=NVL(FREEZE_QTY,0)+to_number(#{detail.QUANTITY})
+		      </if>
+		      <if test="detail.FREEZE_TYPE=='01'"><!-- 解冻：增加非限制库存数量，减少冻结数量 -->
+		         STOCK_QTY=NVL(STOCK_QTY,0)+to_number(#{detail.QUANTITY}) ,FREEZE_QTY=FREEZE_QTY-to_number(#{detail.QUANTITY})
+		      </if>
+			WHERE 
+             <!--pc端根据物料号、批次号查找对应标签-->
+            <if test="detail.ID!=null ">
+               ID=to_number(#{detail.ID})
+            </if>
+            <if test="detail.ID==null">
+            WERKS=#{detail.WERKS} AND WH_NUMBER=#{detail.WH_NUMBER} AND MATNR=#{detail.MATNR} AND BATCH=#{detail.BATCH}
+               AND SOBKZ=#{detail.SOBKZ} AND LGORT=#{detail.LGORT} AND BIN_CODE=#{detail.BIN_CODE} AND LIFNR=#{detail.LIFNR}
+            </if>
+		</foreach>
+	</update>
+	<!--插入冻结记录表 -->
+	<insert id="saveFreezeRecord" parameterType="List" >
+		INSERT INTO WMS_KN_FREEZE_RECORD
+		(ID,WERKS,WH_NUMBER,MATNR,MAKTX,F_BATCH,BATCH,LGORT,BIN_CODE,BIN_NAME,LIFNR,LIKTX,
+		SOBKZ,MEINS,FREEZE_QTY,FREEZE_TYPE,REASON_CODE,REASON,EDITOR,EDIT_DATE) 
+		SELECT SEQ_WMS_KN_FREEZE_RECORD.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="detail" index="index" separator="UNION ALL">
+		SELECT 
+		    #{detail.WERKS},#{detail.WH_NUMBER},#{detail.MATNR},#{detail.MAKTX},#{detail.F_BATCH},#{detail.BATCH},#{detail.LGORT},
+			#{detail.BIN_CODE},#{detail.BIN_NAME},#{detail.LIFNR},#{detail.LIKTX},#{detail.SOBKZ},#{detail.MEINS},#{detail.QUANTITY},
+			#{detail.FREEZE_TYPE},#{detail.REASON_CODE},#{detail.REASON},#{detail.EDITOR},#{detail.EDIT_DATE}
+		FROM DUAL
+		</foreach>
+		) m
+	</insert>
+    <!-- 更新 标签表LABEL_STATUS字段-->
+    <update id="batchUpdateCoreLabelStatus" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_CORE_LABEL T SET T.EDITOR=#{detail.EDITOR},T.EDIT_DATE=#{detail.EDIT_DATE}
+			  <if test="detail.FREEZE_TYPE=='00'"><!-- 冻结：11 已冻结-->
+		           ,T.LABEL_STATUS='11'
+		      </if>
+		      <if test="detail.FREEZE_TYPE=='01'"><!-- 解冻：07 已进仓 -->
+		           ,T.LABEL_STATUS='07'
+		      </if>
+			WHERE 
+             <!--pc端根据物料号、批次号查找对应标签-->
+            <if test="detail.LABEL_NO==null ">
+            T.LABEL_NO IN (
+                SELECT LABEL_NO  FROM WMS_CORE_STOCK_LABEL SL  
+                    WHERE SL.WERKS=#{detail.WERKS} AND SL.WH_NUMBER=#{detail.WH_NUMBER} AND 
+                    SL.MATNR=#{detail.MATNR} AND SL.BATCH=#{detail.BATCH} 
+            )
+            </if>
+            <!--app端根据标签号更新标签状态-->
+            <if test="detail.LABEL_NO!=null and detail.LABEL_NO!='' ">
+            T.LABEL_NO=#{detail.LABEL_NO}
+            </if>
+		</foreach>
+	</update>
+	<!-- 更新 批次流水表EFFECT_DATE字段-->
+	<update id="updateMatBatch" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin"
+            close=";end;" separator=";">
+			UPDATE WMS_CORE_MAT_BATCH T SET T.EFFECT_DATE=#{detail.EFFECT_DATE}
+			  
+		    WHERE
+		    	<if test="detail.WERKS!=null and detail.WERKS!='' ">
+                WERKS=#{detail.WERKS}  
+                </if>
+                <if test="detail.MATNR!=null and detail.MATNR!='' ">
+                AND MATNR=#{detail.MATNR} 
+                </if>
+                <if test="detail.BATCH!=null and detail.BATCH!='' ">
+                AND BATCH=#{detail.BATCH}
+                </if>
+                <if test="detail.LIFNR!=null and detail.LIFNR!='' ">
+                AND LIFNR=#{detail.LIFNR}
+            	</if>
+          
+		</foreach>
+	</update>
+    <select id="getDataByLabelNo" parameterType="Map" resultType="Map">
+       SELECT SL.WERKS,SL.WH_NUMBER,SL.MATNR,S.MAKTX,SL.BIN_CODE,SL.BIN_NAME,S.LIFNR,S.LIKTX,
+          S.MEINS,S.SOBKZ,S.F_BATCH,SL.BATCH,S.LGORT,L.LABEL_STATUS ,SL.LABEL_NO,L.BOX_QTY
+           FROM WMS_CORE_STOCK_LABEL SL
+           LEFT JOIN WMS_CORE_STOCK S ON S.WERKS=SL.WERKS AND S.WH_NUMBER=SL.WH_NUMBER 
+              AND S.MATNR=SL.MATNR AND S.BATCH=SL.BATCH
+           LEFT JOIN WMS_CORE_LABEL L ON SL.LABEL_NO=L.LABEL_NO WHERE SL.LABEL_NO=#{labelNo}
+    </select>
+</mapper>

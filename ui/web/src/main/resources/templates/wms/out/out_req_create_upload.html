@@ -1,0 +1,51 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+	<title>批导</title>
+	<#include "/web_header.html">
+	<style>
+		.msg-font{color:red}
+	</style>
+</head>
+<body >
+<div id="rrapp" v-cloak>
+	<div class="main-content">
+		<!-- <div class="wrapper container" id="vue"  style="padding:10px"> -->
+		<div class="box box-main">
+			<div class="box-body">
+				<form id="uploadForm" class="form-inline" action="${request.contextPath}/out/createRequirement/preview"
+					  enctype="multipart/form-data" method="post">
+
+					<div class="form-group">
+						<label class="control-label">模板文件：</label>
+						<div class="control-inline" >
+							<input type="file" id="excel" name="excel" value=""
+								   class="form-control width-400"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<button type="submit"  class="btn btn-primary btn-sm">导入预览</button>
+						<a class="btn btn-default" href='#' id="saveUpload" onclick="saveUpload()" style="display:none">保存导入</a>
+
+						<a v-if = "requireTypes === '41' || requireTypes === '42' " href="${request.contextPath}/statics/excel/import-createReq-scdd.xlsx">下载导入模板</a>
+						<a v-if = "requireTypes === '43' " href="${request.contextPath}/statics/excel/import-createReq-nbdd.xlsx">下载导入模板</a>
+						<a v-if = "requireTypes === '47' || requireTypes === '48'" href="${request.contextPath}/statics/excel/import-createReq-dbdd.xlsx">下载导入模板</a>
+						<a v-if = "requireTypes === '46' " href="${request.contextPath}/statics/excel/import-createReq-dbdd2.xlsx">下载导入模板</a>
+
+					</div>
+				</form>
+
+				<div id="resultLayer" style="display: none; padding: 10px;">
+					<h4>创建需求成功！需求号：<span id="outreqNoLayer">-</span></h4>
+					<br/>
+
+				</div>
+
+				<!-- 			<div id="divDataGrid" style="width:100%;overflow:auto;"> -->
+				<table id="dataGrid" ></table>
+				<!-- 			</div> -->
+			</div>
+		</div>
+		<!-- 	</div> -->
+	</div>
+</div>
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/out/out_req_create_upload.js?_${.now?long}"></script>
+</body>

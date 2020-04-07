@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>需求拣配</title>
+<#include "/web_header.html">
+<style type="text/css">
+	.keyParts-select {
+		/* color:#f44444; */
+		color:blue;
+	}
+	
+	.SelectBG{
+       background-color:red;
+    }
+    
+</style>
+</head>
+<body>
+<div class="wrapper" id="vue-app">
+		<div class="main-content" id="vue-app">
+			<div class="box box-main">
+				<div class="box-body">
+					<form id="searchForm" class="form-inline" action="${request.contextPath}/out/picking/list">
+					 	<div class="form-group">
+							<label class="control-label" style="width: 45px"><span
+								class="required"> *</span>工厂：</label>
+							<div class="control-inline" style="width: 80px;">
+								<select class="form-control" name="werks" id="werks"
+									onchange="vm.onPlantChange(event)"> 
+									<#list tag.getUserAuthWerks("A70") as factory> 
+										<option value="${factory.code}">${factory.code}</option> 
+									</#list>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label" style="width: 70px"><span class="required">
+									*</span>仓库号：</label>
+							<div class="control-inline" style="width: 80px;">
+								<select class="form-control" v-model="whNumber" name="whNumber" id="whNumber" style="height: 28px;width: 60px;">
+									<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.WH_NUMBER">{{ w.WH_NUMBER }}</option>
+								</select>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label" style="width: 55px"><span
+								class="required"> *</span>仓管员：</label>
+							<div class="control-inline" style="width: 100px;">
+								<select class="form-control" name="whManager" id="whManager" style="width: 100px;height:28px;">
+									<option value="" >全部</option>
+									<option v-for="w in relatedareaname" :value="w.AUTHORIZE_CODE" :key="w.AUTHORIZE_CODE">{{ w.MANAGER }}</option>
+								</select>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="control-label" style="width: 60px"><span
+								class="required"> *</span>需求号：</label>
+							<div class="control-inline" >
+								<input class="form-control" id="requirementNo" name="requirementNo" placeholder="需求号" style="width: 120px;"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width: 40px">库位：</label>
+							<div class="control-inline" >
+								<div class="input-group">
+									<input class="form-control" id="lgort" name="lgort" v-model="lgortList"  placeholder="库位" style="width: 100px;"/>
+									<input type="button"  class="btn btn-default btn-sm" value=".." @click="openLgortSelectWindow()" style="width: 10px;"/>
+<!-- 								    <input class="form-control" name="lgortList"  v-model="lgortList" placeholder="多个库位时以逗号分隔" @click='openLgortSelectWindow()'/> -->
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+								<label class="control-label" style="width: 50px">订单号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input class="form-control" id="orderNo" name="orderNo" placeholder="" style="width: 120px;"/>
+								        <input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#orderNo'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+						<div class="form-group">
+							<label class="control-label" style="width: 45px">工位：</label>
+							<div class="control-inline" >
+								<input class="form-control" id="station" name="station" placeholder="工位" style="width: 80px;"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width: 70px">物料筛选：</label>
+							<div class="control-inline" style="width: 80px;">
+								<select class="form-control" name="reqItemStatus" id="reqItemStatus">
+								 	<option value=''>全部</option>
+								 	<option value='00'>待拣配</option>
+								 	<option value='03'>已拣配</option>
+								 	<!-- <option>稀缺物料</option> -->
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" style="width: 55px">料号：</label>
+							<div class="control-inline">
+								<div class="input-group">
+									<input type="text" id="matnr" name="MATNR"  style="width: 100px;" class="form-control" />
+									<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#matnr'))" style="width: 10px;"/>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<!-- <input class="btn btn-primary" type="button" value='查询' @click="query"> -->
+							<input class="btn btn-primary btn-sm " type="button" value='推荐' @click="recommend">
+						</div>
+					</form>
+					
+					<div id="pgtoolbar1">
+						<div id="links">
+							<!-- <a class="btn" href="#" id="produceOrder" @click="recommend"> <i class="fa fa-thumbs-o-up"></i> 推荐</a>  -->
+								
+							<a href='#' class='btn' @click="confirm"><i class='fa fa-cart-arrow-down' title="下架" aria-hidden='true'></i> 下架</a> 
+								
+						    <a href="#" class="btn"  title="拆分" @click="insert"><i class="fa fa-plus-square"></i> 拆分</a>
+						    
+						    <!-- <a href="#" class="btn"  title="删除下架" @click="cancel"><i class="fa fa-ban"></i> 删除行</a>  -->
+								
+						    <!-- <a href="#" class="btn"  title="导出" @click="exp"><i class="fa fa-arrow-circle-up"></i> 导出</a> -->
+								
+						    <a href="#" class="btn"  title="配送标签" @click="printlabel"><i class="fa fa-truck"></i> 配送标签</a>	
+								
+						    <a href="#" class="btn"  title="关键零部件标签" @click="printkeyparts"><i class="fa fa-gear"></i> 关键零部件标签</a>	
+								
+						    <a href="#" class="btn"  title="拣配清单" @click="exp"><i class="fa fa-list-ol"></i> 拣配清单</a>
+						</div>
+					</div>
+					<div id="headDiv" style="display:none;backgroundr:red">
+							<div style="float:left;width:7%;padding-left:5px">
+							    需求类型：
+							</div>
+						   	<div style="float:left;width:15%;padding-left:5px"  id="type">
+						    </div>
+						    <div style="float:left;width:5%;padding-left:5px">
+							   创建人：
+							</div>
+						   	<div style="float:left;width:5%;padding-left:5px" id="creator">
+						    </div>
+						    <div style="float:left;width:7%;padding-left:5px">
+							    需求时段：
+							</div>
+						   	<div style="float:left;width:10%;padding-left:5px" id="reqDate">
+						    </div>
+						    <div style="float:left;width:7%;padding-left:5px">
+							    汇总模式：
+							</div>
+						   	<div style="float:left;width:8%;padding-left:5px" class="col-sm-8" id="model">
+						    </div>
+					</div>
+					<table id="dataGrid"></table>
+					<table id="tb_excel" style="display:none"></table>
+				</div>
+			</div>
+		</div>
+</div>
+</body>
+
+<script type="text/javascript" src="${request.contextPath}/statics/js/wms/out/requirement_material_picking.js?_${.now?long}"></script>
+</html>

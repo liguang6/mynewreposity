@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>盘点表创建</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css"></link>
+<!-- <link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-tagsinput/bootstrap-tagsinput.css"> -->
+    <style type="text/css">
+		.bootstrap-tagsinput input {
+		     width: 350px;
+		}
+		.label-tag {font-size: 0.8em}
+		.multiselect-container{ /*下拉框的样式*/
+           width:195px;height:110px;
+       }
+       .multiselect {
+           width:100%;
+       }
+       .multiselect-container>li>a>label{
+           line-height: 20px;
+           font-size: 12px;
+       }
+       .multiselect-container>li>a>label>input[type='checkbox'] {
+            margin-top: 7px;
+       }
+       .multiselect-item.multiselect-all.active{
+           border-bottom:1px solid #ccc !important;
+       }
+       /* .multiselect-container.dropdown-menu li{
+           width:49%;
+           display: inline-block;
+       }
+       .multiselect-container.dropdown-menu li:first-child{
+           width:100%;
+       } */
+       .multiselect.dropdown-toggle.btn.btn-default:link,.multiselect.dropdown-toggle.btn.btn-default:visited,.multiselect.dropdown-toggle.btn.btn-default:focus,.multiselect.dropdown-toggle.btn.btn-default:hover,.multiselect.dropdown-toggle.btn.btn-default:active, .btn-default.active, .btn-default:active, .open>.dropdown-toggle.btn-default{
+         background: #fff;
+         outline: none;
+         border:1px solid #ccc;
+         box-shadow: none;
+       }
+       .dropdown-menu>.active>a, .dropdown-menu>.active>a:focus, .dropdown-menu>.active>a:hover{
+           background: blue;
+       }
+       .multiselect-selected-text{
+           font-size:13px;
+           font-family: '微软雅黑','宋体';
+           width:100%;
+           float: left;
+           text-align: left;
+       }
+       .btn.btn-default{
+           padding-right:15px;
+       }
+    </style>
+</head>
+<body>
+<div id="rrapp" v-cloak style="width:600px">
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+					<div class="form-group" style="align:center;margin-top:15px">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>工厂代码：
+								</label>
+							   <div style="float:left;width:50%" class="col-sm-8">
+                                    <select  name="werks" id="werks"
+										 style="width: 100%;height: 26px;" onchange="vm.onPlantChange(event)"> 
+										<#list tag.getUserAuthWerks("INVENTORY_CREATE") as factory> 
+										 <#if params?? && params.werks?? && params.werks == factory.code>
+										   <option value="${factory.code}" selected="selected">${factory.code}</option>
+										   <#else>
+										   <option value="${factory.code}">${factory.code}</option>
+										 </#if> 
+										</#list>
+									</select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								    <font style="color:red;font-weight:bold">*</font>仓库号：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8" >
+									<select  name="whNumber" id="whNumber" class="" style="width: 100%;height: 26px;">
+ 									 	<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+									</select> 
+<!-- 									  <select v-model="whNumber" class="" style="width: 100%;height: 26px;" name="whNumber" id="whNumber" > -->
+<!--  									 	<option v-for="w in warehourse" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option> -->
+<!--  									</select> -->
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     <font style="color:red;font-weight:bold">*</font>盘点方式：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <select id="inventoryType" name="inventoryType"  style="width:100%;height: 26px;" class="required">
+					                     <option value='01'>暗盘</option>
+					                     <option value='00'>明盘</option>
+					                </select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     物料分类：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+					                <select id="inventoryType" name="inventoryType"  style="width:100%;height: 26px;">
+					                     <option value=''>全部</option>
+					                     <option value='A'>A类</option>
+					                     <option value='B'>B类</option>
+					                     <option value='C'>C类</option>
+					                </select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     供应商代码：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8 input-group">
+					                <input type="text"   id="lifnr" name="lifnr" class="form-control"  style="margin-left:15px;width:80%"></input>
+					                <input type="button"  class="btn btn-default btn-sm" value=".." @click="more($('#lifnr'))" style="float:left;width:10%;"/>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                              <div  style="float:left;width:100%">
+								<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+								     仓管员：
+								</label>
+							   	<div style="float:left;width:50%" class="col-sm-8">
+                                   <select name="whManager" id="whManager"  style="width:100%" multiple="multiple" >
+									 <option value="" >全部</option>
+									 <option v-for="w in relatedareaname" :value="w.MANAGER_STAFF" :key="w.MANAGER">{{ w.MANAGER }}</option>
+									</select>
+							    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                            <div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+							     盘点库位：
+							</label>
+						   	<div style="float:left;width:50%" class="col-sm-8">
+				                <select id="lgort" name="lgort" v-model="inventory.lgort" multiple="multiple" style="width:100%">
+<!-- 					                     <option value='01'>0020</option>   -->
+					                </select>
+						    </div>
+						</div>
+					</div>
+					<div class="form-group" style="align:center">
+                          <div  style="float:left;width:100%">
+							<label style="float:left;width:20%" class="col-sm-3 control-label no-padding-right" >
+							     <font style="color:red;font-weight:bold">*</font>盘点比例：
+							</label>
+						   	<div style="float:left;width:50%" class="col-sm-8 input-group">
+				                <input type="text"  id="proportion" name="proportion" class="form-control required number"  v-model="inventory.proportion"  style="margin-left:15px;width:80%"/>
+						        <span class="input-group-addon" id="input-group-addon" style="float:left;width:10%;">%</span>
+						    </div>
+						</div>
+					</div>
+					<button id="btnSubmit" type="submit" hidden="true" ></button>
+				</form>
+			</div>
+		</div>
+		<div id="layer_more" style="display:none;height:200px">
+			<div id="pgtoolbar1">
+				<div id="links">
+					<a href='#' class='btn'  style="width:63px;margin-left:-3px;"><input type='checkbox'  id='checkall' style="margin:0px;"></input> 全选</a> 
+					<a href='#' class='btn' id='newOperation' onclick="addMore()"><i class='fa fa-plus' aria-hidden='true'></i> 新增</a> 
+					<a href='#' class='btn' id='btn_refresh' onclick="refreshMore()"><i class='fa fa-refresh' aria-hidden='true'></i> 清空</a> 
+					<a href='#' class='btn' id='btn_delete' onclick="delMore()"><i class='fa fa-trash' aria-hidden='true'></i> 删除</a> 
+				</div>
+				<table id="moreGrid" class="table table-bordered"  style="text-align:center"> </table>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/kn/inventoryCreate.js?_${.now?long}"></script>
+<script src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js?_${.now?long}"></script>
+</body>
+</html>

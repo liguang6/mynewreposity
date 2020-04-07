@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>标签查询</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<script type="text/javascript" src="${request.contextPath}/statics/js/dynamicColum.js"></script>
+</head>
+<body>
+	<div id="rrapp">
+			<div class="main-content">
+				<div class="box box-main">
+					<div class="box-body">
+						<form id="searchForm" method="post" class="form-inline"  action="${request.contextPath}/query/labelQuery/list" >
+						<div class="row">
+							<div class="form-group">
+								<label class="control-label" style="width: 45px">工厂：</label>
+								<div class="control-inline" style="width: 60px;">
+									<select class="form-control" name="WERKS" id="werks" onchange="vm.onPlantChange(event)">
+									   <#list tag.getUserAuthWerks("QUERY_LABEL") as factory>
+									      <option value="${factory.code}">${factory.code}</option>
+									   </#list>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 60px;">仓库号：</label>
+								<div class="control-inline" style="width: 70px;">
+									<select class="form-control" name="WH_NUMBER" id="wh">
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+	                           <label class="control-label" style="width: 60px">收货单号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+									   	<input type="text" id="receiptNo" name="RECEIPT_NO" style="width: 90px;" class="form-control" />
+									   	<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#receiptNo'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label">料号：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="matnr" name="MATNR" style="width: 90px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#matnr'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label" style="width: 75px">供应商代码：</label>
+								<div class="control-inline">
+									<div class="input-group">
+										<input type="text" id="lifnr" name="LIFNR" style="width: 90px;" class="form-control" />
+										<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#lifnr'))" style="width: 10px;"/>
+									</div>
+								</div>
+							</div>
+						    <div class="form-group">
+									<label class="control-label" style="width: 60px">创建日期：</label>
+									<div class="control-inline">
+										<div class="input-group" style="width:180px">
+										<div class="control-inline">
+										<div class="input-group">
+			                                    <input type="text" id="createDateStart" name="CREATE_DATE_START" 
+												class="form-control width-300" style="width: 85px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						    
+											 </div>
+											<div class="input-group">
+											    <input type="text" id="createDateEnd" name="CREATE_DATE_END"
+												class="form-control width-300" style="width: 85px;"
+												onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,onpicked:function(pd){}});" />						
+											 </div>
+										</div>
+									</div>
+								</div>
+							</div>
+					</div>
+					<div class="row">
+					   <div class="form-group">
+							<label class="control-label" style="width: 45px">状态：</label>
+							<div class="control-inline" style="width: 60px;">
+<!-- 								<select class="form-control" name="LABEL_STATUS" id="labelStatus"> -->
+<!-- 								    <option value=''>全部</option> -->
+		<!-- 							<#list tag.wmsDictList('LABEL_STATUS') as d> 
+										   <option value="${d.code}">${d.value}</option> 
+										</#list> -->
+<!-- 								</select> 00创建，01已收料（待质检），02已收料（无需质检）03待进仓(已质检)，04待退货(已质检)，05收料房退货，06库房退货，07已进仓，08已上架，09已下架，10已出库，11已冻结，12已锁定，20关闭-->
+                                    <select id="labelStatus" name="LABEL_STATUS"
+										style="width: 100%;height:25px" > 
+										<option value=''>全部</option>
+										<option value='00'>创建</option>
+										<option value='01'>已收料（待质检）</option>
+										<option value='02'>已收料（无需质检）</option>
+										<option value='03'>待进仓(已质检)</option>
+										<option value='04'>已收料（无需质检）</option>
+										<option value='05'>收料房退货</option>
+										<option value='06'>库房退货</option>
+										<option value='07'>已进仓</option>
+										<option value='08'>已上架</option>
+										<option value='09'>已下架</option>
+										<option value='10'>已出库</option>
+										<option value='11'>已冻结</option>
+										<option value='12'>已锁定</option>
+										<option value='20'>关闭</option>
+									</select>
+							</div>
+						</div>
+						<div class="form-group">
+	                           <label class="control-label" style="width: 60px">标签类型：</label>
+								<div class="control-inline">
+									<div class="input-group" style="width: 70px;">
+									   	<select name="LABEL_TYPE" id="labelType" @change="labelTypeChange" style="width: 70px;;height:25px">
+									   	    <option value="">全部</option>
+									   	    <option value="00">收货确认产生</option>
+									   	    <option value="01">创建进仓单产生</option>
+									    </select>
+									</div>
+								</div>
+							</div>
+					    <div class="form-group">
+	                          <label class="control-label" style="width: 60px">进仓单号：</label>
+							<div class="control-inline">
+								<div class="input-group">
+								   	<input type="text" id="inboundNo" name="INBOUND_NO" style="width: 90px;" class="form-control" />
+								   	<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#inboundNo'))" style="width: 10px;"/>	  
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label">批次：</label>
+							<div class="control-inline">
+								<div class="input-group">
+								<input type="text" id="batch" name="BATCH" style="width: 90px;" class="form-control" />
+								<input type="button"  class="btn btn-default btn-sm" value=".." onclick="more($('#batch'))" style="width: 10px;"/>	  
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label" >标签：</label>
+							<div class="control-inline">
+								<div class="input-group">
+									<span class="input-icon input-icon-right" style="width: 120px;">
+										<input type="text" id="label_no" name="LABEL_NO" style="width: 120px;" class="form-control" />
+										<i class="ace-icon fa fa-barcode black bigger-160 btn_scan" style="cursor: pointer" onclick="doScan('label_no')"> </i>
+									</span>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group poNo">
+							<label class="control-label" style="width: 75px">采购订单：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+								   <input type="text" id="poNo" name="PO_NO" style="width: 90px;" class="form-control" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group productNo" >
+							<label class="control-label" style="width: 75px">生产订单：</label>
+							<div class="control-inline">
+								<div class="input-group" style="width:80px">
+								   <input type="text" id="productNo" name="PRODUCT_NO" style="width: 90px;" class="form-control" />
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<button type="submit" class="btn btn-primary btn-sm">查询</button>
+<!-- 							<button type="button" class="btn btn-primary btn-sm" @click="exp">导出</button> --> 
+<!-- 							<button type="reset" class="btn btn-primary btn-sm">重置</button> -->
+							<button type="button" class="btn btn-primary btn-sm" @click="print()">条码打印</button>
+							<button type="button" class="btn btn-primary btn-sm" @click="printA4()">A4纸打印</button>
+						    <button type="button" class="btn btn-primary btn-sm" @click="keyPartsPrint()">关键零部件打印</button>
+						</div>
+					</div>
+				</form>
+					<div id="divDataGrid" style="width:100%;overflow:auto;">
+						<table id="dataGrid"></table>
+						<div id="dataGridPage"></div>
+					</div>	
+					<table id="tb_excel" style="display:none"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<form id="print" target="_blank" method="post" action="${request.contextPath}/docPrint/labelLabelPreview" >
+		<button hidden="hidden" id="printButton" type="submit"></button>
+		<input name="labelList" id="labelList" type="text" hidden="hidden">
+		<input name="WERKS" id="WERKS" type="text" hidden="hidden">
+	</form>
+	<form id="printA4" target="_blank" method="post" action="${request.contextPath}/docPrint/labelPreview_A4" >
+		<button hidden="hidden" id="printButtonA4" type="submit"></button>
+		<input name="labelListA4" id="labelListA4" type="text" hidden="hidden">
+		<input name="WERKS" id="WERKSA4" type="text" hidden="hidden">
+	</form>
+	<form id="keyPartsPrint" target="_blank" method="post" action="${request.contextPath}/docPrint/keyPartsLabel" >
+		<button hidden="hidden" id="keyPartsButton" type="submit"></button>
+		<input name="keyPartsList" id="keyPartsList" type="text" hidden="hidden">
+	</form>
+	<script src="${request.contextPath}/statics/js/wms/query/labelQuery.js?_${.now?long}"></script>
+</body>
+</html>

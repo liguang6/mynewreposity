@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>编辑工厂配置</title> <#include "/web_header.html">
+</head>
+<body>
+
+<div id="rrapp" v-cloak class="wrapper" >
+		<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form class="form-horizontal"  id="saveForm" action="#" method="post">
+
+					<div class="box-body">
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> 工厂代码</div>
+									<div class="col-sm-6">
+										<input  id="werks" name="werks" class="form-control required" @blur="getWerksName()" @click="getPlantNoFuzzy()" placeholder="工厂代码" v-model="cplant.werks"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> 仓库号</div>
+									<div class="col-sm-6">
+										<input id="whNumber"  name="whNumber"  class="form-control required" placeholder="仓库号" v-model="cplant.whNumber"/>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label"> <span class="required"> * </span> 工厂名称</div>
+									<div class="col-sm-6">
+										<input id="werksName"  name="werksName" readOnly="true" class="form-control required" placeholder="工厂名称" v-model="cplant.werksName"/>
+									</div>
+								</div>
+							</div>
+							
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>启用预留
+									</div>
+									<div class="col-sm-6">
+										<select id="resbdFlag" name="resbdFlag" v-model="cplant.resbdFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>启用供应商管理
+									</div>
+									<div class="col-sm-6">
+										<select id="vendorFlag" name="vendorFlag" v-model="cplant.vendorFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select> 
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>启用智能储位
+									</div>
+									<div class="col-sm-6">
+										<select id="igFlag" name="igFlag" v-model="cplant.igFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>是否已上WMS
+									</div>
+									<div class="col-sm-6">
+										<select id="wmsFlag" name="wmsFlag" v-model="cplant.wmsFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select> 
+									</div>
+								</div>
+							</div>
+
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>启用核销业务
+									</div>
+									<div class="col-sm-6">
+										<select id="hxFlag" name="hxFlag" v-model="cplant.hxFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select>
+									</div>
+								</div>
+							</div>
+						</div>
+							
+							
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>启用条码管理
+									</div>
+									<div class="col-sm-6">
+										<select id="barcodeFlag" name="barcodeFlag" v-model="cplant.barcodeFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>启用最小包装
+									</div>
+									<div class="col-sm-6">
+										<select id="packageFlag" name="packageFlag" v-model="cplant.packageFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select>
+									</div>
+								</div>
+							
+							
+						</div>
+						
+					</div>
+					<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>启用费用性订单库存管理
+									</div>
+									<div class="col-sm-6">
+										<select id="cmmsFlag" name="cmmsFlag" v-model="cplant.cmmsFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										<span></span>校验人料关系
+									</div>
+									<div class="col-sm-6">
+										<select id="matManagerFlag" name="matManagerFlag" v-model="cplant.matManagerFlag" style="width:100%">
+									   	    <option value=''></option>
+									   	    <option value='X'>是</option>
+									   	    <option value='0'>否</option>
+							   	    	</select>
+									</div>
+								</div>
+							</div>
+					</div>
+					<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										启用保质期
+									</div>
+									<div class="col-sm-6">
+										<select id="prfrqflag" name="prfrqflag" v-model="cplant.prfrqflag" style="width:100%">
+											<option value=''></option>
+											<option value='0'>否</option>
+											<option value='X'>是</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							
+						</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="form-group">
+									<div class="col-sm-6 control-label">
+										冻结/解冻启用SAP 过账
+									</div>
+									<div class="col-sm-6">
+										<select id="freezepostsapflag" name="freezepostsapflag" v-model="cplant.freezepostsapflag" style="width:100%">
+											<option value=''></option>
+											<option value='0'>否</option>
+											<option value='X'>是</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							
+						</div>
+					
+					<button id="btnSubmit" type="submit" hidden="true"></button>
+				</form>
+				</div>
+			</div>
+		</div>
+
+
+	</div>
+
+	<script src="${request.contextPath}/statics/js/wms/config/wms_c_plant_edit.js?_${.now?long}"></script>
+</body>
+
+
+
+</html>

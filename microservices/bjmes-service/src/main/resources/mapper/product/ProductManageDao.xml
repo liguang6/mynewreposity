@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.bjmes.modules.product.dao.ProductManageDao">
+	
+	<select id="getProductsForNoManage" parameterType="Map" resultType="Map">	
+	SELECT P.id,P.werks,P.werks_name,P.workshop,P.workshop_name,P.order_no,P.product_no,C.product_type_code,C.product_type_name,C.product_name
+  FROM BJMES_PD_PRODUCTS P
+  LEFT JOIN BJMES_C_PRODUCTS C ON P.product_code = C.product_code
+  WHERE 1=1 
+  <if test="WERKS != null and WERKS != ''">
+  AND P.werks = #{WERKS}
+  </if>
+  <if test="WORKSHOP != null and WORKSHOP != ''">
+  AND P.workshop = #{WORKSHOP}
+  </if>
+  <if test="ORDER_NO != null and ORDER_NO != ''">
+  AND P.order_no = #{ORDER_NO}
+  </if>
+  <if test="PRODUCT_TYPE_CODE != null and PRODUCT_TYPE_CODE != ''">
+  AND C.product_type_code = #{PRODUCT_TYPE_CODE}
+  </if>
+  <if test="PRODUCT_NAME != null and PRODUCT_NAME != ''">
+  AND C.product_name = #{PRODUCT_NAME}
+  </if>
+  <if test="PRODUCT_NO != null and PRODUCT_NO != ''">
+  AND P.product_no LIKE concat('%',#{PRODUCT_NO},'%')  
+  </if>
+	</select>
+
+  <select id="getProductsForGenerateNo" parameterType="Map" resultType="Map">	
+  SELECT P.id,P.werks,P.werks_name,P.workshop,P.workshop_name,P.order_no,P.product_code,
+  P.single_qty,P.standard_hours,O.order_qty
+  FROM BJMES_ORDER_PRODUCTS P 
+  LEFT JOIN BJMES_C_PRODUCTS C ON P.product_code = C.product_code
+  LEFT JOIN BJMES_WERKS_ORDER O ON P.order_no = O.order_no
+  WHERE P.werks = #{WERKS} AND P.workshop = #{WORKSHOP}
+  <if test="ORDER_NO != null and ORDER_NO != ''">
+  AND P.order_no = #{ORDER_NO}
+  </if>
+  <if test="PRODUCT_TYPE_CODE != null and PRODUCT_TYPE_CODE != ''">
+  AND C.product_type_code = #{PRODUCT_TYPE_CODE}
+  </if>
+  <if test="PRODUCT_NAME != null and PRODUCT_NAME != ''">
+  AND C.product_name = #{PRODUCT_NAME}
+  </if>
+  AND P.status = '0'
+  </select>
+
+  <select id="getProductsNoCount" parameterType="Map" resultType="int">	
+  SELECT COUNT(*) PRO_COUNT FROM BJMES_PD_PRODUCTS WHERE 
+  order_no = #{ORDER_NO} AND product_no LIKE CONCAT(#{PRODUCT_CODE},#{ORDER_NUM},'-',#{YEAR},'%')
+  AND product_no LIKE CONCAT(#{PRODUCT_CODE},#{ORDER_NUM},'-',#{YEAR},'%')  
+  </select>
+  <select id="getProductsNoMax" parameterType="Map" resultType="int">	
+  SELECT IFNULL(MAX(SUBSTRING(SUBSTRING(product_no,LOCATE(#{YEAR},product_no)),
+    LOCATE('-',SUBSTRING(product_no,LOCATE(#{YEAR},product_no)))+1)),0) + 0 MAX_COUNT
+  FROM BJMES_PD_PRODUCTS 
+  WHERE product_no LIKE CONCAT(#{PRODUCT_CODE},#{ORDER_NUM},'-',#{YEAR},'%')  
+  </select>
+
+  <insert id="insertProductsNo" parameterType="List">
+  INSERT INTO BJMES_PD_PRODUCTS (werks, werks_name, workshop, workshop_name, product_no, product_code, order_no, status) VALUES 
+  	<foreach collection="matList" item="detail" index="index" separator=",">
+    (
+      #{detail.werks},#{detail.werks_name},#{detail.workshop},#{detail.workshop_name},
+      #{detail.product_no},#{detail.product_code},#{detail.order_no},'0'
+    )
+    </foreach>
+  </insert>
+
+  <select id="getOrderList" parameterType="Map" resultType="Map">
+	SELECT O.* FROM BJMES_WERKS_ORDER O  WHERE 1=1 
+	<if test="search_werks != '' and search_werks != null">
+	AND O.werks = #{search_werks}
+	</if>
+	<if test="search_order != '' and search_order != null">
+	AND O.order_no LIKE CONCAT('%',#{search_order},'%')
+	</if>
+	<if test="search_order_type_code != '' and search_order_type_code != null">
+	AND O.order_type_code = #{search_order_type_code}
+	</if>
+	<if test="search_bus_type_code != '' and search_bus_type_code != null">
+	AND O.bus_type_code = #{search_bus_type_code}
+	</if>
+	<if test="search_sale_dept_code != '' and search_sale_dept_code != null">
+	AND O.sale_dept_code = #{search_sale_dept_code}
+	</if>
+	<if test="search_status != '' and search_status != null">
+	AND O.status = #{search_status}
+	</if>
+	<if test="search_year != '全部' and search_year != '' and search_status != null">
+	AND O.productive_year = #{search_year}
+	</if> 
+	<if test="pageSize != '' and pageSize != null">
+	LIMIT ${start},${pageSize} 
+	</if>
+	</select>
+	<select id="getOrderListTotalCount" parameterType="Map" resultType="int">
+	SELECT COUNT(*) FROM BJMES_WERKS_ORDER WHERE 1=1 
+	<if test="search_werks != '' and search_werks != null">
+	AND werks = #{search_werks}
+	</if>
+	<if test="search_order != '' and search_order != null">
+	AND order_no LIKE CONCAT('%',#{search_order},'%')
+	</if>
+	<if test="search_order_type_code != '' and search_order_type_code != null">
+	AND order_type_code = #{search_order_type_code}
+	</if>
+	<if test="search_bus_type_code != '' and search_bus_type_code != null">
+	AND bus_type_code = #{search_bus_type_code}
+	</if>
+	<if test="search_sale_dept_code != '' and search_sale_dept_code != null">
+	AND sale_dept_code = #{search_sale_dept_code}
+	</if>
+	<if test="search_status != '' and search_status != null">
+	AND status = #{search_status}
+	</if>
+	<if test="search_year != '全部' and search_year != '' and search_status != null">
+	AND productive_year = #{search_year}
+	</if> 
+	</select>
+
+  <select id="getExceptionList" parameterType="Map" resultType="Map">
+  SELECT E.*,P.product_name,P.product_type_name FROM BJMES_PRODUCTION_EXCEPTION E
+  LEFT JOIN BJMES_PD_PRODUCTS C ON E.product_no = C.product_no
+  LEFT JOIN BJMES_C_PRODUCTS P ON P.product_code = C.product_code
+
+  </select>
+  <select id="getProductNoinfo" parameterType="Map" resultType="Map">
+  SELECT P.werks,P.werks_name,P.workshop,P.workshop_name,P.product_no,P.product_code,P.order_no,P.status,C.product_name
+  FROM BJMES_PD_PRODUCTS P LEFT JOIN BJMES_C_PRODUCTS C ON P.product_code = C.product_code
+  WHERE product_no = #{product_no}
+  </select>
+  <insert id="insertProductionException" parameterType="Map">
+  INSERT INTO BJMES_PRODUCTION_EXCEPTION
+  (werks, werks_name, workshop, workshop_name, process_name, order_no, product_no, exception_type_code, 
+  exception_type_name, reason_type_code, reason_type_name, editor, edit_date, start_time, severity_level, 
+  duty_department_name, status)
+  VALUES
+  (#{werks},#{werks_name},#{workshop},#{workshop_name},#{process_name},#{order_no},#{product_no},#{exception_type_code},
+  #{exception_type_name},#{reason_type_code},#{reason_type_name},#{editor},#{edit_date},#{start_time},#{severity_level},
+  #{duty_department_name},'0')
+  </insert>
+  <update id="editProductionException" parameterType="Map">
+  UPDATE BJMES_PRODUCTION_EXCEPTION SET process_name = #{process_name},exception_type_name = #{exception_type_name},
+  exception_type_code = #{exception_type_name},reason_type_name = #{reason_type_name},reason_type_code = #{reason_type_name},
+  severity_level = #{severity_level},start_time = #{start_time},duty_department_name = #{duty_department_name},
+  editor = #{editor},edit_date=#{edit_date}
+  WHERE id = #{id}
+  </update>
+	
+</mapper>

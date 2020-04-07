@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>发货(V)</title>
+<#include "/web_header.html">
+<style type="text/css">
+	[v-cloak] { display: none }
+</style>
+</head>
+<body class="hold-transition ">
+	<div id="rrapp" class="wrapper">
+		<div class="main-content">
+			<div class="box box-main">
+				<div class="box-body">
+						<form id="searchForm" class="form-inline" :action="formUrl">
+						<!-- 55 生产订单领料(V261)-->
+							<div v-if="BUSINESS_NAME=='55' " v-cloak>	
+									<div class="row">
+											<div class="form-group" >
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>工厂：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:80px" id="parentDiv" >
+													<select name="WERKS" id="WERKS" v-model="WERKS" style="height: 30px;width:100%">
+													   <#list tag.getUserAuthWerks("ACCOUNT_OUT_V") as factory>
+													      <option value="${factory.code}">${factory.code}</option>
+													   </#list>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>仓库号：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:80px;" id="parentDiv" >
+													<select name="WH_NUMBER" id="WH_NUMBER" v-model="WH_NUMBER" style="height: 30px;width:100%">
+														<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>发货类型：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:150px" id="parentDiv">
+													<select id="BUSINESS_NAME" name="BUSINESS_NAME" v-model="BUSINESS_NAME" style="height: 30px;width:100%">
+														<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE">
+															{{t.BUSINESS_NAME}}
+														</option>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:60px;"><span style="color:red">*</span>单据号：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:130px" id="parentDiv">
+													<input type="text" id="OUT_NO" name="OUT_NO" value="" v-model="OUT_NO" style="width: 130px;height: 30px;" class="form-control width-300" />
+													</div>
+												</div>
+											</div>
+
+											<div class="form-group">
+												<input type="button" id="btnSearchData" class="btn btn-primary btn-sm" value="查询" @click="query" />
+											</div>
+									</div>
+									<div class="row">
+											<div class="form-group"  >
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>凭证日期：</label>
+												<div class="control-inline" style="width:80px;">
+													<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+												</div>
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>记账日期：</label>
+												<div class="control-inline"  style="width:80px;">
+													<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+												</div>	
+											</div>
+									
+											<div class="form-group">
+												<input type="button" @click="post" id="btnConfirm" class="btn btn-success btn-sm" value="过账发货"/>
+											</div>
+										</div>
+							</div>
+							
+							<!-- STO销售发货 -->
+							<div v-if="BUSINESS_NAME=='56' " v-cloak>	
+								<div class="row">
+											<div class="form-group" >
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>工厂：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:80px" id="parentDiv">
+													<select name="WERKS" id="WERKS" v-model="WERKS" style="height: 30px;width:100%">
+													   <#list tag.getUserAuthWerks("ACCOUNT_OUT_V") as factory>
+													      <option value="${factory.code}">${factory.code}</option>
+													   </#list>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>仓库号：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:80px;" id="parentDiv" >
+													<select name="WH_NUMBER" id="WH_NUMBER" v-model="WH_NUMBER" style="height: 30px;width:100%">
+														<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>发货类型：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:150px" id="parentDiv">
+													<select id="BUSINESS_NAME" name="BUSINESS_NAME" v-model="BUSINESS_NAME" style="height: 30px;width:100%">
+														<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE">
+															{{t.BUSINESS_NAME}}
+														</option>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:60px;"><span style="color:red">*</span>单据号：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:130px" id="parentDiv">
+													<input type="text" id="OUT_NO" name="OUT_NO" value="" v-model="OUT_NO" style="width: 130px;height: 30px;" class="form-control width-300" />
+													</div>
+												</div>
+											</div>
+
+											<div class="form-group">
+												<input type="button" id="btnSearchData" class="btn btn-primary btn-sm" value="查询" @click="query" />
+											</div>
+									</div>
+									<div class="row">
+											<div class="form-group"  >
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>凭证日期：</label>
+												<div class="control-inline" style="width:80px;">
+													<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+												</div>
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>记账日期：</label>
+												<div class="control-inline"  style="width:80px;">
+													<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+												</div>	
+												<label class="control-label" style="width:80px;"><span style="color:red">*</span>客户代码：</label>
+												<div class="control-inline"  style="">
+													<input id="CUSTOMER" v-model="CUSTOMER"  name=CUSTOMER class="input-medium" style="height: 30px;width:80px;" 
+													@input="customerFuzzy()"  />
+													<input id="CUSTOMER_ID" v-model="CUSTOMER_ID" type="hidden">
+													<span v-cloak>{{CUSTOMER_NAME}}</span>
+												</div>	
+											</div>
+									
+											<div class="form-group">
+												<input type="button" @click="post" id="btnConfirm" class="btn btn-success btn-sm" value="过账发货"/>
+											</div>
+										</div>
+							</div>
+							
+							<!-- 工厂间调拨发货 -->
+							<div v-if="BUSINESS_NAME=='57' " v-cloak>	
+											<div class="form-group" >
+												<label class="control-label" style="width:50px;"><span style="color:red">*</span>工厂：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:60px" >
+													<select name="WERKS" id="WERKS" v-model="WERKS" style="height: 30px;width:100%">
+													   <#list tag.getUserAuthWerks("ACCOUNT_OUT_V") as factory>
+													      <option value="${factory.code}">${factory.code}</option>
+													   </#list>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:55px;"><span style="color:red">*</span>仓库号：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:60px;" >
+													<select name="WH_NUMBER" id="WH_NUMBER" v-model="WH_NUMBER" style="height: 30px;width:100%">
+														<option v-for="w in whList" :value="w.WH_NUMBER" :key="w.ID">{{ w.WH_NUMBER }}</option>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:70px;"><span style="color:red">*</span>发货类型：</label>
+												<div class="control-inline">
+													<div class="input-group treeselect" style="width:130px" >
+													<select id="BUSINESS_NAME" name="BUSINESS_NAME" v-model="BUSINESS_NAME" style="height: 30px;width:100%">
+														<option v-for="t in businessList"  :key="t.CODE" :value="t.CODE">
+															{{t.BUSINESS_NAME}}
+														</option>
+													</select>
+													</div>
+												</div>
+												<label class="control-label" style="width:70px;"><span style="color:red">*</span>接收工厂：</label>
+												<div class="control-inline">
+													<div class="input-group " style="width:60px" >
+													<input type="text" id="WERKS_TO" name="WERKS_TO" @click="getPlantNoSelect('#WERKS_TO','#WERKS_TO',function(v){vm.WERKS_TO=$('#WERKS_TO').val();}) "  v-model="WERKS_TO" style="width: 100%;height: 30px;" class="form-control" />
+													</div>
+												</div>
+												<label class="control-label" style="width:70px;"><span style="color:red">*</span>接收库位：</label>
+												<div class="control-inline">
+													<div class="input-group " style="width:60px" >
+													<input type="text" id="LGORT_TO" name="LGORT_TO"  v-model="LGORT_TO" style="width: 100%;height: 30px;" class="form-control" />
+													</div>
+												</div>
+												<label class="control-label" style="width:70px;"><span style="color:red">*</span>凭证日期：</label>
+												<div class="control-inline" style="width:80px;">
+													<input id="PZ_DATE" v-model="PZ_DATE" name="PZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+												</div>
+												<label class="control-label" style="width:70px;"><span style="color:red">*</span>记账日期：</label>
+												<div class="control-inline"  style="width:80px;">
+													<input id="JZ_DATE" v-model="JZ_DATE"  name="JZ_DATE" class="input-medium" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" style="height: 30px;width:100%" />
+												</div>	
+											</div>
+											
+											<div class="form-group">
+												<input type="button" @click="post" id="btnConfirm" class="btn btn-success btn-sm" value="过账发货"/>
+											</div>
+							</div>
+						</form>
+						<div id="tab1" v-cloak class="table-responsive table2excel" data-tablename="Test Table 1">
+							<table id="dataGrid"></table>
+						</div>
+						<!-- <div id="dataGridPage"></div> -->
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="LGORT_SELECT" style="display:none">
+		<table id="lgortTable"></table>
+	</div>
+	
+	<div id="resultLayer" style="display: none; padding: 10px;">
+		<h4>操作成功！退货单号：<span id="outNo">-</span></h4>
+		<br/>
+		<input type="button" id="btnPrint1" class="btn btn-info btn-sm" value="大letter打印"/>
+		<input type="button" id="btnPrint2" class="btn btn-info btn-sm" value="小letter打印"/>
+	</div>
+	
+	<script src="${request.contextPath}/statics/js/wms/account/wms_out_v.js?_${.now?long}"></script>
+</body>
+</html>

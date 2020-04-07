@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 需求交接 mapper -->
+<mapper namespace="com.byd.wms.business.modules.out.dao.WmsOutHandoverDao">
+
+	<update id="updateHXTO" parameterType="Map">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		update WMS_HX_TO set SF303 = NVL(SF303,0) + #{s.SF303}, 
+		HX_QTY_XF = NVL(HX_QTY_XF,0) + #{s.HX_QTY_XF}
+		where 1=1
+		  and WERKS=#{s.WERKS} 
+		  and F_WERKS = #{s.F_WERKS}
+		  and F_WH_NUMBER = #{s.F_WH_NUMBER}
+		  and MATNR = #{s.MATNR}
+		  and SAP_MATDOC_NO = #{s.SAP_MATDOC_NO}
+		  and SAP_MATDOC_ITEM_NO = #{s.SAP_MATDOC_ITEM_NO}
+		</foreach>
+	</update>
+	
+	<update id="updateHXDN" parameterType="Map">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		update WMS_HX_DN set SF261 = NVL(SF261,0) + #{s.SF261}, 
+		HX_QTY = NVL(HX_QTY,0) + #{s.HX_QTY}
+		where 1=1
+		  and WERKS = #{s.WERKS}
+		  and AUFNR = #{s.AUFNR}
+		  and MATNR = #{s.MATNR}
+		</foreach>
+	</update>
+	
+	<update id="updateHXMO" parameterType="Map">
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+		update WMS_HX_MO_COMPONENT set SF311T = NVL(SF311T,0) + #{s.SF311T}, 
+		HX_QTY_XF = NVL(HX_QTY_XF,0) + #{s.HX_QTY_XF}
+		where 1=1
+		  and F_WERKS = #{s.F_WERKS}
+		  and F_WH_NUMBER = #{s.F_WH_NUMBER}
+		  and MATNR = #{s.MATNR}
+		  and VBELN = #{s.VBELN}
+		  and POSNR = #{s.POSNR}
+		</foreach>
+	</update>
+</mapper>

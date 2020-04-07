@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>发货清单维护</title>
+<#include "/web_header.html">
+<link rel="stylesheet" href="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/css/bootstrap-multiselect.css">
+<script type="text/javascript" src="${request.contextPath}/statics/plugins/bootstrap-multiselect-master/dist/js/bootstrap-multiselect.js"></script>
+<script type="text/javascript" src="${request.contextPath}/statics/js/dynamicColum.js"></script>
+</head>
+<body >
+	<div id="rrapp" v-cloak>
+	<div class="main-content">
+		<div class="box box-main">
+			<div class="box-body">
+				<form id="searchForm"  action="#" method="post" class="form-inline" >
+					<div class="row">
+					<div class="form-group">
+						<label class="control-label">
+						<font style="color:red;font-weight:bold">*</font>STO送货单号：</label>
+						<div class="control-inline">
+                             <input type="text" class="form-control" id="DELIVERY_NO" name="DELIVERY_NO"   placeholder="STO送货单号">							
+                        </div>
+					</div>
+					<input type="text" class="form-control" id="data" name="data"  v-model="inputData" hidden="hidden" style="display:none"/>	
+			<!--  		<div class="form-group">
+						<label class="control-label">
+						<font style="color:red;font-weight:bold">*</font>发货工厂：</label>
+						<div class="control-inline">
+                             <input type="text" class="form-control"  id="FACT_NO" name="FACT_NO" @click="getMaterialNoFuzzy()" placeholder="发货工厂">							
+                        </div>
+					</div>  -->
+					<div class="form-group">
+						<label class="control-label">收货工厂：</label>
+						<div class="control-inline">
+                             <input type="text" class="form-control"  id="FACT_NO" name="FACT_NO"  placeholder="收货工厂">							
+                        </div>
+					</div>
+					<div class="form-group">
+						<button type="button" id="btnquery" class="btn btn-primary btn-sm">查询</button>						
+						<button type="button" class="btn btn-primary btn-sm" @click="exp">导出</button>	   
+						<button type="reset" class="btn btn-default btn-sm">重置</button>
+					</div>
+					</div>
+					
+					
+					<!-- 
+					<div class="row">
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>发货日期：</label>
+						<div class="control-inline">
+                             <input type="text" class="form-control required" id="deliver_date" name="deliver_date"  placeholder="发货日期" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})" />							
+                        </div>
+					</div>
+					
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>收货人：</label>
+						<div class="control-inline">
+                              <input type="text"  id="receiving_cargo" name="receiving_cargo" class="form-control required"   placeholder="收货人" />
+					    </div>
+					</div>
+					
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>收货地址：</label>
+						<div class="control-inline">
+                              <input type="text"  id="receiving_address" name="receiving_address" class="form-control required"  placeholder="收货地址" />
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>收货电话 ：</label>
+						<div class="control-inline">
+                              <input type="text"  id="receiving_telephone" name="receiving_telephone" class="form-control number"   placeholder="货电话 "/>
+						</div>
+					</div>	
+					
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>货运公司 ：</label>
+						<div class="control-inline">
+                              <input type="text" id="freight_company" name="freight_company" class="form-control number"  placeholder="货运公司" />
+						</div>
+					</div>									
+					</div>
+					
+					
+					<div class="row">
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>货运司机 ：</label>
+						<div class="control-inline">
+                              <input type="text" id="freight_driver" name="freight_driver" class="form-control number"  placeholder="货运司机" />
+						</div>
+					</div>	
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>托运单号 ：</label>
+						<div class="control-inline">
+                              <input type="text"  id="consignment_number" name="consignment_number" class="form-control number"   placeholder="托运单号"/>
+						</div>
+					</div>	
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>货车车牌 ：</label>
+						<div class="control-inline">
+                              <input type="text"  id="freight_license_plate" name="freight_license_plate" class="form-control number"  placeholder="货车车牌"/>
+						</div>
+					</div>	
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>起运时间 ：</label>
+						<div class="control-inline">
+                              <input type="text"  id="shipment_date" name="shipment_date" class="form-control number"   placeholder="起运时间" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})"/>
+						</div>
+					</div>	
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>预计送达 ：</label>
+						<div class="control-inline">
+                              <input type="text"  id="expected_service" name="expected_service" class="form-control number"   placeholder="预计送达" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})"/>
+						</div>
+					</div>																
+					</div>
+
+
+					<div class="row">
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>体积单价：</label>
+						<div class="control-inline">
+                              <input type="text"  id="volume_unit_price" name="volume_unit_price" class="form-control"   placeholder="体积单价"/>
+						</div>
+					</div>	
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>重量单价：</label>
+						<div class="control-inline">
+                              <input type="text"  id="weight_unit_price" name="weight_unit_price" class="form-control"   placeholder="重量单价"/>
+					    </div>
+					</div>	
+					<div class="form-group">
+						<label class="control-label" style="width: 75px">
+						<font style="color:red;font-weight:bold">*</font>工厂：</label>
+						<div class="control-inline">
+                              <input type="text"  id="fact_no" name="fact_no" class="form-control number"  placeholder="工厂" />
+						</div>
+					</div>											
+					</div>		 -->			
+				</form> 
+				  <div id="pgtoolbar1">
+					<div id="links" >
+						<a href='#' class='btn' id='newOperation'><i class='fa fa-plus' aria-hidden='true'></i> 创建发货单</a>
+						<a href='#' class='btn' id='editOperation'><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 修改发货单</a>
+						<a href='#' class='btn' id='comfirm'><i class='fa fa-pencil-square-o' aria-hidden='true'></i> 提交</a>
+					</div>
+				</div>
+					<table id="dataGrid"></table>
+					<table id="tb_excel" style="display:none"></table>
+					<div id="dataGridPage"></div>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="${request.contextPath}/statics/js/wms/config/wms_c_shipping_list.js?_${.now?long}"></script>
+</body>
+</html>

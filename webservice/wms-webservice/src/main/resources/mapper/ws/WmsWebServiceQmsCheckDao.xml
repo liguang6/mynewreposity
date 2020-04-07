@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.webservice.ws.dao.WmsWebServiceQmsCheckDao">
+
+	<select id="getInReceiptByNo"  parameterType="Map" resultType="Map">
+		select * from WMS_IN_RECEIPT where RECEIPT_NO=#{RECEIPT_NO} and RECEIPT_ITEM_NO=#{RECEIPT_ITEM_NO}
+	</select>
+
+	<update id="batchUpdateInReceipt" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			update WMS_IN_RECEIPT set
+			INABLE_QTY=nvl(INABLE_QTY,0)+to_number(#{detail.INABLE_QTY}),RETURNABLE_QTY=nvl(RETURNABLE_QTY,0)+to_number(#{detail.RETURNABLE_QTY})
+			WHERE
+			RECEIPT_NO=#{detail.RECEIPT_NO} and RECEIPT_ITEM_NO=#{detail.RECEIPT_ITEM_NO}
+		</foreach>
+	</update>
+
+    <update id="batchUpInspeItemStatus" parameterType="List">
+        <foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+            update WMS_QC_INSPECTION_ITEM qcitem
+            set qcitem.INSPECTION_ITEM_STATUS='01'
+            where qcitem.INSPECTION_NO=#{detail.INSPECTION_NO} and qcitem.INSPECTION_ITEM_NO=#{detail.INSPECTION_ITEM_NO}
+        </foreach>
+    </update>
+
+	<update id="batchUpInspeHeadStatus" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			update WMS_QC_INSPECTION_HEAD qchead
+			set qchead.INSPECTION_STATUS='01'
+			where qchead.INSPECTION_NO=#{detail.INSPECTION_NO} and exists
+			(select 1 from WMS_QC_INSPECTION_ITEM qcitem where qcitem.INSPECTION_NO=#{detail.INSPECTION_NO}  and qcitem.INSPECTION_ITEM_STATUS='00')
+		</foreach>
+	</update>
+
+	<select id="getInspectionItemByNo"  parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_QC_INSPECTION_ITEM WHERE INSPECTION_NO=#{INSPECTION_NO}
+	</select>
+
+	<select id="getInspectionItemByNoINo"  parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_QC_INSPECTION_ITEM WHERE INSPECTION_NO=#{INSPECTION_NO} and INSPECTION_ITEM_NO=#{INSPECTION_ITEM_NO}
+	</select>
+
+	<update id="batchUpInspeHeadAllStatus" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			update WMS_QC_INSPECTION_HEAD qchead
+			set qchead.INSPECTION_STATUS='02'
+			where qchead.INSPECTION_NO=#{detail.INSPECTION_NO} and exists
+			(select 1 from WMS_QC_INSPECTION_ITEM qcitem where qcitem.INSPECTION_NO=#{detail.INSPECTION_NO}  and qcitem.INSPECTION_ITEM_STATUS != '00')
+		</foreach>
+	</update>
+
+	<select id="getCoreLableByNo"  parameterType="Map" resultType="Map">
+		SELECT * FROM WMS_CORE_LABEL WHERE LABEL_NO=#{LABEL_NO}
+	</select>
+
+	<update id="batchUpdateCoreLabel" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			update WMS_CORE_LABEL set LABEL_STATUS=#{detail.LABEL_STATUS}, QC_RESULT_CODE=#{detail.QC_RESULT_CODE},
+			QC_PEOPLE=#{detail.QC_PEOPLE},QC_DATE=#{detail.QC_DATE}, RETURN_REASON_TYPE=#{detail.RETURN_REASON_TYPE}
+			 where LABEL_NO=#{detail.LABEL_NO}
+		</foreach>
+	</update>
+
+	<update id="upQCoreLabelByInspectionNo" parameterType="String">
+		merge into WMS_CORE_LABEL cl
+		using (select qcitem.* from WMS_QC_INSPECTION_ITEM qcitem
+		where qcitem.INSPECTION_NO =#{inspectNO}) bb
+		on (cl.RECEIPT_NO=bb.RECEIPT_NO and cl.RECEIPT_ITEM_NO=bb.RECEIPT_ITEM_NO)
+		when matched then
+		  update  set cl.LABEL_STATUS='03',cl.QC_RESULT_CODE='02'
+-- 		update WMS_CORE_LABEL cl
+-- 		set cl.LABEL_STATUS='03',cl.QC_RESULT_CODE='02'
+-- 		where exists(select 1 from WMS_QC_INSPECTION_ITEM qcitem
+-- 		where qcitem.INSPECTION_NO =#{qcNO}
+-- 		and cl.RECEIPT_NO=qcitem.RECEIPT_NO and cl.RECEIPT_ITEM_NO=qcitem.RECEIPT_ITEM_NO)
+	</update>
+
+	<update id="bthUpQCoreLabelByInspectionNo" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			update WMS_CORE_LABEL cl
+			set cl.LABEL_STATUS='03',cl.QC_RESULT_CODE='02',cl.QC_PEOPLE=#{detail.QC_PEOPLE},cl.QC_DATE=#{detail.QC_DATE}, cl.RETURN_REASON_TYPE=#{detail.RETURN_REASON_TYPE}
+			where exists(select 1 from WMS_QC_INSPECTION_ITEM qcitem
+			where qcitem.INSPECTION_NO = #{detail.INSPECTION_NO} and qcitem.INSPECTION_ITEM_NO = #{detail.INSPECTION_ITEM_NO}
+			and cl.RECEIPT_NO=qcitem.RECEIPT_NO and cl.RECEIPT_ITEM_NO=qcitem.RECEIPT_ITEM_NO)
+		</foreach>
+	</update>
+
+<!--	<update id="bthUpQCoreLabelByInspectionNo" parameterType="List">-->
+<!--		update WMS_CORE_LABEL cl-->
+<!--		set cl.LABEL_STATUS='03',cl.QC_RESULT_CODE='02'-->
+<!--		where exists(select 1 from WMS_QC_INSPECTION_ITEM qcitem-->
+<!--		where qcitem.INSPECTION_NO in-->
+<!--		<foreach collection="list" index="index" open="(" close=")" separator="," item="d">-->
+<!--			#{d}-->
+<!--		</foreach>-->
+<!--		and cl.RECEIPT_NO=qcitem.RECEIPT_NO and cl.RECEIPT_ITEM_NO=qcitem.RECEIPT_ITEM_NO)-->
+<!--	</update>-->
+
+	<update id="bthUpNqCoreLabelByInspectionNo" parameterType="List">
+		<foreach item="detail" index="index" collection="list" open="begin" close=";end;" separator=";">
+			update WMS_CORE_LABEL cl
+			set cl.LABEL_STATUS='04',cl.QC_RESULT_CODE='03',cl.QC_PEOPLE=#{detail.QC_PEOPLE},cl.QC_DATE=#{detail.QC_DATE}, cl.RETURN_REASON_TYPE=#{detail.RETURN_REASON_TYPE}
+			where exists(select 1 from WMS_QC_INSPECTION_ITEM qcitem
+			where qcitem.INSPECTION_NO = #{detail.INSPECTION_NO} and qcitem.INSPECTION_ITEM_NO = #{detail.INSPECTION_ITEM_NO}
+			and cl.RECEIPT_NO=qcitem.RECEIPT_NO and cl.RECEIPT_ITEM_NO=qcitem.RECEIPT_ITEM_NO)
+		</foreach>
+	</update>
+
+<!--    <update id="bthUpNqCoreLabelByInspectionNo" parameterType="List">-->
+<!--        update WMS_CORE_LABEL cl-->
+<!--        set cl.LABEL_STATUS='04',cl.QC_RESULT_CODE='03'-->
+<!--        where exists(select 1 from WMS_QC_INSPECTION_ITEM qcitem-->
+<!--        where qcitem.INSPECTION_NO in-->
+<!--		<foreach collection="list" index="index" open="(" close=")" separator="," item="setObj">-->
+<!--			#{setObj}-->
+<!--		</foreach>-->
+<!--        and cl.RECEIPT_NO=qcitem.RECEIPT_NO and cl.RECEIPT_ITEM_NO=qcitem.RECEIPT_ITEM_NO)-->
+<!--    </update>-->
+
+	<insert id="saveQcResult" parameterType="List" >
+		insert into WMS_QC_RESULT (id, qc_result_no, qc_result_item_no, inspection_no, inspection_item_no,
+		qc_record_type,werks, wh_number, matnr, batch,
+		qc_date, qc_result_code,
+		qc_people, del,creator, create_date, label_no, return_reason_type)
+		SELECT SEQ_WMS_QC_RESULT.NEXTVAL,m.* FROM (
+		<foreach collection="list" item="detail" index="index" separator="UNION ALL">
+			SELECT
+			#{detail.QC_RESULT_NO},#{detail.QC_RESULT_ITEM_NO},#{detail.INSPECTION_NO},#{detail.INSPECTION_ITEM_NO},
+			#{detail.QC_RECORD_TYPE},#{detail.WERKS},#{detail.WH_NUMBER},#{detail.MATNR},#{detail.BATCH},
+			#{detail.QC_DATE},#{detail.QC_RESULT_CODE},
+			#{detail.QC_PEOPLE},'0',#{detail.CREATOR},#{detail.CREATE_DATE},#{detail.LABEL_NO},#{detail.RETURN_REASON_TYPE}
+			FROM DUAL
+		</foreach>
+		) m
+
+<!--		insert into WMS_QC_RESULT (id, qc_result_no, qc_result_item_no, inspection_no, inspection_item_no,-->
+<!--		qc_record_type, stock_source,werks, wh_number, lgort, matnr, maktx, unit, result_qty, batch,-->
+<!--		qc_date, qc_result_code, qc_result_text, qc_result, destroy_qty, iqc_cost_center,-->
+<!--		qc_people, del,creator, create_date, editor, edit_date, label_no, lifnr, sobkz, return_reason_type)-->
+<!--		SELECT SEQ_WMS_QC_RESULT.NEXTVAL,m.* FROM (-->
+<!--		<foreach collection="list" item="detail" index="index" separator="UNION ALL">-->
+<!--			SELECT-->
+<!--			#{detail.QC_RESULT_NO},#{detail.QC_RESULT_ITEM_NO},#{detail.INSPECTION_NO},#{detail.INSPECTION_ITEM_NO},-->
+<!--			#{detail.QC_RECORD_TYPE},#{detail.stock_source},#{detail.WERKS},#{detail.WH_NUMBER},#{detail.lgort},#{detail.MATNR},#{detail.maktx},#{detail.unit},#{detail.result_qty},#{detail.BATCH},-->
+<!--			#{detail.QC_DATE},#{detail.QC_RESULT_CODE},#{detail.qc_result_text},#{detail.qc_result},#{detail.destroy_qty},#{detail.iqc_cost_center},-->
+<!--			#{detail.QC_PEOPLE},'0',#{detail.CREATOR},#{detail.CREATE_DATE},#{detail.editor},#{detail.edit_date},#{detail.LABEL_NO},#{detail.lifnr},#{detail.sobkz},#{detail.RETURN_REASON_TYPE}-->
+<!--			FROM DUAL-->
+<!--		</foreach>-->
+<!--		) m-->
+	</insert>
+
+	<insert id="batSaveTQcResult" parameterType="Map" >
+		insert into WMS_QC_RESULT (id, qc_result_no, qc_result_item_no, inspection_no, inspection_item_no,
+		qc_record_type,werks, wh_number, matnr, batch,
+		qc_date, qc_result_code,lgort,lifnr,maktx,unit,result_qty,
+		qc_people, del,creator, create_date, label_no,return_reason_type)
+		SELECT SEQ_WMS_QC_RESULT.NEXTVAL,m.* FROM (
+		<foreach collection="map_list" item="detail" index="index" separator="union all">
+			SELECT
+			#{detail.QC_RESULT_NO},#{detail.QC_RESULT_ITEM_NO},#{detail.INSPECTION_NO},#{detail.INSPECTION_ITEM_NO},
+			#{detail.QC_RECORD_TYPE},#{detail.WERKS},#{detail.WH_NUMBER},#{detail.MATNR},#{detail.BATCH},
+			#{detail.QC_DATE},#{detail.QC_RESULT_CODE},qcin.LGORT,qcin.LIFNR,qcin.MAKTX,qcin.UNIT,(#{detail.INABLE_QTY}+#{detail.RETURNABLE_QTY}),
+			#{detail.QC_PEOPLE},'0',#{detail.CREATOR},#{detail.CREATE_DATE},#{detail.LABEL_NO},#{detail.RETURN_REASON_TYPE}
+			FROM WMS_QC_INSPECTION_ITEM qcin where qcin.INSPECTION_NO=#{detail.INSPECTION_NO} and qcin.INSPECTION_ITEM_NO=#{detail.INSPECTION_ITEM_NO}
+		</foreach>
+		) m
+	</insert>
+
+	<insert id="batSaveYNQcResult" parameterType="Map" >
+		insert into WMS_QC_RESULT (id, qc_result_no, qc_result_item_no, inspection_no, inspection_item_no,
+		qc_record_type,werks, wh_number, matnr, batch,
+		qc_date, qc_result_code,lgort,lifnr,maktx,unit,result_qty,
+		qc_people, del,creator, create_date, label_no,return_reason_type)
+		SELECT SEQ_WMS_QC_RESULT.NEXTVAL,m.* FROM (
+		<foreach collection="map_list" item="detail" index="index" separator="union all">
+			SELECT
+			#{detail.QC_RESULT_NO},#{detail.QC_RESULT_ITEM_NO},#{detail.INSPECTION_NO},#{detail.INSPECTION_ITEM_NO},
+			#{detail.QC_RECORD_TYPE},#{detail.WERKS},#{detail.WH_NUMBER},#{detail.MATNR},#{detail.BATCH},
+			#{detail.QC_DATE},#{detail.QC_RESULT_CODE},qcin.LGORT,qcin.LIFNR,qcin.MAKTX,qcin.UNIT,qcin.INSPECTION_QTY,
+			#{detail.QC_PEOPLE},'0',#{detail.CREATOR},#{detail.CREATE_DATE},(select WM_CONCAT(cl.LABEL_NO) from WMS_CORE_LABEL cl
+			where qcin.RECEIPT_NO=cl.RECEIPT_NO and qcin.RECEIPT_ITEM_NO=cl.RECEIPT_ITEM_NO),#{detail.RETURN_REASON_TYPE}
+			FROM WMS_QC_INSPECTION_ITEM qcin where qcin.INSPECTION_NO=#{detail.INSPECTION_NO} and qcin.INSPECTION_ITEM_NO=#{detail.INSPECTION_ITEM_NO}
+		</foreach>
+		) m
+	</insert>
+
+
+	<insert id="insertLogInfo" parameterType="Map">
+		insert into WMS_WEBSERVICE_LOG (pk_log, biz_id, flow_no, from_no, to_no, from_jsondata,
+		to_jsondata, vstatus, cturid, ctdt, upurid, updt)
+		VALUES (SEQ_WMS_WEBSERVICE_LOG_PKLOG.nextval,
+		#{biz_id},#{flow_no},#{from_no},#{to_no},
+			#{from_jsondata},#{to_jsondata},#{vstatus},
+			#{cturid},#{ctdt},#{upurid},#{updt}
+		)
+	</insert>
+
+	<insert id="insertLogInfos" parameterType="List">
+		insert into WMS_WEBSERVICE_LOG (pk_log, biz_id, flow_no, from_no, to_no, from_jsondata,
+		to_jsondata, vstatus, cturid, ctdt, upurid, updt)
+		SELECT SEQ_WMS_WEBSERVICE_LOG_PKLOG.nextval.m.* from(
+		<foreach collection="list" item="d" index="index" separator="union all">
+			select
+			#{d.biz_id},#{d.flow_no},#{d.from_no},#{d.to_no},
+			#{d.from_jsondata},#{d.to_jsondata},#{d.vstatus},#{d.cturid},#{d.ctdt},#{d.upurid},#{d.updt}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+	<insert id="saveLogInfos" parameterType="Map">
+		INSERT INTO WMS_WEBSERVICE_LOG (pk_log, biz_id, flow_no, from_no, to_no, from_jsondata,
+		to_jsondata, vstatus, cturid, ctdt, upurid, updt)
+		SELECT SEQ_WMS_WEBSERVICE_LOG_PKLOG.nextval.m.* from(
+		<foreach collection="add_list" item="d" index="index" separator="union all">
+			select
+			#{d.biz_id},#{d.flow_no},#{d.from_no},#{d.to_no},
+			#{d.from_jsondata},#{d.to_jsondata},#{d.vstatus},#{d.cturid},#{d.ctdt},#{d.upurid},#{d.updt}
+			from dual
+		</foreach>
+		) m
+	</insert>
+
+</mapper>

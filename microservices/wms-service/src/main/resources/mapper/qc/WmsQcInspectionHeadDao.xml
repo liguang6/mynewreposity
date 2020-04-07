@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.qc.dao.WmsQcInspectionHeadDao">
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.byd.wms.business.modules.qc.entity.WmsQcInspectionHeadEntity" id="wmsQcInspectionHeadMap">
+        <result property="id" column="ID"/>
+        <result property="inspectionNo" column="INSPECTION_NO"/>
+        <result property="inspectionType" column="INSPECTION_TYPE"/>
+        <result property="inspectionStatus" column="INSPECTION_STATUS"/>
+        <result property="wmsNo" column="WMS_NO"/>
+        <result property="werks" column="WERKS"/>
+        <result property="whNumber" column="WH_NUMBER"/>
+        <result property="isAuto" column="IS_AUTO"/>
+        <result property="del" column="DEL"/>
+        <result property="memo" column="MEMO"/>
+        <result property="creator" column="CREATOR"/>
+        <result property="createDate" column="CREATE_DATE"/>
+        <result property="editor" column="EDITOR"/>
+        <result property="editDate" column="EDIT_DATE"/>
+    </resultMap>
+    
+    <update id="updateStockQty" parameterType="Map">
+    	<!--TIP: NVL 函数   为空的时候设置为0-->
+       UPDATE WMS_CORE_STOCK SET FREEZE_QTY = (NVL(FREEZE_QTY,0) + to_number(#{params.QTY})),
+       STOCK_QTY = (NVL(STOCK_QTY,0) - to_number(#{params.QTY})),
+       EDITOR = #{params.EDITOR},
+       EDIT_DATE = #{params.EDIT_DATE}
+       WHERE WERKS = #{params.WERKS} and WH_NUMBER = #{params.WH_NUMBER} and LGORT = #{params.LGORT}
+       and BIN_CODE = #{params.BIN_CODE} and MATNR = #{params.MATNR} AND (LIFNR = #{params.LIFNR} or LIFNR is null)
+       AND BATCH = #{params.BATCH} and SOBKZ = #{params.SOBKZ}
+    </update>
+    
+    <update id="updateOnInspectStockQty" parameterType="Map">
+       UPDATE WMS_CORE_STOCK SET FREEZE_QTY = NVL(FREEZE_QTY,0) + to_number(#{params.unQualifiedQty}),
+       STOCK_QTY = NVL(STOCK_QTY,0) + to_number(#{params.qualifiedQty}) 
+       WHERE WERKS = #{params.WERKS} and WH_NUMBER = #{params.WH_NUMBER} and LGORT = #{params.LGORT}
+       and BIN_CODE = #{params.BIN_CODE}  and MATNR = #{params.MATNR} and LIFNR = #{params.LIFNR}
+       and BATCH = #{params.BATCH} and SOBKZ = #{params.SOBKZ}
+    </update>
+    
+    <select id="queryInspectionList" parameterType="Map" resultType="Map">
+      SELECT * from (
+      SELECT distinct h.*,i.LIFNR,i.LIKTX FROM WMS_QC_INSPECTION_HEAD h
+      left join WMS_QC_INSPECTION_ITEM i ON h.INSPECTION_NO = i.INSPECTION_NO
+      where h.DEL = '0' 
+      <if test="params.werks !=null and params.werks!=''">
+        and h.WERKS = #{params.werks}
+      </if>
+      <if test="params.inspectionType != null and params.inspectionType !=''">
+        and h.INSPECTION_TYPE = #{params.inspectionType}
+      </if>
+      <if test="params.inspectionStatus != null and params.inspectionStatus !=''">
+        and h.INSPECTION_STATUS = #{params.inspectionStatus}
+      </if>
+      <if test="params.creator != null and params.creator !=''">
+        and h.CREATOR like '%' || #{params.creator} || '%'
+      </if>
+      <if test="params.inspectionNo != null and params.inspectionNo !=''">
+        and h.INSPECTION_NO like '%' || #{params.inspectionNo} || '%'
+      </if>
+      
+      ) where 1=1 
+      <if test="params.lifnr != null and params.lifnr != ''">
+        and LIFNR like '%' || #{params.lifnr} || '%'
+      </if>
+      order by CREATE_DATE desc
+    </select>
+    
+    <update id="updateWmsCoreLabelStatus">
+    	update WMS_CORE_LABEL set label_status  = #{status}
+    	where label_no = #{label_no}
+    </update>
+</mapper>

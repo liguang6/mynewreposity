@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 需求拣配 mapper -->
+<mapper namespace="com.byd.wms.business.modules.out.dao.WmsOutResersalPickingDao">
+
+
+
+	<update id="updateBfqrByReqItem" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_OUT_REQUIREMENT_ITEM l
+			set l.QTY_XJ =  nvl(l.QTY_XJ,0) - nvl(#{s.CONFIRM_QUANTITY},0)
+			WHERE l.REQUIREMENT_NO=#{s.requirementNo} AND l.REQUIREMENT_ITEM_NO=#{s.REFERENCE_DELIVERY_ITEM}
+		</foreach>
+
+	</update>
+
+	<update id="updateBfqrByReqItem2" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_OUT_REQUIREMENT_ITEM l
+			set l.QTY_XJ =  nvl(l.QTY_XJ,0) - ( nvl(#{s.CONFIRM_QUANTITY},0)
+			-  nvl(#{s.REAL_QUANTITY},0) )
+			WHERE l.REQUIREMENT_NO=#{s.requirementNo} AND l.REQUIREMENT_ITEM_NO=#{s.REFERENCE_DELIVERY_ITEM}
+		</foreach>
+
+	</update>
+
+
+
+	<select id="selectWhTask" parameterType="Map" resultType="Map">
+	    select * from WMS_CORE_WH_TASK
+		       where 1=1 and del = 0
+			   <if test="WH_NUMBER !=null and WH_NUMBER !=''">
+				   and WH_NUMBER = #{WH_NUMBER}
+			   </if>
+			   <if test="REFERENCE_DELIVERY_NO !=null and REFERENCE_DELIVERY_NO !=''">
+			  	   and REFERENCE_DELIVERY_NO = #{REFERENCE_DELIVERY_NO}
+			   </if>
+			   <if test="WT_STATUS !=null and WT_STATUS !=''">
+			  	   and WT_STATUS = #{WT_STATUS}
+			   </if>
+	</select>
+
+	<select id="selectQtyByStock" parameterType="Map" resultType="Map">
+		select * from WMS_CORE_STOCK l
+		where 1=1
+		 	and l.WH_NUMBER = #{WH_NUMBER} and l.WERKS = #{WERKS}
+		 	and l.MATNR=#{MATNR} and l.BATCH = #{BATCH}
+			and l.BIN_CODE=#{FROM_BIN_CODE}
+			and l.LGORT=#{LGORT}
+			and l.SOBKZ=#{SOBKZ} 
+			<if test="LIFNR !=null and LIFNR !=''">
+				AND l.LIFNR = #{LIFNR}
+			</if>
+			<if test="LIFNR ==null or LIFNR ==''">
+				AND l.LIFNR is null
+			</if>
+	</select>
+
+
+
+
+	<update id="updateBfgzByStock" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_STOCK l
+			set l.XJ_QTY =nvl(l.XJ_QTY,0) - ( nvl(#{s.CONFIRM_QUANTITY},0)
+			-  nvl(#{s.REAL_QUANTITY},0) ), 
+			l.RSB_QTY = nvl(l.RSB_QTY,0)- (nvl(#{s.QUANTITY},0)-nvl(#{s.CONFIRM_QUANTITY},0)),
+			l.STOCK_QTY = nvl(l.STOCK_QTY,0) + ( nvl(#{s.QUANTITY},0)
+			-  nvl(#{s.REAL_QUANTITY},0) )
+			where l.WH_NUMBER = #{s.WH_NUMBER} and l.WERKS = #{s.WERKS} and l.MATNR=#{s.MATNR} and l.BATCH = #{s.BATCH}
+			and l.BIN_CODE=#{s.FROM_BIN_CODE}
+			and l.LGORT=#{s.LGORT}
+			and l.SOBKZ=#{s.SOBKZ}
+			<if test="s.LIFNR !=null and s.LIFNR !=''">
+				AND l.LIFNR = #{s.LIFNR}
+			</if>
+			<if test="s.LIFNR ==null or s.LIFNR ==''">
+				AND l.LIFNR is null
+			</if>
+		</foreach>
+
+	</update>
+
+	<update id="updateWqByStock" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_STOCK l
+			set l.RSB_QTY =  nvl(l.RSB_QTY,0)- nvl(#{s.QUANTITY},0),
+			l.STOCK_QTY = nvl(l.STOCK_QTY,0) + nvl(#{s.QUANTITY},0)
+			where l.WH_NUMBER = #{s.WH_NUMBER} and l.WERKS = #{s.WERKS} and l.MATNR=#{s.MATNR} and l.BATCH = #{s.BATCH}
+			and l.BIN_CODE=#{s.FROM_BIN_CODE}
+			and l.LGORT=#{s.LGORT}
+			and l.SOBKZ=#{s.SOBKZ} 
+			<if test="s.LIFNR !=null and s.LIFNR !=''">
+				AND l.LIFNR = #{s.LIFNR}
+			</if>
+			<if test="s.LIFNR ==null or s.LIFNR ==''">
+				AND l.LIFNR is null
+			</if>
+		</foreach>
+
+	</update>
+
+	<update id="updateBfqrByStock" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_STOCK l
+			set l.XJ_QTY = nvl(l.XJ_QTY,0) - nvl(#{s.CONFIRM_QUANTITY},0),
+			l.RSB_QTY = nvl(l.RSB_QTY,0)- (nvl(#{s.QUANTITY},0)-nvl(#{s.CONFIRM_QUANTITY},0)),
+			l.STOCK_QTY = nvl(l.STOCK_QTY,0) + nvl(#{s.QUANTITY},0)
+			where l.WH_NUMBER = #{s.WH_NUMBER} and l.WERKS = #{s.WERKS} and l.MATNR=#{s.MATNR} and l.BATCH = #{s.BATCH}
+			and l.BIN_CODE=#{s.FROM_BIN_CODE}
+			and l.LGORT=#{s.LGORT}
+			and l.SOBKZ=#{s.SOBKZ} 
+			<if test="s.LIFNR !=null and s.LIFNR !=''">
+				AND l.LIFNR = #{s.LIFNR}
+			</if>
+			<if test="s.LIFNR ==null or s.LIFNR ==''">
+				AND l.LIFNR is null
+			</if>
+		</foreach>
+
+	</update>
+
+	<update id="updateQrByStock" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_STOCK l
+			set l.XJ_QTY = nvl(l.XJ_QTY,0) - nvl(#{s.CONFIRM_QUANTITY},0),
+			l.STOCK_QTY = nvl(l.STOCK_QTY,0) + nvl(#{s.CONFIRM_QUANTITY},0)
+			where l.WH_NUMBER = #{s.WH_NUMBER} and l.WERKS = #{s.WERKS} and l.MATNR=#{s.MATNR} and l.BATCH = #{s.BATCH}
+			and l.BIN_CODE=#{s.FROM_BIN_CODE}
+			and l.LGORT=#{s.LGORT}
+			and l.SOBKZ=#{s.SOBKZ} 
+			<if test="s.LIFNR !=null and s.LIFNR !=''">
+				AND l.LIFNR = #{s.LIFNR}
+			</if>
+			<if test="s.LIFNR ==null or s.LIFNR ==''">
+				AND l.LIFNR is null
+			</if>
+		</foreach>
+
+	</update>
+
+	<update id="updateBin" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_STOCK_LABEL l
+			set l.BIN_CODE = 'AAAA',l.BIN_NAME = 'AAAA'
+			where l.LABEL_NO = #{s.LABEL_NO} and l.WH_NUMBER = #{s.WH_NUMBER}
+			and l.BATCH = #{s.BATCH} and l.WERKS = #{s.WERKS} and l.MATNR = #{s.MATNR}
+			and l.BIN_CODE= #{s.TO_BIN_CODE}
+		</foreach>
+
+	</update>
+
+	<update id="updateStatusByLabel" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_LABEL l
+			set l.LABEL_STATUS = '08'
+			where l.LABEL_NO = #{s.LABEL_NO}
+		</foreach>
+
+	</update>
+
+	<update id="updateStatusByTask" parameterType="Map" >
+		<foreach collection="list" index="index" item="s" separator=";" open="begin" close=" ; end;">
+			update WMS_CORE_WH_TASK
+			set WT_STATUS = '03'
+			where 1=1
+			<if test="s.WH_NUMBER !=null and s.WH_NUMBER !=''">
+				and WH_NUMBER = #{s.WH_NUMBER}
+			</if>
+			<if test="s.requirementNo !=null and s.requirementNo !=''">
+				and REFERENCE_DELIVERY_NO = #{s.requirementNo}
+			</if>
+			<if test="s.REFERENCE_DELIVERY_ITEM !=null and s.REFERENCE_DELIVERY_ITEM !=''">
+				and REFERENCE_DELIVERY_ITEM = #{s.REFERENCE_DELIVERY_ITEM}
+			</if>
+			<if test="s.TASK_NUM !=null and s.TASK_NUM !=''">
+				and TASK_NUM = #{s.TASK_NUM}
+			</if>
+		</foreach>
+
+
+	</update>
+
+	
+</mapper>

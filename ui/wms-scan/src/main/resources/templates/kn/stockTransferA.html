@@ -1,0 +1,131 @@
+<html>
+    <head>
+    	<#include "/web_header.html">
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/oa_smq.css" />
+        <link rel="stylesheet" href="${request.contextPath}/statics/css/tabs.css" />
+        <style type="text/CSS">
+            #global_content_smq{
+                border:1px solid #6FACEF;
+            }
+           
+            .btn{
+                border:1px solid #1271EF;background:transparent url(${request.contextPath}/statics/ins/btn_bg.jpg) repeat-x;/**/
+                padding:0 8px;line-height:22px;color: #fff; font-weight:bold;
+            }
+            body{text-align:center}
+        </style>
+       
+        <title>寄售转自有411K</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <div id="global_content_smq">
+            <div class="smq_test" >
+                <h2>寄售转自有411K</h2>
+                <div id="divInfo" style="color:red;text-align:center;visibility: hidden;">error</div>
+                
+                <div class="box" style="text-align:center">
+                    <button id="but_input" class="btn" onclick="rback()" >录入</button>
+                    <button id="but_datainfo" class="btn" onclick="showData()" >数据表</button>
+                    <button id="but_headinfo" class="btn" onclick="showhead()" >抬头信息</button>
+                </div>
+                <br><br>
+                 <!-- 录入页面  -->
+                <div id="div1">
+                    <div class="box">
+                        <label id="barcodeLabel" >标签</label>
+                        <div >
+                            <input id="barcode" name="barcode"  type="text"/>
+                            <button id="scan" onclick="scanPre();" >扫描</button>
+                        </div>
+                    </div>
+                    <!-- 扫描明细  -->
+	                <br><br>
+	                <div >
+		                <div class="box">
+	                        <label style="color: blue">已扫箱数:</label>
+	                        <label id="boxlabel" style="color: blue;width:130px;text-align: left;padding-left: 5px;"></label>
+	                    </div>
+	                    <div class="box">
+	                        <label style="color: blue">条码号:</label>
+	                        <label id="barcodelabel" style="color: blue;width:130px;text-align: left;padding-left: 5px;"></label>
+	                    </div>
+	                    <div class="box">
+	                        <label style="color: blue">物料号:</label>
+	                        <label id="matnrlabel" style="color: blue;width:130px;text-align: left;padding-left: 5px;"></label>
+	                    </div>
+	                    <div class="box">
+	                        <label style="color: blue">物料描述:</label>
+	                        <label id="maktxlabel" style="color: blue;width:130px;text-align: left;padding-left: 5px;"></label>
+	                    </div>
+	                    <div class="box">
+	                        <label style="color: blue">数量:</label>
+	                        <label id="qtylabel" style="color: blue;width:130px;text-align: left;padding-left: 5px;"></label>
+	                    </div>
+	                    <div class="box">
+	                        <label style="color: blue">批次:</label>
+	                        <label id="batchlabel" style="color: blue;width:130px;text-align: left;padding-left: 5px;">&nbsp;</label>
+	                    </div>
+	                    <div class="box">&nbsp;</div>
+	                </div>
+                </div>
+                <!-- 抬头页面-->
+                <div id="div2" style="display:none;">
+                    <div class="box">
+                        <label >凭证日期</label>
+                        <input id="PZ_DATE" name="PZ_DATE"  type="text" />
+                    </div>
+                    <div class="box">
+                        <label >记账日期</label>
+                        <input id="JZ_DATE" name="JZ_DATE"  type="text" />
+                    </div>
+                    <div class="box">
+                        <label >文本抬头</label>
+                        <input id="HEADER_TXT" name="HEADER_TXT"  type="text" />
+                    </div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                </div>
+                <!-- 汇总数据明细页面-->
+                <div id="div3" style="display:none;">
+                    <table id="dataGrid"></table>
+					<div id='pager'></div>
+                </div>
+                <!-- 条码明细页面-->
+                <div id="div4" style="display:none;">
+                    <table id="dataGridA"></table>
+					<div id='pagerA'></div>
+                </div>
+                <!-- 做账返回页面-->
+                <div id="div5" style="display:none;">                
+                    <div class="box">
+                    	<label >WMS凭证</label>
+                    	<label id="WMS_NO" style="width:130px;">
+                    </div>
+                    <div class="box">&nbsp;</label></div>
+                    <div class="box"> 
+                    	<label >SAP凭证</label>
+                    	<label id="SAP_DOC_NO" style="width:130px;">
+                    </div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                    <div class="box">&nbsp;</div>
+                </div>
+
+                <br><br>
+                <div style="text-align:center;">
+                	<button id="btn4" class="btn" onclick="saveA()" >过账</button>
+					<button id="btn1" class="btn" onclick="save()" style="display:none;"> 确认</button>
+					<button id="btn2" class="btn" onClick='window.location.replace("${request.contextPath}/index2.html?m=4")' >取消</button>
+					<button id='btn5' class="btn"  style="display:none;">删除</button>
+					<button id="btn3" type="reset" class="btn" onClick="rback();" style="display:none;"> 返回</button>
+				</div>
+				
+            </div>
+        </div>
+	<script src="${request.contextPath}/statics/js/kn/stockTransferA.js?_${.now?long}"></script>
+    </body>
+</html>

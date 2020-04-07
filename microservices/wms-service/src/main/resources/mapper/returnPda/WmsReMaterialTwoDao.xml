@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byd.wms.business.modules.returnpda.dao.WmsReMaterialTwoPdaDao">
+	<select id="getWmsDocByLabelNo" parameterType="Map" resultType="Map">
+      select MO_NO,LGORT,SOBKZ,LIFNR,MATNR
+      from WMS_CORE_WMSDOC_ITEM
+      where SAP_MOVE_TYPE=#{SAP_MOVE_TYPE} and to_char(LABEL_NO) like '%'||#{LABEL_NO}||'%'
+	</select>
+    <select id="getWmsQTYByLabel" parameterType="Map" resultType="Map">
+      select SOBKZ,LIFNR,BOX_QTY,MATNR,UNIT,MAKTX
+      from WMS_CORE_LABEL
+      where to_char(LABEL_NO) = #{LABEL_NO}
+	</select>
+    <select id="getWmsBatchByLabel" parameterType="Map" resultType="Map">
+      select BATCH
+      from WMS_CORE_LABEL
+      where to_char(LABEL_NO) = #{LABEL_NO}
+	</select>
+
+
+    <select id="validateScanCache" parameterType="Map" resultType="Map">
+      select *
+      from WMS_PDA_SCAN_CACHE
+      where to_char(LABEL_NO) = #{LABEL_NO} and MENU_KEY = #{MENU_KEY} and BUSINESS_NAME = #{BUSINESS_NAME}
+	</select>
+
+    <insert id="insertScanCache" parameterType="Map">
+        insert into WMS_PDA_SCAN_CACHE (ID, WERKS, WH_NUMBER, LABEL_NO,
+       MATNR, QTY, BUSINESS_NAME, CREATOR, CREATE_DATE,MENU_KEY,BATCH,
+       BUSINESS_TYPE,MO_NO,LGORT,SOBKZ,LIFNR,HEADER_TXT,MAKTX,UNIT,BUSINESS_CODE)
+        select WMS_PDA_SCAN_CACHE_SEQ.NEXTVAL as ID,#{WERKS},#{WH_NUMBER},
+        #{LABEL_NO},#{MATNR},#{QTY},#{BUSINESS_NAME},#{CREATOR},#{CREATE_DATE},
+        #{MENU_KEY},#{BATCH},#{BUSINESS_TYPE},#{MO_NO},#{LGORT},
+        #{SOBKZ},#{LIFNR},#{HEADER_TXT},#{MAKTX},#{UNIT},#{BUSINESS_CODE}
+        from dual
+	</insert>
+    <select id="getPorecCache" parameterType="Map" resultType="Map">
+      select MATNR,MO_NO,LGORT,SOBKZ,LIFNR,BATCH,HEADER_TXT,MAKTX,UNIT,CREATE_DATE,sum(QTY) as TOTALL_QTY,count(*) as QTY
+      from WMS_PDA_SCAN_CACHE
+      where WERKS =#{WERKS} and WH_NUMBER=#{WH_NUMBER} and BUSINESS_NAME=#{BUSINESS_NAME} and
+      BUSINESS_TYPE=#{BUSINESS_TYPE} and MENU_KEY=#{MENU_KEY} and CREATOR=#{CREATOR}
+      group by MATNR,MO_NO,LGORT,SOBKZ,LIFNR,BATCH,HEADER_TXT,CREATE_DATE,MAKTX,UNIT
+      ORDER BY CREATE_DATE ASC
+	</select>
+
+    <select id="getScanInfo" parameterType="Map" resultType="Map">
+      select LABEL_NO,BATCH,QTY,CREATE_DATE
+      from WMS_PDA_SCAN_CACHE
+      where BUSINESS_NAME=#{BUSINESS_NAME} and BUSINESS_TYPE=#{BUSINESS_TYPE}
+      and MENU_KEY=#{MENU_KEY} and WERKS =#{WERKS} and WH_NUMBER=#{WH_NUMBER}
+      <if test="MO_NO!=null and MO_NO!=''">
+          and MO_NO=#{MO_NO}
+      </if>
+        <if test="LGORT!=null and LGORT!=''">
+           and LGORT=#{LGORT}
+        </if>
+        <if test="MATNR!=null and MATNR!=''">
+            and MATNR =#{MATNR}
+        </if>
+        <if test="SOBKZ!=null and SOBKZ!=''">
+            and SOBKZ=#{SOBKZ}
+        </if>
+        <if test="LIFNR!=null and LIFNR!=''">
+            and LIFNR=#{LIFNR}
+        </if>
+        <if test="BATCH!=null and BATCH!=''">
+            and BATCH=#{BATCH}
+        </if>
+      ORDER BY CREATE_DATE ASC
+	</select>
+
+    <delete id="removeScanInfo" parameterType="Map">
+     <foreach collection="list" item="l" open="begin" close=";end;" separator=";">
+     delete WMS_PDA_SCAN_CACHE where LABEL_NO = #{l.LABEL_NO} and CREATOR=#{CREATOR}
+         and BUSINESS_NAME=#{BUSINESS_NAME} and BUSINESS_TYPE=#{BUSINESS_TYPE}
+         and WERKS =#{WERKS} and WH_NUMBER=#{WH_NUMBER} and MENU_KEY=#{MENU_KEY}
+     </foreach>
+    </delete>
+
+    <insert id="insertBarCodeLog" parameterType="Map">
+        insert into WMS_REPORT_BARCODE_LOG (ID, WERKS, WH_NUMBER, LABEL_NO,)
+        select WMS_PDA_SCAN_CACHE_SEQ.NEXTVAL as ID,#{WERKS},#{WH_NUMBER},
+        #{LABEL_NO}
+        from dual
+	</insert>
+    <update id="saveData" parameterType="Map">
+        <foreach collection="dataList" item="l" open="begin" close=";end;" separator=";">
+            update WMS_PDA_SCAN_CACHE set LIFNR = #{l.LIFNR}
+            <if test="l.MO_NO != null and l.MO_NO != ''">
+                , MO_NO =#{l.MO_NO}
+            </if>
+            <if test="l.LGORT != null and l.LGORT != ''">
+                , LGORT =#{l.LGORT}
+            </if>
+            where CREATOR =#{CREATOR} and MENU_KEY=#{MENU_KEY} and MATNR =#{l.MATNR}  and SOBKZ=#{l.SOBKZ}
+            and BUSINESS_NAME=#{BUSINESS_NAME} and BUSINESS_TYPE=#{BUSINESS_TYPE}
+            and BATCH=#{l.BATCH}
+        </foreach>
+    </update>
+</mapper>
